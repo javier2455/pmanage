@@ -40,32 +40,32 @@ export default function LoginPage() {
         },
     });
 
-    async function handleDeleteUser() {
-        const user = localStorage.getItem("user")
-        const userId = JSON.parse(user || '{}').id
-        if (!userId) {
-            setError("root", { message: "Usuario no encontrado" })
-            return
-        }
-        try {
-            const response = await axios.delete('https://psearch.dveloxsoft.com/auth/delete-user-by-id', {
-                data: {
-                    userId: userId
-                },
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            console.log('response of delete user', response);
-        } catch (error) {
-            console.log('error of delete user', error);
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message });
-            } else {
-                setError("root", { message: "Error al eliminar usuario. Intenta de nuevo." });
-            }
-        }
-    }
+    // async function handleDeleteUser() {
+    //     const user = localStorage.getItem("user")
+    //     const userId = JSON.parse(user || '{}').id
+    //     if (!userId) {
+    //         setError("root", { message: "Usuario no encontrado" })
+    //         return
+    //     }
+    //     try {
+    //         const response = await axios.delete('https://psearch.dveloxsoft.com/auth/delete-user-by-id', {
+    //             data: {
+    //                 userId: userId
+    //             },
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //         });
+    //         console.log('response of delete user', response);
+    //     } catch (error) {
+    //         console.log('error of delete user', error);
+    //         if (axios.isAxiosError(error) && error.response?.data?.message) {
+    //             setError("root", { message: error.response.data.message });
+    //         } else {
+    //             setError("root", { message: "Error al eliminar usuario. Intenta de nuevo." });
+    //         }
+    //     }
+    // }
 
 
 
@@ -223,14 +223,14 @@ export default function LoginPage() {
                         </Link>
                     </p>
                 </CardContent>
-                <CardFooter className="flex flex-col gap-2">
+                {/* <CardFooter className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
                         <Separator className="flex-1" />
                         <span className="text-xs text-muted-foreground">Solo para pruebas</span>
                         <Separator className="flex-1" />
                     </div>
                     <Button onClick={handleDeleteUser} className="w-full">Eliminar usuario</Button>
-                </CardFooter>
+                </CardFooter> */}
             </Card>
         </div>
     )
