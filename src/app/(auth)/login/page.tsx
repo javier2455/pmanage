@@ -7,6 +7,7 @@ import {
     Card,
     CardContent,
     CardDescription,
+    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -39,6 +40,33 @@ export default function LoginPage() {
         },
     });
 
+    async function handleDeleteUser() {
+        const user = localStorage.getItem("user")
+        const userId = JSON.parse(user || '{}').id
+        if (!userId) {
+            setError("root", { message: "Usuario no encontrado" })
+            return
+        }
+        try {
+            const response = await axios.delete('https://psearch.dveloxsoft.com/auth/delete-user-by-id', {
+                data: {
+                    userId: userId
+                },
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            console.log('response of delete user', response);
+        } catch (error) {
+            console.log('error of delete user', error);
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                setError("root", { message: error.response.data.message });
+            } else {
+                setError("root", { message: "Error al eliminar usuario. Intenta de nuevo." });
+            }
+        }
+    }
+
 
 
     const onSubmit = async (data: LoginFormData) => {
@@ -50,19 +78,27 @@ export default function LoginPage() {
 
             /* Verificar si el usuario tiene o no un plan activo */
             const activePlan = await getActivePlan({ userId: user.id, token });
+            console.log("activePlan", activePlan);
 
-            console.log('activePlan', activePlan);
-
-            if (!activePlan.data.isActive) {
+            if (activePlan?.data?.isActive || activePlan?.isActive) {
                 localStorage.setItem("token", token);
                 localStorage.setItem("user", JSON.stringify(user));
                 router.push("/dashboard");
             } else {
+                localStorage.setItem("token", token);
+                localStorage.setItem("user", JSON.stringify(user));
                 router.push("/plans");
             }
 
         } catch (error) {
+            console.log('error of login', error);
+            if (axios.isAxiosError(error) && error.response?.data?.error === "Unauthorized" && error.response?.data?.message === "Invalid credentials") {
+                console.log('entro aqui')
+                setError("root", { message: "Credenciales incorrectas" })
+                return
+            }
             if (axios.isAxiosError(error) && error.response?.data?.message) {
+                console.log('entro aqui x2')
                 setError("root", { message: error.response.data.message });
             } else {
                 setError("root", { message: "Error al iniciar sesión. Intenta de nuevo." });
@@ -177,7 +213,6 @@ export default function LoginPage() {
                         </svg>
                         Continuar con Google
                     </Button>
-
                     <p className="text-center text-sm text-muted-foreground">
                         {"No tienes una cuenta? "}
                         <Link
@@ -188,6 +223,14 @@ export default function LoginPage() {
                         </Link>
                     </p>
                 </CardContent>
+                <CardFooter className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                        <Separator className="flex-1" />
+                        <span className="text-xs text-muted-foreground">Solo para pruebas</span>
+                        <Separator className="flex-1" />
+                    </div>
+                    <Button onClick={handleDeleteUser} className="w-full">Eliminar usuario</Button>
+                </CardFooter>
             </Card>
         </div>
     )
