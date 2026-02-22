@@ -4,9 +4,13 @@ import * as React from "react"
 import {
   LayoutDashboard,
   ShoppingCart,
-  // PackageOpen,
+  Package,
+  FileText,
+  ShoppingBag,
+  ArrowDownToLine,
   CalendarCheck,
-  // CalendarRange,
+  CalendarDays,
+  CalendarRange,
   ArrowLeftRight,
   Store,
 } from "lucide-react"
@@ -26,11 +30,6 @@ import {
 import Link from "next/link"
 
 const data = {
-  user: {
-    name: "Admin",
-    email: "admin@ventaspro.com",
-    avatar: "",
-  },
   navMain: [
     {
       title: "Panel Principal",
@@ -44,12 +43,24 @@ const data = {
       icon: ShoppingCart,
       items: [
         {
-          title: "Ventas",
-          url: "/dashboard/business/sales",
+          title: "Detalles",
+          url: "/dashboard/business/details",
+          icon: FileText,
         },
         {
-          title: "Ingresos",
+          title: "Productos",
+          url: "/dashboard/business/products",
+          icon: Package,
+        },
+        {
+          title: "Ventas",
+          url: "/dashboard/business/sales",
+          icon: ShoppingBag,
+        },
+        {
+          title: "Entrada",
           url: "/dashboard/business/entries",
+          icon: ArrowDownToLine,
         },
       ],
     },
@@ -61,10 +72,12 @@ const data = {
         {
           title: "Diario",
           url: "/dashboard/accounting-close/daily",
+          icon: CalendarDays,
         },
         {
           title: "Mensual",
           url: "/dashboard/accounting-close/monthly",
+          icon: CalendarRange,
         },
       ],
     },
@@ -78,7 +91,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar className=""  collapsible="icon" {...props}>
+    <Sidebar className="" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -100,7 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

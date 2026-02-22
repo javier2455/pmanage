@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getExchangeRate } from "@/lib/api";
+import { getExchangeRate } from "@/lib/api/exchange-rate";
 
 export function useExchangeRate(businessId: string) {
     return useQuery({

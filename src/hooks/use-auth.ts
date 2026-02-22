@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { login, register, verifyCode, resendCode } from "@/lib/auth";
+import { login, register, verifyCode, resendCode } from "@/lib/api/auth";
 import type { LoginFormData, RegisterFormData, VerifyFormData } from "@/lib/validations/auth";
 
 export function useLoginMutation() {

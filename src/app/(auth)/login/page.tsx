@@ -20,7 +20,8 @@ import Link from 'next/link'
 import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { getActivePlan } from "@/lib/plans";
+import { getActivePlan } from "@/lib/api/plans";
+import { businessRoutes } from "@/lib/routes/business";
 
 
 export default function LoginPage() {
@@ -81,8 +82,17 @@ export default function LoginPage() {
             console.log("activePlan", activePlan);
 
             if (activePlan?.data?.isActive || activePlan?.isActive) {
+                const response = await axios.get(businessRoutes.getMyBusinesses,{
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+                if (response) {
+                    console.log('response of get my businesses', response);
+                }
                 localStorage.setItem("token", token);
                 localStorage.setItem("user", JSON.stringify(user));
+
                 router.push("/dashboard");
             } else {
                 localStorage.setItem("token", token);

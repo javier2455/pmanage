@@ -3,6 +3,7 @@ import { poppins } from "@/fonts";
 import "./globals.css";
 import { ThemeProvider } from "@/components/next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "sileo";
 
 export const metadata: Metadata = {
   title: "Sistema de Gestión de Negocios",
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body
         className={`${poppins.className} antialiased`}
       >
+        <Toaster position="bottom-right" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

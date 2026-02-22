@@ -4,6 +4,7 @@ import ExchangeCard from "@/components/exchange-rate/exchange-card";
 import { useExchangeRate } from "@/hooks/use-exchange";
 
 export default function ExchangeRatePage() {
+  
   const { data, isLoading, isError } = useExchangeRate('34f7137e-25b2-45d0-bde3-8d7d466324e6');
 
   if (isLoading) return <div>Cargando...</div>;
