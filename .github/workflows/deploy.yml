@@ -1,0 +1,143 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Next.js project
+        run: npm run build
+
+      - name: Create production package.json
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const prodPkg = {
+              name: pkg.name,
+              version: pkg.version,
+              private: true,
+              scripts: {
+                start: 'NODE_ENV=production node server.js'
+              },
+              dependencies: pkg.dependencies,
+              devDependencies: pkg.devDependencies
+            };
+            require('fs').writeFileSync('package.json', JSON.stringify(prodPkg, null, 2));
+          "
+
+      - name: Clean remote api folder
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          script: |
+            TARGET=~/psearch.dveloxsoft.com/api
+            cd $TARGET
+            # Eliminar todos los archivos y carpetas excepto los protegidos
+            for item in *; do
+              if [ "$item" != ".htaccess" ] && [ "$item" != "upload" ] && [ "$item" != "uploads" ] && [ "$item" != "tmp" ] && [ "$item" != "public" ] && [ "$item" != "node_modules" ]; then
+                rm -rf "$item"
+              fi
+            done
+
+      - name: Upload .next folder to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: ".next/**"
+          target: "~/psearch.dveloxsoft.com/api/"
+          overwrite: true
+          rm: false
+          strip_components: 1
+
+      - name: Upload public folder to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "public/**"
+          target: "~/psearch.dveloxsoft.com/api/public/"
+          overwrite: true
+          rm: false
+          strip_components: 1
+
+      - name: Upload server.js to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "server.js"
+          target: "~/psearch.dveloxsoft.com/api/"
+          overwrite: true
+
+      - name: Upload package.json to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "package.json"
+          target: "~/psearch.dveloxsoft.com/api/"
+          overwrite: true
+
+      - name: Upload .env file if exists
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: ".env.production"
+          target: "~/psearch.dveloxsoft.com/api/"
+          overwrite: true
+        continue-on-error: true
+
+      - name: Install production dependencies on server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          script: |
+            TARGET=~/psearch.dveloxsoft.com/api
+            cd $TARGET
+            npm install --production
+
+      - name: Restart Passenger
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          script: |
+            TARGET=~/psearch.dveloxsoft.com/api
+            touch $TARGET/tmp/restart.txt
