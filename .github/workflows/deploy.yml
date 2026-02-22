@@ -13,17 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Build Next.js project
-        run: npm run build
+        run: pnpm run build
 
       - name: Create production package.json
         run: |
@@ -36,8 +41,7 @@ jobs:
               scripts: {
                 start: 'NODE_ENV=production node server.js'
               },
-              dependencies: pkg.dependencies,
-              devDependencies: pkg.devDependencies
+              dependencies: pkg.dependencies
             };
             require('fs').writeFileSync('package.json', JSON.stringify(prodPkg, null, 2));
           "
@@ -107,6 +111,29 @@ jobs:
           target: "~/psearch.dveloxsoft.com/api/"
           overwrite: true
 
+      - name: Upload pnpm-lock.yaml to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "pnpm-lock.yaml"
+          target: "~/psearch.dveloxsoft.com/api/"
+          overwrite: true
+
+      - name: Upload pnpm-workspace.yaml to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "pnpm-workspace.yaml"
+          target: "~/psearch.dveloxsoft.com/api/"
+          overwrite: true
+        continue-on-error: true
+
       - name: Upload .env file if exists
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -129,7 +156,9 @@ jobs:
           script: |
             TARGET=~/psearch.dveloxsoft.com/api
             cd $TARGET
-            npm install --production
+            # Install pnpm globally if not available
+            npm install -g pnpm
+            pnpm install --frozen-lockfile --production
 
       - name: Restart Passenger
         uses: appleboy/ssh-action@v1.0.0
