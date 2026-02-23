@@ -1,0 +1,1 @@
+export const BASIC_ROUTE = 'https://psearch.dveloxsoft.com/api'

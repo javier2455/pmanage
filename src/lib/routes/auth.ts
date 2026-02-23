@@ -1,6 +1,8 @@
+import { BASIC_ROUTE } from ".";
+
 export const authRoutes = {
-  login: "https://psearch.dveloxsoft.com/auth/login",
-  register: "https://psearch.dveloxsoft.com/auth/register",
-  verify: "https://psearch.dveloxsoft.com/auth/verify-email",
-  resend: "https://psearch.dveloxsoft.com/auth/resend-verification",
+  login: `${BASIC_ROUTE}/auth/login`,
+  register: `${BASIC_ROUTE}/auth/register`,
+  verify: `${BASIC_ROUTE}/auth/verify-email`,
+  resend: `${BASIC_ROUTE}/auth/resend-verification`,
 };   

@@ -1,4 +1,6 @@
+import { BASIC_ROUTE } from ".";
+
 export const salesRoutes = {
-    getAllSalesByBusinessId: (businessId: string) => `https://psearch.dveloxsoft.com/sales/business/${businessId}`,
-    createSale: "https://psearch.dveloxsoft.com/sales",
+    getAllSalesByBusinessId: (businessId: string) => `${BASIC_ROUTE}/sales/business/${businessId}`,
+    createSale: `${BASIC_ROUTE}/sales`,
 }; 
