@@ -74,7 +74,7 @@ jobs:
           target: "~/psearch.dveloxsoft.com/"
           overwrite: true
           rm: false
-          strip_components: 1
+          strip_components: 0
 
       - name: Upload public folder to cPanel
         uses: appleboy/scp-action@v0.1.7
@@ -108,6 +108,17 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "package.json"
+          target: "~/psearch.dveloxsoft.com/"
+          overwrite: true
+
+      - name: Upload pnpm-lock.yaml to cPanel
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "pnpm-lock.yaml"
           target: "~/psearch.dveloxsoft.com/"
           overwrite: true
 
