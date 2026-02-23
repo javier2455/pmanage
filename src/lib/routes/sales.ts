@@ -1,4 +1,4 @@
 export const salesRoutes = {
-    getAllSalesByBusinessId: (businessId: string) => `https://psearch.dveloxsoft.com/sales/business/${businessId}`,
-    createSale: "https://psearch.dveloxsoft.com/sales",
+    getAllSalesByBusinessId: (businessId: string) => `https://psearch.dveloxsoft.com/api/sales/business/${businessId}`,
+    createSale: "https://psearch.dveloxsoft.com/api/sales",
 }; 

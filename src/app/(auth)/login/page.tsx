@@ -49,7 +49,7 @@ export default function LoginPage() {
     //         return
     //     }
     //     try {
-    //         const response = await axios.delete('https://psearch.dveloxsoft.com/auth/delete-user-by-id', {
+    //         const response = await axios.delete('https://psearch.dveloxsoft.com/api/auth/delete-user-by-id', {
     //             data: {
     //                 userId: userId
     //             },

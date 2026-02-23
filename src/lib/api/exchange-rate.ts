@@ -6,7 +6,7 @@ interface ExchangeRateProps {
 
 export async function getExchangeRate({ businessId }: ExchangeRateProps) {
     const { data } = await axios.get(
-        `https://psearch.dveloxsoft.com/monetary-exchange/business/${businessId}`
+        `https://psearch.dveloxsoft.com/api/monetary-exchange/business/${businessId}`
     );
 
     return data;

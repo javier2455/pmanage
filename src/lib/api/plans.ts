@@ -7,7 +7,7 @@ interface ActivePlanProps {
 
 export async function getActivePlan({ userId, token }: ActivePlanProps) {
     const { data } = await axios.get(
-        `https://psearch.dveloxsoft.com/plans/user/${userId}/active`,
+        `https://psearch.dveloxsoft.com/api/plans/user/${userId}/active`,
         {
             headers: {
                 Authorization: `Bearer ${token}`,
