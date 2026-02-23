@@ -46,7 +46,7 @@ jobs:
             require('fs').writeFileSync('package.json', JSON.stringify(prodPkg, null, 2));
           "
 
-      - name: Clean remote api folder
+      - name: Clean remote folder
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -54,9 +54,16 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
-            TARGET=~/psearch.dveloxsoft.com/api
+            TARGET=~/psearch.dveloxsoft.com
             cd $TARGET
             # Eliminar todos los archivos y carpetas excepto los protegidos
+            for item in *; do
+              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "tmp" ] && [ "$item" != "node_modules" ] && [ "$item" != "api" ]; then
+                rm -rf "$item"
+              fi
+            done
+            # Limpiar contenido de api excepto las excepciones
+            cd $TARGET/api
             for item in *; do
               if [ "$item" != ".htaccess" ] && [ "$item" != "upload" ] && [ "$item" != "uploads" ] && [ "$item" != "tmp" ] && [ "$item" != "public" ] && [ "$item" != "node_modules" ]; then
                 rm -rf "$item"
@@ -145,20 +152,6 @@ jobs:
           target: "~/psearch.dveloxsoft.com/api/"
           overwrite: true
         continue-on-error: true
-
-      - name: Install production dependencies on server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          script: |
-            TARGET=~/psearch.dveloxsoft.com/api
-            cd $TARGET
-            # Install pnpm globally if not available
-            npm install -g pnpm
-            pnpm install --frozen-lockfile --production
 
       - name: Restart Passenger
         uses: appleboy/ssh-action@v1.0.0
