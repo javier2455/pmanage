@@ -62,13 +62,6 @@ jobs:
                 rm -rf "$item"
               fi
             done
-            # Limpiar contenido de api excepto las excepciones
-            cd $TARGET/api
-            for item in *; do
-              if [ "$item" != ".htaccess" ] && [ "$item" != "upload" ] && [ "$item" != "uploads" ] && [ "$item" != "tmp" ] && [ "$item" != "public" ] && [ "$item" != "node_modules" ]; then
-                rm -rf "$item"
-              fi
-            done
 
       - name: Upload .next folder to cPanel
         uses: appleboy/scp-action@v0.1.7
@@ -78,7 +71,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: ".next/**"
-          target: "~/psearch.dveloxsoft.com/api/"
+          target: "~/psearch.dveloxsoft.com/"
           overwrite: true
           rm: false
           strip_components: 1
@@ -91,7 +84,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "public/**"
-          target: "~/psearch.dveloxsoft.com/api/public/"
+          target: "~/psearch.dveloxsoft.com/public/"
           overwrite: true
           rm: false
           strip_components: 1
@@ -104,7 +97,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "server.js"
-          target: "~/psearch.dveloxsoft.com/api/"
+          target: "~/psearch.dveloxsoft.com/"
           overwrite: true
 
       - name: Upload package.json to cPanel
@@ -115,43 +108,20 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "package.json"
-          target: "~/psearch.dveloxsoft.com/api/"
+          target: "~/psearch.dveloxsoft.com/"
           overwrite: true
 
-      - name: Upload pnpm-lock.yaml to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "pnpm-lock.yaml"
-          target: "~/psearch.dveloxsoft.com/api/"
-          overwrite: true
-
-      - name: Upload pnpm-workspace.yaml to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "pnpm-workspace.yaml"
-          target: "~/psearch.dveloxsoft.com/api/"
-          overwrite: true
-        continue-on-error: true
-
-      - name: Upload .env file if exists
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: ".env.production"
-          target: "~/psearch.dveloxsoft.com/api/"
-          overwrite: true
-        continue-on-error: true
+      # - name: Upload .env file if exists
+      #   uses: appleboy/scp-action@v0.1.7
+      #   with:
+      #     host: ${{ secrets.CPANEL_HOST }}
+      #     username: ${{ secrets.CPANEL_USER }}
+      #     key: ${{ secrets.CPANEL_KEY }}
+      #     passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+      #     source: ".env.production"
+      #     target: "~/psearch.dveloxsoft.com/api/"
+      #     overwrite: true
+      #   continue-on-error: true
 
       - name: Restart Passenger
         uses: appleboy/ssh-action@v1.0.0
@@ -161,5 +131,5 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
-            TARGET=~/psearch.dveloxsoft.com/api
+            TARGET=~/psearch.dveloxsoft.com
             touch $TARGET/tmp/restart.txt
