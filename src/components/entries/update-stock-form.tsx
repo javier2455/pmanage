@@ -80,7 +80,7 @@ export function UpdateStockForm() {
           }, description: "El stock se ha actualizado correctamente"
         });
       }
-      // reset()
+      reset()
       setSelectedProduct(null)
       // handleCancel()
     } catch (error) {

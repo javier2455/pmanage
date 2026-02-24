@@ -1,4 +1,6 @@
-export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL";
+import { BusinessProduct } from "./business";
+
+export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL "| "ud";
 
 export type Product =  {
     id: string;
@@ -9,4 +11,23 @@ export type Product =  {
     imageUrl: string | null;
     active: boolean;
     createdAt: Date;
+};
+
+export type CreateProductResponse =  {
+    message: string;
+    data: {
+        product: Product;
+        businessProduct: BusinessProduct;
+    };
+
+};
+export type CreateProductProps =  {
+    businessId: string;
+    name: string;
+    description: string | null;
+    category: string | null;
+    unit: ProductUnit;
+    imageUrl: string | null;
+    price: number;
+    stock: number;
 };

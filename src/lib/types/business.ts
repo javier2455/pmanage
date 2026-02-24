@@ -28,6 +28,15 @@ export type BusinessWithProducts = {
   updatedAt: Date;
 };
 
+export type BusinessProduct = {
+  id: string;
+  businessId: string;
+  productId: string;
+  price: number;
+  stock: number;
+  updatedAt: Date;
+};
+
 export interface GetAllProductOfMyBusinessesProps {
   businessId: string;
 }
