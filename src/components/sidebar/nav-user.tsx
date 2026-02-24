@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     ChevronsUpDown,
     LogOut,
@@ -33,11 +33,13 @@ export function NavUser() {
     const router = useRouter()
     const { isMobile } = useSidebar()
     const { setTheme, theme } = useTheme()
-    const [user] = useState(() => {
-        if (typeof window === "undefined") return {}
+    const [user, setUser] = useState<{ name?: string; email?: string }>({})
+
+    useEffect(() => {
         const stored = localStorage.getItem("user")
-        return stored ? JSON.parse(stored) : {}
-    })
+        const parsed = stored ? JSON.parse(stored) : {}
+        queueMicrotask(() => setUser(parsed))
+    }, [])
 
     const userName = user.name || ""
     const userEmail = user.email || ""
