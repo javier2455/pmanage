@@ -1,8 +1,7 @@
-// "use client";
+"use client";
 
 import Link from "next/link";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import { SaleWithProductAndBusiness } from "@/lib/types/sales";
+import { Eye, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,13 +11,47 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProductToShowInTable } from "@/lib/types/product";
+import { DeleteDialog } from "@/components/delete-dialog";
+import { useDeleteProductMutation } from "@/hooks/use-product";
+import { sileo } from "sileo";
+import axios from "axios";
 
 interface TableOfProductsProps {
     products: ProductToShowInTable[];
-    onDelete?: (sale: SaleWithProductAndBusiness) => void;
 }
 
-export default function TableOfProducts({ products, onDelete }: TableOfProductsProps) {
+export default function TableOfProducts({ products }: TableOfProductsProps) {
+    const deleteProductMutation = useDeleteProductMutation();
+    async function handleDelete(productId: string) {
+        try {
+            const response = await deleteProductMutation.mutateAsync(productId);
+            console.log('response of handleDelete', response)
+            if (response) {
+                sileo.success({
+                    title: "Producto eliminado correctamente", fill: '', styles: {
+                        title: "text-white! text-[16px]! font-bold!",
+                        description: "text-white/90! text-[15px]!",
+                    }, description: "El producto se ha eliminado correctamente"
+                });
+            }
+
+        } catch (error) {
+            console.log('error of handleDelete', error)
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                sileo.error({
+                    title: error.response?.data?.error, styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: error.response?.data?.message
+                });
+            } else {
+                sileo.error({
+                    title: "Error al eliminar el producto", fill: '', styles: {
+                        title: "text-white! text-[16px]! font-bold!",
+                        description: "text-white/90! text-[15px]!",
+                    }, description: "Error al eliminar el producto. Intenta de nuevo."
+                });
+            }
+        }
+    }
+
     if (products.length === 0) {
         return (
             <Card>
@@ -98,20 +131,23 @@ export default function TableOfProducts({ products, onDelete }: TableOfProductsP
                                                     <TooltipContent>Detalles</TooltipContent>
                                                 </Tooltip>
 
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
+                                                <DeleteDialog
+                                                    deleteType="Producto"
+                                                    name={product.product.name}
+                                                    onConfirm={() => handleDelete(product.product.id)}
+                                                    tooltip="Eliminar"
+                                                    trigger={
                                                         <Button
+                                                            type="button"
                                                             variant="ghost"
                                                             size="icon-sm"
-                                                            // onClick={() => onDelete?.('product')}
-                                                            className="text-red-600 hover:text-red-700 hover:bg-red-500/10 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-500/20"
+                                                            className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-500/10 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-500/20"
                                                             aria-label="Eliminar"
                                                         >
                                                             <Trash2 className="size-4" />
                                                         </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Eliminar</TooltipContent>
-                                                </Tooltip>
+                                                    }
+                                                />
                                             </div>
                                         </td>
                                     </tr>

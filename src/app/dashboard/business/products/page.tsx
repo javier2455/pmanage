@@ -14,8 +14,6 @@ export default function ProductsPage() {
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar las ventas</div>;
 
-  console.log("data of products", data)
-
   return (
     <section className="flex flex-col gap-6">
       <div>
@@ -31,13 +29,7 @@ export default function ProductsPage() {
             <Plus className="size-4" />
           </Link>
         </div>
-        <TableOfProducts
-          products={data.data ?? []}
-          onDelete={(product) => {
-            // TODO: Implementar eliminación de producto
-            console.log("Eliminar producto:", product.id);
-          }}
-        />
+        <TableOfProducts products={data.data ?? []} />
       </div>
     </section>
   )

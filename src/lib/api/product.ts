@@ -15,3 +15,14 @@ export async function create(credentials: CreateProductProps): Promise<CreatePro
 
     return data;
 }
+
+export async function deleteProduct(productId: string) {
+    const { data } = await axios.delete(productRoutes.deleteProduct(productId), {
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    });
+
+    return data;
+}

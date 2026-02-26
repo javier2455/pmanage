@@ -36,7 +36,6 @@ export function NewProductForm() {
     const createProductMutation = useCreateProductMutation();
 
     const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null)
-    console.log('pathname', pathname)
     const {
         register,
         handleSubmit,
