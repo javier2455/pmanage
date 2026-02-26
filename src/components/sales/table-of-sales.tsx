@@ -1,6 +1,5 @@
-"use client";
+// "use client";
 
-import React from "react";
 import Link from "next/link";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { SaleWithProductAndBusiness } from "@/lib/types/sales";

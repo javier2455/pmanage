@@ -22,8 +22,8 @@ const plans = [
         period: "mes",
         badge: null,
         features: [
-            { text: "Hasta 500 ventas por mes", included: true },
-            { text: "1 punto de venta", included: true },
+            { text: "Tener un negocio", included: true },
+            { text: "Registra hasta 100 productos", included: true },
             { text: "Registro de ingresos", included: true },
             { text: "Cierre contable diario", included: true },
             { text: "Tipo de cambio manual", included: true },

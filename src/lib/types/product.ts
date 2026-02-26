@@ -1,8 +1,8 @@
 import { BusinessProduct } from "./business";
 
-export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL "| "ud";
+export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL " | "ud";
 
-export type Product =  {
+export type Product = {
     id: string;
     name: string;
     description: string | null;
@@ -13,7 +13,7 @@ export type Product =  {
     createdAt: Date;
 };
 
-export type CreateProductResponse =  {
+export type CreateProductResponse = {
     message: string;
     data: {
         product: Product;
@@ -21,7 +21,7 @@ export type CreateProductResponse =  {
     };
 
 };
-export type CreateProductProps =  {
+export type CreateProductProps = {
     businessId: string;
     name: string;
     description: string | null;
@@ -31,3 +31,13 @@ export type CreateProductProps =  {
     price: number;
     stock: number;
 };
+
+export type ProductToShowInTable = {
+    id: string;
+    businessId: string;
+    productId: string;
+    price: string;
+    stock: number;
+    updatedAt: Date;
+    product: Product;
+}

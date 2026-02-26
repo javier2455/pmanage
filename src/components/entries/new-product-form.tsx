@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
 import { useCreateProductMutation } from "@/hooks/use-product"
 import { ProductUnit } from "@/lib/types/product"
@@ -24,16 +25,18 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateProductFormData, createProductSchema } from "@/lib/validations/products"
 import axios from "axios"
 import { sileo } from "sileo"
+import Link from "next/link"
 
 
 const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL ", "ud"]
 
 export function NewProductForm() {
+    const pathname = usePathname()
     const { activeBusinessId } = useBusiness()
     const createProductMutation = useCreateProductMutation();
 
     const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null)
-
+    console.log('pathname', pathname)
     const {
         register,
         handleSubmit,
@@ -97,7 +100,7 @@ export function NewProductForm() {
         <div className="flex flex-col gap-6">
             {/* Name */}
             <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mb-6">
                     <Label htmlFor="product-name" className="text-card-foreground">
                         Nombre del producto <span className="text-destructive">*</span>
                     </Label>
@@ -132,95 +135,96 @@ export function NewProductForm() {
                         <p className="text-xs text-destructive">{errors.description.message}</p>
                     )}
                 </div>
-
-                {/* Category + Unit */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="product-category" className="text-card-foreground">
-                            Categoria <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="product-category"
-                            placeholder="Ej: Electrónica, Ropa..."
-                            {...register("category")}
-                            aria-invalid={errors.category ? "true" : "false"}
-                        />
-                        {errors.category && (
-                            <p className="text-xs text-destructive">{errors.category.message}</p>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                        <Label className="text-card-foreground">
-                            Unidad de medida <span className="text-destructive">*</span>
-                        </Label>
-                        <Combobox<ProductUnit>
-                            value={selectedUnit}
-                            onValueChange={(u) => setSelectedUnit(u)}
-                            items={UNITS}
-                            itemToStringLabel={(u) => u ?? ""}
-                            isItemEqualToValue={(a, b) => a === b}
-                            {...register("unit")}
-                            aria-invalid={errors.unit ? "true" : "false"}
-                        >
-                            <ComboboxInput
-                                placeholder="Buscar unidad..."
-                                className="w-full"
-                                showClear={!!selectedUnit}
+                <div className="my-4">
+                    {/* Category + Unit */}
+                    <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="product-category" className="text-card-foreground">
+                                Categoria <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="product-category"
+                                placeholder="Ej: Electrónica, Ropa..."
+                                {...register("category")}
+                                aria-invalid={errors.category ? "true" : "false"}
                             />
-                            <ComboboxContent>
-                                <ComboboxList className="max-h-64">
-                                    {UNITS.map((u) => (
-                                        <ComboboxItem key={u} value={u}>
-                                            {u}
-                                        </ComboboxItem>
-                                    ))}
-                                    <ComboboxEmpty>No se encontró ninguna unidad.</ComboboxEmpty>
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
-                        {errors.unit && (
-                            <p className="text-xs text-destructive">{errors.unit.message}</p>
-                        )}
-                    </div>
-                </div>
+                            {errors.category && (
+                                <p className="text-xs text-destructive">{errors.category.message}</p>
+                            )}
+                        </div>
 
-                {/* Price + Stock */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="product-price" className="text-card-foreground">
-                            Precio <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="product-price"
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0.00"
-                            {...register("price", { valueAsNumber: true })}
-                            aria-invalid={errors.price ? "true" : "false"}
-                        />
-                        {errors.price && (
-                            <p className="text-xs text-destructive">{errors.price.message}</p>
-                        )}
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-card-foreground">
+                                Unidad de medida <span className="text-destructive">*</span>
+                            </Label>
+                            <Combobox<ProductUnit>
+                                value={selectedUnit}
+                                onValueChange={(u) => setSelectedUnit(u)}
+                                items={UNITS}
+                                itemToStringLabel={(u) => u ?? ""}
+                                isItemEqualToValue={(a, b) => a === b}
+                                {...register("unit")}
+                                aria-invalid={errors.unit ? "true" : "false"}
+                            >
+                                <ComboboxInput
+                                    placeholder="Buscar unidad..."
+                                    className="w-full"
+                                    showClear={!!selectedUnit}
+                                />
+                                <ComboboxContent>
+                                    <ComboboxList className="max-h-64">
+                                        {UNITS.map((u) => (
+                                            <ComboboxItem key={u} value={u}>
+                                                {u}
+                                            </ComboboxItem>
+                                        ))}
+                                        <ComboboxEmpty>No se encontró ninguna unidad.</ComboboxEmpty>
+                                    </ComboboxList>
+                                </ComboboxContent>
+                            </Combobox>
+                            {errors.unit && (
+                                <p className="text-xs text-destructive">{errors.unit.message}</p>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="product-stock" className="text-card-foreground">
-                            Stock <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="product-stock"
-                            type="number"
-                            min={0}
-                            step={1}
-                            placeholder="0"
-                            {...register("stock", { valueAsNumber: true })}
-                            aria-invalid={errors.stock ? "true" : "false"}
-                        />
-                        {errors.stock && (
-                            <p className="text-xs text-destructive">{errors.stock.message}</p>
-                        )}
+                    {/* Price + Stock */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="product-price" className="text-card-foreground">
+                                Precio <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="product-price"
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                placeholder="0.00"
+                                {...register("price", { valueAsNumber: true })}
+                                aria-invalid={errors.price ? "true" : "false"}
+                            />
+                            {errors.price && (
+                                <p className="text-xs text-destructive">{errors.price.message}</p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="product-stock" className="text-card-foreground">
+                                Stock <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="product-stock"
+                                type="number"
+                                min={0}
+                                step={1}
+                                placeholder="0"
+                                {...register("stock", { valueAsNumber: true })}
+                                aria-invalid={errors.stock ? "true" : "false"}
+                            />
+                            {errors.stock && (
+                                <p className="text-xs text-destructive">{errors.stock.message}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -276,14 +280,14 @@ export function NewProductForm() {
                 <Separator />
 
                 {/* Buttons */}
-                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <Button
-                        variant="outline"
-                        className="bg-transparent"
-                        onClick={() => reset()}>
+                <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <Link
+                        href={pathname === '/dashboard/business/entries/create' ? '/dashboard/business/entries' : '/dashboard/business/products'}
+                        className="bg-transparent border border-white rounded-lg px-3 py-1 text-white flex items-center text-[14px]"
+                    >
                         <X className="mr-2 h-4 w-4" />
                         Cancelar
-                    </Button>
+                    </Link>
                     <Button type="submit" disabled={false}>
                         <PackagePlus className="mr-2 h-4 w-4" />
                         Registrar producto
