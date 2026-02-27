@@ -1,13 +1,14 @@
+import { EditProductForm } from "@/components/products/edit-product-form";
 import { NewProductForm } from "@/components/products/new-product-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackagePlus } from "lucide-react";
 
-export default function CreateProductPage() {
+export default function EditProductPage() {
   return (
     <section className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Crear producto
+          Editar producto
         </h1>
       </div>
       <Card>
@@ -18,18 +19,19 @@ export default function CreateProductPage() {
             </div>
             <div>
               <CardTitle className="text-card-foreground">
-                Registrar nuevo producto
+                Editar producto
               </CardTitle>
               <CardDescription>
-                Agrega un producto nuevo al inventario del almacen
+                Edita los datos del producto
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="">
-          <NewProductForm />
+          <EditProductForm />
         </CardContent>
       </Card>
     </section>
   )
 }
+

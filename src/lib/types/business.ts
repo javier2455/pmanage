@@ -41,4 +41,3 @@ export interface GetAllProductOfMyBusinessesProps {
   businessId: string;
 }
 
-

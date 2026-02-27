@@ -1,4 +1,4 @@
-import { BusinessProduct } from "./business";
+import { BusinessProduct, BusinessType } from "./business";
 
 export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL " | "ud";
 
@@ -40,4 +40,33 @@ export type ProductToShowInTable = {
     stock: number;
     updatedAt: Date;
     product: Product;
+}
+
+export type GetProductByIdResponse = {
+    message: string;
+    data: {
+        id: string;
+        name: string;
+        description: string | null;
+        category: string;
+        unit: ProductUnit;
+        imageUrl: string | null;
+        businesses: BusinessResponseForGetProductById[];
+    };
+}
+
+export type BusinessResponseForGetProductById = {
+    businessId: string;
+    businessName: string;
+    businessType: BusinessType;
+    address: string;
+    phone: string | null;
+    email: string | null;
+    lat: number;
+    lng: number;
+    price: number;
+    stock: number;
+    productImageUrl: string | null;
+    updatedAt: Date;
+
 }

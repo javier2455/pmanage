@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -129,6 +129,24 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
                                                         </Button>
                                                     </TooltipTrigger>
                                                     <TooltipContent>Detalles</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon-sm"
+                                                            asChild
+                                                            className="text-primary hover:text-primary/90 hover:bg-primary/10 dark:hover:bg-primary/20"
+                                                        >
+                                                            <Link
+                                                                href={`/dashboard/business/products/${product.product.id}/edit`}
+                                                                aria-label="Editar"
+                                                            >
+                                                                <Pencil className="size-4" />
+                                                            </Link>
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Editar</TooltipContent>
                                                 </Tooltip>
 
                                                 <DeleteDialog

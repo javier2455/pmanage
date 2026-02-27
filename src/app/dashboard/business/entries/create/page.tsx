@@ -7,7 +7,7 @@ import {
   } from "@/components/ui/card"
   import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
   import { UpdateStockForm } from "@/components/entries/update-stock-form"
-  import { NewProductForm } from "@/components/entries/new-product-form"
+  import { NewProductForm } from "@/components/products/new-product-form"
   import { PackageOpen, PackagePlus } from "lucide-react"
   
   export default function CreateEntriesPage() {

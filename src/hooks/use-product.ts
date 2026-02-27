@@ -1,6 +1,17 @@
-import { create, deleteProduct } from "@/lib/api/product";
-import { CreateProductProps } from "@/lib/types/product";
+import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { create, deleteProduct, getProductById } from "@/lib/api/product";
+import { CreateProductProps } from "@/lib/types/product";
+
+
+
+export function useGetProductByIdQuery(productId: string) {
+    return useQuery({
+        queryKey: ["product", productId],
+        queryFn: () => getProductById(productId),
+        enabled: !!productId,
+    });
+}
 
 export function useCreateProductMutation() {
     const queryClient = useQueryClient();

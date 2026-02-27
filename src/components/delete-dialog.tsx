@@ -25,12 +25,13 @@ type DeleteDialogType = 'Producto' | 'Venta' | 'Entrada' | 'Negocio'
 interface DeleteDialogProps {
     deleteType: DeleteDialogType
     name: string
+    actionText?: string
     onConfirm: () => void | Promise<void>
     trigger?: React.ReactNode
     tooltip?: string
 }
 
-export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip }: DeleteDialogProps) {
+export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip, actionText = 'Eliminar' }: DeleteDialogProps) {
     const [isLoading, setIsLoading] = useState(false)
     const triggerContent = trigger ?? <Button variant="outline">Open Dialog</Button>
 
@@ -57,24 +58,25 @@ export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip }: 
                     </span>
                 ) : triggerContent}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] md:max-w-[520px] shadow-lg shadow-destructive/10">
+            <DialogContent className="sm:max-w-[425px] md:max-w-[520px] shadow-lg shadow-destructive/30">
                 <DialogHeader className="gap-3">
                     <div className="flex items-center gap-3">
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
                             <AlertTriangle className="size-5 text-destructive" />
                         </div>
                         <DialogTitle className="text-base font-semibold text-foreground">
-                            Eliminar {deleteType}
+                            {actionText} {deleteType}
                         </DialogTitle>
                     </div>
                     <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                        ¿Estás seguro de querer eliminar este {deleteType.toLowerCase()} — <span className="font-bold text-white">{name}</span>? Esta acción no se puede deshacer.
+                        ¿Estás seguro de querer {actionText.toLowerCase()} este {deleteType.toLowerCase()} — <span className="font-bold text-white">{name}</span>? Esta acción no se puede deshacer.
+                        {actionText === 'Cancelar' && ' El stock del producto se restablecerá.'}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-2">
                     <DialogClose asChild>
                         <Button variant="outline" type="button" disabled={isLoading}>
-                            Cancelar
+                            {actionText === 'Cancelar' ? 'Regresar' : 'Cancelar'}
                         </Button>
                     </DialogClose>
                     <Button
@@ -86,10 +88,10 @@ export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip }: 
                         {isLoading ? (
                             <>
                                 <Loader2 className="size-4 animate-spin" />
-                                Eliminando...
+                                {actionText === 'Cancelar' ? 'Cancelando venta...' : 'Eliminando...'}
                             </>
                         ) : (
-                            "Eliminar"
+                            actionText === 'Cancelar' ? 'Cancelar venta' : 'Eliminar'
                         )}
                     </Button>
                 </DialogFooter>

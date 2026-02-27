@@ -22,19 +22,17 @@ export default function SalesPage() {
         <p className="text-muted-foreground">
           Consulta y actualiza las ventas de tu negocio
         </p>
-        <div className="flex justify-end items-center mb-4">
+        <div className="flex justify-between items-center mb-4">
+          {/* TOtal de ventas registradas */}
+          <p className="text-muted-foreground">
+            Total de ventas registradas: <span className="text-white font-bold">{data?.length}</span>
+          </p>
           <Link href="/dashboard/business/sales/create" className="flex items-center gap-2 cursor-pointer hover:bg-primary/90 transition-all duration-300 bg-primary text-primary-foreground px-4 py-2 rounded-md">
             Agregar venta
             <Plus className="size-4" />
           </Link>
         </div>
-        <TableOfSales
-          sales={data ?? []}
-          onDelete={(sale) => {
-            // TODO: Implementar eliminación de venta
-            console.log("Eliminar venta:", sale.id);
-          }}
-        />
+        <TableOfSales sales={data ?? []} />
       </div>
     </section>
   )
