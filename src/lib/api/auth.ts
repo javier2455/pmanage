@@ -19,7 +19,7 @@ interface AuthResponse {
 
 
 export async function login(credentials: LoginFormData): Promise<AuthResponse> {
-  const { data } = await axios.post<AuthResponse>(authRoutes.login, credentials, {
+  const { data } = await axios.post(authRoutes.login, credentials, {
     headers: {
       "Content-Type": "application/json",
     },
@@ -29,20 +29,15 @@ export async function login(credentials: LoginFormData): Promise<AuthResponse> {
 }
 
 export async function register(credentials: RegisterFormData) {
-  const { email, name, password, role } = credentials
-  console.log('credentials of register before sent post', { email, name, password, role });
-  try {
-    const { data } = await axios.post<AuthResponse>(authRoutes.register, { email, name, password, role }, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+  const { email, name, password } = credentials
+  console.log('credentials of register before sent post', { email, name, password });
+  const { data } = await axios.post(authRoutes.register, { email, name, password }, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-    return data;
-
-  } catch (error) {
-    console.log(error);
-  }
+  return data;
 }
 
 export async function verifyCode(credentials: { email: string, code: string }): Promise<AuthResponse> {
