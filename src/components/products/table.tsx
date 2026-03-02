@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ProductToShowInTable } from "@/lib/types/product";
 import { DeleteDialog } from "@/components/delete-dialog";
+import ProductDetailsDialog from "@/components/products/details-dialog";
 import { useDeleteProductMutation } from "@/hooks/use-product";
 import { sileo } from "sileo";
 import axios from "axios";
@@ -112,24 +113,21 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
+                                                <ProductDetailsDialog
+                                                    productId={product.product.id}
+                                                    tooltip="Detalles"
+                                                    trigger={
                                                         <Button
+                                                            type="button"
                                                             variant="ghost"
                                                             size="icon-sm"
-                                                            asChild
-                                                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/20"
+                                                            className="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-500/10 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-500/20"
+                                                            aria-label="Ver detalles"
                                                         >
-                                                            <Link
-                                                                href={`/dashboard/business/products/${product.id}`}
-                                                                aria-label="Ver detalles"
-                                                            >
-                                                                <Eye className="size-4" />
-                                                            </Link>
+                                                            <Eye className="size-4" />
                                                         </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>Detalles</TooltipContent>
-                                                </Tooltip>
+                                                    }
+                                                />
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <Button

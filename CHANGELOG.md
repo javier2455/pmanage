@@ -87,6 +87,14 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 - Notificaciones con Sileo en éxito y error al crear negocio
 - Botón de cancelar en el formulario de crear negocio
 
+#### Corregido (edición de productos)
+- Fix en `lib/api/product.ts`: función `edit` enviaba los headers como parte del body en vez de como config de axios (segundo vs tercer argumento de `axios.put`)
+- Fix en `lib/validations/products.ts`: campo `active` en `editProductSchema` era requerido pero el formulario no lo incluía, causando que la validación fallara silenciosamente y el submit nunca se ejecutara. Ahora es `.optional()`
+
+#### Cambiado
+- Icono del botón de actualizar producto: `Save` reemplazado por `RefreshCw`
+- Eliminado efecto hover del `SelectTrigger` en `components/ui/select.tsx`
+
 #### Eliminado
 - Código muerto de `getMyBusinesses` en el login (no se usaba la respuesta)
 - Import sin usar de `businessRoutes` en login

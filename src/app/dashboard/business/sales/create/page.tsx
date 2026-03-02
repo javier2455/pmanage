@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import { useCreateSaleMutation } from "@/hooks/use-sales"
@@ -35,6 +36,7 @@ import { sileo } from "sileo"
 // const EXCHANGE_RATES = { usd: 1, eur: 0.92, mn: 17.25 }
 
 export default function CreateSalesPage() {
+  const router = useRouter()
   const { activeBusinessId } = useBusiness()
   const { data } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const createSaleMutation = useCreateSaleMutation()
@@ -76,6 +78,7 @@ export default function CreateSalesPage() {
   function handleCancel() {
     setSelectedProduct(null)
     reset({ stock: 0, productId: "" })
+    router.push("/dashboard/business/sales")
   }
 
   async function onSubmit(data: CreateSaleFormData) {
