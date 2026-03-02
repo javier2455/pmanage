@@ -1,6 +1,6 @@
 import axios from "axios";
 import { productRoutes } from "../routes/product";
-import { CreateProductProps, CreateProductResponse } from "../types/product";
+import { CreateProductProps, CreateProductResponse, EditProductProps } from "../types/product";
 
 
 export async function getProductById(productId: string) {
@@ -25,6 +25,16 @@ export async function create(credentials: CreateProductProps): Promise<CreatePro
         },
     });
 
+    return data;
+}
+
+export async function edit(productId: string, credentials: EditProductProps) {
+    const { data } = await axios.put(productRoutes.editProduct(productId), credentials, {
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    });
     return data;
 }
 

@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import { useParams, usePathname } from "next/navigation"
+import { useParams, usePathname, useRouter } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
-import { useCreateProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
-import { BusinessResponseForGetProductById, ProductUnit } from "@/lib/types/product"
+import { useEditProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
+import { ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -19,10 +19,10 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox"
-import { X, PackagePlus } from "lucide-react"
+import { X, RefreshCw } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CreateProductFormData, createProductSchema } from "@/lib/validations/products"
+import { EditProductFormData, editProductSchema } from "@/lib/validations/products"
 import axios from "axios"
 import { sileo } from "sileo"
 import Link from "next/link"
@@ -30,15 +30,14 @@ import Link from "next/link"
 const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL ", "ud"]
 
 export function EditProductForm() {
+    const router = useRouter()
     const pathname = usePathname()
     const { id } = useParams()
 
     const { activeBusinessId } = useBusiness()
 
-    
     const { data, isLoading, isError } = useGetProductByIdQuery((id as string) ?? "")
-    console.log('data of useGetProductByIdQuery', data)
-    const createProductMutation = useCreateProductMutation();
+    const editProductMutation = useEditProductMutation();
 
     const {
         register,
@@ -48,16 +47,14 @@ export function EditProductForm() {
         setError,
         reset,
         formState: { errors },
-    } = useForm<CreateProductFormData>({
-        resolver: zodResolver(createProductSchema),
+    } = useForm<EditProductFormData>({
+        resolver: zodResolver(editProductSchema),
         defaultValues: {
             name: "",
             description: "",
             category: "",
             unit: "kg",
             imageUrl: "",
-            price: 0,
-            stock: 0,
         },
     })
 
@@ -67,48 +64,37 @@ export function EditProductForm() {
         if (!data?.data) return
 
         const productData = data.data
-        const businessData = productData.businesses?.find(
-            (b: BusinessResponseForGetProductById) => b.businessId === activeBusinessId
-        )
-
         reset({
             name: productData.name,
             description: productData.description ?? "",
             category: productData.category,
             unit: productData.unit,
             imageUrl: productData.imageUrl ?? "",
-            price: businessData?.price ?? 0,
-            stock: businessData?.stock ?? 0,
         })
     }, [data, activeBusinessId, reset])
 
 
-    async function onSubmit(data: CreateProductFormData) {
+    async function onSubmit(data: EditProductFormData) {
         try {
-            console.log('data of onSubmit', data)
-            const response = await createProductMutation.mutateAsync({
-                businessId: activeBusinessId ?? "",
-                name: data.name,
-                description: data.description,
-                category: data.category,
-                unit: data.unit,
-                imageUrl: data.imageUrl,
-                price: data.price,
-                stock: data.stock,
+            await editProductMutation.mutateAsync({
+                productId: id as string,
+                credentials: {
+                    name: data.name,
+                    description: data.description,
+                    category: data.category,
+                    unit: data.unit,
+                    imageUrl: data.imageUrl
+                }
             })
-            if (response) {
-                sileo.success({
-                    title: "Producto actualizado correctamente", fill: '', styles: {
-                        title: "text-white! text-[16px]! font-bold!",
-                        description: "text-white/90! text-[15px]!",
-                    }, description: "El producto se ha actualizado correctamente"
-                });
-            }
+            sileo.success({
+                title: "Producto actualizado correctamente", fill: '', styles: {
+                    title: "text-white! text-[16px]! font-bold!",
+                    description: "text-white/90! text-[15px]!",
+                }, description: "El producto se ha actualizado correctamente"
+            });
             reset()
-            //   setSelectedProduct(null)
-            // handleCancel()
+            router.push("/dashboard/business/products")
         } catch (error) {
-            console.log('error of onSubmit', error)
             if (axios.isAxiosError(error) && error.response?.data?.message) {
                 setError("root", { message: error.response.data.message });
                 sileo.error({
@@ -233,45 +219,6 @@ export function EditProductForm() {
                             )}
                         </div>
                     </div>
-
-                    {/* Price + Stock */}
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="product-price" className="text-card-foreground">
-                                Precio <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="product-price"
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                placeholder="0.00"
-                                {...register("price", { valueAsNumber: true })}
-                                aria-invalid={errors.price ? "true" : "false"}
-                            />
-                            {errors.price && (
-                                <p className="text-xs text-destructive">{errors.price.message}</p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="product-stock" className="text-card-foreground">
-                                Stock <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="product-stock"
-                                type="number"
-                                min={0}
-                                step={1}
-                                placeholder="0"
-                                {...register("stock", { valueAsNumber: true })}
-                                aria-invalid={errors.stock ? "true" : "false"}
-                            />
-                            {errors.stock && (
-                                <p className="text-xs text-destructive">{errors.stock.message}</p>
-                            )}
-                        </div>
-                    </div>
                 </div>
 
                 {/* Image upload */}
@@ -335,8 +282,8 @@ export function EditProductForm() {
                         Cancelar
                     </Link>
                     <Button type="submit" disabled={false}>
-                        <PackagePlus className="mr-2 h-4 w-4" />
-                        Registrar producto
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Actualizar producto
                     </Button>
                 </div>
             </form>

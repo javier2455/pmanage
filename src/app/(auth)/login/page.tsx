@@ -72,13 +72,10 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginFormData) => {
         try {
             const response = await loginMutation.mutateAsync(data);
-            console.log('response', response);
-
             const { access_token, user } = response;
 
             /* Verificar si el usuario tiene o no un plan activo */
             const activePlan = await getActivePlan({ token: access_token });
-            console.log("activePlan", activePlan);
 
             if (activePlan?.data?.isActive || activePlan?.isActive) {
                 localStorage.setItem("token", access_token);
@@ -92,19 +89,15 @@ export default function LoginPage() {
             }
 
         } catch (error) {
-            console.log('error of login', error);
             if (axios.isAxiosError(error) && error.response?.data?.error === "Unauthorized" && error.response?.data?.message === "Invalid credentials") {
-                console.log('entro aqui')
                 setError("root", { message: "Credenciales incorrectas" })
                 return
             }
             if (axios.isAxiosError(error) && error.response?.data?.error === "Internal Server Error" && error.response?.data?.message === "User not authenticated") {
-                console.log('entro aqui')
                 setError("root", { message: "Usuario no activo. Comuniquese con soporte para activar su cuenta." })
                 return
             }
             if (axios.isAxiosError(error) && error.response?.data?.message) {
-                console.log('entro aqui x2')
                 setError("root", { message: error.response.data.message });
             } else {
                 setError("root", { message: "Error al iniciar sesión. Intenta de nuevo." });

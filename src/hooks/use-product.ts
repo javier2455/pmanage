@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { create, deleteProduct, getProductById } from "@/lib/api/product";
-import { CreateProductProps } from "@/lib/types/product";
+import { create, deleteProduct, edit, getProductById } from "@/lib/api/product";
+import { CreateProductProps, EditProductProps } from "@/lib/types/product";
 
 
 
@@ -21,6 +21,18 @@ export function useCreateProductMutation() {
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
                 queryKey: ["all-product-of-my-businesses", variables.businessId],
+            });
+        },
+    });
+}
+
+export function useEditProductMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ productId, credentials }: { productId: string, credentials: EditProductProps }) => edit(productId, credentials),
+        onSuccess: (_, productId) => {
+            queryClient.invalidateQueries({
+                queryKey: ["product", productId],
             });
         },
     });

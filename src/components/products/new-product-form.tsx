@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
 import { useCreateProductMutation } from "@/hooks/use-product"
 import { ProductUnit } from "@/lib/types/product"
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import {
     Combobox,
@@ -31,6 +30,7 @@ import Link from "next/link"
 const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL ", "ud"]
 
 export function NewProductForm() {
+    const router = useRouter()
     const pathname = usePathname()
     const { activeBusinessId } = useBusiness()
     const createProductMutation = useCreateProductMutation();
@@ -62,7 +62,6 @@ export function NewProductForm() {
 
     async function onSubmit(data: CreateProductFormData) {
         try {
-            console.log('data of onSubmit', data)
             const response = await createProductMutation.mutateAsync({
                 businessId: activeBusinessId ?? "",
                 name: data.name,
@@ -82,10 +81,10 @@ export function NewProductForm() {
                 });
             }
             reset()
+            router.push("/dashboard/business/products")
             //   setSelectedProduct(null)
             // handleCancel()
         } catch (error) {
-            console.log('error of onSubmit', error)
             if (axios.isAxiosError(error) && error.response?.data?.message) {
                 setError("root", { message: error.response.data.message });
                 sileo.error({

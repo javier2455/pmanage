@@ -13,6 +13,14 @@ export const createProductSchema = z.object({
     .max(100000, "El monto máximo es de 100,000"),
 });
 
-
+export const editProductSchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  description: z.string().nullable(),
+  category: z.string().min(1, "La categoría es requerida"),
+  unit: z.enum(["kg", "lb", "g", "L", "mL ", "ud"]),
+  imageUrl: z.string().nullable(),
+  active: z.boolean().nullable().optional(),
+});
 
 export type CreateProductFormData = z.infer<typeof createProductSchema>;
+export type EditProductFormData = z.infer<typeof editProductSchema>;

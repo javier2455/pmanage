@@ -31,7 +31,6 @@ export async function login(credentials: LoginFormData): Promise<LoginResponse> 
 
 export async function register(credentials: RegisterFormData): Promise<UserResponseOfRegister> {
   const { email, name, password, rolId } = credentials
-  console.log('credentials of register before sent post', { email, name, password, rolId });
   const { data } = await axios.post(authRoutes.register, { email, name, password, rolId }, {
     headers: {
       "Content-Type": "application/json",

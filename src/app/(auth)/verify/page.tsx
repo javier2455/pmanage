@@ -23,6 +23,7 @@ const CODE_LENGTH = 6
 export default function VerifyPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [sucessfulVerification, setSucessfulVerification] = useState(false)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
     const {
@@ -112,13 +113,14 @@ export default function VerifyPage() {
                 { email: parseEmail, code: data.code },
                 { headers: { "Content-Type": "application/json" } }
             )
-            console.log("response of verify", response)
             if (response.data?.active === true) {
-                localStorage.removeItem("userEmail")
-                router.push("/login")
+                setSucessfulVerification(true)
+                setTimeout(() => {
+                    localStorage.removeItem("userEmail")
+                    router.push("/login")
+                }, 5000)
             }
         } catch (error: unknown) {
-            console.log("error of verify", error)
             if (error instanceof AxiosError) {
                 if (error.response?.data?.error === "Unauthorized" && error.response?.data?.message === "Invalid verification code") {
                     setError("code", { message: "Código de verificación inválido o expirado" })
@@ -126,6 +128,7 @@ export default function VerifyPage() {
             }
         } finally {
             setLoading(false)
+            setSucessfulVerification(false)
         }
     }
 
@@ -152,7 +155,14 @@ export default function VerifyPage() {
                             Revisa tu bandeja de entrada
                         </span>
                     </div>
-
+                    {sucessfulVerification && (
+                        <div className="mx-auto flex items-center gap-2 rounded-lg bg-muted px-4 py-3">
+                            <MailCheck className="h-5 w-5 text-primary" />
+                            <span className="text-sm text-muted-foreground">
+                                Código de verificación verificado correctamente
+                            </span>
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
                         <fieldset className="flex flex-col gap-3">
                             <legend className="sr-only">Código de verificación</legend>

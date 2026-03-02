@@ -21,6 +21,7 @@ export type CreateProductResponse = {
     };
 
 };
+
 export type CreateProductProps = {
     businessId: string;
     name: string;
@@ -30,6 +31,15 @@ export type CreateProductProps = {
     imageUrl: string | null;
     price: number;
     stock: number;
+};
+
+export type EditProductProps = {
+    name: string;
+    description: string | null;
+    category: string | null;
+    unit: ProductUnit;
+    imageUrl: string | null;
+    active?: boolean | null;
 };
 
 export type ProductToShowInTable = {

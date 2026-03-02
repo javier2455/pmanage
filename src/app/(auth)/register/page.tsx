@@ -37,7 +37,6 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const response = await registerMutation.mutateAsync(data);
-      console.log('response of register', response);
 
       if (response.email) {
         const { email } = response;
