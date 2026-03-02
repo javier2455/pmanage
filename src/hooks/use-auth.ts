@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { login, register, verifyCode, resendCode } from "@/lib/api/auth";
 import type { LoginFormData, RegisterFormData, VerifyFormData } from "@/lib/validations/auth";
 
@@ -22,8 +22,9 @@ export function useVerifyMutation() {
   });
 }
 
-// export function useResendMutation() {
-//   return useMutation({
-//     mutationFn: () => resendCode(),
-//   });
-// }
+export function useResendCode(email: string) {
+  return useQuery({
+    queryKey: ["resend-code", email],
+    queryFn: () => resendCode({ email }),
+  });
+}

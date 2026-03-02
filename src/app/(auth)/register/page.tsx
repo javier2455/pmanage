@@ -29,7 +29,7 @@ export default function RegisterPage() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "business_owner",
+      rolId: '4',
     },
   });
 
@@ -37,11 +37,11 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const response = await registerMutation.mutateAsync(data);
-      console.log('response of register', response.data);
-      
-      if (response) {
-        const { user } = response.data;
-        localStorage.setItem("userEmail", JSON.stringify(user.email));
+      console.log('response of register', response);
+
+      if (response.email) {
+        const { email } = response;
+        localStorage.setItem("userEmail", JSON.stringify(email));
         router.push("/verify");
       }
 

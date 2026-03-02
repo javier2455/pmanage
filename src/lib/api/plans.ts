@@ -1,13 +1,12 @@
 import axios from "axios";
+import { plansRoutes } from "../routes/plans";
 
 interface ActivePlanProps {
-    userId: string;
     token: string;
 }
 
-export async function getActivePlan({ userId, token }: ActivePlanProps) {
-    const { data } = await axios.get(
-        `https://psearch.dveloxsoft.com/api/plans/user/${userId}/active`,
+export async function getActivePlan({ token }: ActivePlanProps) {
+    const { data } = await axios.get(plansRoutes.getActivePlan,
         {
             headers: {
                 Authorization: `Bearer ${token}`,

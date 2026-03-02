@@ -12,7 +12,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
-  role: z.enum(["admin", "business_owner", "user"]),
+  rolId: z.enum(["4", "5", "6"]),
   email: z.string().email("Ingresa un correo electrónico válido").min(1, "El correo es requerido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   confirmPassword: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),

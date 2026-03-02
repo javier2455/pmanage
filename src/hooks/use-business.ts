@@ -1,13 +1,23 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getAllProductOfMyBusinesses } from "@/lib/api/business";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getAllProductOfMyBusinesses, createBusiness } from "@/lib/api/business";
+import type { CreateBusinessPayload } from "@/lib/types/business";
 
 export function useAllProductOfMyBusinesses(businessId: string) {
     return useQuery({
         queryKey: ["all-product-of-my-businesses", businessId],
         queryFn: () => getAllProductOfMyBusinesses({ businessId }),
-        // enabled: !!productId, // evita ejecutar si no hay id
-        // staleTime: 1000 * 60, // 1 minuto
+    });
+}
+
+export function useCreateBusinessMutation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (payload: CreateBusinessPayload) => createBusiness(payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["businesses"] });
+        },
     });
 }

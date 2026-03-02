@@ -1,6 +1,7 @@
 "use client"
 
 import { useBusiness } from "@/context/business-context"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +17,7 @@ import { Check, ChevronsUpDown, Store, Plus } from "lucide-react"
 
 
 export function BusinessSwitcher() {
+  const router = useRouter()
   const { businesses, setActiveBusinessId, activeBusiness, isLoading } =
     useBusiness()
 
@@ -68,7 +70,10 @@ export function BusinessSwitcher() {
           ))}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="flex cursor-pointer items-center gap-2 text-muted-foreground">
+        <DropdownMenuItem
+          onClick={() => router.push("/dashboard/business/create")}
+          className="flex cursor-pointer items-center gap-2 text-muted-foreground"
+        >
           <Plus className="size-4" />
           <span className="text-sm">Agregar negocio</span>
         </DropdownMenuItem>

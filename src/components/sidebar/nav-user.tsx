@@ -47,6 +47,7 @@ export function NavUser() {
     function handleLogout() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("activeBusinessId");
         router.push("/login");
     }
 

@@ -113,7 +113,7 @@ export default function VerifyPage() {
                 { headers: { "Content-Type": "application/json" } }
             )
             console.log("response of verify", response)
-            if (response.data?.message === "Email verified successfully") {
+            if (response.data?.active === true) {
                 localStorage.removeItem("userEmail")
                 router.push("/login")
             }

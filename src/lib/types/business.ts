@@ -41,3 +41,13 @@ export interface GetAllProductOfMyBusinessesProps {
   businessId: string;
 }
 
+export interface CreateBusinessPayload {
+  name: string;
+  description: string | null;
+  type: BusinessType;
+  address: string;
+  phone: string | null;
+  email: string | null;
+  municipalityId: string;
+}
+

@@ -21,7 +21,6 @@ import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { getActivePlan } from "@/lib/api/plans";
-import { businessRoutes } from "@/lib/routes/business";
 
 
 export default function LoginPage() {
@@ -75,27 +74,19 @@ export default function LoginPage() {
             const response = await loginMutation.mutateAsync(data);
             console.log('response', response);
 
-            const { token, user } = response.data;
+            const { access_token, user } = response;
 
             /* Verificar si el usuario tiene o no un plan activo */
-            const activePlan = await getActivePlan({ userId: user.id, token });
+            const activePlan = await getActivePlan({ token: access_token });
             console.log("activePlan", activePlan);
 
             if (activePlan?.data?.isActive || activePlan?.isActive) {
-                const response = await axios.get(businessRoutes.getMyBusinesses,{
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-                if (response) {
-                    console.log('response of get my businesses', response);
-                }
-                localStorage.setItem("token", token);
+                localStorage.setItem("token", access_token);
                 localStorage.setItem("user", JSON.stringify(user));
 
                 router.push("/dashboard");
             } else {
-                localStorage.setItem("token", token);
+                localStorage.setItem("token", access_token);
                 localStorage.setItem("user", JSON.stringify(user));
                 router.push("/plans");
             }
@@ -105,6 +96,11 @@ export default function LoginPage() {
             if (axios.isAxiosError(error) && error.response?.data?.error === "Unauthorized" && error.response?.data?.message === "Invalid credentials") {
                 console.log('entro aqui')
                 setError("root", { message: "Credenciales incorrectas" })
+                return
+            }
+            if (axios.isAxiosError(error) && error.response?.data?.error === "Internal Server Error" && error.response?.data?.message === "User not authenticated") {
+                console.log('entro aqui')
+                setError("root", { message: "Usuario no activo. Comuniquese con soporte para activar su cuenta." })
                 return
             }
             if (axios.isAxiosError(error) && error.response?.data?.message) {
