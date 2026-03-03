@@ -5,13 +5,14 @@ import { useAllSalesByBusinessId } from "@/hooks/use-sales";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import TableOfSales from "@/components/sales/table-of-sales";
+import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 
 export default function SalesPage() {
   const { activeBusinessId } = useBusiness();
-  const { data, isLoading, isError } = useAllSalesByBusinessId(activeBusinessId ?? '')
+  const { data, isLoading, isFetching, isError } = useAllSalesByBusinessId(activeBusinessId ?? '')
 
-  if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar las ventas</div>;
+  console.log(data)
 
   return (
     <section className="flex flex-col gap-6">
@@ -32,7 +33,11 @@ export default function SalesPage() {
             <Plus className="size-4" />
           </Link>
         </div>
-        <TableOfSales sales={data ?? []} />
+        {isLoading || isFetching ? (
+          <SimpleTableSkeleton />
+        ) : (
+          <TableOfSales sales={data ?? []} />
+        )}
       </div>
     </section>
   )

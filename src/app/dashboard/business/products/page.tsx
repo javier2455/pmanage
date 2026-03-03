@@ -2,17 +2,16 @@
 
 import TableOfProducts from "@/components/products/table";
 import { useBusiness } from "@/context/business-context";
-// import { useAllSalesByBusinessId } from "@/hooks/use-sales";
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
+import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
 export default function ProductsPage() {
   const { activeBusinessId } = useBusiness();
-  const { data, isLoading, isError } = useAllProductOfMyBusinesses(activeBusinessId ?? '')
+  const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(activeBusinessId ?? "");
 
-  if (isLoading) return <div>Cargando...</div>;
-  if (isError) return <div>Error al cargar las ventas</div>;
+  if (isError) return <div>Error al cargar los productos</div>;
 
   return (
     <section className="flex flex-col gap-6">
@@ -29,7 +28,11 @@ export default function ProductsPage() {
             <Plus className="size-4" />
           </Link>
         </div>
-        <TableOfProducts products={data.data ?? []} />
+        {isLoading || isFetching ? (
+          <SimpleTableSkeleton />
+        ) : (
+          <TableOfProducts products={data?.data ?? []} />
+        )}
       </div>
     </section>
   )

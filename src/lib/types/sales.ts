@@ -1,16 +1,26 @@
-import { Business } from "./business";
 import { Product } from "./product";
 
 export interface SaleWithProductAndBusiness {
-  id: string;
-  idbusiness: string;
-  idproducto: string;
-  business: Business;
-  product: Product;
-  cantidad: number;
-  precio: number;
-  descripcion: string;
-  createdAt: Date;
+  // id: string;
+  // idbusiness: string;
+  // idproducto: string;
+  // business: Business;
+  // product: Product;
+  // cantidad: number;
+  // precio: number;
+  // descripcion: string;
+  // createdAt: Date;
+
+    id: string;
+    idbusiness: string;
+    idproducto: string;
+    product: Product;
+    cantidad: number;
+    precio: number;
+    descripcion: string;
+    isCancelled: boolean;
+    createdAt: Date;
+    productName: string;
 }
 
 export interface SaleDetailsProps {

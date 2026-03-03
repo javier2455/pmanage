@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreateSaleProps } from "@/lib/types/sales";
-import { create, deleteSale, getAllSalesByBusinessId, getSaleById } from "@/lib/api/sale";
+import { cancelSale, create, getAllSalesByBusinessId, getSaleById } from "@/lib/api/sale";
 
 export function useAllSalesByBusinessId(businessId: string) {
     return useQuery({
@@ -25,14 +25,13 @@ export function useCreateSaleMutation() {
     });
 }
 
-export function useDeleteSaleMutation() {
+export function useCancelSaleMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (saleId: string,) => deleteSale(saleId),
+        mutationFn: (saleId: string,) => cancelSale(saleId),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["all-sales-by-business-id"],
-            });
+            queryClient.invalidateQueries({queryKey: ["all-sales-by-business-id"]});
+            queryClient.invalidateQueries({queryKey: ["sale-by-id"]});
         },
     });
 }

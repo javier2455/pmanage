@@ -33,19 +33,21 @@ interface DeleteDialogProps {
 
 export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip, actionText = 'Eliminar' }: DeleteDialogProps) {
     const [isLoading, setIsLoading] = useState(false)
+    const [open, setOpen] = useState(false)
     const triggerContent = trigger ?? <Button variant="outline">Open Dialog</Button>
 
     async function handleConfirm() {
         setIsLoading(true)
         try {
             await onConfirm()
+            setOpen(false)
         } finally {
             setIsLoading(false)
         }
     }
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {tooltip ? (
                     <span className="inline-flex">

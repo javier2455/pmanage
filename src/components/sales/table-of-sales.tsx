@@ -9,28 +9,26 @@ import { DeleteDialog } from "../delete-dialog";
 import DetailsDialog from "./details-dialog";
 import axios from "axios";
 import { sileo } from "sileo";
-import { useDeleteSaleMutation } from "@/hooks/use-sales";
+import { useCancelSaleMutation } from "@/hooks/use-sales";
+import { StatusBadge } from "../generic/status-badge";
 
 interface TableOfSalesProps {
   sales: SaleWithProductAndBusiness[];
 }
 
 export default function TableOfSales({ sales }: TableOfSalesProps) {
-  const deleteSaleMutation = useDeleteSaleMutation();
+  const cancelSaleMutation = useCancelSaleMutation();
   async function handleDelete(saleId: string) {
     try {
-      const response = await deleteSaleMutation.mutateAsync(saleId);
-      if (response) {
-        sileo.success({
-          title: "Venta cancelada correctamente", fill: '', styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          }, description: "La venta se ha cancelado correctamente"
-        });
-      }
+      await cancelSaleMutation.mutateAsync(saleId);
+      sileo.success({
+        title: "Venta cancelada correctamente", fill: '', styles: {
+          title: "text-white! text-[16px]! font-bold!",
+          description: "text-white/90! text-[15px]!",
+        }, description: "La venta se ha cancelado correctamente"
+      });
 
     } catch (error) {
-      console.log('error of handleDelete', error)
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         sileo.error({
           title: error.response?.data?.error, styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: error.response?.data?.message
@@ -76,7 +74,7 @@ export default function TableOfSales({ sales }: TableOfSalesProps) {
                     Cantidad
                   </th>
                   <th className="text-left py-3 px-4 font-semibold text-foreground">
-                    Precio total
+                    Estado
                   </th>
                   <th className="text-right py-3 px-4 font-semibold text-foreground">
                     Acciones
@@ -101,11 +99,9 @@ export default function TableOfSales({ sales }: TableOfSalesProps) {
                     <td className="py-4 px-4 text-foreground">
                       {sale.cantidad}
                     </td>
-                    <td className="py-4 px-4 text-foreground">
-                      {new Intl.NumberFormat("es-CO", {
-                        style: "currency",
-                        currency: "CUP",
-                      }).format(sale.precio * sale.cantidad)}
+                    <td className="py-4 px-4">
+                      {sale.isCancelled ? <StatusBadge text="Cancelada" /> : <StatusBadge text="Activa" />}
+
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center justify-end gap-2">

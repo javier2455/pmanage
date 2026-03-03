@@ -5,5 +5,6 @@ export const salesRoutes = {
     getSaleById: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}`,
     createSale: `${BASIC_ROUTE}/sales`,
     deleteSale: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}`,
+    cancelSale: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/cancel`,
 
 }; 

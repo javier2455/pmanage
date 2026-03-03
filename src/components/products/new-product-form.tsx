@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
 import { useCreateProductMutation } from "@/hooks/use-product"
@@ -35,7 +34,6 @@ export function NewProductForm() {
     const { activeBusinessId } = useBusiness()
     const createProductMutation = useCreateProductMutation();
 
-    const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null)
     const {
         register,
         handleSubmit,
@@ -51,24 +49,21 @@ export function NewProductForm() {
             description: "",
             category: "",
             unit: "kg",
-            imageUrl: "",
             price: 0,
             stock: 0,
         },
     })
 
-    const stockValue = watch("stock")
-    const stockNum = Number(stockValue) || 0
+    const selectedUnit = watch("unit")
 
     async function onSubmit(data: CreateProductFormData) {
         try {
             const response = await createProductMutation.mutateAsync({
                 businessId: activeBusinessId ?? "",
                 name: data.name,
-                description: data.description,
+                description: data.description ?? null,
                 category: data.category,
                 unit: data.unit,
-                imageUrl: data.imageUrl,
                 price: data.price,
                 stock: data.stock,
             })
@@ -97,7 +92,9 @@ export function NewProductForm() {
     return (
         <div className="flex flex-col gap-6">
             {/* Name */}
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(onSubmit, () => {
+                sileo.error({ title: "Revisa el formulario", description: "Completa todos los campos requeridos correctamente" })
+            })}>
                 <div className="flex flex-col gap-2 mb-6">
                     <Label htmlFor="product-name" className="text-card-foreground">
                         Nombre del producto <span className="text-destructive">*</span>
@@ -157,11 +154,10 @@ export function NewProductForm() {
                             </Label>
                             <Combobox<ProductUnit>
                                 value={selectedUnit}
-                                onValueChange={(u) => setSelectedUnit(u)}
+                                onValueChange={(u) => setValue("unit", u ?? "kg")}
                                 items={UNITS}
                                 itemToStringLabel={(u) => u ?? ""}
                                 isItemEqualToValue={(a, b) => a === b}
-                                {...register("unit")}
                                 aria-invalid={errors.unit ? "true" : "false"}
                             >
                                 <ComboboxInput

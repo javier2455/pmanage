@@ -30,10 +30,9 @@ export function useEditProductMutation() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ productId, credentials }: { productId: string, credentials: EditProductProps }) => edit(productId, credentials),
-        onSuccess: (_, productId) => {
-            queryClient.invalidateQueries({
-                queryKey: ["product", productId],
-            });
+        onSuccess: (_, { productId }) => {
+            queryClient.invalidateQueries({ queryKey: ["product", productId] });
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
         },
     });
 }

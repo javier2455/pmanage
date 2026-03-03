@@ -14,6 +14,7 @@ import axios from "axios";
 import { Business } from "@/lib/types/business";
 import { businessRoutes } from "@/lib/routes/business";
 import { useRouter, usePathname } from "next/navigation";
+import { sileo } from "sileo";
 
 type BusinessContextType = {
   businesses: Business[];
@@ -39,20 +40,23 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   );
 
   // 🔥 Traer negocios del usuario
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["businesses"],
     queryFn: async () => {
-      
       const { data } = await axios.get(businessRoutes.getMyBusinesses, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      
+
       if (Array.isArray(data?.data)) {
         return data.data;
       }
       return [];
+    },
+    retry: (failureCount, error) => {
+      if (axios.isAxiosError(error) && error.response?.status === 401) return false;
+      return failureCount < 2;
     },
   });
 
@@ -63,6 +67,32 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
+
+    if (isError) {
+      console.error("BusinessProvider error:", error);
+
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        sileo.error({
+          title: "Sesión expirada",
+          description: "Tu sesión ha expirado. Inicia sesión nuevamente.",
+          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+        });
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("activeBusinessId");
+        router.push("/login");
+      } else {
+        sileo.error({
+          title: "Error al cargar negocios",
+          description: axios.isAxiosError(error)
+            ? error.response?.data?.message ?? "Error de conexión con el servidor"
+            : "Error inesperado. Intenta recargar la página.",
+          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+        });
+      }
+      return;
+    }
+
     if (pathname === "/dashboard/business/create") return;
 
     if (!businesses.length) {
@@ -75,7 +105,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     if (!exists) {
       startTransition(() => setActiveBusinessId(businesses[0].id));
     }
-  }, [businesses, activeBusinessId, isLoading, pathname, router]);
+  }, [businesses, activeBusinessId, isLoading, isError, error, pathname, router]);
 
   // 🔹 Persistir
   useEffect(() => {
@@ -89,7 +119,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     return businesses.find((b) => b.id === activeBusinessId) || null;
   }, [businesses, activeBusinessId]);
 
-  if (isLoading) {
+  if (isLoading || (isError && !axios.isAxiosError(error))) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">

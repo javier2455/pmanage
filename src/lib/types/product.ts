@@ -28,7 +28,7 @@ export type CreateProductProps = {
     description: string | null;
     category: string | null;
     unit: ProductUnit;
-    imageUrl: string | null;
+    imageUrl?: string | null | undefined;
     price: number;
     stock: number;
 };
