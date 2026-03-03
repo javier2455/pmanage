@@ -7,6 +7,39 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.0-beta] - 2026-03-03
+
+### Agregado
+
+#### Productos
+- Componente `ProductsTableSkeleton` para mostrar estado de carga con estructura de tabla (shadcn)
+- Skeleton en página de productos durante carga inicial (`isLoading`) y refetch tras crear/editar/eliminar (`isFetching`)
+
+### Corregido
+
+#### Crear producto
+- Combobox de unidad no sincronizaba con react-hook-form (usaba estado local); ahora usa `watch("unit")` y `setValue` para mantener el valor del formulario
+- Backend rechazaba `imageUrl`: eliminado del payload en `lib/api/product.ts` y del schema de validación
+- Toast de feedback cuando falla la validación del formulario (campos requeridos)
+
+#### StatusBadge
+- Badges no mostraban color de fondo: la variante `default` del Badge aplicaba `bg-neutral-900` y sobrescribía las clases personalizadas; ahora usan `variant="ghost"` para que `bg-destructive` y `bg-emerald-500` se apliquen correctamente
+
+#### Invalidación de cache (productos)
+- `useEditProductMutation` no invalidaba la lista de productos; ahora invalida `["all-product-of-my-businesses"]` además de la query del producto individual
+- La tabla de productos se actualiza correctamente tras crear, editar o eliminar
+
+#### Otros (sesiones anteriores)
+- `DeleteDialog`: no se cerraba tras confirmar eliminación; añadido estado `open` controlado y `setOpen(false)` tras `onConfirm` exitoso
+- `BusinessProvider`: token expirado causaba 401, lista de negocios vacía y redirección incorrecta; añadido manejo de `isError`, retry sin reintentos en 401, redirección a login y limpieza de localStorage
+- `cancelSale`: mismo fix de headers en body (orden de argumentos en `axios.post`)
+
+### Eliminado
+- Campo `imageUrl` del schema `createProductSchema` y del formulario de crear producto (el backend no lo acepta)
+- `console.log` de debug en `lib/api/product.ts`
+
+---
+
 ## [0.1.0-beta] - 2026-03-01
 
 ### Funcionalidades del sistema
