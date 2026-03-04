@@ -80,10 +80,10 @@ export function EditProductForm() {
                 productId: id as string,
                 credentials: {
                     name: data.name,
-                    description: data.description,
-                    category: data.category,
+                    description: data.description ?? null,
+                    category: data.category ?? null,
                     unit: data.unit,
-                    imageUrl: data.imageUrl
+                    imageUrl: data.imageUrl ?? null
                 }
             })
             sileo.success({
