@@ -92,6 +92,7 @@ export default function CreateBusinessPage() {
         },
       });
       router.push("/dashboard");
+      
     } catch (error) {
       if (axios.isAxiosError(error)) {
         sileo.error({

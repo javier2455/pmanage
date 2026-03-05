@@ -1,13 +1,20 @@
 import axios from "axios";
 import { productRoutes } from "../routes/product";
-import { CreateProductProps, CreateProductResponse, EditProductProps } from "../types/product";
+import { CreateProductProps, CreateProductResponse, EditProductProps, GetAllProductsResponse } from "../types/product";
 
+
+export async function getAllProducts(): Promise<GetAllProductsResponse> {
+    const { data } = await axios.get(productRoutes.getAllProducts, {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    });
+    return data;
+}
 
 export async function getProductById(productId: string) {
-    console.log('productId of getProductById before request', productId)
     const { data } = await axios.get(productRoutes.getProductById(productId), {
         headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     });

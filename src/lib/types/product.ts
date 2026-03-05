@@ -10,7 +10,19 @@ export type Product = {
     unit: ProductUnit;
     imageUrl: string | null;
     active: boolean;
+    userId?: string | null | undefined;
     createdAt: Date;
+};
+
+export type GetAllProductsResponse = {
+    message: string;
+    data: Product[];
+    meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 };
 
 export type CreateProductResponse = {
@@ -30,6 +42,7 @@ export type CreateProductProps = {
     unit: ProductUnit;
     imageUrl?: string | null | undefined;
     price: number;
+    entryPrice: number;
     stock: number;
 };
 
@@ -47,6 +60,7 @@ export type ProductToShowInTable = {
     businessId: string;
     productId: string;
     price: string;
+    entryPrice: string;
     stock: number;
     updatedAt: Date;
     product: Product;

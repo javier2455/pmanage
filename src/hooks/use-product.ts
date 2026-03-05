@@ -1,9 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { create, deleteProduct, edit, getProductById } from "@/lib/api/product";
+import { create, deleteProduct, edit, getAllProducts, getProductById } from "@/lib/api/product";
 import { CreateProductProps, EditProductProps } from "@/lib/types/product";
 
 
+
+export function useGetAllProductsQuery() {
+    return useQuery({
+        queryKey: ["all-products"],
+        queryFn: () => getAllProducts(),
+        // enabled,
+    });
+}
 
 export function useGetProductByIdQuery(productId: string) {
     return useQuery({
@@ -15,13 +23,12 @@ export function useGetProductByIdQuery(productId: string) {
 
 export function useCreateProductMutation() {
     const queryClient = useQueryClient();
-    
+
     return useMutation({
         mutationFn: (credentials: CreateProductProps) => create(credentials),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({
-                queryKey: ["all-product-of-my-businesses", variables.businessId],
-            });
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
+            queryClient.invalidateQueries({ queryKey: ["all-products"] });
         },
     });
 }
@@ -33,6 +40,7 @@ export function useEditProductMutation() {
         onSuccess: (_, { productId }) => {
             queryClient.invalidateQueries({ queryKey: ["product", productId] });
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
+            queryClient.invalidateQueries({ queryKey: ["all-products"] });
         },
     });
 }
@@ -40,11 +48,10 @@ export function useEditProductMutation() {
 export function useDeleteProductMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (productId: string,) => deleteProduct(productId),
+        mutationFn: (productId: string) => deleteProduct(productId),
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["all-product-of-my-businesses"],
-            });
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
+            queryClient.invalidateQueries({ queryKey: ["all-products"] });
         },
     });
 }
