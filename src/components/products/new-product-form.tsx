@@ -50,6 +50,7 @@ export function NewProductForm() {
             category: "",
             unit: "kg",
             price: 0,
+            entryPrice: 0,
             stock: 0,
         },
     })
@@ -65,6 +66,7 @@ export function NewProductForm() {
                 category: data.category,
                 unit: data.unit,
                 price: data.price,
+                entryPrice: data.entryPrice,
                 stock: data.stock,
             })
             if (response) {
@@ -183,7 +185,22 @@ export function NewProductForm() {
                     </div>
 
                     {/* Price + Stock */}
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="product-entry-price" className="text-card-foreground">Precio de entrada <span className="text-destructive">*</span></Label>
+                            <Input
+                                id="product-entry-price"
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                placeholder="0.00"
+                                {...register("entryPrice", { valueAsNumber: true })}
+                                aria-invalid={errors.entryPrice ? "true" : "false"}
+                            />
+                            {errors.entryPrice && (
+                                <p className="text-xs text-destructive">{errors.entryPrice.message}</p>
+                            )}
+                        </div>
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="product-price" className="text-card-foreground">
                                 Precio <span className="text-destructive">*</span>
@@ -201,7 +218,6 @@ export function NewProductForm() {
                                 <p className="text-xs text-destructive">{errors.price.message}</p>
                             )}
                         </div>
-
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="product-stock" className="text-card-foreground">
                                 Stock <span className="text-destructive">*</span>
@@ -220,6 +236,7 @@ export function NewProductForm() {
                             )}
                         </div>
                     </div>
+
                 </div>
 
                 {/* Image upload */}
@@ -276,7 +293,7 @@ export function NewProductForm() {
                 {/* Buttons */}
                 <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                     <Link
-                        href={pathname === '/dashboard/business/entries/create' ? '/dashboard/business/entries' : '/dashboard/business/products'}
+                        href={pathname === '/dashboard/business/inventory/create' ? '/dashboard/business/inventory' : '/dashboard/business/products'}
                         className="bg-transparent border border-white rounded-lg px-3 py-1 text-white flex items-center text-[14px]"
                     >
                         <X className="mr-2 h-4 w-4" />

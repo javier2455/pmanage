@@ -22,9 +22,22 @@ export async function getProductById(productId: string) {
 }
 
 export async function create(credentials: CreateProductProps): Promise<CreateProductResponse> {
-    const { category, description, name, price, stock, unit } = credentials
-    const { data } = await axios.post(productRoutes.createProduct(credentials.businessId),
-        { category, description, name, price, stock, unit }, {
+    const { category, description, name, price, entryPrice, stock, unit } = credentials
+    const { data } = await axios.post(productRoutes.createProduct,
+        { category, description, name, price, entryPrice, stock, unit }, {
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+    });
+
+    return data;
+}
+
+export async function createInBusiness(credentials: CreateProductProps): Promise<CreateProductResponse> {
+    const { category, description, name, price, entryPrice, stock, unit } = credentials
+    const { data } = await axios.post(productRoutes.createProductInBusiness(credentials.businessId),
+        { category, description, name, price, entryPrice, stock, unit }, {
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,

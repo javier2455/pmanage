@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const entriesUpdateStockSchema = z.object({
+export const inventoryUpdateStockSchema = z.object({
   quantity: z
     .number()
     .min(1, "El monto es requerido")
@@ -11,4 +11,4 @@ export const entriesUpdateStockSchema = z.object({
 
 
 
-export type EntriesUpdateStockFormData = z.infer<typeof entriesUpdateStockSchema>;
+export type InventoryUpdateStockFormData = z.infer<typeof inventoryUpdateStockSchema>;

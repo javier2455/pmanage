@@ -6,11 +6,11 @@ import {
     CardTitle,
   } from "@/components/ui/card"
   import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-  import { UpdateStockForm } from "@/components/entries/update-stock-form"
+  import { UpdateStockForm } from "@/components/inventory/update-stock-form"
   import { NewProductForm } from "@/components/products/new-product-form"
   import { PackageOpen, PackagePlus } from "lucide-react"
   
-  export default function CreateEntriesPage() {
+  export default function CreateInventoryPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>

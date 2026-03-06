@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import packageJson from "../../../package.json"
 import {
     ChevronsUpDown,
     LogOut,
@@ -107,6 +108,10 @@ export function NavUser() {
                             <LogOut className="mr-2 size-4" />
                             Cerrar sesion
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            v{packageJson.version}
+                        </div>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

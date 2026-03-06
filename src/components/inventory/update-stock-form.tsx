@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { BusinessWithProducts } from "@/lib/types/business"
 import { useBusiness } from "@/context/business-context"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
@@ -28,12 +29,13 @@ import {
 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { EntriesUpdateStockFormData, entriesUpdateStockSchema } from "@/lib/validations/entries"
-import { useAddStockToProductMutation } from "@/hooks/use-entries"
+import { InventoryUpdateStockFormData, inventoryUpdateStockSchema } from "@/lib/validations/inventory"
+import { useAddStockToProductMutation } from "@/hooks/use-inventory"
 import { sileo } from "sileo"
 import axios from "axios"
 
 export function UpdateStockForm() {
+  const router = useRouter()
   const { activeBusinessId } = useBusiness()
   const { data } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const addStockToProductMutation = useAddStockToProductMutation()
@@ -48,8 +50,8 @@ export function UpdateStockForm() {
     setError,
     reset,
     formState: { errors },
-  } = useForm<EntriesUpdateStockFormData>({
-    resolver: zodResolver(entriesUpdateStockSchema),
+  } = useForm<InventoryUpdateStockFormData>({
+    resolver: zodResolver(inventoryUpdateStockSchema),
     defaultValues: {
       quantity: 0,
       productId: "",
@@ -63,7 +65,7 @@ export function UpdateStockForm() {
   const quantityValue = watch("quantity")
   const newStockNum = Number(quantityValue) || 0
 
-  async function onSubmit(data: EntriesUpdateStockFormData) {
+  async function onSubmit(data: InventoryUpdateStockFormData) {
     try {
       const response = await addStockToProductMutation.mutateAsync({
         businessId: activeBusinessId ?? "",
@@ -82,6 +84,7 @@ export function UpdateStockForm() {
       }
       reset()
       setSelectedProduct(null)
+      router.push("/dashboard/business/inventory")
       // handleCancel()
     } catch (error) {
       console.log('error of onSubmit', error)

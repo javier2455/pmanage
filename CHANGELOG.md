@@ -7,6 +7,40 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.0-beta] - 2026-03-05
+
+### Agregado
+
+#### Productos
+- Tabs en página crear producto: "Crear nuevo producto" y "Asignar producto a negocio" (igual que entradas)
+- Tabla de "otros productos" (productos no asociados al negocio activo)
+- Campo "Precio de entrada" en formulario de crear producto
+- Proxy `/api/products` en Next.js para evitar CORS (backend redirige OPTIONS)
+
+#### Inventario
+- Tabla de historial de entradas (`TableOfInventory`) con columnas: Producto, Cantidad, Precio unitario, Stock anterior, Stock nuevo, Fecha, Acciones
+- Diálogo de detalles de entrada (`InventoryDetailsDialog`) con misma estructura que ventas
+- Skeleton durante carga y refetch en página de inventario
+- Contador de total de entradas
+
+#### Sidebar
+- Icono `Boxes` para Inventario (reemplaza ArrowDownToLine)
+- Versión de la app en el menú de opciones del usuario
+
+### Corregido
+
+#### Inventario
+- Hook renombrado `useAllSalesByBusinessId` → `useAllInventoryByBusinessId` en `use-inventory.ts`
+- Invalidación de `["all-inventory-by-business-id"]` al agregar stock
+
+#### Productos
+- Tipo `imageUrl` en `edit-product-form`: `?? null` para evitar `undefined` en `EditProductProps`
+
+### Cambiado
+- Página de productos: dos tablas (productos del negocio + otros productos), carga paralela de queries
+
+---
+
 ## [0.2.0-beta] - 2026-03-03
 
 ### Agregado
