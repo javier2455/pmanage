@@ -57,3 +57,13 @@ export async function resendCode({ email }: { email: string }) {
   });
   return { message: 'Código de verificación reenviado, verifique su email' };
 }
+
+export async function getMe(token: string): Promise<LoginDataResponse> {
+  const { data } = await axios.get(authRoutes.me, {
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+  return data;
+}

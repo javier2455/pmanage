@@ -7,7 +7,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -21,11 +20,15 @@ import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { getActivePlan } from "@/lib/api/plans";
+import { authRoutes } from "@/lib/routes/auth";
+import { getMe } from "@/lib/api/auth";
+import { useState } from "react";
 
 
 export default function LoginPage() {
     const router = useRouter();
     const loginMutation = useLoginMutation();
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const {
         register,
@@ -39,6 +42,89 @@ export default function LoginPage() {
             password: "",
         },
     });
+
+    const handleGoogleLogin = () => {
+        setIsGoogleLoading(true);
+
+        // Abrir popup con las dimensiones especificadas
+        const width = 500;
+        const height = 600;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+
+        const popup = window.open(
+            authRoutes.google,
+            'GoogleLogin',
+            `width=${width},height=${height},left=${left},top=${top},popup=yes,resizable=yes,scrollbars=yes`
+        );
+
+        if (!popup) {
+            setIsGoogleLoading(false);
+            setError("root", { message: "No se pudo abrir la ventana de autenticación. Verifica que los popups estén habilitados." });
+            return;
+        }
+
+        // Escuchar mensajes del popup
+        const handleMessage = async (event: MessageEvent) => {
+            // Verificar que el mensaje viene de nuestro dominio
+            if (!event.origin.includes('ms.dveloxsoft.com')) return;
+
+            if (event.isTrusted) {
+                const { accessToken, refreshToken } = event.data;
+
+                try {
+                    // Llamar al endpoint auth/me para obtener los datos completos del usuario
+                    const user = await getMe(accessToken);
+                    const activePlan = await getActivePlan({ token: accessToken });
+
+                    // Guardar datos en localStorage
+                    localStorage.setItem("token", accessToken);
+                    localStorage.setItem("refresh_token", refreshToken);
+                    localStorage.setItem("user", JSON.stringify(user));
+
+                    window.removeEventListener('message', handleMessage);
+                    setIsGoogleLoading(false);
+
+                    // Cerrar el popup si sigue abierto
+                    if (popup && !popup.closed) {
+                        popup.close();
+                    }
+
+                    if (activePlan?.data?.isActive || activePlan?.isActive) {
+                        router.push("/dashboard");
+                    } else {
+                        router.push("/plans");
+                    }
+
+                } catch (error) {
+                    if (popup && !popup.closed) {
+                        popup.close();
+                    }
+                    window.removeEventListener('message', handleMessage);
+                    setIsGoogleLoading(false);
+                    setError("root", { message: "Error al obtener los datos del usuario" });
+                }
+            } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+                if (popup && !popup.closed) {
+                    popup.close();
+                }
+                window.removeEventListener('message', handleMessage);
+                setIsGoogleLoading(false);
+                setError("root", { message: event.data.message || "Error al iniciar sesión con Google" });
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // Verificar si el popup se cierra sin completar la autenticación
+        const checkPopupClosed = setInterval(() => {
+            if (popup && popup.closed) {
+                clearInterval(checkPopupClosed);
+                window.removeEventListener('message', handleMessage);
+                setIsGoogleLoading(false);
+            }
+        }, 500);
+    };
 
     // async function handleDeleteUser() {
     //     const user = localStorage.getItem("user")
@@ -189,8 +275,8 @@ export default function LoginPage() {
                         type="button"
                         variant="outline"
                         className="w-full"
-                    // onClick={handleGoogleLogin}
-                    // disabled={loading}
+                        onClick={handleGoogleLogin}
+                        disabled={isGoogleLoading}
                     >
                         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                             <path
@@ -210,7 +296,7 @@ export default function LoginPage() {
                                 fill="#EA4335"
                             />
                         </svg>
-                        Continuar con Google
+                        {isGoogleLoading ? "Conectando..." : "Continuar con Google"}
                     </Button>
                     <p className="text-center text-sm text-muted-foreground">
                         {"No tienes una cuenta? "}
