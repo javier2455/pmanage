@@ -30,7 +30,7 @@ export async function create(credentials: CreateProductProps): Promise<CreatePro
             Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
     });
-
+    console.log('response of create product', data)
     return data;
 }
 

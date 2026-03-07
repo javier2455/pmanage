@@ -7,19 +7,18 @@ import {
   } from "@/components/ui/card"
   import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
   import { UpdateStockForm } from "@/components/inventory/update-stock-form"
-  import { NewProductForm } from "@/components/products/new-product-form"
-  import { PackageOpen, PackagePlus } from "lucide-react"
+  // import { NewProductForm } from "@/components/products/new-product-form"
+  import { PackageOpen } from "lucide-react"
   
   export default function CreateInventoryPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Ingresos
+            Entrada de Productos
           </h1>
           <p className="text-muted-foreground">
-            Actualiza el stock de productos existentes o registra nuevos productos
-            al almacen
+            Actualiza el stock de productos existentes.
           </p>
         </div>
   
@@ -33,14 +32,14 @@ import {
               <span className="hidden sm:inline">Actualizar Stock</span>
               <span className="sm:hidden">Stock</span>
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="new-product"
               className="gap-2 px-5 py-4 cursor-pointer border-none data-[state=active]:text-primary! data-[state=active]:border-none"
             >
               <PackagePlus className="h-4 w-4" />
               <span className="hidden sm:inline">Nuevo Producto</span>
               <span className="sm:hidden">Nuevo</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
   
           <TabsContent value="update-stock" className="mt-6">
@@ -67,7 +66,7 @@ import {
             </Card>
           </TabsContent>
   
-          <TabsContent value="new-product" className="mt-6">
+          {/* <TabsContent value="new-product" className="mt-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -88,7 +87,7 @@ import {
                 <NewProductForm />
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     )
