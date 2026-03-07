@@ -35,6 +35,15 @@ export type CreateProductResponse = {
 };
 
 export type CreateProductProps = {
+    // businessId: string;
+    name: string;
+    description: string | null;
+    category: string | null;
+    unit: ProductUnit;
+    imageUrl?: string | null | undefined;
+};
+
+export type CreateProductInBusinessProps = {
     businessId: string;
     name: string;
     description: string | null;

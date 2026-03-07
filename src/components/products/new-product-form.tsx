@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { useBusiness } from "@/context/business-context"
+// import { useBusiness } from "@/context/business-context"
 import { useCreateProductMutation } from "@/hooks/use-product"
 import { ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,7 @@ const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL ", "ud"]
 export function NewProductForm() {
     const router = useRouter()
     const pathname = usePathname()
-    const { activeBusinessId } = useBusiness()
+    // const { activeBusinessId } = useBusiness()
     const createProductMutation = useCreateProductMutation();
 
     const {
@@ -49,9 +49,6 @@ export function NewProductForm() {
             description: "",
             category: "",
             unit: "kg",
-            price: 0,
-            entryPrice: 0,
-            stock: 0,
         },
     })
 
@@ -60,14 +57,10 @@ export function NewProductForm() {
     async function onSubmit(data: CreateProductFormData) {
         try {
             const response = await createProductMutation.mutateAsync({
-                businessId: activeBusinessId ?? "",
                 name: data.name,
                 description: data.description ?? null,
                 category: data.category,
-                unit: data.unit,
-                price: data.price,
-                entryPrice: data.entryPrice,
-                stock: data.stock,
+                unit: data.unit
             })
             if (response) {
                 sileo.success({
@@ -185,7 +178,7 @@ export function NewProductForm() {
                     </div>
 
                     {/* Price + Stock */}
-                    <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                    {/* <div className="grid gap-4 sm:grid-cols-3 mb-6">
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="product-entry-price" className="text-card-foreground">Precio de entrada <span className="text-destructive">*</span></Label>
                             <Input
@@ -235,7 +228,7 @@ export function NewProductForm() {
                                 <p className="text-xs text-destructive">{errors.stock.message}</p>
                             )}
                         </div>
-                    </div>
+                    </div> */}
 
                 </div>
 

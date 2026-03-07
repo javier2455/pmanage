@@ -10,7 +10,7 @@ import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 export default function InventoryPage() {
   const { activeBusinessId } = useBusiness();
   const { data, isLoading, isFetching, isError } = useAllInventoryByBusinessId(activeBusinessId ?? "");
-
+  console.log('data', data)
   if (isError) return <div>Error al cargar el inventario</div>;
 
   return (

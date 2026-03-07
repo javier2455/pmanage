@@ -1,6 +1,6 @@
 import axios from "axios";
 import { productRoutes } from "../routes/product";
-import { CreateProductProps, CreateProductResponse, EditProductProps, GetAllProductsResponse } from "../types/product";
+import { CreateProductInBusinessProps, CreateProductProps, CreateProductResponse, EditProductProps, GetAllProductsResponse } from "../types/product";
 
 
 export async function getAllProducts(): Promise<GetAllProductsResponse> {
@@ -22,9 +22,9 @@ export async function getProductById(productId: string) {
 }
 
 export async function create(credentials: CreateProductProps): Promise<CreateProductResponse> {
-    const { category, description, name, price, entryPrice, stock, unit } = credentials
+    const { category, description, name, unit } = credentials
     const { data } = await axios.post(productRoutes.createProduct,
-        { category, description, name, price, entryPrice, stock, unit }, {
+        { category, description, name, unit }, {
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -34,7 +34,7 @@ export async function create(credentials: CreateProductProps): Promise<CreatePro
     return data;
 }
 
-export async function createInBusiness(credentials: CreateProductProps): Promise<CreateProductResponse> {
+export async function createInBusiness(credentials: CreateProductInBusinessProps): Promise<CreateProductResponse> {
     const { category, description, name, price, entryPrice, stock, unit } = credentials
     const { data } = await axios.post(productRoutes.createProductInBusiness(credentials.businessId),
         { category, description, name, price, entryPrice, stock, unit }, {

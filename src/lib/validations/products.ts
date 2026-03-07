@@ -5,6 +5,13 @@ export const createProductSchema = z.object({
   description: z.string().nullable(),
   category: z.string().min(1, "La categoría es requerida"),
   unit: z.enum(["kg", "lb", "g", "L", "mL ", "ud"]),
+});
+
+export const createProductInBusinessSchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  description: z.string().nullable(),
+  category: z.string().min(1, "La categoría es requerida"),
+  unit: z.enum(["kg", "lb", "g", "L", "mL ", "ud"]),
   price: z.number().min(1, "El precio es requerido").max(1000000, "El precio máximo es de 100,000"),
   entryPrice: z.number().min(1, "El precio es requerido").max(1000000, "El precio máximo es de 100,000"),
   stock: z
@@ -12,6 +19,12 @@ export const createProductSchema = z.object({
     .min(1, "El monto es requerido")
     .max(100000, "El monto máximo es de 100,000"),
 });
+
+export const assignProductToBusinessSchema = createProductInBusinessSchema
+  .pick({ price: true, entryPrice: true, stock: true })
+  .extend({
+    productId: z.string().min(1, "Selecciona un producto"),
+  });
 
 export const editProductSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
@@ -23,4 +36,6 @@ export const editProductSchema = z.object({
 });
 
 export type CreateProductFormData = z.infer<typeof createProductSchema>;
+export type CreateProductInBusinessFormData = z.infer<typeof createProductInBusinessSchema>;
+export type AssignProductToBusinessFormData = z.infer<typeof assignProductToBusinessSchema>;
 export type EditProductFormData = z.infer<typeof editProductSchema>;

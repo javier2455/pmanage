@@ -13,8 +13,8 @@ export async function getAllInventoryByBusinessId(businessId: string): Promise<I
 
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
     console.log('credentials of create', credentials)
-    const { quantity, unitPrice, description } = credentials
-    const { data } = await axios.post(inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId), { quantity, description }, {
+    const { quantity, entryPrice, description } = credentials
+    const { data } = await axios.post(inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId), { quantity, entryPrice, description }, {
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,

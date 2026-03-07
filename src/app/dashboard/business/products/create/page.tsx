@@ -1,4 +1,5 @@
 import { NewProductForm } from "@/components/products/new-product-form";
+import { AssignProductToBusinessForm } from "@/components/products/assign-product-to-business-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, PackagePlus } from "lucide-react";
@@ -76,9 +77,7 @@ export default function CreateProductPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Contenido próximamente. Aquí podrás asignar productos existentes a tu negocio.
-              </p>
+              <AssignProductToBusinessForm />
             </CardContent>
           </Card>
         </TabsContent>

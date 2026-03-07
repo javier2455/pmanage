@@ -54,6 +54,7 @@ export function UpdateStockForm() {
     resolver: zodResolver(inventoryUpdateStockSchema),
     defaultValues: {
       quantity: 0,
+      entryPrice: 0,
       productId: "",
       description: "",
     },
@@ -71,7 +72,7 @@ export function UpdateStockForm() {
         businessId: activeBusinessId ?? "",
         productId: selectedProduct?.product.id ?? "",
         quantity: newStockNum,
-        unitPrice: Number(selectedProduct?.price) ?? 0,
+        entryPrice: data.entryPrice,
         description: data.description,
       })
       if (response) {
@@ -135,7 +136,7 @@ export function UpdateStockForm() {
         <div className="my-6 space-y-6">
           {/* Product info - shown when product is selected */}
           {selectedProduct && (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               {/* Current stock */}
               <div className="flex flex-col gap-2">
                 <Label className="text-card-foreground">Stock actual</Label>
@@ -175,6 +176,29 @@ export function UpdateStockForm() {
                   </span>
                 </div>
               </div>
+
+              {/* Entry price input */}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="entry-price" className="text-card-foreground">
+                  Precio de entrada
+                </Label>
+                <Input
+                  id="entry-price"
+                  type="number"
+                  min={1}
+                  step="0.01"
+                  placeholder="0.00"
+                  {...register("entryPrice", { valueAsNumber: true })}
+                  disabled={!selectedProduct}
+                  aria-invalid={errors.entryPrice ? "true" : "false"}
+                />
+                {errors.entryPrice && (
+                  <p className="text-xs text-destructive">
+                    {errors.entryPrice.message}
+                  </p>
+                )}
+              </div>
+
               {/* New stock input */}
               <div className="flex flex-col gap-2 w-full">
                 <Label htmlFor="new-stock" className="text-card-foreground">
