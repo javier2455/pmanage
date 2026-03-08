@@ -11,29 +11,30 @@ export interface SaleWithProductAndBusiness {
   // descripcion: string;
   // createdAt: Date;
 
-    id: string;
-    idbusiness: string;
-    idproducto: string;
-    product: Product;
-    cantidad: number;
-    precio: number;
-    descripcion: string;
-    isCancelled: boolean;
-    createdAt: Date;
-    productName: string;
+  id: string;
+  idbusiness: string;
+  idproducto: string;
+  product: Product;
+  cantidad: number;
+  precio: number;
+  descripcion: string;
+  isCancelled: boolean;
+  createdAt: Date;
+  productName: string;
 }
 
 export interface SaleDetailsProps {
-    id: string;
-    idbusiness: string;
-    idproducto: string;
-    cantidad: string;
-    precio: string;
-    descripcion: string;
-    isCancelled: boolean;
-    createdAt: Date;
-    productName: string;
+  id: string;
+  idbusiness: string;
+  idproducto: string;
+  cantidad: string;
+  precio: string;
+  descripcion: string;
+  isCancelled: boolean;
+  createdAt: Date;
+  productName: string;
 }
+
 
 export interface CreateSaleProps {
   idbusiness: string;

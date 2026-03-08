@@ -39,7 +39,7 @@ const stats = [
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-6 p-4 ">
+    <div className="flex flex-col gap-6 p-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Panel Principal
