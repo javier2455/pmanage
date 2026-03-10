@@ -1,1 +1,1 @@
-export const BASIC_ROUTE = 'https://psearch2.dveloxsoft.com/apiv1'
+export const BASIC_ROUTE = 'https://psearch3.dveloxsoft.com/apiv1'
