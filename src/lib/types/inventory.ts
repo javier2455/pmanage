@@ -8,6 +8,11 @@ export type AddStockToProductProps = {
     description: string;
 }
 
+export type InventoryEntryResponse = {
+    message: string;
+    data: InventoryEntry[];
+}
+
 export type InventoryEntry = {
     id: string;
     idbusiness: string;

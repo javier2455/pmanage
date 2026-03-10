@@ -5,8 +5,8 @@ export const productRoutes = {
     /** Proxy local: evita CORS (el backend redirige OPTIONS y falla el preflight) */
     getAllProducts: "/api/products",
     getProductById: (productId: string) => `/api/products/${productId}`,
-    createProduct: "/api/products",
-    createProductInBusiness: (businessId: string) => `/api/products/business/${businessId}`,
+    createProduct: "/api/products/",
+    createProductInBusiness: (businessId: string) => `/api/business/${businessId}/products/`,
     editProduct: (productId: string) => `/api/products/${productId}`,
     deleteProduct: (productId: string) => `/api/products/${productId}`,
     /** Proxy local: evita CORS (el backend redirige OPTIONS y falla el preflight) */

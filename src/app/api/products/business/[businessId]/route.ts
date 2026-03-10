@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = "https://psearch.dveloxsoft.com/api";
+const BACKEND_URL = "https://psearch.dveloxsoft.com/apiv1";
 
 export async function POST(
   request: NextRequest,

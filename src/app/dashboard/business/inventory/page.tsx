@@ -10,7 +10,8 @@ import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 export default function InventoryPage() {
   const { activeBusinessId } = useBusiness();
   const { data, isLoading, isFetching, isError } = useAllInventoryByBusinessId(activeBusinessId ?? "");
-  console.log('data', data)
+  const entries = Array.isArray(data?.data) ? data.data : [];
+
   if (isError) return <div>Error al cargar el inventario</div>;
 
   return (
@@ -24,7 +25,7 @@ export default function InventoryPage() {
         </p>
         <div className="flex justify-between items-center mb-4">
           <p className="text-muted-foreground">
-            Total de entradas: <span className="font-bold text-foreground">{data?.length}</span>
+            Total de entradas: <span className="font-bold text-foreground">{entries.length}</span>
           </p>
           <Link href="/dashboard/business/inventory/create" className="flex items-center gap-2 cursor-pointer hover:bg-primary/90 transition-all duration-300 bg-primary text-primary-foreground px-4 py-2 rounded-md">
             Agregar entrada de producto
@@ -34,7 +35,7 @@ export default function InventoryPage() {
         {isLoading || isFetching ? (
           <SimpleTableSkeleton />
         ) : (
-          <TableOfInventory entries={data ?? []} />
+          <TableOfInventory entries={entries} />
         )}
       </div>
     </section>

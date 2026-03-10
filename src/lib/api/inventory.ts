@@ -1,8 +1,8 @@
 import axios from "axios";
 import { inventoryRoutes } from "../routes/inventory";
-import { AddStockToProductProps, InventoryEntry } from "../types/inventory";
+import { AddStockToProductProps, InventoryEntryResponse } from "../types/inventory";
 
-export async function getAllInventoryByBusinessId(businessId: string): Promise<InventoryEntry[]> {
+export async function getAllInventoryByBusinessId(businessId: string): Promise<InventoryEntryResponse> {
     const { data } = await axios.get(inventoryRoutes.getInventoryByBusinessId(businessId), {
         headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
