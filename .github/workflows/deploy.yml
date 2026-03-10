@@ -54,11 +54,11 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
-            TARGET=~/psearch.dveloxsoft.com
+            TARGET=~/psearch2.dveloxsoft.com
             cd $TARGET
             # Eliminar todos los archivos y carpetas excepto los protegidos
             for item in *; do
-              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "tmp" ] && [ "$item" != "node_modules" ] && [ "$item" != "api" ]; then
+              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "tmp" ] && [ "$item" != "node_modules" ] && [ "$item" != "apiv1" ]; then
                 rm -rf "$item"
               fi
             done
@@ -71,7 +71,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: ".next/**"
-          target: "~/psearch.dveloxsoft.com/"
+          target: "~/psearch2.dveloxsoft.com/"
           overwrite: true
           rm: false
           strip_components: 0
@@ -84,7 +84,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "public/**"
-          target: "~/psearch.dveloxsoft.com/public/"
+          target: "~/psearch2.dveloxsoft.com/public/"
           overwrite: true
           rm: false
           strip_components: 1
@@ -97,7 +97,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "server.js"
-          target: "~/psearch.dveloxsoft.com/"
+          target: "~/psearch2.dveloxsoft.com/"
           overwrite: true
 
       - name: Upload package.json to cPanel
@@ -108,7 +108,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "package.json"
-          target: "~/psearch.dveloxsoft.com/"
+          target: "~/psearch2.dveloxsoft.com/"
           overwrite: true
 
       - name: Upload pnpm-lock.yaml to cPanel
@@ -119,7 +119,7 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           source: "pnpm-lock.yaml"
-          target: "~/psearch.dveloxsoft.com/"
+          target: "~/psearch2.dveloxsoft.com/"
           overwrite: true
 
       # - name: Upload .env file if exists
@@ -142,5 +142,5 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
-            TARGET=~/psearch.dveloxsoft.com
+            TARGET=~/psearch2.dveloxsoft.com
             touch $TARGET/tmp/restart.txt
