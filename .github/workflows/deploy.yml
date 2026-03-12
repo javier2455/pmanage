@@ -58,7 +58,7 @@ jobs:
             cd $TARGET
             # Eliminar todos los archivos y carpetas excepto los protegidos
             for item in *; do
-              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "tmp" ] && [ "$item" != "node_modules" ] && [ "$item" != "api" ]; then
+              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "tmp" ] && [ "$item" != "node_modules" ] && [ "$item" != "apiv1" ]; then
                 rm -rf "$item"
               fi
             done

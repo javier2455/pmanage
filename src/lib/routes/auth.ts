@@ -5,4 +5,6 @@ export const authRoutes = {
   register: `${BASIC_ROUTE}/auth/register`,
   verify: `${BASIC_ROUTE}/auth/activate`,
   sendConfirmationToken: (email: string) => `${BASIC_ROUTE}/auth/send-confirmation-token/${email}`,
+  google: `${BASIC_ROUTE}/auth/google`,
+  me: `${BASIC_ROUTE}/auth/me`,
 };   
