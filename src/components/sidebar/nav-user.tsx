@@ -37,7 +37,7 @@ export function NavUser() {
     const [user, setUser] = useState<{ name?: string; email?: string }>({})
 
     useEffect(() => {
-        const stored = localStorage.getItem("user")
+        const stored = sessionStorage.getItem("user")
         const parsed = stored ? JSON.parse(stored) : {}
         queueMicrotask(() => setUser(parsed))
     }, [])
@@ -46,9 +46,10 @@ export function NavUser() {
     const userEmail = user.email || ""
 
     function handleLogout() {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("activeBusinessId");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("refresh_token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("activeBusinessId");
         router.push("/login");
     }
 

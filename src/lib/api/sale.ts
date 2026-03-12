@@ -11,7 +11,7 @@ export async function getAllSalesByBusinessId({ businessId }: GetAllSalesByBusin
         salesRoutes.getAllSalesByBusinessId(businessId),
         {
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                Authorization: `Bearer ${sessionStorage.getItem("token")}`,
             },
         },
     );
@@ -22,7 +22,7 @@ export async function getAllSalesByBusinessId({ businessId }: GetAllSalesByBusin
 export async function getSaleById(saleId: string): Promise<SaleDetailsProps> {
     const { data } = await axios.get(salesRoutes.getSaleById(saleId), {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
     });
     return data;
@@ -33,7 +33,7 @@ export async function create(credentials: CreateSaleProps): Promise<BusinessWith
     const { data } = await axios.post(salesRoutes.createSale, credentials, {
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
     });
 
@@ -44,7 +44,7 @@ export async function cancelSale(saleId: string) {
     const { data } = await axios.post(salesRoutes.cancelSale(saleId), {}, {
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
     });
 

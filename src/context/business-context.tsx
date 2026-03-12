@@ -35,7 +35,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [activeBusinessId, setActiveBusinessId] = useState<string | null>(
     () =>
       typeof window !== "undefined"
-        ? localStorage.getItem("activeBusinessId")
+        ? sessionStorage.getItem("activeBusinessId")
         : null
   );
 
@@ -45,7 +45,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data } = await axios.get(businessRoutes.getMyBusinesses, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
       });
 
@@ -77,9 +77,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
           description: "Tu sesión ha expirado. Inicia sesión nuevamente.",
           styles: { description: "text-[#dc2626]/90! text-[15px]!" },
         });
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("activeBusinessId");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("refresh_token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("activeBusinessId");
         router.push("/login");
       } else {
         sileo.error({
@@ -110,7 +111,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   // 🔹 Persistir
   useEffect(() => {
     if (activeBusinessId) {
-      localStorage.setItem("activeBusinessId", activeBusinessId);
+      sessionStorage.setItem("activeBusinessId", activeBusinessId);
     }
   }, [activeBusinessId]);
 

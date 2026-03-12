@@ -77,10 +77,10 @@ export default function LoginPage() {
                     const user = await getMe(accessToken);
                     const activePlan = await getActivePlan({ token: accessToken });
 
-                    // Guardar datos en localStorage
-                    localStorage.setItem("token", accessToken);
-                    localStorage.setItem("refresh_token", refreshToken);
-                    localStorage.setItem("user", JSON.stringify(user));
+                    // Guardar datos en sessionStorage
+                    sessionStorage.setItem("token", accessToken);
+                    sessionStorage.setItem("refresh_token", refreshToken);
+                    sessionStorage.setItem("user", JSON.stringify(user));
 
                     window.removeEventListener('message', handleMessage);
                     setIsGoogleLoading(false);
@@ -127,7 +127,7 @@ export default function LoginPage() {
     };
 
     // async function handleDeleteUser() {
-    //     const user = localStorage.getItem("user")
+    //     const user = sessionStorage.getItem("user")
     //     const userId = JSON.parse(user || '{}').id
     //     if (!userId) {
     //         setError("root", { message: "Usuario no encontrado" })
@@ -164,13 +164,13 @@ export default function LoginPage() {
             const activePlan = await getActivePlan({ token: access_token });
 
             if (activePlan?.data?.isActive || activePlan?.isActive) {
-                localStorage.setItem("token", access_token);
-                localStorage.setItem("user", JSON.stringify(user));
+                sessionStorage.setItem("token", access_token);
+                sessionStorage.setItem("user", JSON.stringify(user));
 
                 router.push("/dashboard");
             } else {
-                localStorage.setItem("token", access_token);
-                localStorage.setItem("user", JSON.stringify(user));
+                sessionStorage.setItem("token", access_token);
+                sessionStorage.setItem("user", JSON.stringify(user));
                 router.push("/plans");
             }
 

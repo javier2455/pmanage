@@ -5,7 +5,7 @@ import { GetAllMunicipalitiesByProvinceIdResponse, GetAllProvincesResponse } fro
 export async function getAllProvinces(): Promise<GetAllProvincesResponse> {
     const { data } = await axios.get(searchRoutes.getAllProvinces, {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
     });
 
@@ -15,7 +15,7 @@ export async function getAllProvinces(): Promise<GetAllProvincesResponse> {
 export async function getAllMunicipalitiesByProvinceId(provinceId: string): Promise<GetAllMunicipalitiesByProvinceIdResponse> {
     const { data } = await axios.get(searchRoutes.getAllMunicipalitiesByProvinceId(provinceId), {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
     });
 

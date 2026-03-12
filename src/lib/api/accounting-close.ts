@@ -5,7 +5,7 @@ import { accountingCloseRoutes } from "../routes/accounting-close";
 export async function getDailyAccountingClose(businessId: string): Promise<AccountingCloseDailyResponse> {
     const { data } = await axios.get(accountingCloseRoutes.getDailyAccountingClose(businessId), {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
     });
     return data;
