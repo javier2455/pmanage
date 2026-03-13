@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
   Combobox,
+  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
@@ -122,11 +123,13 @@ export function UpdateStockForm() {
             />
             <ComboboxContent>
               <ComboboxList className="max-h-64">
-                {products.map((item) => (
-                  <ComboboxItem key={item.id} value={item}>
-                    {item.product.name}
-                  </ComboboxItem>
-                ))}
+                <ComboboxCollection>
+                  {(item: BusinessWithProducts) => (
+                    <ComboboxItem value={item}>
+                      {item.product.name}
+                    </ComboboxItem>
+                  )}
+                </ComboboxCollection>
                 <ComboboxEmpty>No se encontró ningún producto.</ComboboxEmpty>
               </ComboboxList>
             </ComboboxContent>

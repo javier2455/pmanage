@@ -1,15 +1,18 @@
 "use client"
 
 import ExchangeCard from "@/components/exchange-rate/exchange-card";
+import { useBusiness } from "@/context/business-context";
 import { useExchangeRate } from "@/hooks/use-exchange";
 
 export default function ExchangeRatePage() {
-  
-  const { data, isLoading, isError } = useExchangeRate('34f7137e-25b2-45d0-bde3-8d7d466324e6');
+  const { activeBusinessId } = useBusiness();
+  const { data, isLoading, isError } = useExchangeRate(activeBusinessId ?? '');
 
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar las tasas de cambio</div>;
-  if (!data?.data) return <div>Cargando...</div>;
+
+  console.log('looking for data', data);
+  // if (!data?.data) return <div>Cargando...</div>;
 
   return (
     <section className="flex flex-col gap-6 p-4">

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Combobox,
+  ComboboxCollection,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
@@ -169,16 +170,15 @@ export default function CreateSalesPage() {
                   />
                   <ComboboxContent>
                     <ComboboxList className="max-h-64">
-                      {products.map((bp) => (
-                        <ComboboxItem key={bp.id} value={bp} onClick={() => setValue("productId", bp.product.id)}>
-                          <div className="flex flex-1 items-start p-1">
-                            <span>{bp.product.name}</span>
-                            {/* <span className="ml-2 text-xs text-muted-foreground tabular-nums">
-                              stock de: {bp.stock}
-                            </span> */}
-                          </div>
-                        </ComboboxItem>
-                      ))}
+                      <ComboboxCollection>
+                        {(bp: BusinessWithProducts) => (
+                          <ComboboxItem value={bp} onClick={() => setValue("productId", bp.product.id)}>
+                            <div className="flex flex-1 items-start p-1">
+                              <span>{bp.product.name}</span>
+                            </div>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxCollection>
                       <ComboboxEmpty>No se encontró ningún producto.</ComboboxEmpty>
                     </ComboboxList>
                   </ComboboxContent>
