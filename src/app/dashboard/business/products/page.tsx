@@ -13,7 +13,7 @@ import Link from "next/link";
 
 export default function ProductsPage() {
   const { activeBusinessId } = useBusiness();
-  // const businessId = activeBusinessId ?? "";
+  const businessId = activeBusinessId ?? "";
 
   const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(activeBusinessId ?? "");
   const { data: allProductsData, isLoading: allProductsLoading, isFetching: allProductsFetching, isError: allProductsError } = useGetAllProductsQuery();

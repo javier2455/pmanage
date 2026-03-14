@@ -1,6 +1,11 @@
 import { InventoryEntry } from "./inventory";
 import { SaleWithProductAndBusiness } from "./sales";
 
+export interface DateRangeParameters {
+    startDate?: string;
+    endDate?: string;
+}
+
 export type AccountingCloseDailyResponse = {
     date: string;
     sales: SaleWithProductAndBusiness[];

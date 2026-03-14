@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { format } from "date-fns"
 import { useBusiness } from "@/context/business-context"
 import { useDailyAccountingClose } from "@/hooks/use-accounting-close"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
@@ -25,6 +27,7 @@ import {
   CalendarCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DateFilter } from "@/components/accounting-close/date-filter"
 
 
 function formatCurrency(value: number) {
@@ -36,10 +39,14 @@ function formatCurrency(value: number) {
 
 export default function DailyPage() {
   const { activeBusinessId } = useBusiness()
-  const { data, isLoading, isError } = useDailyAccountingClose(activeBusinessId ?? "")
-  const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
-  console.log('look here for data', data)
+  const dateParams = selectedDate
+    ? { startDate: format(selectedDate, "yyyy-MM-dd"), endDate: format(selectedDate, "yyyy-MM-dd") }
+    : undefined
+
+  const { data, isLoading, isError } = useDailyAccountingClose(activeBusinessId ?? "", dateParams)
+  const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
 
   const today = new Date().toLocaleDateString("es-ES", {
     weekday: "long",
@@ -93,14 +100,21 @@ export default function DailyPage() {
   return (
     <div className="flex flex-col gap-6 p-4">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Cierre Diario
-        </h1>
-        <p className="text-muted-foreground">
-          Resumen contable del dia &mdash;{" "}
-          <span className="capitalize">{today}</span>
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Cierre Diario
+          </h1>
+          <p className="text-muted-foreground">
+            Resumen contable del dia &mdash;{" "}
+            <span className="capitalize">{today}</span>
+          </p>
+        </div>
+        <DateFilter
+          startDate={selectedDate}
+          onConfirm={(date) => setSelectedDate(date)}
+          onClear={() => setSelectedDate(undefined)}
+        />
       </div>
 
       {/* Summary stat cards */}

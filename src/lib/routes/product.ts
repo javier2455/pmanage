@@ -3,18 +3,18 @@ import { BASIC_ROUTE } from ".";
 
 export const productRoutes = {
     /** Proxy local: evita CORS (el backend redirige OPTIONS y falla el preflight) */
-    getAllProducts: "/api/products",
-    getProductById: (productId: string) => `/api/products/${productId}`,
-    createProduct: "/api/products/",
-    createProductInBusiness: (businessId: string) => `/api/business/${businessId}/products/`,
-    editProduct: (productId: string) => `/api/products/${productId}`,
-    deleteProduct: (productId: string) => `/api/products/${productId}`,
+    // getAllProducts: "apiv1/product",
+    // getProductById: (productId: string) => `/apiv1/products/${productId}`,
+    // createProduct: "apiv1/product",
+    // createProductInBusiness: (businessId: string) => `apiv1/business/${businessId}/products/`,
+    // editProduct: (productId: string) => `apiv1/products/${productId}`,
+    // deleteProduct: (productId: string) => `apiv1/product/${productId}`,
     /** Proxy local: evita CORS (el backend redirige OPTIONS y falla el preflight) */
     
-    // getAllProducts: `${BASIC_ROUTE}/products`,
-    // getProductById: (productId: string) => `${BASIC_ROUTE}/products/${productId}`,
-    // createProduct: `${BASIC_ROUTE}/products`,
-    // createProductInBusiness: (businessId: string) => `${BASIC_ROUTE}/products/business/${businessId}`,
-    // editProduct: (productId: string) => `${BASIC_ROUTE}/products/${productId}`,
-    // deleteProduct: (productId: string) => `${BASIC_ROUTE}/products/${productId}`,
+    getAllProducts: `${BASIC_ROUTE}/product`,
+    getProductById: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
+    createProduct: `${BASIC_ROUTE}/product`,
+    createProductInBusiness: (businessId: string) => `${BASIC_ROUTE}/businesses/${businessId}/products`,
+    editProduct: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
+    deleteProduct: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
 }

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}/products`, {
+    const response = await fetch(`${BACKEND_URL}/product`, {
       method: "GET",
       headers: {
         Authorization: authHeader,
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const response = await fetch(`${BACKEND_URL}/products`, {
+    const response = await fetch(`${BACKEND_URL}/product`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
