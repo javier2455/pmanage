@@ -35,9 +35,9 @@ export async function create(credentials: CreateProductProps): Promise<CreatePro
 }
 
 export async function createInBusiness(credentials: CreateProductInBusinessProps): Promise<CreateProductResponse> {
-    const { category, description, name, price, entryPrice, stock, unit } = credentials
+    const { productId, price, entryPrice, stock } = credentials
     const { data } = await axios.post(productRoutes.createProductInBusiness(credentials.businessId),
-        { category, description, name, price, entryPrice, stock, unit }, {
+        { productId, price, entryPrice, stock }, {
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,

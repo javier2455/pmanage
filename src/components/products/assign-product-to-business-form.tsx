@@ -69,6 +69,7 @@ export function AssignProductToBusinessForm() {
     try {
       await createProductInBusinessMutation.mutateAsync({
         businessId: activeBusinessId,
+        productId: product.id,
         name: product.name,
         description: product.description,
         category: product.category,

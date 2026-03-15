@@ -45,6 +45,7 @@ export type CreateProductProps = {
 
 export type CreateProductInBusinessProps = {
     businessId: string;
+    productId: string;
     name: string;
     description: string | null;
     category: string | null;
