@@ -110,7 +110,7 @@ export function UpdateStockForm() {
             onValueChange={(item) => {
               setSelectedProduct(item)
               setValue("productId", item?.id ?? "")
-              setValue("quantity", 1)
+              setValue("quantity", 0)
             }}
             items={products}
             itemToStringLabel={(bp) => (bp ? bp.product.name : "")}
@@ -213,7 +213,7 @@ export function UpdateStockForm() {
                   min="1"
                   placeholder="Ej: 50"
                   {...register("quantity", { valueAsNumber: true })}
-                  disabled={!selectedProduct || selectedProduct.stock === 0}
+                  disabled={!selectedProduct}
                   aria-invalid={errors.quantity ? "true" : "false"}
                 />
                 {errors.quantity && (

@@ -42,7 +42,7 @@ export default function DailyPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
   const dateParams = selectedDate
-    ? { startDate: format(selectedDate, "yyyy-MM-dd"), endDate: format(selectedDate, "yyyy-MM-dd") }
+    ? { startDate: format(selectedDate, "yyyy-MM-dd") }
     : undefined
 
   const { data, isLoading, isError } = useDailyAccountingClose(activeBusinessId ?? "", dateParams)
