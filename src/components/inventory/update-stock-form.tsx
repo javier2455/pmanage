@@ -254,7 +254,7 @@ export function UpdateStockForm() {
         <Separator />
 
         {/* Buttons */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
@@ -262,6 +262,7 @@ export function UpdateStockForm() {
             onClick={() => {
               setSelectedProduct(null)
               reset()
+              router.push("/dashboard/business/inventory")
             }}
           >
             <X className="mr-2 h-4 w-4" />

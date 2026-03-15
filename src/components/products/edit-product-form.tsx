@@ -274,13 +274,12 @@ export function EditProductForm() {
 
                 {/* Buttons */}
                 <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <Link
-                        href={pathname === '/dashboard/business/inventory/create' ? '/dashboard/business/inventory' : '/dashboard/business/products'}
-                        className="bg-transparent border border-white rounded-lg px-3 py-1 text-white flex items-center text-[14px]"
-                    >
-                        <X className="mr-2 h-4 w-4" />
-                        Cancelar
-                    </Link>
+                    <Button type="button" variant="default" asChild>
+                        <Link href={pathname === '/dashboard/business/inventory/create' ? '/dashboard/business/inventory' : '/dashboard/business/products'}>
+                            <X className="mr-2 h-4 w-4" />
+                            Cancelar
+                        </Link>
+                    </Button>
                     <Button type="submit" disabled={false}>
                         <RefreshCw className="mr-2 h-4 w-4" />
                         Actualizar producto

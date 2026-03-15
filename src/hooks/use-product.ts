@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { create, createInBusiness, deleteProduct, edit, getAllProducts, getProductById } from "@/lib/api/product";
+import { create, createInBusiness, deleteProduct, deleteProductInBusiness, edit, getAllProducts, getProductById } from "@/lib/api/product";
 import { CreateProductInBusinessProps, CreateProductProps, EditProductProps } from "@/lib/types/product";
 
 
@@ -60,6 +60,17 @@ export function useDeleteProductMutation() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (productId: string) => deleteProduct(productId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
+            queryClient.invalidateQueries({ queryKey: ["all-products"] });
+        },
+    });
+}
+
+export function useDeleteProductInBusinessMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ businessId, productId }: { businessId: string; productId: string }) => deleteProductInBusiness(businessId, productId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
             queryClient.invalidateQueries({ queryKey: ["all-products"] });

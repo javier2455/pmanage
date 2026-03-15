@@ -1,6 +1,7 @@
 import axios from "axios";
 import { productRoutes } from "../routes/product";
 import { CreateProductInBusinessProps, CreateProductProps, CreateProductResponse, EditProductProps, GetAllProductsResponse } from "../types/product";
+import { businessRoutes } from "../routes/business";
 
 
 export async function getAllProducts(): Promise<GetAllProductsResponse> {
@@ -66,4 +67,25 @@ export async function deleteProduct(productId: string) {
     });
 
     return data;
+}
+
+export async function deleteProductInBusiness(businessId: string, productId: string) {
+    const reponse = await axios.delete(businessRoutes.deleteProductOfMyBusiness(businessId, productId), {
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+    });
+
+    if (reponse.status === 204) {
+        return {
+            success: true,
+            message: "Producto eliminado del negocio correctamente",
+        };
+    } else {
+        return {
+            success: false,
+            message: "Error al eliminar el producto del negocio",
+        };
+    }
 }
