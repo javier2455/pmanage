@@ -7,6 +7,68 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.0-beta] - 2026-03-12 / 2026-03-14
+
+### Agregado
+
+#### Cierre contable diario — Filtro de fechas
+- Tipo `DateRangeParameters` en `lib/types/accounting-close.ts`
+- Función `getDailyAccountingClose` acepta parámetro opcional `params?: DateRangeParameters` y construye la URL con `URLSearchParams` según si hay rango de fechas
+- Hook `useDailyAccountingClose` incluye `params` en el `queryKey` para que TanStack Query refetch automáticamente al cambiar las fechas
+- Nuevo componente `DateFilter` (`components/accounting-close/date-filter.tsx`): calendario shadcn en un Popover con botones "Confirmar" y "Limpiar", y botón `X` en el trigger para limpiar directamente
+- Integración del `DateFilter` en la página de cierre diario con estado local `selectedDate`
+
+#### Ventas — Cancelación con razón
+- Nuevo componente `CancelSaleDialog` (`components/sales/cancel-sale-dialog.tsx`) con:
+  - Input obligatorio para la razón de cancelación (`cancellationReason`)
+  - Botón de confirmar deshabilitado si el input está vacío o está cargando
+  - Estado de carga con spinner (`Loader2`)
+  - Limpieza automática del input al cerrar el diálogo
+  - Soporte para confirmar con `Enter`
+  - Tooltip opcional en el trigger
+- Botón de cancelar deshabilitado en `TableOfSales` si la venta ya está cancelada (`sale.isCancelled`)
+
+#### Página de detalles del negocio
+- Nueva página `/dashboard/business/details` que muestra los datos del negocio activo con la misma estructura y estilos que la página de crear negocio (campos de solo lectura)
+
+#### Proxies Next.js para CORS
+- `/api/businesses/my-businesses` — proxy GET para obtener negocios del usuario
+- `/api/businesses/[businessId]/products` — proxy GET para productos de un negocio
+- `/api/auth/login`, `/api/auth/register`, `/api/auth/activate` — proxies POST para autenticación
+- `/api/auth/send-confirmation-token/[email]` — proxy POST para reenvío de código
+- `/api/auth/me` — proxy GET con reenvío del header `Authorization`
+- `/api/products` y `/api/products/[productId]` — proxies GET/POST/PUT/DELETE para productos generales
+
+### Corregido
+
+#### ExchangeRatePage
+- `TypeError: Cannot read properties of undefined (reading 'data')`: añadido guard `if (!data?.data)` y fallbacks `?? '-'` en los valores pasados a `ExchangeCard`
+
+#### ComboboxCollection en ventas e inventario
+- Error `Type 'Element[]' is not assignable to type '(item: any, index: number) => ReactNode'`: `ComboboxCollection` requiere una función render como children, no un array; reemplazado `products.map()` por función render directa en `sales/create/page.tsx` y `update-stock-form.tsx`
+
+#### Rutas de productos
+- Corregido path del backend de plural `/products` a singular `/product` en los proxies `api/products/route.ts` y `api/products/[productId]/route.ts`
+- Todas las rutas de productos, businesses y auth en `lib/routes/*.ts` apuntan ahora a los proxies locales (`/api/*`) en vez del backend externo directamente
+
+#### Proxies — Parsing robusto
+- Reemplazado `response.json()` por `response.text()` + `try { JSON.parse(text) } catch { data = { message: text } }` en todos los proxies para evitar crash cuando el backend devuelve HTML o respuesta vacía
+
+### Cambiado
+
+#### Almacenamiento de sesión
+- Migración completa de `localStorage` a `sessionStorage` para `token`, `refresh_token`, `user` y `activeBusinessId` en: `login/page.tsx`, `business-context.tsx`, `nav-user.tsx` y todos los archivos de `lib/api/*.ts`
+
+#### Cancelación de venta
+- `cancelSale` en `lib/api/sale.ts` ahora recibe `cancellationReason: string` y lo envía en el body del POST
+- `useCancelSaleMutation` en `hooks/use-sales.ts` ahora acepta `{ saleId, cancellationReason }` en lugar de solo `saleId`
+- `TableOfSales` usa `CancelSaleDialog` en lugar del `DeleteDialog` genérico
+
+### Resuelto
+- Merge conflict en `src/lib/routes/index.ts`: mantenida la URL `https://psearch.dveloxsoft.com/apiv1`
+
+---
+
 ## [0.3.0-beta] - 2026-03-05
 
 ### Agregado
