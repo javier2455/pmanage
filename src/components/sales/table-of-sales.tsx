@@ -5,8 +5,8 @@ import { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DeleteDialog } from "../delete-dialog";
 import DetailsDialog from "./details-dialog";
+import { CancelSaleDialog } from "./cancel-sale-dialog";
 import axios from "axios";
 import { sileo } from "sileo";
 import { useCancelSaleMutation } from "@/hooks/use-sales";
@@ -18,27 +18,35 @@ interface TableOfSalesProps {
 
 export default function TableOfSales({ sales }: TableOfSalesProps) {
   const cancelSaleMutation = useCancelSaleMutation();
-  async function handleDelete(saleId: string) {
+
+  async function handleCancel(saleId: string, cancellationReason: string) {
     try {
-      await cancelSaleMutation.mutateAsync(saleId);
+      await cancelSaleMutation.mutateAsync({ saleId, cancellationReason });
       sileo.success({
-        title: "Venta cancelada correctamente", fill: '', styles: {
+        title: "Venta cancelada correctamente",
+        fill: "",
+        styles: {
           title: "text-white! text-[16px]! font-bold!",
           description: "text-white/90! text-[15px]!",
-        }, description: "La venta se ha cancelado correctamente"
+        },
+        description: "La venta se ha cancelado correctamente",
       });
-
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         sileo.error({
-          title: error.response?.data?.error, styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: error.response?.data?.message
+          title: error.response?.data?.error,
+          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+          description: error.response?.data?.message,
         });
       } else {
         sileo.error({
-          title: "Error al cancelar la venta", fill: '', styles: {
+          title: "Error al cancelar la venta",
+          fill: "",
+          styles: {
             title: "text-white! text-[16px]! font-bold!",
             description: "text-white/90! text-[15px]!",
-          }, description: "Error al cancelar la venta. Intenta de nuevo."
+          },
+          description: "Error al cancelar la venta. Intenta de nuevo.",
         });
       }
     }
@@ -121,19 +129,18 @@ export default function TableOfSales({ sales }: TableOfSalesProps) {
                           }
                         />
 
-                        <DeleteDialog
-                          deleteType="Venta"
-                          name={sale.product.name}
-                          onConfirm={() => handleDelete(sale.id)}
-                          tooltip="Cancelar"
-                          actionText="Cancelar"
+                        <CancelSaleDialog
+                          productName={sale.product.name}
+                          onConfirm={(cancellationReason) => handleCancel(sale.id, cancellationReason)}
+                          tooltip="Cancelar venta"
                           trigger={
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon-sm"
                               className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-500/10 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-500/20"
-                              aria-label="Eliminar"
+                              aria-label="Cancelar venta"
+                              disabled={sale.isCancelled}
                             >
                               <XCircle className="size-4" />
                             </Button>

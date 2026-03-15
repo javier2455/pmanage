@@ -28,10 +28,11 @@ export function useCreateSaleMutation() {
 export function useCancelSaleMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (saleId: string,) => cancelSale(saleId),
+        mutationFn: ({ saleId, cancellationReason }: { saleId: string; cancellationReason: string }) =>
+            cancelSale(saleId, cancellationReason),
         onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ["all-sales-by-business-id"]});
-            queryClient.invalidateQueries({queryKey: ["sale-by-id"]});
+            queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["sale-by-id"] });
         },
     });
 }

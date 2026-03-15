@@ -40,8 +40,8 @@ export async function create(credentials: CreateSaleProps): Promise<BusinessWith
     return data;
 }
 
-export async function cancelSale(saleId: string) {
-    const { data } = await axios.post(salesRoutes.cancelSale(saleId), {}, {
+export async function cancelSale(saleId: string, cancellationReason: string) {
+    const { data } = await axios.post(salesRoutes.cancelSale(saleId), { cancellationReason }, {
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
