@@ -4,7 +4,7 @@ import { DollarSign, Euro, CreditCard } from 'lucide-react'
 
 interface ExchangeCardProps {
     title: string
-    value: string
+    value: number
     currency: string
 }
 
