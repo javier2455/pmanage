@@ -25,6 +25,9 @@ export const createBusinessSchema = z.object({
 export const updateBusinessSchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(100, "El nombre no puede exceder 100 caracteres"),
   description: z.string().max(500, "La descripción no puede exceder 500 caracteres").optional().or(z.literal("")),
+  type: z.enum(["agromarket", "mipyme", "market"], {
+    message: "El tipo de negocio es requerido",
+  }),
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
   phone: z.string().max(20, "El teléfono no puede exceder 20 caracteres").optional().or(z.literal("")),
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),

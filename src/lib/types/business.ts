@@ -54,6 +54,7 @@ export interface CreateBusinessPayload {
 export interface UpdateBusinessPayload {
   name: string;
   description: string | null;
+  type: BusinessType;
   address: string;
   phone: string | null;
   email: string | null;

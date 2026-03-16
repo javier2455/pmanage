@@ -18,16 +18,36 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Store, Building2, MapPin, Phone, Mail, Pencil, X, Save } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Store, Building2, MapPin, Phone, Mail, Pencil, X, Save, Tags } from "lucide-react";
 import { useBusiness } from "@/context/business-context";
 import { sileo } from "sileo";
 import axios from "axios";
+import { BusinessType } from "@/lib/types/business";
 
 const businessTypeLabels: Record<string, string> = {
   mipyme: "MiPyme",
   agromarket: "Agromercado",
   market: "Mercado",
 };
+
+function EditableFieldWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <div className="pointer-events-none absolute inset-0 rounded-md ring-1 ring-primary/25" />
+      <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+        <Pencil className="h-3 w-3 text-primary/50" />
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function BusinessDetailsPage() {
   const { activeBusiness, activeBusinessId } = useBusiness();
@@ -38,22 +58,28 @@ export default function BusinessDetailsPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<UpdateBusinessFormData>({
     resolver: zodResolver(updateBusinessSchema),
     defaultValues: {
       name: activeBusiness?.name ?? "",
       description: activeBusiness?.description ?? "",
+      type: (activeBusiness?.type as BusinessType) ?? "mipyme",
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
     },
   });
 
+  const selectedType = watch("type");
+
   function handleEdit() {
     reset({
       name: activeBusiness?.name ?? "",
       description: activeBusiness?.description ?? "",
+      type: (activeBusiness?.type as BusinessType) ?? "mipyme",
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
@@ -75,6 +101,7 @@ export default function BusinessDetailsPage() {
         payload: {
           name: data.name,
           description: data.description || null,
+          type: data.type,
           address: data.address,
           phone: data.phone || null,
           email: data.email || null,
@@ -133,7 +160,7 @@ export default function BusinessDetailsPage() {
                 <CardDescription>
                   {isEditing
                     ? "Modifica los campos que deseas actualizar"
-                    : "Información registrada de tu negocio"}
+                    : "Los campos con el indicador pueden editarse"}
                 </CardDescription>
               </div>
             </div>
@@ -178,27 +205,58 @@ export default function BusinessDetailsPage() {
                     )}
                   </>
                 ) : (
-                  <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                    <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <span className="pl-6 text-sm text-foreground">
-                      {activeBusiness?.name ?? "-"}
-                    </span>
-                  </div>
+                  <EditableFieldWrapper>
+                    <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                      <Building2 className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
+                        {activeBusiness?.name ?? "-"}
+                      </span>
+                    </div>
+                  </EditableFieldWrapper>
                 )}
               </div>
 
-              {/* Tipo (solo lectura siempre) */}
+              {/* Tipo de negocio */}
               <div className="flex flex-col gap-2">
-                <Label className="text-card-foreground">
+                <Label htmlFor="type" className="text-card-foreground">
                   Tipo de negocio
                 </Label>
-                <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                  <span className="text-sm text-foreground">
-                    {activeBusiness?.type
-                      ? businessTypeLabels[activeBusiness.type] ?? activeBusiness.type
-                      : "-"}
-                  </span>
-                </div>
+                {isEditing ? (
+                  <>
+                    <Select
+                      value={selectedType}
+                      onValueChange={(val) => setValue("type", val as BusinessType)}
+                    >
+                      <SelectTrigger id="type" aria-invalid={!!errors.type} className="w-full">
+                        <div className="flex items-center gap-2">
+                          <Tags className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Selecciona un tipo" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent align="start" position="popper">
+                        <SelectItem value="mipyme">MiPyme</SelectItem>
+                        <SelectItem value="agromarket">Agromercado</SelectItem>
+                        <SelectItem value="market">Mercado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.type && (
+                      <p className="text-sm text-destructive" role="alert">
+                        {errors.type.message}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <EditableFieldWrapper>
+                    <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                      <Tags className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
+                        {activeBusiness?.type
+                          ? businessTypeLabels[activeBusiness.type] ?? activeBusiness.type
+                          : "-"}
+                      </span>
+                    </div>
+                  </EditableFieldWrapper>
+                )}
               </div>
             </div>
 
@@ -227,16 +285,18 @@ export default function BusinessDetailsPage() {
                   )}
                 </>
               ) : (
-                <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <span className="pl-6 text-sm text-foreground">
-                    {activeBusiness?.address ?? "-"}
-                  </span>
-                </div>
+                <EditableFieldWrapper>
+                  <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                    <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      {activeBusiness?.address ?? "-"}
+                    </span>
+                  </div>
+                </EditableFieldWrapper>
               )}
             </div>
 
-            {/* Provincia / Municipio (solo lectura siempre) */}
+            {/* Provincia / Municipio (solo lectura) */}
             <div className="grid gap-5 md:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label className="text-card-foreground">Provincia</Label>
@@ -276,11 +336,13 @@ export default function BusinessDetailsPage() {
                   )}
                 </>
               ) : (
-                <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                  <span className="text-sm text-foreground">
-                    {activeBusiness?.description ?? "-"}
-                  </span>
-                </div>
+                <EditableFieldWrapper>
+                  <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                    <span className="text-sm text-foreground">
+                      {activeBusiness?.description ?? "-"}
+                    </span>
+                  </div>
+                </EditableFieldWrapper>
               )}
             </div>
 
@@ -313,12 +375,14 @@ export default function BusinessDetailsPage() {
                     )}
                   </>
                 ) : (
-                  <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <span className="pl-6 text-sm text-foreground">
-                      {activeBusiness?.phone ?? "-"}
-                    </span>
-                  </div>
+                  <EditableFieldWrapper>
+                    <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                      <Phone className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
+                        {activeBusiness?.phone ?? "-"}
+                      </span>
+                    </div>
+                  </EditableFieldWrapper>
                 )}
               </div>
 
@@ -349,12 +413,14 @@ export default function BusinessDetailsPage() {
                     )}
                   </>
                 ) : (
-                  <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <span className="pl-6 text-sm text-foreground">
-                      {activeBusiness?.email ?? "-"}
-                    </span>
-                  </div>
+                  <EditableFieldWrapper>
+                    <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                      <Mail className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
+                        {activeBusiness?.email ?? "-"}
+                      </span>
+                    </div>
+                  </EditableFieldWrapper>
                 )}
               </div>
             </div>

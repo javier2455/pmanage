@@ -7,6 +7,47 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.5.0-beta] - 2026-03-16
+
+### Agregado
+
+#### Tipo de cambio — Formulario de actualización
+- Nuevo componente `ExchangeRateForm` (`components/exchange-rate/exchange-rate-form.tsx`) con:
+  - Inputs para USD, EUR y Transferencia usando `InputGroup` con icono de prefijo
+  - Lógica create/update: llama a `useCreateExchangeRateMutation` si no hay datos previos, o `useUpdateExchangeRateMutation` si ya existen
+  - Pre-rellena los campos con los valores actuales vía `useEffect` + `reset()`
+  - Tras guardar, actualiza los campos inmediatamente con la respuesta del servidor (`response.data`) sin esperar el refetch
+  - Notificaciones `sileo.success` / `sileo.error` y manejo de errores con `axios.isAxiosError`
+  - Muestra "Valor actual: X MN" debajo de cada campo cuando hay datos existentes
+- Nuevo schema de validación `exchangeRateSchema` en `lib/validations/exchange-rate.ts`
+- Tipo `UpdateExchangeRatePayload` (`Omit<ExchangeRatePayload, 'idbusiness'>`) en `lib/types/exchange-rate.ts`
+- Función `updateExchangeRate` en `lib/api/exchange-rate.ts`
+- Ruta `updateExchangeRate` en `lib/routes/exchange-rate.ts`
+- Hook `useUpdateExchangeRateMutation` en `hooks/use-exchange.ts`
+- `ExchangeRateTypeOne` exportado desde `lib/types/exchange-rate.ts`
+
+#### Detalles del negocio — Campo tipo de negocio editable
+- "Tipo de negocio" ahora es editable al activar el modo edición, usando un `Select` con las opciones MiPyme, Agromercado y Mercado
+- Campo `type` añadido al schema `updateBusinessSchema` y al payload del `onSubmit`
+- Componente `EditableFieldWrapper` interno: envuelve los campos editables en modo lectura con un ring sutil (`ring-1 ring-primary/25`) y un icono de lápiz pequeño (`Pencil h-3 w-3 text-primary/50`) en la esquina derecha como indicador visual; los campos de solo lectura (Provincia, Municipio) no tienen este wrapper
+
+### Corregido
+
+#### Tipo de cambio
+- `TypeError: Cannot read properties of null (reading 'USD')`: añadido guard `data?.data` en la page; las cards solo se renderizan si hay datos, y al formulario se le pasa `data?.data ?? null`
+- Schema Zod: `invalid_type_error` reemplazado por `error` para compatibilidad con Zod v4
+- Interfaces `ExchangeRateData` y `ExchangeRateFormProps` locales del formulario eliminadas y reemplazadas con `ExchangeRateTypeOne` importada desde tipos
+- Corregido `invalidateQueries` en `useCreateExchangeRateMutation`: ahora invalida `["exchange-rate", idbusiness]` en vez de queries de productos
+
+#### Detalles del negocio — Select de tipo de negocio
+- Valor seleccionado aparecía centrado: icono y `SelectValue` agrupados en un `div flex` para que formen un bloque a la izquierda junto al chevron a la derecha
+- Dropdown del select se abría centrado: `SelectContent` cambiado a `align="start"` y `position="popper"` para alinearse al inicio del trigger y heredar su ancho
+
+### Eliminado
+- Proxies Next.js de productos (`src/app/api/products/route.ts`, `src/app/api/products/[productId]/route.ts`, `src/app/api/products/business/[businessId]/route.ts`) — no se utilizaban; las rutas en `lib/routes/product.ts` apuntan directamente al backend externo
+
+---
+
 ## [0.4.0-beta] - 2026-03-12 / 2026-03-14
 
 ### Agregado
