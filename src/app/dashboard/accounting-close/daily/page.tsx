@@ -107,7 +107,7 @@ export default function DailyPage() {
           </h1>
           <p className="text-muted-foreground">
             Resumen contable del dia &mdash;{" "}
-            <span className="capitalize">{today}</span>
+            <span className="capitalize">{selectedDate ? format(selectedDate, "dd 'de' MMMM, yyyy") : today}</span>
           </p>
         </div>
         <DateFilter

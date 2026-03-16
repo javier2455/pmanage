@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Crown } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -33,6 +33,7 @@ export function NavMain({
       title: string
       url: string
       icon?: LucideIcon
+      pro?: boolean
     }[]
   }[]
 }) {
@@ -72,6 +73,12 @@ export function NavMain({
                           <Link href={subItem.url}>
                             {subItem.icon && <subItem.icon className="size-4" />}
                             <span>{subItem.title}</span>
+                            {subItem.pro && (
+                              <span className="ml-auto flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                                <Crown className="size-2.5" />
+                                Pro
+                              </span>
+                            )}
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

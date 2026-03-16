@@ -78,6 +78,7 @@ const data = {
           title: "Mensual",
           url: "/dashboard/accounting-close/monthly",
           icon: CalendarRange,
+          pro: true,
         },
       ],
     },

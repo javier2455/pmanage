@@ -105,12 +105,12 @@ export function NavUser() {
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-accent-foreground cursor-pointer" onClick={handleLogout}>
+                        <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                             <LogOut className="mr-2 size-4" />
                             Cerrar sesion
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                        <div className="px-2 py-1.5 text-xs">
                             v{packageJson.version}
                         </div>
                     </DropdownMenuContent>
