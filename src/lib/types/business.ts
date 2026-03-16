@@ -51,3 +51,19 @@ export interface CreateBusinessPayload {
   municipalityId: string;
 }
 
+export interface UpdateBusinessPayload {
+  name: string;
+  description: string | null;
+  address: string;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface UpdateBusinessResponse {
+  message: string;
+  data: {
+    id: string;
+    name: string;
+  };
+}
+

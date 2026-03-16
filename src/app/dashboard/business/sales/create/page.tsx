@@ -276,9 +276,9 @@ export default function CreateSalesPage() {
                   <X className="mr-2 h-4 w-4" />
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={!isValid}>
+                <Button type="submit" disabled={!isValid || createSaleMutation.isPending}>
                   <Check className="mr-2 h-4 w-4" />
-                  Registrar venta
+                  {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
                 </Button>
               </div>
             </CardContent>

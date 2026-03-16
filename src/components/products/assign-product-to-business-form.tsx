@@ -233,7 +233,7 @@ export function AssignProductToBusinessForm() {
             disabled={createProductInBusinessMutation.isPending}
           >
             <Link2 className="mr-2 h-4 w-4" />
-            Agregar al negocio
+            {createProductInBusinessMutation.isPending ? "Agregando..." : "Agregar al negocio"}
           </Button>
         </div>
       </form>

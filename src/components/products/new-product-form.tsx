@@ -291,9 +291,9 @@ export function NewProductForm() {
                             Cancelar
                         </Link>
                     </Button>
-                    <Button type="submit" disabled={false}>
+                    <Button type="submit" disabled={createProductMutation.isPending}>
                         <PackagePlus className="mr-2 h-4 w-4" />
-                        Registrar producto
+                        {createProductMutation.isPending ? "Registrando..." : "Registrar producto"}
                     </Button>
                 </div>
             </form>

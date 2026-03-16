@@ -268,9 +268,9 @@ export function UpdateStockForm() {
             <X className="mr-2 h-4 w-4" />
             Cancelar
           </Button>
-          <Button type="submit" disabled={!selectedProduct}>
+          <Button type="submit" disabled={!selectedProduct || addStockToProductMutation.isPending}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Actualizar stock
+            {addStockToProductMutation.isPending ? "Actualizando..." : "Actualizar stock"}
           </Button>
         </div>
       </form>

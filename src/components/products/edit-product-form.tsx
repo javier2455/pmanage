@@ -280,9 +280,9 @@ export function EditProductForm() {
                             Cancelar
                         </Link>
                     </Button>
-                    <Button type="submit" disabled={false}>
+                    <Button type="submit" disabled={editProductMutation.isPending}>
                         <RefreshCw className="mr-2 h-4 w-4" />
-                        Actualizar producto
+                        {editProductMutation.isPending ? "Actualizando..." : "Actualizar producto"}
                     </Button>
                 </div>
             </form>
