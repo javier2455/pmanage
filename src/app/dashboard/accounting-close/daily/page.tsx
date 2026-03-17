@@ -212,65 +212,146 @@ export default function DailyPage() {
         </Card>
       </div> */}
 
-      {/* Products sold today */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-              <ShoppingCart className="h-4 w-4 text-primary" />
+      {/* Products sold today + Inventory entries - side by side on tablet+ */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                <ShoppingCart className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-card-foreground">
+                  Productos vendidos hoy
+                </CardTitle>
+                <CardDescription>
+                  Detalle de todas las ventas realizadas en el dia
+                </CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-card-foreground">
-                Productos vendidos hoy
-              </CardTitle>
-              <CardDescription>
-                Detalle de todas las ventas realizadas en el dia
-              </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="hidden sm:grid sm:grid-cols-5 gap-4 border-b border-border pb-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-2">
+                Producto
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                Cantidad
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                Precio Unit.
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                Total
+              </span>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="hidden sm:grid sm:grid-cols-5 gap-4 border-b border-border pb-3">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-2">
-              Producto
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Cantidad
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Precio Unit.
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Total
-            </span>
-          </div>
-          <div className="flex flex-col">
-            {sales
-              .filter((s) => !s.isCancelled)
-              .map((sale) => {
-                const total = sale.cantidad * sale.precio
+            <div className="flex flex-col">
+              {sales
+                .filter((s) => !s.isCancelled)
+                .map((sale) => {
+                  const total = sale.cantidad * sale.precio
+                  return (
+                    <div
+                      key={sale.id}
+                      className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
+                    >
+                      <span className="text-sm font-medium text-card-foreground col-span-2 sm:col-span-2 line-clamp-2">
+                        {sale.product?.name}
+                      </span>
+                      <div className="flex sm:justify-end items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground sm:hidden">
+                          Cant:
+                        </span>
+                        <span className="text-sm tabular-nums text-card-foreground">
+                          {sale.cantidad}
+                        </span>
+                      </div>
+                      <div className="flex sm:justify-end items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground sm:hidden">
+                          P.U.:
+                        </span>
+                        <span className="text-sm tabular-nums text-card-foreground">
+                          ${formatCurrency(sale.precio)}
+                        </span>
+                      </div>
+                      <div className="flex sm:justify-end items-center col-span-2 sm:col-span-1">
+                        <span className="text-sm font-semibold tabular-nums text-card-foreground">
+                          ${formatCurrency(total)}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm font-semibold text-card-foreground">
+                Total ventas del dia
+              </span>
+              <span className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                ${formatCurrency(totalSales)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                <Package className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-card-foreground">
+                  Productos ingresados hoy
+                </CardTitle>
+                <CardDescription>
+                  Detalle de todos los productos ingresados en el dia
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="hidden sm:grid sm:grid-cols-4 gap-4 border-b border-border pb-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-1">
+                Producto
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                Cantidad
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                Costo Unit.
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                Total
+              </span>
+            </div>
+            <div className="flex flex-col">
+              {inventoryEntries.map((entry) => {
+                const qty = Number(entry.quantity)
+                const unitCost = Number(entry.entryPrice)
+                const total = qty * unitCost
                 return (
                   <div
-                    key={sale.id}
-                    className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
+                    key={entry.id}
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
                   >
-                    <span className="text-sm font-medium text-card-foreground col-span-2 sm:col-span-2">
-                      {sale.product?.name}
+                    <span className="text-sm font-medium text-card-foreground col-span-2 sm:col-span-1 line-clamp-2">
+                      {entry.product?.name ?? "-"}
                     </span>
                     <div className="flex sm:justify-end items-center gap-1.5">
                       <span className="text-xs text-muted-foreground sm:hidden">
                         Cant:
                       </span>
                       <span className="text-sm tabular-nums text-card-foreground">
-                        {sale.cantidad}
+                        {qty}
                       </span>
                     </div>
                     <div className="flex sm:justify-end items-center gap-1.5">
                       <span className="text-xs text-muted-foreground sm:hidden">
-                        P.U.:
+                        C.U.:
                       </span>
                       <span className="text-sm tabular-nums text-card-foreground">
-                        ${formatCurrency(sale.precio)}
+                        ${formatCurrency(unitCost)}
                       </span>
                     </div>
                     <div className="flex sm:justify-end items-center col-span-2 sm:col-span-1">
@@ -281,98 +362,18 @@ export default function DailyPage() {
                   </div>
                 )
               })}
-          </div>
-          <div className="flex items-center justify-between pt-4">
-            <span className="text-sm font-semibold text-card-foreground">
-              Total ventas del dia
-            </span>
-            <span className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-              ${formatCurrency(totalSales)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Inventory entries today */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-              <Package className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <CardTitle className="text-card-foreground">
-                Productos ingresados hoy
-              </CardTitle>
-              <CardDescription>
-                Detalle de todos los productos ingresados en el dia
-              </CardDescription>
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm font-semibold text-card-foreground">
+                Total gastos del dia
+              </span>
+              <span className="text-base font-bold tabular-nums text-destructive">
+                ${formatCurrency(totalExpenses)}
+              </span>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="hidden sm:grid sm:grid-cols-4 gap-4 border-b border-border pb-3">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-1">
-              Producto
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Cantidad
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Costo Unit.
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Total
-            </span>
-          </div>
-          <div className="flex flex-col">
-            {inventoryEntries.map((entry) => {
-              const qty = Number(entry.quantity)
-              const unitCost = Number(entry.entryPrice)
-              const total = qty * unitCost
-              return (
-                <div
-                  key={entry.id}
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
-                >
-                  <span className="text-sm font-medium text-card-foreground col-span-2 sm:col-span-1">
-                    {entry.product?.name ?? "-"}
-                  </span>
-                  <div className="flex sm:justify-end items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground sm:hidden">
-                      Cant:
-                    </span>
-                    <span className="text-sm tabular-nums text-card-foreground">
-                      {qty}
-                    </span>
-                  </div>
-                  <div className="flex sm:justify-end items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground sm:hidden">
-                      C.U.:
-                    </span>
-                    <span className="text-sm tabular-nums text-card-foreground">
-                      ${formatCurrency(unitCost)}
-                    </span>
-                  </div>
-                  <div className="flex sm:justify-end items-center col-span-2 sm:col-span-1">
-                    <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                      ${formatCurrency(total)}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          <div className="flex items-center justify-between pt-4">
-            <span className="text-sm font-semibold text-card-foreground">
-              Total gastos del dia
-            </span>
-            <span className="text-base font-bold tabular-nums text-destructive">
-              ${formatCurrency(totalExpenses)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Current inventory */}
       <Card>

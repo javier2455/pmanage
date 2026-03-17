@@ -76,12 +76,12 @@ const data = {
           url: "/dashboard/accounting-close/daily",
           icon: CalendarDays,
         },
-        {
-          title: "Mensual",
-          url: "/dashboard/accounting-close/monthly",
-          icon: CalendarRange,
-          pro: true,
-        },
+        // {
+        //   title: "Mensual",
+        //   url: "/dashboard/accounting-close/monthly",
+        //   icon: CalendarRange,
+        //   pro: true,
+        // },
       ],
     },
     {

@@ -85,14 +85,14 @@ export function NavUser() {
                         sideOffset={4}
                     >
                         <DropdownMenuGroup>
-                            <DropdownMenuItem className="cursor-pointer">
+                            {/* <DropdownMenuItem className="cursor-pointer">
                                 <User className="mr-2 size-4" />
                                 Perfil
                             </DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">
                                 <Settings className="mr-2 size-4" />
                                 Configuracion
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuItem
                                 onClick={() =>
                                     setTheme(theme === "light" ? "dark" : "light")
