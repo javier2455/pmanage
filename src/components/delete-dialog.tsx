@@ -70,9 +70,11 @@ export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip, ac
                             {actionText} {deleteType}
                         </DialogTitle>
                     </div>
-                    <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                        ¿Estás seguro de querer {actionText.toLowerCase()} este {deleteType.toLowerCase()} — <span className="font-bold text-white">{name}</span>? Esta acción no se puede deshacer.
-                        {actionText === 'Cancelar' && ' El stock del producto se restablecerá.'}
+                    <DialogDescription asChild>
+                        <p className=" text-foreground text-sm leading-relaxed">
+                            ¿Estás seguro de querer {actionText.toLowerCase()} este {deleteType.toLowerCase()} — <span className="font-bold text-foreground">{name}</span>? Esta acción no se puede deshacer.
+                            {actionText === 'Cancelar' && ' El stock del producto se restablecerá.'}
+                        </p>
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-2">

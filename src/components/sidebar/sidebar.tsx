@@ -13,6 +13,8 @@ import {
   CalendarRange,
   ArrowLeftRight,
   Store,
+  Settings,
+  BadgeDollarSign,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -86,6 +88,18 @@ const data = {
       title: "Tipo de Cambio",
       url: "/dashboard/exchange-rate",
       icon: ArrowLeftRight,
+    },
+    {
+      title: "Administrar",
+      url: "#",
+      icon: Settings,
+      items: [
+        {
+          title: "Asignar Planes",
+          url: "/dashboard/admin/assign-plans",
+          icon: BadgeDollarSign,
+        },
+      ],
     },
   ],
 }
