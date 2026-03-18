@@ -1,6 +1,5 @@
 import axios from "axios";
 import { plansRoutes } from "../routes/plans";
-import { PlanResponse } from "../types/plans";
 
 interface ActivePlanProps {
     token: string;
@@ -18,12 +17,11 @@ export async function getActivePlan({ token }: ActivePlanProps) {
     return data;
 }
 
-export async function getAllPlans(): Promise<PlanResponse[]> {
-    const { data } = await axios.get(plansRoutes.getAllPlans, {
-        headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-    });
+export async function getAllPlans() {
+    const { data } = await axios.get(plansRoutes.getAllPlans);
 
     return data;
+    // const { data } = await axios.get("/api/plans");
+    // const list = Array.isArray(data) ? data : (data as { data?: unknown[] })?.data;
+    // return Array.isArray(list) ? list : [];
 }

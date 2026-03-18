@@ -16,7 +16,7 @@ export default function AssignPlansPage() {
   const users: UserDataResponse[] = usersData ?? []
   const plans = plansData ?? []
 
-  console.log('plans', plans)
+  console.log('looking for plans', plans)
 
   const [searchQuery, setSearchQuery] = useState("")
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -59,7 +59,7 @@ export default function AssignPlansPage() {
         </p>
       </div>
 
-      <AssignPlansStatsCards users={users} plans={plans} />
+      {/* <AssignPlansStatsCards users={users} plans={plans} />
 
       <AssignPlansTable
         users={users}
@@ -82,7 +82,7 @@ export default function AssignPlansPage() {
         onConfirm={handleConfirm}
         onCancel={handleCancel}
         plans={plans}
-      />
+      /> */}
     </div>
   )
 }
