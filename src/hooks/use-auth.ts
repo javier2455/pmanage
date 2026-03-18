@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { login, register, verifyCode, resendCode } from "@/lib/api/auth";
+import { login, register, verifyCode, resendCode, getMe } from "@/lib/api/auth";
 import type { LoginFormData, RegisterFormData, VerifyFormData } from "@/lib/validations/auth";
 
 export function useLoginMutation() {
@@ -26,5 +26,12 @@ export function useResendCode(email: string) {
   return useQuery({
     queryKey: ["resend-code", email],
     queryFn: () => resendCode({ email }),
+  });
+}
+
+export function useAuthUserData() {
+  return useQuery({
+    queryKey: ["auth-user-data"],
+    queryFn: () => getMe(),
   });
 }

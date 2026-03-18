@@ -18,6 +18,44 @@ interface AuthResponse {
   message?: string;
 }
 
+interface AuthDataResponse {
+  id: string;
+  email: string;
+  phone: string | null;
+  avatar: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastLogin: string;
+  pageId: string;
+  rol: Role;
+  active: number;
+  twoFactorEnabled: boolean;
+  providers: [];
+  hasPassword: boolean;
+  name: string;
+  _source: string;
+  plan: Plan;
+}
+
+interface Role {
+  id: number;
+  name: string;
+  pageId: string;
+  permission: string;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  price: string;
+  maxProducts: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 export async function login(credentials: LoginFormData): Promise<LoginResponse> {
   const { data } = await apiClient.post(authRoutes.login, credentials);
@@ -40,7 +78,7 @@ export async function resendCode({ email }: { email: string }) {
   return { message: 'Código de verificación reenviado, verifique su email' };
 }
 
-export async function getMe(): Promise<LoginDataResponse> {
+export async function getMe(): Promise<AuthDataResponse> {
   const { data } = await apiClient.get(authRoutes.me);
   return data;
 }

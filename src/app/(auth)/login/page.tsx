@@ -160,14 +160,16 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginFormData) => {
         try {
             const response = await loginMutation.mutateAsync(data);
-            const { access_token, refresh_token, user } = response;
+            const { access_token, refresh_token } = response;
 
             /* Verificar si el usuario tiene o no un plan activo */
-            // Guardar token en sessionStorage antes de llamar a getActivePlan
+            // Guardar token en sessionStorage antes de llamar a getMe y getActivePlan
             sessionStorage.setItem("token", access_token);
             if (refresh_token) {
                 sessionStorage.setItem("refresh_token", refresh_token);
             }
+            const user = await getMe();
+
             const activePlan = await getActivePlan();
 
             if (activePlan?.data?.isActive || activePlan?.isActive) {
@@ -175,7 +177,7 @@ export default function LoginPage() {
                 if (refresh_token) {
                     sessionStorage.setItem("refresh_token", refresh_token);
                 }
-                sessionStorage.setItem("user", JSON.stringify(user));
+                sessionStorage.setItem("user", JSON.stringify({ name: user.name, role: user.rol, email: user.email, plan: user.plan }));
 
                 router.push("/dashboard");
             } else {
@@ -183,7 +185,7 @@ export default function LoginPage() {
                 if (refresh_token) {
                     sessionStorage.setItem("refresh_token", refresh_token);
                 }
-                sessionStorage.setItem("user", JSON.stringify(user));
+                sessionStorage.setItem("user", JSON.stringify({ name: user.name, role: user.rol, email: user.email, plan: user.plan }));
                 router.push("/plans");
             }
 
