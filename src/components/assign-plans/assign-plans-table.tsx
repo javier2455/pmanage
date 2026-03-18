@@ -130,20 +130,22 @@ export function AssignPlansTable({
                           <DropdownMenuLabel>Asignar Plan</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           {plans.map((plan) => {
-                            const style = getPlanStyle(plan)
-                            const Icon = style.icon
+                            const planStyle = getPlanStyle(plan)
+                            const Icon = planStyle.icon
+                            const s = planStyle.style
                             const isActive = user.plan?.id === plan.id
                             return (
                               <DropdownMenuItem
                                 key={plan.id}
                                 onClick={() => onPlanSelect(user, plan)}
                                 disabled={isActive}
-                                className={cn("gap-2", isActive && "opacity-50")}
+                                className={cn("gap-2 border-l-4", isActive && "opacity-50")}
+                                style={!isActive && s.color ? { borderLeftColor: s.color, backgroundColor: s.backgroundColor } : undefined}
                               >
-                                <Icon className={cn("h-4 w-4", style.color)} />
-                                <span>{plan.name}</span>
+                                <Icon className="h-4 w-4 shrink-0" style={!isActive && s.color ? { color: s.color } : undefined} />
+                                <span style={!isActive && s.color ? { color: s.color } : undefined}>{plan.name}</span>
                                 {isActive && (
-                                  <Check className="ml-auto h-4 w-4 text-primary" />
+                                  <Check className="ml-auto h-4 w-4 text-primary shrink-0" />
                                 )}
                               </DropdownMenuItem>
                             )

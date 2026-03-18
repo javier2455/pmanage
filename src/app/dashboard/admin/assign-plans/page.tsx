@@ -19,6 +19,8 @@ export default function AssignPlansPage() {
   const users: UserDataResponse[] = usersData ?? []
   const plans = plansData?.data ?? []
 
+  console.log('plans', plans)
+
   const [searchQuery, setSearchQuery] = useState("")
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean

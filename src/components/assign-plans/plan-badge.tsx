@@ -22,20 +22,17 @@ export function PlanBadge({ plan, plans }: PlanBadgeProps) {
   }
 
   const planFromList = plans.find((p) => p.id === plan.id)
-  const style = planFromList ? getPlanStyle(planFromList) : { icon: Star, color: "text-muted-foreground", bgColor: "bg-muted/50", borderColor: "border-border" }
-  const Icon = style.icon
+  const planStyle = planFromList ? getPlanStyle(planFromList) : getPlanStyle({ type: plan.name, name: plan.name })
+  const Icon = planStyle.icon
+  const s = planStyle.style
 
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "gap-1",
-        style.bgColor,
-        style.color,
-        style.borderColor
-      )}
+      className={cn("gap-1 border", planStyle.bgColor, planStyle.color, planStyle.borderColor)}
+      style={s.color ? { backgroundColor: s.backgroundColor, borderColor: s.borderColor, color: s.color } : undefined}
     >
-      <Icon className="h-3 w-3" />
+      <Icon className="h-3 w-3 shrink-0" style={s.color ? { color: s.color } : undefined} />
       {plan.name}
     </Badge>
   )
