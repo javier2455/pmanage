@@ -1,4 +1,4 @@
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import { exchangeRateRoutes } from "../routes/exchange-rate";
 import { ExchangeRatePayload, ExchangeRateResponse, UpdateExchangeRatePayload } from "../types/exchange-rate";
 
@@ -7,7 +7,7 @@ interface ExchangeRateProps {
 }
 
 export async function getExchangeRate({ businessId }: ExchangeRateProps) {
-    const { data } = await axios.get(
+    const { data } = await apiClient.get(
         exchangeRateRoutes.getExchangeRate(businessId)
     );
 
@@ -15,15 +15,9 @@ export async function getExchangeRate({ businessId }: ExchangeRateProps) {
 }
 
 export async function createExchangeRate(payload: ExchangeRatePayload): Promise<ExchangeRateResponse> {
-    const { data } = await axios.post(
+    const { data } = await apiClient.post(
         exchangeRateRoutes.createExchangeRate,
-        payload,
-        {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-            },
-        }
+        payload
     );
 
     return data;
@@ -32,15 +26,9 @@ export async function createExchangeRate(payload: ExchangeRatePayload): Promise<
 export async function updateExchangeRate(businessId: string, payload: UpdateExchangeRatePayload): Promise<ExchangeRateResponse> {
     console.log('payload', payload);
     console.log('businessId', businessId);
-    const { data } = await axios.put(
+    const { data } = await apiClient.put(
         exchangeRateRoutes.updateExchangeRate(businessId),
-        payload,
-        {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-            },
-        }
+        payload
     );
 
     return data;

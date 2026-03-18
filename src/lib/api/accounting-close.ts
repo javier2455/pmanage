@@ -1,4 +1,4 @@
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import { AccountingCloseDailyResponse, DateRangeParameters } from "../types/accounting-close";
 import { accountingCloseRoutes } from "../routes/accounting-close";
 
@@ -12,10 +12,6 @@ export async function getDailyAccountingClose(businessId: string, params?: DateR
     if (params?.startDate) url.searchParams.set("startDate", params.startDate);
     if (params?.endDate)   url.searchParams.set("endDate", params.endDate);
 
-    const { data } = await axios.get(url.toString(), {
-        headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-    });
+    const { data } = await apiClient.get(url.toString());
     return data;
 }

@@ -1,4 +1,4 @@
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import { authRoutes } from "@/lib/routes/auth";
 import type { LoginFormData, RegisterFormData } from "@/lib/validations/auth";
 import { LoginResponse, UserResponseOfRegister } from "../types/user";
@@ -20,50 +20,28 @@ interface AuthResponse {
 
 
 export async function login(credentials: LoginFormData): Promise<LoginResponse> {
-  const { data } = await axios.post(authRoutes.login, credentials, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
+  const { data } = await apiClient.post(authRoutes.login, credentials);
   return data;
 }
 
 export async function register(credentials: RegisterFormData): Promise<UserResponseOfRegister> {
   const { email, name, password, rolId } = credentials
-  const { data } = await axios.post(authRoutes.register, { email, name, password, rolId }, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const { data } = await apiClient.post(authRoutes.register, { email, name, password, rolId });
   console.log('data of register', data);
   return data;
 }
 
 export async function verifyCode(credentials: { email: string, code: string }): Promise<AuthResponse> {
-  const { data } = await axios.post<AuthResponse>(authRoutes.verify, credentials, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const { data } = await apiClient.post<AuthResponse>(authRoutes.verify, credentials);
   return data;
 }
 
 export async function resendCode({ email }: { email: string }) {
-  await axios.post(authRoutes.sendConfirmationToken(email), {
-    headers: {
-      "Content-Type": "application/json",
-    }
-  });
+  await apiClient.post(authRoutes.sendConfirmationToken(email));
   return { message: 'Código de verificación reenviado, verifique su email' };
 }
 
-export async function getMe(token: string): Promise<LoginDataResponse> {
-  const { data } = await axios.get(authRoutes.me, {
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
-  });
+export async function getMe(): Promise<LoginDataResponse> {
+  const { data } = await apiClient.get(authRoutes.me);
   return data;
 }

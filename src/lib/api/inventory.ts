@@ -1,25 +1,15 @@
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import { inventoryRoutes } from "../routes/inventory";
 import { AddStockToProductProps, InventoryEntryResponse } from "../types/inventory";
 
 export async function getAllInventoryByBusinessId(businessId: string): Promise<InventoryEntryResponse> {
-    const { data } = await axios.get(inventoryRoutes.getInventoryByBusinessId(businessId), {
-        headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-    });
+    const { data } = await apiClient.get(inventoryRoutes.getInventoryByBusinessId(businessId));
     return data;
 }
 
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
     console.log('credentials of create', credentials)
     const { quantity, entryPrice, description } = credentials
-    const { data } = await axios.post(inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId), { quantity, entryPrice, description }, {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-    });
-
+    const { data } = await apiClient.post(inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId), { quantity, entryPrice, description });
     return data;
 }

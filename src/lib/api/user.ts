@@ -1,13 +1,9 @@
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import { userRoutes } from "../routes/user";
 import { UserDataResponse } from "../types/user";
 
 export async function getAllUsersData(): Promise<UserDataResponse[]> {
-    const { data } = await axios.get(userRoutes.getUserData, {
-        headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-    });
+    const { data } = await apiClient.get(userRoutes.getUserData);
 
     return data;
 }
