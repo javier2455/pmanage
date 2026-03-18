@@ -74,8 +74,10 @@ export default function LoginPage() {
 
                 try {
                     // Llamar al endpoint auth/me para obtener los datos completos del usuario
-                    const user = await getMe(accessToken);
-                    const activePlan = await getActivePlan({ token: accessToken });
+                    // Guardar token en sessionStorage antes de hacer llamadas autenticadas
+                    sessionStorage.setItem("token", accessToken);
+                    const user = await getMe();
+                    const activePlan = await getActivePlan();
 
                     // Guardar datos en sessionStorage
                     sessionStorage.setItem("token", accessToken);
@@ -158,18 +160,29 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginFormData) => {
         try {
             const response = await loginMutation.mutateAsync(data);
-            const { access_token, user } = response;
+            const { access_token, refresh_token, user } = response;
 
             /* Verificar si el usuario tiene o no un plan activo */
-            const activePlan = await getActivePlan({ token: access_token });
+            // Guardar token en sessionStorage antes de llamar a getActivePlan
+            sessionStorage.setItem("token", access_token);
+            if (refresh_token) {
+                sessionStorage.setItem("refresh_token", refresh_token);
+            }
+            const activePlan = await getActivePlan();
 
             if (activePlan?.data?.isActive || activePlan?.isActive) {
                 sessionStorage.setItem("token", access_token);
+                if (refresh_token) {
+                    sessionStorage.setItem("refresh_token", refresh_token);
+                }
                 sessionStorage.setItem("user", JSON.stringify(user));
 
                 router.push("/dashboard");
             } else {
                 sessionStorage.setItem("token", access_token);
+                if (refresh_token) {
+                    sessionStorage.setItem("refresh_token", refresh_token);
+                }
                 sessionStorage.setItem("user", JSON.stringify(user));
                 router.push("/plans");
             }
