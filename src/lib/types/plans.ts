@@ -9,3 +9,26 @@ export interface PlanResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface AssignPlanPayload {
+  userId: string;
+  planId: string;
+  startDate: string;
+  expiresAt: string;
+}
+
+export interface AssignPlanResponse {
+    message: string;
+    data: AssignPlanResponseData;
+}
+
+type AssignPlanResponseData = {
+  id: string;
+  userId: string;
+  planId: string;
+  startsAt: string;
+  expiresAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

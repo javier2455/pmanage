@@ -157,7 +157,7 @@ export function AssignPlanConfirmDialog({
           </Button>
           <Button
             onClick={onConfirm}
-            disabled={saving}
+            disabled={saving || (!!newPlan && !endDate.trim()) || !newPlan}
             className={cn(
               newPlan === null &&
                 "bg-destructive text-destructive-foreground hover:bg-destructive/90"

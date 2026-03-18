@@ -27,7 +27,6 @@ export async function login(credentials: LoginFormData): Promise<LoginResponse> 
 export async function register(credentials: RegisterFormData): Promise<UserResponseOfRegister> {
   const { email, name, password, rolId } = credentials
   const { data } = await apiClient.post(authRoutes.register, { email, name, password, rolId });
-  console.log('data of register', data);
   return data;
 }
 

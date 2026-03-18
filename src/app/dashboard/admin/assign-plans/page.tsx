@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
+import { sileo } from "sileo"
 import { useGetAllUsersData } from "@/hooks/use-user"
-import { useGetAllPlans } from "@/hooks/use-plans"
+import { useGetAllPlans, useAssignPlanMutation } from "@/hooks/use-plans"
 import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
 import { AssignPlansStatsCards } from "@/components/assign-plans/assign-plans-stats-cards"
@@ -12,11 +14,10 @@ import { AssignPlanConfirmDialog } from "@/components/assign-plans/assign-plan-c
 export default function AssignPlansPage() {
   const { data: usersData, isLoading: isLoadingUsers } = useGetAllUsersData()
   const { data: plansData } = useGetAllPlans()
+  const assignPlanMutation = useAssignPlanMutation()
 
   const users: UserDataResponse[] = usersData ?? []
-  const plans = plansData ?? []
-
-  console.log('looking for plans', plans)
+  const plans = plansData?.data ?? []
 
   const [searchQuery, setSearchQuery] = useState("")
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -24,7 +25,6 @@ export default function AssignPlansPage() {
     user: UserDataResponse | null
     newPlan: PlanResponse | null
   }>({ open: false, user: null, newPlan: null })
-  const [saving, setSaving] = useState(false)
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
 
@@ -34,12 +34,54 @@ export default function AssignPlansPage() {
     setConfirmDialog({ open: true, user, newPlan: plan })
   }
 
-  const handleConfirm = () => {
-    if (!confirmDialog.user) return
-    setSaving(true)
-    // TODO: llamar API de asignar plan cuando exista
-    setSaving(false)
-    setConfirmDialog({ open: false, user: null, newPlan: null })
+  const handleConfirm = async () => {
+    const { user, newPlan } = confirmDialog
+    if (!user || !newPlan) return
+    if (!endDate.trim()) {
+      sileo.error({
+        title: "Fecha requerida",
+        description: "La fecha de expiracion es obligatoria para asignar el plan.",
+        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+      })
+      return
+    }
+
+    try {
+      await assignPlanMutation.mutateAsync({
+        userId: user.id,
+        planId: newPlan.id,
+        startDate,
+        expiresAt: endDate,
+      })
+      sileo.success({
+        title: "Plan asignado",
+        description: `El plan ${newPlan.name} se ha asignado correctamente a ${user.name}.`,
+        styles: {
+          title: "text-black! text-[16px]! font-bold!",
+          description: "text-black/90! text-[15px]!",
+        },
+      })
+      setConfirmDialog({ open: false, user: null, newPlan: null })
+      setStartDate("")
+      setEndDate("")
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        sileo.error({
+          title: error.response?.data?.error ?? "Error",
+          description: error.response?.data?.message,
+          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+        })
+      } else {
+        sileo.error({
+          title: "Error al asignar plan",
+          description: "No se pudo asignar el plan. Intenta de nuevo.",
+          styles: {
+            title: "text-white! text-[16px]! font-bold!",
+            description: "text-white/90! text-[15px]!",
+          },
+        })
+      }
+    }
   }
 
   const handleCancel = () => {
@@ -59,7 +101,7 @@ export default function AssignPlansPage() {
         </p>
       </div>
 
-      {/* <AssignPlansStatsCards users={users} plans={plans} />
+      <AssignPlansStatsCards users={users} plans={plans ?? []} />
 
       <AssignPlansTable
         users={users}
@@ -74,15 +116,15 @@ export default function AssignPlansPage() {
         open={confirmDialog.open}
         user={confirmDialog.user}
         newPlan={confirmDialog.newPlan}
-        saving={saving}
+        saving={assignPlanMutation.isPending}
         startDate={startDate}
         endDate={endDate}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
-        plans={plans}
-      /> */}
+        plans={plans ?? []}
+      />
     </div>
   )
 }

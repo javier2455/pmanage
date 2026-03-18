@@ -24,8 +24,6 @@ export async function createExchangeRate(payload: ExchangeRatePayload): Promise<
 }
 
 export async function updateExchangeRate(businessId: string, payload: UpdateExchangeRatePayload): Promise<ExchangeRateResponse> {
-    console.log('payload', payload);
-    console.log('businessId', businessId);
     const { data } = await apiClient.put(
         exchangeRateRoutes.updateExchangeRate(businessId),
         payload
