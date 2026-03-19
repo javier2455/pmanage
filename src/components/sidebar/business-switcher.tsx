@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Check, ChevronsUpDown, Store, Plus } from "lucide-react"
+import { PRO_STYLE } from "@/components/assign-plans/utils"
 
 
 export function BusinessSwitcher() {
@@ -76,6 +77,10 @@ export function BusinessSwitcher() {
         >
           <Plus className="size-4" />
           <span className="text-sm">Agregar negocio</span>
+          <span className={cn("ml-auto", PRO_STYLE.className)}>
+            <PRO_STYLE.icon className="size-2.5" />
+            Pro
+          </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

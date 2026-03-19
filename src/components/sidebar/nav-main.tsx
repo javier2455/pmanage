@@ -1,10 +1,12 @@
 "use client"
 
-import { ChevronRight, Crown } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { PRO_STYLE } from "@/components/assign-plans/utils"
+import { cn } from "@/lib/utils"
 import {
   Collapsible,
   CollapsibleContent,
@@ -74,8 +76,8 @@ export function NavMain({
                             {subItem.icon && <subItem.icon className="size-4" />}
                             <span>{subItem.title}</span>
                             {subItem.pro && (
-                              <span className="ml-auto flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                                <Crown className="size-2.5" />
+                              <span className={cn("ml-auto", PRO_STYLE.className)}>
+                                <PRO_STYLE.icon className="size-2.5" />
                                 Pro
                               </span>
                             )}

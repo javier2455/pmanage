@@ -50,3 +50,12 @@ export function getPlanStyle(plan: PlanResponse | { type?: string; name?: string
     style: {},
   }
 }
+
+/** Estilo unificado para funcionalidades Pro (sidebar, navbar, etc.) */
+export const PRO_STYLE = {
+  icon: Sparkles,
+  color: "text-amber-600 dark:text-amber-400",
+  bgColor: "bg-amber-500/10",
+  borderColor: "border-amber-500/20",
+  className: "flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20",
+} as const
