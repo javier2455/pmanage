@@ -14,8 +14,8 @@ export function useAssignPlanMutation() {
 
     return useMutation({
         mutationFn: (payload: AssignPlanPayload) => assignPlan(payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["all-users"] });
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ["all-users"] });
         },
     });
 }

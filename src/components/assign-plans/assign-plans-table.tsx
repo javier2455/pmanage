@@ -134,16 +134,25 @@ export function AssignPlansTable({
                             const Icon = planStyle.icon
                             const s = planStyle.style
                             const isActive = user.plan?.id === plan.id
+                            const hasHoverStyle = !isActive && s.color && s.backgroundColor && s.borderColor
+                            const hasIconTextColor = s.color
                             return (
                               <DropdownMenuItem
                                 key={plan.id}
                                 onClick={() => onPlanSelect(user, plan)}
                                 disabled={isActive}
-                                className={cn("gap-2 border-l-4", isActive && "opacity-50")}
-                                style={!isActive && s.color ? { borderLeftColor: s.color, backgroundColor: s.backgroundColor } : undefined}
+                                className={cn(
+                                  "gap-2 border-l-4 border-transparent",
+                                  hasHoverStyle && "data-highlighted:border-l-(--plan-border) data-highlighted:bg-(--plan-bg)"
+                                )}
+                                style={
+                                  hasHoverStyle
+                                    ? ({ "--plan-border": s.borderColor, "--plan-bg": s.backgroundColor } as React.CSSProperties)
+                                    : undefined
+                                }
                               >
-                                <Icon className="h-4 w-4 shrink-0" style={!isActive && s.color ? { color: s.color } : undefined} />
-                                <span style={!isActive && s.color ? { color: s.color } : undefined}>{plan.name}</span>
+                                <Icon className="h-4 w-4 shrink-0" style={hasIconTextColor ? { color: s.color } : undefined} />
+                                <span style={hasIconTextColor ? { color: s.color } : undefined}>{plan.name}</span>
                                 {isActive && (
                                   <Check className="ml-auto h-4 w-4 text-primary shrink-0" />
                                 )}
