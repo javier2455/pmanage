@@ -89,18 +89,18 @@ const data = {
       url: "/dashboard/exchange-rate",
       icon: ArrowLeftRight,
     },
-    // {
-    //   title: "Administrar",
-    //   url: "#",
-    //   icon: Settings,
-    //   items: [
-    //     {
-    //       title: "Asignar Planes",
-    //       url: "/dashboard/admin/assign-plans",
-    //       icon: BadgeDollarSign,
-    //     },
-    //   ],
-    // },
+    {
+      title: "Administrar",
+      url: "#",
+      icon: Settings,
+      items: [
+        {
+          title: "Asignar Planes",
+          url: "/dashboard/admin/assign-plans",
+          icon: BadgeDollarSign,
+        },
+      ],
+    },
   ],
 }
 

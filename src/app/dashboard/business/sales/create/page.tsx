@@ -247,7 +247,7 @@ export default function CreateSalesPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm tabular-nums text-card-foreground">
                       {selectedProduct
-                        ? `${unitPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                        ? `${unitPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
                         : "--"}
                     </span>
                   </div>
@@ -259,7 +259,7 @@ export default function CreateSalesPage() {
                     <DollarSign className="h-4 w-4 text-primary" />
                     <span className="text-sm font-semibold tabular-nums text-card-foreground">
                       {quantityNum > 0
-                        ? `${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                        ? `${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
                         : "--"}
                     </span>
                   </div>
@@ -315,17 +315,17 @@ export default function CreateSalesPage() {
                 </span>
                 <span className="text-sm font-medium text-card-foreground tabular-nums">
                   {selectedProduct
-                    ? `$${unitPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                    ? `$${unitPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
                     : "--"}
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-border py-4">
                 <span className="text-sm text-muted-foreground">
-                  Total (USD)
+                  Total (MN)
                 </span>
                 <span className="text-sm font-semibold text-card-foreground tabular-nums">
                   {quantityNum > 0
-                    ? `$${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                    ? `$${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
                     : "--"}
                 </span>
               </div>

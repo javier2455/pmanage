@@ -25,6 +25,7 @@ export function useCreateSaleMutation() {
         mutationFn: (credentials: CreateSaleProps) => create(credentials),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["daily-accounting-close"] });
         },
     });
 }
@@ -36,6 +37,7 @@ export function useCancelSaleMutation() {
             cancelSale(saleId, cancellationReason),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
             queryClient.invalidateQueries({ queryKey: ["sale-by-id"] });
         },
     });
