@@ -18,42 +18,35 @@ const plans = [
     {
         name: "Basico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        price: 299,
+        price: 3,
         period: "mes",
         badge: null,
         features: [
-            { text: "Tener un negocio", included: true },
+            { text: "Registrar un negocio", included: true },
             { text: "Registra hasta 100 productos", included: true },
-            { text: "Registro de ingresos", included: true },
+            { text: "Registro de ventas", included: true },
+            { text: "Registro de compras", included: true },
             { text: "Cierre contable diario", included: true },
             { text: "Tipo de cambio manual", included: true },
-            { text: "Soporte por correo", included: true },
-            { text: "Cierre contable mensual", included: false },
-            { text: "Multiples usuarios", included: false },
-            { text: "Reportes avanzados", included: false },
-            { text: "Integracion con facturacion", included: false },
+            { text: "Soporte por grupo de whatsapp o correo", included: true },
         ],
         highlighted: false,
     },
     {
         name: "Pro",
         description: "Para negocios en crecimiento que necesitan control total.",
-        price: 799,
+        price: 10,
         period: "mes",
         badge: "Recomendado",
         features: [
-            { text: "Ventas ilimitadas", included: true },
-            { text: "Puntos de venta ilimitados", included: true },
-            { text: "Registro de ingresos", included: true },
-            { text: "Cierre contable diario", included: true },
-            { text: "Tipo de cambio automatico", included: true },
-            { text: "Soporte prioritario 24/7", included: true },
+            { text: "Todo lo que incluye el plan básico más:", included: true },
+            { text: "Registrar hasta 3 negocios", included: true },
+            { text: "Registra hasta 500 productos", included: true },
             { text: "Cierre contable mensual", included: true },
-            { text: "Hasta 10 usuarios", included: true },
+            { text: "Soporte prioritario 24/7", included: true },
             { text: "Reportes avanzados y exportacion", included: true },
-            { text: "Integracion con facturacion", included: true },
         ],
-        highlighted: true,
+        highlighted: false,
     },
 ]
 
@@ -132,7 +125,7 @@ export default function PlansPage() {
                                             ${plan.price}
                                         </span>
                                         <span className="text-sm text-muted-foreground">
-                                            MXN / {plan.period}
+                                            USD o al cambio en moneda nacional / {plan.period}
                                         </span>
                                     </div>
 

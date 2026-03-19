@@ -20,8 +20,12 @@ export function useGetSaleById(saleId: string) {
 }
 
 export function useCreateSaleMutation() {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (credentials: CreateSaleProps) => create(credentials),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
+        },
     });
 }
 

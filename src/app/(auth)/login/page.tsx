@@ -171,7 +171,6 @@ export default function LoginPage() {
             const user = await getMe();
 
             const activePlan = await getActivePlan();
-
             if (activePlan?.data?.isActive || activePlan?.isActive) {
                 sessionStorage.setItem("token", access_token);
                 if (refresh_token) {
@@ -181,11 +180,6 @@ export default function LoginPage() {
 
                 router.push("/dashboard");
             } else {
-                sessionStorage.setItem("token", access_token);
-                if (refresh_token) {
-                    sessionStorage.setItem("refresh_token", refresh_token);
-                }
-                sessionStorage.setItem("user", JSON.stringify({ name: user.name, role: user.rol, email: user.email, plan: user.plan }));
                 router.push("/plans");
             }
 
