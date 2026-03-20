@@ -1,6 +1,6 @@
 "use client"
 
-import { Users, MoreHorizontal, Search, Check, X } from "lucide-react"
+import { Users, MoreHorizontal, Search, Check, X, Plus } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import { PlanBadge } from "./plan-badge"
 import { getPlanStyle } from "./utils"
 import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
+import Link from "next/link"
 
 interface AssignPlansTableProps {
   users: UserDataResponse[]
@@ -57,14 +58,22 @@ export function AssignPlansTable({
               </CardDescription>
             </div>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre o correo..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nombre o correo..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="h-10 pl-9"
+              />
+            </div>
+            <Button asChild className="h-10 w-full sm:w-auto">
+              <Link href="/dashboard/admin/assign-plans/create">
+                Agregar plan
+                <Plus className="size-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </CardHeader>

@@ -1,4 +1,4 @@
-import { Crown, Sparkles, Star } from "lucide-react"
+import { Crown, Gift, Sparkles, Star } from "lucide-react"
 import type { PlanResponse } from "@/lib/types/plans"
 
 function normalize(s: string): string {
@@ -17,6 +17,16 @@ export type PlanStyle = {
 export function getPlanStyle(plan: PlanResponse | { type?: string; name?: string }): PlanStyle {
   const raw = plan.type ?? plan.name ?? ""
   const type = normalize(raw)
+  // Free primero: tier de entrada, neutro (slate), no confundir con basic/premium
+  if (type.includes("free") || type.includes("gratis"))
+    return {
+      icon: Gift,
+      color: "text-slate-600 dark:text-slate-400",
+      bgColor: "bg-slate-500/10",
+      borderColor: "border-slate-500/20",
+      // Sin inline color: respeta dark: en Badge / iconos
+      style: {},
+    }
   // Pro antes que basic para que "Pro Basic" / "Basic Pro" reciba estilos Pro
   if (type.includes("pro") || type.includes("profesional") || type.includes("premium") || type.includes("plus"))
     return {

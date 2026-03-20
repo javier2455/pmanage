@@ -22,6 +22,15 @@ export interface AssignPlanResponse {
     data: AssignPlanResponseData;
 }
 
+export interface  CreateTypePlanPayload {
+  name: string;
+  description: string | null;
+  type: PlanType;
+  price: number | null;
+  maxProducts: number;
+  isActive: boolean;
+}
+
 type AssignPlanResponseData = {
   id: string;
   userId: string;
@@ -32,3 +41,6 @@ type AssignPlanResponseData = {
   createdAt: string;
   updatedAt: string;
 }
+
+export type PlanType = "free" | "basic" | "premium" | "enterprise";
+

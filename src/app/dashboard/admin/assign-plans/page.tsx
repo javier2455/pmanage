@@ -43,7 +43,10 @@ export default function AssignPlansPage() {
       sileo.error({
         title: "Fecha requerida",
         description: "La fecha de expiracion es obligatoria para asignar el plan.",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+        styles: {
+          title: "text-foreground! text-[16px]! font-bold!",
+          description: "text-destructive! text-[15px]!",
+        },
       })
       return
     }
@@ -59,8 +62,8 @@ export default function AssignPlansPage() {
         title: "Plan asignado",
         description: `El plan ${newPlan.name} se ha asignado correctamente a ${user.name}.`,
         styles: {
-          title: "text-black! text-[16px]! font-bold!",
-          description: "text-black/90! text-[15px]!",
+          title: "text-foreground! text-[16px]! font-bold!",
+          description: "text-muted-foreground! text-[15px]!",
         },
       })
       setConfirmDialog({ open: false, user: null, newPlan: null })
@@ -71,15 +74,18 @@ export default function AssignPlansPage() {
         sileo.error({
           title: error.response?.data?.error ?? "Error",
           description: error.response?.data?.message,
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+          styles: {
+            title: "text-foreground! text-[16px]! font-bold!",
+            description: "text-destructive! text-[15px]!",
+          },
         })
       } else {
         sileo.error({
           title: "Error al asignar plan",
           description: "No se pudo asignar el plan. Intenta de nuevo.",
           styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
+            title: "text-foreground! text-[16px]! font-bold!",
+            description: "text-destructive! text-[15px]!",
           },
         })
       }
