@@ -7,25 +7,34 @@ function normalize(s: string): string {
   return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
-function getRoleAndPlan(): { roleName: string; planType: string } {
-  if (typeof window === "undefined") return { roleName: "", planType: "" };
+function readRoleName(): string {
+  if (typeof window === "undefined") return "";
   const stored = sessionStorage.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
       const role = parsed.role;
-      const plan = parsed.plan;
-      return {
-        roleName: typeof role === "string" ? role : role?.name ?? "",
-        planType: plan?.type ?? plan?.name ?? "",
-      };
+      return typeof role === "string" ? role : role?.name ?? "";
     } catch {
-      const cookies = getAuthCookies();
-      return { roleName: cookies.role ?? "", planType: cookies.planType ?? "" };
+      return getAuthCookies().role ?? "";
     }
   }
-  const cookies = getAuthCookies();
-  return { roleName: cookies.role ?? "", planType: cookies.planType ?? "" };
+  return getAuthCookies().role ?? "";
+}
+
+function readPlanType(): string {
+  if (typeof window === "undefined") return "";
+  const stored = sessionStorage.getItem("user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const plan = parsed.plan;
+      return plan?.type ?? plan?.name ?? "";
+    } catch {
+      return getAuthCookies().planType ?? "";
+    }
+  }
+  return getAuthCookies().planType ?? "";
 }
 
 function subscribe() {
@@ -33,11 +42,8 @@ function subscribe() {
 }
 
 export function useUserRoleAndPlan() {
-  const { roleName, planType } = useSyncExternalStore(
-    subscribe,
-    getRoleAndPlan,
-    () => ({ roleName: "", planType: "" })
-  );
+  const roleName = useSyncExternalStore(subscribe, readRoleName, () => "");
+  const planType = useSyncExternalStore(subscribe, readPlanType, () => "");
 
   const isAdmin = roleName.toLowerCase() === "admin";
   const planNormalized = normalize(planType);
