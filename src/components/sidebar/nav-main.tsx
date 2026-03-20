@@ -36,6 +36,7 @@ export function NavMain({
       url: string
       icon?: LucideIcon
       pro?: boolean
+      disabled?: boolean
     }[]
   }[]
 }) {
@@ -69,19 +70,35 @@ export function NavMain({
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
-                          asChild
-                          isActive={pathname === subItem.url}
+                          asChild={!subItem.disabled}
+                          isActive={pathname === subItem.url && !subItem.disabled}
+                          className={cn(
+                            subItem.disabled && "pointer-events-none opacity-50 cursor-not-allowed"
+                          )}
                         >
-                          <Link href={subItem.url}>
-                            {subItem.icon && <subItem.icon className="size-4" />}
-                            <span>{subItem.title}</span>
-                            {subItem.pro && (
-                              <span className={cn("ml-auto", PRO_STYLE.className)}>
-                                <PRO_STYLE.icon className="size-2.5" />
-                                Pro
-                              </span>
-                            )}
-                          </Link>
+                          {subItem.disabled ? (
+                            <span className="flex flex-1 items-center gap-2 px-2 py-1.5">
+                              {subItem.icon && <subItem.icon className="size-4" />}
+                              <span>{subItem.title}</span>
+                              {subItem.pro && (
+                                <span className={cn("ml-auto", PRO_STYLE.className)}>
+                                  <PRO_STYLE.icon className="size-2.5" />
+                                  Pro
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <Link href={subItem.url}>
+                              {subItem.icon && <subItem.icon className="size-4" />}
+                              <span>{subItem.title}</span>
+                              {subItem.pro && (
+                                <span className={cn("ml-auto", PRO_STYLE.className)}>
+                                  <PRO_STYLE.icon className="size-2.5" />
+                                  Pro
+                                </span>
+                              )}
+                            </Link>
+                          )}
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

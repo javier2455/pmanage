@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearAuthCookies } from "@/lib/cookies";
 
 // Create axios instance with interceptors
 const apiClient = axios.create({
@@ -83,6 +84,7 @@ apiClient.interceptors.response.use(
           sessionStorage.removeItem("token");
           sessionStorage.removeItem("refresh_token");
           sessionStorage.removeItem("user");
+          clearAuthCookies();
           window.location.href = "/login";
         }
         return Promise.reject(error);
@@ -126,6 +128,7 @@ apiClient.interceptors.response.use(
           sessionStorage.removeItem("token");
           sessionStorage.removeItem("refresh_token");
           sessionStorage.removeItem("user");
+          clearAuthCookies();
           window.location.href = "/login";
         }
         
@@ -140,6 +143,7 @@ apiClient.interceptors.response.use(
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("refresh_token");
       sessionStorage.removeItem("user");
+      clearAuthCookies();
       window.location.href = "/login";
     }
     

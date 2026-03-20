@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -8,6 +8,8 @@ import {
   type CreateBusinessFormData,
 } from "@/lib/validations/business";
 import { useCreateBusinessMutation } from "@/hooks/use-business";
+import { useBusiness } from "@/context/business-context";
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import {
   useGetAllProvinces,
   useGetAllMunicipalitiesByProvinceId,
@@ -43,7 +45,22 @@ const businessTypes = [
 export default function CreateBusinessPage() {
   const router = useRouter();
   const createBusinessMutation = useCreateBusinessMutation();
+  const { businesses, isLoading: isLoadingBusinesses } = useBusiness();
+  const { isProPlan } = useUserRoleAndPlan();
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
+
+  useEffect(() => {
+    if (isLoadingBusinesses) return;
+    if (!isProPlan && businesses.length >= 1) {
+      sileo.error({
+        title: "Plan requerido",
+        description:
+          "Solo usuarios con plan Pro pueden crear más de un negocio. Actualiza tu plan para desbloquear esta función.",
+        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+      });
+      router.replace("/dashboard");
+    }
+  }, [isProPlan, businesses.length, isLoadingBusinesses, router]);
 
   const { data: provincesData, isLoading: isLoadingProvinces } = useGetAllProvinces();
   const { data: municipalitiesData, isLoading: isLoadingMunicipalities } =
@@ -117,6 +134,10 @@ export default function CreateBusinessPage() {
       }
     }
   };
+
+  if (!isProPlan && businesses.length >= 1) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4">

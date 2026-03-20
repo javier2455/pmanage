@@ -15,12 +15,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Check, ChevronsUpDown, Store, Plus } from "lucide-react"
 import { PRO_STYLE } from "@/components/assign-plans/utils"
-
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 
 export function BusinessSwitcher() {
   const router = useRouter()
   const { businesses, setActiveBusinessId, activeBusiness, isLoading } =
     useBusiness()
+  const { isProPlan } = useUserRoleAndPlan()
+
+  const canAddBusiness = isProPlan || businesses.length === 0
 
   return (
     <DropdownMenu>
@@ -72,8 +75,12 @@ export function BusinessSwitcher() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => router.push("/dashboard/business/create")}
-          className="flex cursor-pointer items-center gap-2 text-muted-foreground"
+          onClick={() => canAddBusiness && router.push("/dashboard/business/create")}
+          disabled={!canAddBusiness}
+          className={cn(
+            "flex items-center gap-2",
+            canAddBusiness ? "cursor-pointer text-muted-foreground" : "opacity-50 cursor-not-allowed"
+          )}
         >
           <Plus className="size-4" />
           <span className="text-sm">Agregar negocio</span>

@@ -15,6 +15,7 @@ import { Business } from "@/lib/types/business";
 import { businessRoutes } from "@/lib/routes/business";
 import { useRouter, usePathname } from "next/navigation";
 import { sileo } from "sileo";
+import { clearAuthCookies } from "@/lib/cookies";
 
 type BusinessContextType = {
   businesses: Business[];
@@ -81,6 +82,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem("refresh_token");
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("activeBusinessId");
+        clearAuthCookies();
         router.push("/login");
       } else {
         sileo.error({

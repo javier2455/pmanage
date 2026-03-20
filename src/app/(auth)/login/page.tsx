@@ -22,6 +22,7 @@ import axios from "axios";
 import { getActivePlan } from "@/lib/api/plans";
 import { authRoutes } from "@/lib/routes/auth";
 import { getMe } from "@/lib/api/auth";
+import { setAuthCookies } from "@/lib/cookies";
 import { useState } from "react";
 
 
@@ -83,6 +84,14 @@ export default function LoginPage() {
                     sessionStorage.setItem("token", accessToken);
                     sessionStorage.setItem("refresh_token", refreshToken);
                     sessionStorage.setItem("user", JSON.stringify(user));
+
+                    const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
+                    const planType = user.plan?.type ?? user.plan?.name ?? "";
+                    setAuthCookies({
+                        token: accessToken,
+                        role: roleName,
+                        planType,
+                    });
 
                     window.removeEventListener('message', handleMessage);
                     setIsGoogleLoading(false);
@@ -178,8 +187,26 @@ export default function LoginPage() {
                 }
                 sessionStorage.setItem("user", JSON.stringify({ name: user.name, role: user.rol, email: user.email, plan: user.plan }));
 
+                /* Guardar cookies */
+                const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
+                const planType = user.plan?.type ?? user.plan?.name ?? "";
+                setAuthCookies({
+                    token: access_token,
+                    role: roleName,
+                    planType,
+                });
+
                 router.push("/dashboard");
             } else {
+                /* Guardar cookies */
+                const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
+                const planType = user.plan?.type ?? user.plan?.name ?? "";
+                setAuthCookies({
+                    token: access_token,
+                    role: roleName,
+                    planType,
+                });
+                /* Guardar cookies */
                 router.push("/plans");
             }
 

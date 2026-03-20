@@ -29,6 +29,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
+import { clearAuthCookies } from "@/lib/cookies"
 
 export function NavUser() {
     const router = useRouter()
@@ -50,6 +51,7 @@ export function NavUser() {
         sessionStorage.removeItem("refresh_token");
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("activeBusinessId");
+        clearAuthCookies();
         router.push("/login");
     }
 

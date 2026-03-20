@@ -19,6 +19,7 @@ import {
 
 import { NavMain } from "@/components/sidebar/nav-main"
 import { NavUser } from "@/components/sidebar/nav-user"
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import {
   Sidebar,
   SidebarContent,
@@ -105,6 +106,27 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isAdmin, isProPlan } = useUserRoleAndPlan()
+
+  const filteredNavMain = React.useMemo(() => {
+    return data.navMain
+      .filter((item) => {
+        if (item.title === "Administrar") return isAdmin
+        return true
+      })
+      .map((item) => {
+        if (item.items) {
+          const itemsWithDisabled = item.items.map((sub) => ({
+            ...sub,
+            disabled: sub.pro ? !isProPlan : false,
+          }))
+          return { ...item, items: itemsWithDisabled }
+        }
+        return item
+      })
+      .filter((item) => !item.items || item.items.length > 0)
+  }, [isAdmin, isProPlan])
+
   return (
     <Sidebar className="" collapsible="icon" {...props}>
       <SidebarHeader>
@@ -125,7 +147,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
