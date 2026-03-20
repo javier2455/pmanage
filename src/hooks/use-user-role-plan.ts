@@ -13,7 +13,8 @@ function readRoleName(): string {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      const role = parsed.role;
+      /* email login usa `role`; getMe() crudo (Google) usa `rol` */
+      const role = parsed.role ?? parsed.rol;
       return typeof role === "string" ? role : role?.name ?? "";
     } catch {
       return getAuthCookies().role ?? "";

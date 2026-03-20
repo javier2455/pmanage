@@ -80,10 +80,18 @@ export default function LoginPage() {
                     const user = await getMe();
                     const activePlan = await getActivePlan();
 
-                    // Guardar datos en sessionStorage
+                    // Guardar datos en sessionStorage (misma forma que login email: `role` para compatibilidad con UI)
                     sessionStorage.setItem("token", accessToken);
                     sessionStorage.setItem("refresh_token", refreshToken);
-                    sessionStorage.setItem("user", JSON.stringify(user));
+                    sessionStorage.setItem(
+                        "user",
+                        JSON.stringify({
+                            name: user.name,
+                            role: user.rol,
+                            email: user.email,
+                            plan: user.plan,
+                        })
+                    );
 
                     const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
                     const planType = user.plan?.type ?? user.plan?.name ?? "";
