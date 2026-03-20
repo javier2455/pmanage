@@ -93,7 +93,7 @@ export default function AssignPlansPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex max-w-full flex-col gap-6 overflow-x-hidden p-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Asignar Planes

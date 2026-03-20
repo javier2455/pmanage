@@ -8,7 +8,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <BusinessProvider>
       <AppSidebar />
-      <main className="bg-background w-full min-h-screen">
+      <main className="bg-background w-full min-h-screen overflow-x-hidden">
         <nav className="flex items-center gap-2 p-4">
           <SidebarTrigger />
           <div className="flex flex-1 items-center justify-center px-2">

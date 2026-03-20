@@ -8,14 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -48,7 +41,7 @@ export function AssignPlansTable({
   )
 
   return (
-    <Card>
+    <Card className="w-full max-w-full overflow-x-hidden">
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
@@ -75,8 +68,8 @@ export function AssignPlansTable({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="w-full overflow-x-auto">
+      <CardContent className="w-full max-w-full p-0">
+        <div className="w-full max-w-full overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b border-border">
@@ -115,20 +108,22 @@ export function AssignPlansTable({
                       <PlanBadge plan={user.plan ?? null} plans={plans} />
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                      <Popover>
+                        <PopoverTrigger asChild>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
+                            size="icon-sm"
+                            aria-label="Abrir menu"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal className="size-4" />
                             <span className="sr-only">Abrir menu</span>
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48" collisionPadding={16} avoidCollisions>
-                          <DropdownMenuLabel>Asignar Plan</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-52 p-1">
+                          <div className="px-2 py-1.5 text-sm font-medium">
+                            Asignar Plan
+                          </div>
+                          <div className="my-1 h-px bg-border" />
                           {plans.map((plan) => {
                             const planStyle = getPlanStyle(plan)
                             const Icon = planStyle.icon
@@ -137,42 +132,56 @@ export function AssignPlansTable({
                             const hasHoverStyle = !isActive && s.color && s.backgroundColor && s.borderColor
                             const hasIconTextColor = s.color
                             return (
-                              <DropdownMenuItem
+                              <button
                                 key={plan.id}
+                                type="button"
                                 onClick={() => onPlanSelect(user, plan)}
                                 disabled={isActive}
                                 className={cn(
-                                  "gap-2 border-l-4 border-transparent",
-                                  hasHoverStyle && "data-highlighted:border-l-(--plan-border) data-highlighted:bg-(--plan-bg)"
+                                  "flex w-full items-center gap-2.5 rounded-sm border-l-4 border-transparent px-2 py-1.5 text-left text-sm transition-colors",
+                                  isActive
+                                    ? "cursor-default opacity-60"
+                                    : "cursor-pointer hover:bg-muted"
                                 )}
                                 style={
                                   hasHoverStyle
                                     ? ({ "--plan-border": s.borderColor, "--plan-bg": s.backgroundColor } as React.CSSProperties)
                                     : undefined
                                 }
+                                onMouseEnter={(e) => {
+                                  if (!hasHoverStyle || isActive) return
+                                  e.currentTarget.style.borderLeftColor = `var(--plan-border)`
+                                  e.currentTarget.style.backgroundColor = `var(--plan-bg)`
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!hasHoverStyle || isActive) return
+                                  e.currentTarget.style.borderLeftColor = "transparent"
+                                  e.currentTarget.style.backgroundColor = ""
+                                }}
                               >
-                                <Icon className="h-4 w-4 shrink-0" style={hasIconTextColor ? { color: s.color } : undefined} />
+                                <Icon className="size-4 shrink-0" style={hasIconTextColor ? { color: s.color } : undefined} />
                                 <span style={hasIconTextColor ? { color: s.color } : undefined}>{plan.name}</span>
                                 {isActive && (
-                                  <Check className="ml-auto h-4 w-4 text-primary shrink-0" />
+                                  <Check className="ml-auto size-4 shrink-0 text-primary" />
                                 )}
-                              </DropdownMenuItem>
+                              </button>
                             )
                           })}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
+                          <div className="my-1 h-px bg-border" />
+                          <button
+                            type="button"
                             onClick={() => onPlanSelect(user, null)}
                             disabled={!user.plan}
                             className={cn(
-                              "gap-2 text-destructive focus:text-destructive",
-                              !user.plan && "opacity-50"
+                              "flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left text-sm transition-colors text-destructive",
+                              user.plan ? "cursor-pointer hover:bg-muted" : "cursor-default opacity-50"
                             )}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="size-4 shrink-0" />
                             <span>Quitar plan</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          </button>
+                        </PopoverContent>
+                      </Popover>
                     </td>
                   </tr>
                 ))
