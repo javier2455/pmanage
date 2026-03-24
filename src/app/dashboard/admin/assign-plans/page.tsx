@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import axios from "axios"
 import { sileo } from "sileo"
 import { useGetAllUsersData } from "@/hooks/use-user"
@@ -19,9 +19,6 @@ export default function AssignPlansPage() {
   const users: UserDataResponse[] = usersData ?? []
   const plans = plansData?.data ?? []
 
-  console.log('plans', plans)
-
-  const [searchQuery, setSearchQuery] = useState("")
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     user: UserDataResponse | null
@@ -30,11 +27,14 @@ export default function AssignPlansPage() {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
 
-  const handlePlanSelect = (user: UserDataResponse, plan: PlanResponse | null) => {
-    setStartDate(new Date().toISOString().split("T")[0])
-    setEndDate("")
-    setConfirmDialog({ open: true, user, newPlan: plan })
-  }
+  const handlePlanSelect = useCallback(
+    (user: UserDataResponse, plan: PlanResponse | null) => {
+      setStartDate(new Date().toISOString().split("T")[0])
+      setEndDate("")
+      setConfirmDialog({ open: true, user, newPlan: plan })
+    },
+    [],
+  )
 
   const handleConfirm = async () => {
     const { user, newPlan } = confirmDialog
@@ -99,7 +99,7 @@ export default function AssignPlansPage() {
   }
 
   return (
-    <div className="flex max-w-full flex-col gap-6 overflow-x-hidden p-4">
+    <div className="flex min-w-0 max-w-full flex-col gap-6 overflow-x-hidden p-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Asignar Planes
@@ -115,8 +115,6 @@ export default function AssignPlansPage() {
         users={users}
         plans={plans}
         isLoading={isLoadingUsers}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
         onPlanSelect={handlePlanSelect}
       />
 

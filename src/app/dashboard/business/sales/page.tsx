@@ -2,17 +2,26 @@
 
 import { useBusiness } from "@/context/business-context";
 import { useAllSalesByBusinessId } from "@/hooks/use-sales";
-import { Plus } from "lucide-react";
-import Link from "next/link";
+import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import TableOfSales from "@/components/sales/table-of-sales";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 
 export default function SalesPage() {
   const { activeBusinessId } = useBusiness();
-  const { data, isLoading, isFetching, isError } = useAllSalesByBusinessId(activeBusinessId ?? '')
+  const { data, isLoading, isFetching, isError } = useAllSalesByBusinessId(
+    activeBusinessId ?? "",
+  );
+
+  const sales: SaleWithProductAndBusiness[] = Array.isArray(data)
+    ? data
+    : data &&
+        typeof data === "object" &&
+        "data" in data &&
+        Array.isArray((data as { data: unknown }).data)
+      ? (data as { data: SaleWithProductAndBusiness[] }).data
+      : [];
 
   if (isError) return <div>Error al cargar las ventas</div>;
-  console.log(data)
 
   return (
     <section className="flex flex-col gap-6">
@@ -23,19 +32,12 @@ export default function SalesPage() {
         <p className="text-muted-foreground">
           Consulta y actualiza las ventas de tu negocio
         </p>
-        <div className="flex justify-end items-center mb-4">
-          
-          <Link href="/dashboard/business/sales/create" className="flex items-center gap-2 cursor-pointer hover:bg-primary/90 transition-all duration-300 bg-primary text-primary-foreground px-4 py-2 rounded-md">
-            Agregar venta
-            <Plus className="size-4" />
-          </Link>
-        </div>
         {isLoading || isFetching ? (
           <SimpleTableSkeleton />
         ) : (
-          <TableOfSales sales={data ?? []} />
+          <TableOfSales sales={sales} />
         )}
       </div>
     </section>
-  )
+  );
 }

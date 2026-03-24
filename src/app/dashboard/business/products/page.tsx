@@ -6,10 +6,11 @@ import TableOfOtherProducts from "@/components/products/table-of-other-products"
 import { useBusiness } from "@/context/business-context";
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
 import { useGetAllProductsQuery } from "@/hooks/use-product";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 import { ProductToShowInTable } from "@/lib/types/product";
-import { Plus } from "lucide-react";
-import Link from "next/link";
 
 export default function ProductsPage() {
   const { activeBusinessId } = useBusiness();
@@ -46,11 +47,13 @@ export default function ProductsPage() {
         <p className="text-muted-foreground">
           Consulta, actualiza, añade y elimina productos de tu negocio
         </p>
-        <div className="flex justify-end items-center mb-4">
-          <Link href="/dashboard/business/products/create" className="flex items-center gap-2 cursor-pointer hover:bg-primary/90 transition-all duration-300 bg-primary text-primary-foreground px-4 py-2 rounded-md">
-            Agregar producto
-            <Plus className="size-4" />
-          </Link>
+        <div className="mb-4 flex items-center justify-end">
+          <Button asChild>
+            <Link href="/dashboard/business/products/create">
+              <Plus data-icon="inline-start" />
+              Agregar producto
+            </Link>
+          </Button>
         </div>
 
         <div className="space-y-8">

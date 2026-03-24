@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { format } from "date-fns"
 import { useBusiness } from "@/context/business-context"
 import { useDailyAccountingClose } from "@/hooks/use-accounting-close"
@@ -15,29 +15,35 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import {
-  ShoppingCart,
-  Package,
-  TrendingUp,
-  TrendingDown,
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  Warehouse,
-  CalendarCheck,
-} from "lucide-react"
+import { ShoppingCart, Package, BarChart3, CalendarCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DateFilter } from "@/components/accounting-close/date-filter"
+import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
+import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
+import { DailyCloseEntryTable } from "@/components/accounting-close/daily-close-entry-table"
+import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
 
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+function DailyClosePageSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 p-4">
+      <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+      <div className="h-4 w-64 animate-pulse rounded bg-muted" />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
+        ))}
+      </div>
+      <div className="h-64 animate-pulse rounded-lg bg-muted" />
+    </div>
+  )
 }
 
 export default function DailyPage() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const { activeBusinessId } = useBusiness()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
@@ -55,33 +61,24 @@ export default function DailyPage() {
     day: "numeric",
   })
 
-  const sales = data?.sales ?? []
   const inventoryEntries = data?.inventoryEntries ?? []
+  const activeSales = useMemo(
+    () => (data?.sales ?? []).filter((s) => !s.isCancelled),
+    [data?.sales],
+  )
   const totalSales = data?.totalIncome ?? 0
   const totalExpenses = data?.totalExpense ?? 0
   const balance = data?.total ?? totalSales - totalExpenses
-  const totalUnitsSold = sales.reduce((acc, s) => acc + Number(s.cantidad), 0)
 
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-6 p-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-64 animate-pulse rounded bg-muted" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
-          ))}
-        </div>
-        <div className="h-64 animate-pulse rounded-lg bg-muted" />
-      </div>
-    )
+  if (!mounted || isLoading) {
+    return <DailyClosePageSkeleton />
   }
 
   if (isError || !activeBusinessId) {
     return (
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-6 p-4">
         <h1 className="text-2xl font-bold text-foreground">Cierre Diario</h1>
         <p className="text-muted-foreground">
           {!activeBusinessId
@@ -91,10 +88,9 @@ export default function DailyPage() {
       </div>
     )
   }
-  const totalStockUnits = inventory.reduce((acc: number, i: BusinessWithProducts) => acc + i.stock, 0)
   const totalStockValue = inventory.reduce(
     (acc: number, i: BusinessWithProducts) => acc + i.stock * Number(i.price),
-    0
+    0,
   )
 
   return (
@@ -203,7 +199,7 @@ export default function DailyPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-card-foreground">
-              {totalStockUnits}
+              {inventory.reduce((acc, i) => acc + i.stock, 0)}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               Valorado en ${formatCurrency(totalStockValue)}
@@ -212,9 +208,9 @@ export default function DailyPage() {
         </Card>
       </div> */}
 
-      {/* Products sold today + Inventory entries - side by side on tablet+ */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+      {/* Productos vendidos + ingresos de inventario */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <Card className="gap-4 py-4">
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
@@ -225,76 +221,18 @@ export default function DailyPage() {
                   Productos vendidos hoy
                 </CardTitle>
                 <CardDescription>
-                  Detalle de todas las ventas realizadas en el dia
+                  Detalle de todas las ventas realizadas en el día (sin canceladas)
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="hidden sm:grid sm:grid-cols-5 gap-4 border-b border-border pb-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-2">
-                Producto
-              </span>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-                Cantidad
-              </span>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-                Precio Unit.
-              </span>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-                Total
-              </span>
-            </div>
-            <div className="flex flex-col">
-              {sales
-                .filter((s) => !s.isCancelled)
-                .map((sale) => {
-                  const total = sale.cantidad * sale.precio
-                  return (
-                    <div
-                      key={sale.id}
-                      className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
-                    >
-                      <span className="text-sm font-medium text-card-foreground col-span-2 sm:col-span-2 line-clamp-2">
-                        {sale.product?.name}
-                      </span>
-                      <div className="flex sm:justify-end items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground sm:hidden">
-                          Cant:
-                        </span>
-                        <span className="text-sm tabular-nums text-card-foreground">
-                          {sale.cantidad}
-                        </span>
-                      </div>
-                      <div className="flex sm:justify-end items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground sm:hidden">
-                          P.U.:
-                        </span>
-                        <span className="text-sm tabular-nums text-card-foreground">
-                          ${formatCurrency(sale.precio)}
-                        </span>
-                      </div>
-                      <div className="flex sm:justify-end items-center col-span-2 sm:col-span-1">
-                        <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                          ${formatCurrency(total)}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-            </div>
-            <div className="flex items-center justify-between pt-4">
-              <span className="text-sm font-semibold text-card-foreground">
-                Total ventas del dia
-              </span>
-              <span className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                ${formatCurrency(totalSales)}
-              </span>
-            </div>
-          </CardContent>
+          <DailyCloseSoldTable
+            sales={activeSales}
+            totalIncome={totalSales}
+          />
         </Card>
 
-        <Card>
+        <Card className="gap-4 py-4">
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
@@ -305,78 +243,19 @@ export default function DailyPage() {
                   Productos ingresados hoy
                 </CardTitle>
                 <CardDescription>
-                  Detalle de todos los productos ingresados en el dia
+                  Detalle de los productos ingresados en el día
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="hidden sm:grid sm:grid-cols-4 gap-4 border-b border-border pb-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-1">
-                Producto
-              </span>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-                Cantidad
-              </span>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-                Costo Unit.
-              </span>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-                Total
-              </span>
-            </div>
-            <div className="flex flex-col">
-              {inventoryEntries.map((entry) => {
-                const qty = Number(entry.quantity)
-                const unitCost = Number(entry.entryPrice)
-                const total = qty * unitCost
-                return (
-                  <div
-                    key={entry.id}
-                    className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
-                  >
-                    <span className="text-sm font-medium text-card-foreground col-span-2 sm:col-span-1 line-clamp-2">
-                      {entry.product?.name ?? "-"}
-                    </span>
-                    <div className="flex sm:justify-end items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground sm:hidden">
-                        Cant:
-                      </span>
-                      <span className="text-sm tabular-nums text-card-foreground">
-                        {qty}
-                      </span>
-                    </div>
-                    <div className="flex sm:justify-end items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground sm:hidden">
-                        C.U.:
-                      </span>
-                      <span className="text-sm tabular-nums text-card-foreground">
-                        ${formatCurrency(unitCost)}
-                      </span>
-                    </div>
-                    <div className="flex sm:justify-end items-center col-span-2 sm:col-span-1">
-                      <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                        ${formatCurrency(total)}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="flex items-center justify-between pt-4">
-              <span className="text-sm font-semibold text-card-foreground">
-                Total gastos del dia
-              </span>
-              <span className="text-base font-bold tabular-nums text-destructive">
-                ${formatCurrency(totalExpenses)}
-              </span>
-            </div>
-          </CardContent>
+          <DailyCloseEntryTable
+            entries={inventoryEntries}
+            totalExpense={totalExpenses}
+          />
         </Card>
       </div>
 
-      {/* Current inventory */}
-      <Card>
+      <Card className="gap-4 py-4">
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
@@ -384,93 +263,18 @@ export default function DailyPage() {
             </div>
             <div>
               <CardTitle className="text-card-foreground">
-                Stock en almacen
+                Stock en almacén
               </CardTitle>
               <CardDescription>
-                Inventario restante al cierre del dia
+                Inventario restante al cierre del día
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="hidden sm:grid sm:grid-cols-4 gap-4 border-b border-border pb-3">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider col-span-1">
-              Producto
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Stock
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Precio Unit.
-            </span>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
-              Valor Total
-            </span>
-          </div>
-          <div className="flex flex-col">
-            {inventory.map((item: BusinessWithProducts) => {
-              const price = Number(item.price)
-              const totalValue = item.stock * price
-              const isLowStock = item.stock <= 10
-              return (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 border-b border-border py-3 last:border-0"
-                >
-                  <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
-                    <span className="text-sm font-medium text-card-foreground">
-                      {item.product?.name ?? "-"}
-                    </span>
-                    {isLowStock && (
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0 border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                      >
-                        Bajo
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex sm:justify-end items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground sm:hidden">
-                      Stock:
-                    </span>
-                    <span
-                      className={cn(
-                        "text-sm font-medium tabular-nums",
-                        isLowStock
-                          ? "text-amber-600 dark:text-amber-400"
-                          : "text-card-foreground"
-                      )}
-                    >
-                      {item.stock} uds
-                    </span>
-                  </div>
-                  <div className="flex sm:justify-end items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground sm:hidden">
-                      P.U.:
-                    </span>
-                    <span className="text-sm tabular-nums text-card-foreground">
-                      ${formatCurrency(price)}
-                    </span>
-                  </div>
-                  <div className="flex sm:justify-end items-center">
-                    <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                      ${formatCurrency(totalValue)}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          <div className="flex items-center justify-between pt-4">
-            <span className="text-sm font-semibold text-card-foreground">
-              Valor total del inventario
-            </span>
-            <span className="text-base font-bold tabular-nums text-card-foreground">
-              ${formatCurrency(totalStockValue)}
-            </span>
-          </div>
-        </CardContent>
+        <DailyCloseStockTable
+          lines={inventory}
+          totalStockValue={totalStockValue}
+        />
       </Card>
 
       {/* Financial summary */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, RefreshCw, X } from "lucide-react"
+import { ArrowDown, Check, RefreshCw, X } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -44,9 +44,11 @@ export function AssignPlanConfirmDialog({
   onCancel,
   plans,
 }: AssignPlanConfirmDialogProps) {
+  const newPlanStyle = newPlan ? getPlanStyle(newPlan) : null
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !saving && !isOpen && onCancel()}>
-      <DialogContent className="sm:max-w-md overflow-hidden">
+      <DialogContent className="sm:max-w-[425px] md:max-w-[520px]">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Confirmar cambio de plan
@@ -58,8 +60,8 @@ export function AssignPlanConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4 min-w-0 overflow-hidden">
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4">
+        <div className="flex min-w-0 flex-col gap-4 py-4">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 p-4 dark:bg-muted/20">
             <div className="min-w-0">
               <p className="font-medium text-card-foreground truncate">
                 {user?.name}
@@ -74,24 +76,46 @@ export function AssignPlanConfirmDialog({
             </div>
           </div>
 
-          {newPlan && (
-            <div className={cn(
-              "flex items-center gap-3 rounded-lg border p-4",
-              getPlanStyle(newPlan).bgColor,
-              getPlanStyle(newPlan).borderColor
-            )}>
-              <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-lg",
-                getPlanStyle(newPlan).bgColor
-              )}>
+          {newPlan && newPlanStyle && (
+            <div className="flex flex-col items-center gap-2 py-0.5">
+              <div className="h-px w-full max-w-[140px] bg-linear-to-r from-transparent via-border to-transparent" />
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                  "border border-border bg-card text-primary shadow-sm",
+                  "dark:bg-card/80"
+                )}
+              >
+                <ArrowDown className="h-5 w-5" strokeWidth={2.25} />
+              </div>
+              <span className="text-center text-xs font-medium text-muted-foreground">
+                Pasará a este plan
+              </span>
+              <div className="h-px w-full max-w-[140px] bg-linear-to-r from-transparent via-border to-transparent" />
+            </div>
+          )}
+
+          {newPlan && newPlanStyle && (
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-lg border p-4",
+                newPlanStyle.bgColor,
+                newPlanStyle.borderColor
+              )}
+            >
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                  newPlanStyle.bgColor
+                )}
+              >
                 {(() => {
-                  const style = getPlanStyle(newPlan)
-                  const Icon = style.icon
-                  return <Icon className={cn("h-5 w-5", style.color)} />
+                  const Icon = newPlanStyle.icon
+                  return <Icon className={cn("h-5 w-5", newPlanStyle.color)} />
                 })()}
               </div>
-              <div>
-                <p className={cn("font-medium", getPlanStyle(newPlan).color)}>
+              <div className="min-w-0">
+                <p className={cn("font-medium", newPlanStyle.color)}>
                   Plan {newPlan.name}
                 </p>
                 <p className="text-sm text-muted-foreground">

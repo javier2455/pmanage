@@ -7,6 +7,40 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.10.0-beta] - 2026-03-24
+
+### Agregado
+
+#### Productos (negocio y catálogo)
+- Botón **Agregar producto** de nuevo en la parte superior de `products/page.tsx` (enlace con `Button` + `Plus`).
+- Búsqueda y tabla siguen en los componentes de tabla; sin filtro por categoría en la UI (la columna categoría permanece visible u ordenable donde aplica).
+
+#### Asignar planes (admin)
+- Tabla de usuarios con **TanStack Table**, columnas ordenables, búsqueda por nombre/correo integrada en la tabla, paginación con `DataTablePaginationNav`, estados vacíos y de carga.
+- Nuevos archivos: `assign-plans-table-columns.tsx`; `assign-plans-table.tsx` reescrito; `page.tsx` sin estado `searchQuery` local y `handlePlanSelect` con `useCallback`.
+
+#### Cierre contable diario
+- Tres **data tables**: productos vendidos (sin canceladas), ingresos de inventario del día y stock en almacén — con ordenación, filtro por nombre de producto, paginación y totales al pie (ingresos/gastos/valor inventario según bloque).
+- Helper `formatClosingCurrency` en `components/accounting-close/format-closing-currency.ts`.
+- Componentes: `daily-close-sortable-header.tsx`, `daily-close-sold/entry/stock-columns.tsx`, `daily-close-sold/entry/stock-table.tsx`, `daily-close-table-layout.ts` (anchos fijos `table-fixed` para evitar solapamiento: producto ~28 %, columnas numéricas con `min-width`).
+- Página `daily/page.tsx`: import de formato como `formatCurrency` (alias de `formatClosingCurrency`) para compatibilidad con el runtime.
+
+### Cambiado
+
+#### Cierre diario — UI
+- Cards en grid de dos columnas con `lg:items-start` y `Card` con `gap-4 py-4` en bloques de tablas para reducir altura fantasma cuando una columna tiene poco contenido.
+- Estado vacío (`Empty`) con `flex-none` y padding acotado para anular el `flex-1` por defecto del componente que estiraba la card.
+- Tablas con `table-fixed`, `w-full`, `min-w-0` y reparto de anchos documentado en `daily-close-table-layout.ts`.
+
+#### Cierre diario — Hidratación
+- Primer render unificado: estado `mounted` + `useEffect` y skeleton `DailyClosePageSkeleton` hasta montar el cliente, luego `isLoading` u otras ramas — evita mismatch SSR/cliente entre skeleton, error sin negocio y contenido (contexto React Query / negocio activo).
+
+### Corregido
+
+- Errores de consola por identificadores ausentes tras refactors (`searchQuery`, `formatCurrency`) al alinear estado/imports con el código actual y caché de desarrollo cuando aplica.
+
+---
+
 ## [0.5.0-beta] - 2026-03-16
 
 ### Agregado
@@ -268,3 +302,43 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 #### Eliminado
 - Código muerto de `getMyBusinesses` en el login (no se usaba la respuesta)
 - Import sin usar de `businessRoutes` en login
+
+---
+
+## Resumen del sistema (estado actual), recomendaciones y mejoras sugeridas
+
+*Actualizado: 2026-03-19 — complementa las notas de versiones anteriores; no sustituye el historial por release.*
+
+### Resumen breve del sistema actual
+
+**pmanage** (v0.9.0-beta) es un panel web (**Next.js 16**, App Router) orientado a la gestión de negocios: autenticación (login, registro, verificación por correo), multi-negocio con negocio activo, **productos**, **ventas** (incl. cancelación con motivo), **inventario / entradas**, **cierre contable** (diario y mensual), **tipo de cambio** y página pública de **planes**. La UI usa **shadcn/ui**, **Tailwind CSS 4**, **TanStack Query**, **Axios**, formularios con **react-hook-form + Zod**, tema claro/oscuro y toasts con **Sileo**.
+
+La sesión se basa en **sessionStorage** (token, usuario, negocio activo) y **cookies de auth** sincronizadas para que el **middleware** pueda proteger rutas: exige token en `/dashboard` y `/plans`, restringe `/dashboard/admin/*` a rol admin y el cierre **mensual** a planes tipo “Pro” (premium/profesional/plus, etc.). El sidebar filtra ítems según rol y plan.
+
+**Admin**: flujo de **asignar planes** a usuarios, creación de planes con tipos `free | basic | premium | enterprise`, estadísticas por plan y estilos visuales por tipo de plan (`getPlanStyle`). Parte de las llamadas a API pasan por **proxies `/api/*`** en Next para mitigar CORS en auth y negocios.
+
+### Funcionalidades que se podrían agregar
+
+- **Refresh token automático** o reintento controlado antes de expulsar al usuario en 401.
+- **Auditoría / historial** de cambios en productos, planes asignados y cierres contables.
+- **Exportación** (CSV/PDF) de ventas, inventario y cierres.
+- **Notificaciones in-app** o recordatorios (vencimiento de planes, stock bajo).
+- **Roles intermedios** (p. ej. solo lectura) si el backend lo soporta.
+- **Tests** (Vitest/Playwright o similares): hoy no hay suite automatizada visible en el repo.
+- **Documentación de API / `.env.example`** para onboarding de desarrolladores.
+
+### Mejoras sugeridas (UX, consistencia, mantenimiento)
+
+- **Unificar estilos de toasts Sileo** en toda la app (`text-foreground` / `text-muted-foreground` / `text-destructive`) para modo claro/oscuro, no solo en assign-plans.
+- **Tipado estricto de `PlanResponse.type`** frente a `string` si el backend garantiza el enum.
+- **Revisión de proxies vs llamadas directas** al backend: documentar qué rutas usan proxy y cuáles no, para evitar duplicidad y confusiones de CORS.
+- **Accesibilidad**: foco en diálogos, `aria-*` en tablas complejas y contraste en badges.
+- **i18n** si se prevé otro idioma además del español actual en UI.
+
+### Errores, riesgos o puntos a corregir / vigilar
+
+- **Cookies + sessionStorage**: si una cookie queda desincronizada del storage (pestaña antigua, limpieza parcial), el middleware y el cliente podrían discrepar; conviene una única función de “logout total” y revisar edge cases.
+- **`PlanType` vs nombres en BD**: `getPlanStyle` también mira `name` y palabras como `custom`/`personalizado`; alinear contrato API para que `type` sea la fuente de verdad y reducir heurísticas por nombre.
+- **Changelog histórico**: entradas muy antiguas mencionan `localStorage` en planes/login; el sistema actual usa **sessionStorage** — al leer documentación antigua, contrastar con el código vigente.
+
+*Esta sección es orientativa; priorizar según negocio y capacidad del backend.*

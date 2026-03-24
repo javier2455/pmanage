@@ -6,7 +6,7 @@ export interface DateRangeParameters {
     endDate?: string;
 }
 
-export type AccountingCloseDailyResponse = {
+export type AccountingCloseResponse = {
     date: string;
     sales: SaleWithProductAndBusiness[];
     inventoryEntries: InventoryEntry[];

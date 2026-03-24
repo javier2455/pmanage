@@ -1,178 +1,330 @@
 "use client";
 
-import Link from "next/link";
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import * as React from "react";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type ColumnFiltersState,
+  type PaginationState,
+  type SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import axios from "axios";
+import { sileo } from "sileo";
+import { Package, Search } from "lucide-react";
+import type { ProductToShowInTable } from "@/lib/types/product";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ProductToShowInTable } from "@/lib/types/product";
-import ProductDetailsDialog from "@/components/products/details-dialog";
-import { DeleteDialog } from "@/components/delete-dialog";
-import { useDeleteProductInBusinessMutation } from "@/hooks/use-product";
+import { Input } from "@/components/ui/input";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { useBusiness } from "@/context/business-context";
-import { sileo } from "sileo";
-import axios from "axios";
+import { useDeleteProductInBusinessMutation } from "@/hooks/use-product";
+import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
+import {
+  createBusinessProductsColumns,
+  type BusinessProductsColumnMeta,
+} from "./business-products-table-columns";
+
+function columnMeta(column: {
+  columnDef: { meta?: unknown };
+}): BusinessProductsColumnMeta {
+  const meta = column.columnDef.meta;
+  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
+    return meta as BusinessProductsColumnMeta;
+  }
+  return {};
+}
 
 interface TableOfProductsProps {
-    products: ProductToShowInTable[];
+  products: ProductToShowInTable[];
 }
 
 export default function TableOfProducts({ products }: TableOfProductsProps) {
-    const { activeBusinessId } = useBusiness();
-    const deleteProductInBusinessMutation = useDeleteProductInBusinessMutation();
+  const { activeBusinessId } = useBusiness();
+  const deleteProductInBusinessMutation = useDeleteProductInBusinessMutation();
 
-    async function handleDelete(productId: string) {
-        try {
-            const response = await deleteProductInBusinessMutation.mutateAsync({
-                businessId: activeBusinessId ?? "",
-                productId,
-            });
-            if (response.success) {
-                sileo.success({
-                    title: "Producto eliminado del negocio correctamente",
-                    fill: "",
-                    styles: {
-                        title: "text-white! text-[16px]! font-bold!",
-                        description: "text-white/90! text-[15px]!",
-                    },
-                    description: "El producto se ha eliminado del negocio correctamente",
-                });
-            } else {
-                sileo.error({
-                    title: "Error al eliminar el producto del negocio",
-                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-                    description: response.message,
-                });
-            }
-        } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                sileo.error({
-                    title: error.response?.data?.error,
-                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-                    description: error.response?.data?.message,
-                });
-            } else {
-                sileo.error({
-                    title: "Error al eliminar el producto del negocio",
-                    fill: "",
-                    styles: {
-                        title: "text-white! text-[16px]! font-bold!",
-                        description: "text-white/90! text-[15px]!",
-                    },
-                    description: "Error al eliminar el producto. Intenta de nuevo.",
-                });
-            }
+  const handleDeleteProduct = React.useCallback(
+    async (productId: string) => {
+      try {
+        const response = await deleteProductInBusinessMutation.mutateAsync({
+          businessId: activeBusinessId ?? "",
+          productId,
+        });
+        if (response.success) {
+          sileo.success({
+            title: "Producto eliminado del negocio correctamente",
+            fill: "",
+            styles: {
+              title: "text-white! text-[16px]! font-bold!",
+              description: "text-white/90! text-[15px]!",
+            },
+            description:
+              "El producto se ha eliminado del negocio correctamente",
+          });
+        } else {
+          sileo.error({
+            title: "Error al eliminar el producto del negocio",
+            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+            description: response.message,
+          });
         }
-    }
-    if (products.length === 0) {
-        return (
-            <Card>
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                    <p className="text-muted-foreground text-center">
-                        No hay productos registrados
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.data?.message) {
+          sileo.error({
+            title: error.response?.data?.error,
+            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+            description: error.response?.data?.message,
+          });
+        } else {
+          sileo.error({
+            title: "Error al eliminar el producto del negocio",
+            fill: "",
+            styles: {
+              title: "text-white! text-[16px]! font-bold!",
+              description: "text-white/90! text-[15px]!",
+            },
+            description: "Error al eliminar el producto. Intenta de nuevo.",
+          });
+        }
+      }
+    },
+    [activeBusinessId, deleteProductInBusinessMutation],
+  );
 
+  const columns = React.useMemo(
+    () => createBusinessProductsColumns(handleDeleteProduct),
+    [handleDeleteProduct],
+  );
+
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 5,
+  });
+
+  React.useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [products]);
+
+  React.useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [columnFilters]);
+
+  const table = useReactTable({
+    data: products,
+    columns,
+    getRowId: (row) => row.id,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
+    state: {
+      sorting,
+      columnFilters,
+      pagination,
+    },
+  });
+
+  const pageCount = table.getPageCount();
+  const maxPageIndex = Math.max(0, pageCount - 1);
+  React.useEffect(() => {
+    if (pagination.pageIndex > maxPageIndex) {
+      setPagination((p) => ({ ...p, pageIndex: maxPageIndex }));
+    }
+  }, [maxPageIndex, pagination.pageIndex]);
+
+  const nameColumn = table.getColumn("name");
+  const nameFilterValue = String(nameColumn?.getFilterValue() ?? "");
+
+  const filteredTotal = table.getFilteredRowModel().rows.length;
+  const hasNameFilter = nameFilterValue.trim().length > 0;
+
+  function clearNameFilter() {
+    nameColumn?.setFilterValue(undefined);
+  }
+
+  if (products.length === 0) {
     return (
-        <Card>
-            <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[600px]">
-                        <thead>
-                            <tr className="border-b border-border">
-                                <th className="text-left py-3 px-4 font-semibold text-foreground">
-                                    Nombre del producto
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold text-foreground">
-                                    Precio
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold text-foreground">
-                                    Cantidad/(Stock)
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold text-foreground">
-                                    Categoría
-                                </th>
-                                <th className="text-right py-3 px-4 font-semibold text-foreground">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {products.map((product) => (
-                                <tr
-                                    key={product.id}
-                                    className="border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors"
-                                >
-                                    <td className="py-4 px-4 text-foreground">
-                                        {product.product.name}
-                                    </td>
-                                    <td className="py-4 px-4 text-foreground">
-                                        {new Intl.NumberFormat("es-CO", {
-                                            style: "currency",
-                                            currency: "COP",
-                                        }).format(Number(product.price))}
-                                    </td>
-                                    <td className="py-4 px-4 text-foreground text-center">
-                                        {product.stock.toString()}
-                                    </td>
-                                    <td className="py-4 px-4 text-foreground">
-                                        {product.product.category}
-                                    </td>
-                                    <td className="py-4 px-4">
-                                        <div className="flex items-center justify-end">
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon-sm"
-                                                        aria-label="Abrir acciones"
-                                                    >
-                                                        <MoreHorizontal className="size-4" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent align="end" className="w-52 p-1">
-                                                    <ProductDetailsDialog
-                                                        productId={product.product.id}
-                                                        trigger={
-                                                            <button className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer">
-                                                                <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                                                                Ver detalles
-                                                            </button>
-                                                        }
-                                                    />
-                                                    <Link
-                                                        href={`/dashboard/business/products/${product.product.id}/edit`}
-                                                        className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm hover:bg-muted transition-colors"
-                                                    >
-                                                        <Pencil className="size-4 text-primary" />
-                                                        Editar
-                                                    </Link>
-                                                    <DeleteDialog
-                                                        deleteType="Producto"
-                                                        name={product.product.name}
-                                                        onConfirm={() => handleDelete(product.product.id)}
-                                                        trigger={
-                                                            <button className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm hover:bg-muted transition-colors cursor-pointer whitespace-nowrap">
-                                                                <Trash2 className="size-4 shrink-0 text-destructive" />
-                                                                Eliminar del negocio
-                                                            </button>
-                                                        }
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </CardContent>
-        </Card>
+      <Card>
+        <CardContent className="p-6">
+          <Empty className="border-border border bg-card">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Package />
+              </EmptyMedia>
+              <EmptyTitle>Sin productos en este negocio</EmptyTitle>
+              <EmptyDescription>
+                Aún no has añadido productos a este negocio. Crea o asigna un
+                producto para verlo aquí.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </CardContent>
+      </Card>
     );
-}
+  }
 
+  return (
+    <TooltipProvider>
+      <Card>
+        <CardContent className="flex flex-col gap-4 p-0">
+          <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex w-full max-w-md flex-col gap-1.5">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="business-products-name-filter"
+              >
+                Buscar por nombre
+              </label>
+              <Input
+                id="business-products-name-filter"
+                type="search"
+                placeholder="Nombre del producto…"
+                value={nameFilterValue}
+                onChange={(e) =>
+                  nameColumn?.setFilterValue(
+                    e.target.value.length ? e.target.value : undefined,
+                  )
+                }
+                aria-controls="business-products-table"
+              />
+            </div>
+          </div>
+
+          {filteredTotal === 0 ? (
+            <div className="px-4 pb-6">
+              <Empty className="border-border border bg-muted/30">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Search />
+                  </EmptyMedia>
+                  <EmptyTitle>Sin resultados</EmptyTitle>
+                  <EmptyDescription>
+                    No hay productos que coincidan con «{nameFilterValue.trim()}».
+                    Prueba con otro término o limpia la búsqueda.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearNameFilter}
+                  >
+                    Limpiar búsqueda
+                  </Button>
+                </EmptyContent>
+              </Empty>
+            </div>
+          ) : (
+            <Table id="business-products-table" className="min-w-[700px]">
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "px-4 py-3 text-foreground",
+                          columnMeta(header.column).headerClassName,
+                        )}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "px-4 py-3 text-foreground",
+                          columnMeta(cell.column).cellClassName,
+                        )}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          <div className="flex flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              {hasNameFilter ? (
+                <>
+                  <span className="font-medium text-foreground">
+                    {filteredTotal}
+                  </span>{" "}
+                  coincidencia{filteredTotal === 1 ? "" : "s"} de{" "}
+                  <span className="font-medium text-foreground">
+                    {products.length}
+                  </span>{" "}
+                  productos
+                </>
+              ) : (
+                <>
+                  Total:{" "}
+                  <span className="font-medium text-foreground">
+                    {products.length}
+                  </span>{" "}
+                  producto{products.length === 1 ? "" : "s"}
+                </>
+              )}
+            </p>
+            {filteredTotal > 0 ? (
+              <DataTablePaginationNav
+                pageIndex={pagination.pageIndex}
+                pageCount={pageCount}
+                onPageIndexChange={(nextIndex) =>
+                  setPagination((p) => ({ ...p, pageIndex: nextIndex }))
+                }
+                navLabel="Paginación de productos del negocio"
+              />
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
+  );
+}
