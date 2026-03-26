@@ -55,6 +55,10 @@ export function NavUser() {
         router.push("/login");
     }
 
+    function handleProfile() {
+        router.push("/dashboard/profile");
+    }
+
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -87,11 +91,11 @@ export function NavUser() {
                         sideOffset={4}
                     >
                         <DropdownMenuGroup>
-                            {/* <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem className="cursor-pointer" onClick={handleProfile}>
                                 <User className="mr-2 size-4" />
                                 Perfil
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
+                           {/*  <DropdownMenuItem className="cursor-pointer">
                                 <Settings className="mr-2 size-4" />
                                 Configuracion
                             </DropdownMenuItem> */}
