@@ -25,19 +25,19 @@ export default function SalesPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
+      <div className="mb-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Ventas
         </h1>
         <p className="text-muted-foreground">
           Consulta y actualiza las ventas de tu negocio
         </p>
+      </div>
         {isLoading || isFetching ? (
           <SimpleTableSkeleton />
         ) : (
           <TableOfSales sales={sales} />
         )}
-      </div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState, useSyncExternalStore } from "react"
 import { format } from "date-fns"
 import { useBusiness } from "@/context/business-context"
 import { useDailyAccountingClose } from "@/hooks/use-accounting-close"
@@ -39,10 +39,11 @@ function DailyClosePageSkeleton() {
 }
 
 export default function DailyPage() {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
 
   const { activeBusinessId } = useBusiness()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)

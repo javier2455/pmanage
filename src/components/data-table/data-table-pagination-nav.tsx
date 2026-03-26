@@ -50,12 +50,15 @@ export function DataTablePaginationNav({
   pageCount,
   onPageIndexChange,
   navLabel = "Paginación de la tabla",
+  showLabels = false,
 }: {
   pageIndex: number;
   pageCount: number;
   onPageIndexChange: (nextIndex: number) => void;
   /** `aria-label` for the `<nav>`. */
   navLabel?: string;
+  /** Muestra los textos "Anterior" / "Siguiente" junto a los iconos. Por defecto `false`. */
+  showLabels?: boolean;
 }) {
   const items = React.useMemo(
     () => getPaginationStripItems(pageIndex, pageCount),
@@ -76,13 +79,13 @@ export function DataTablePaginationNav({
         type="button"
         variant="ghost"
         size="sm"
-        className="gap-0 px-2 sm:gap-1.5 sm:px-3"
+        className={cn("px-2", showLabels && "gap-1.5 sm:px-3")}
         disabled={!canPreviousPage}
         aria-label="Página anterior"
         onClick={() => onPageIndexChange(Math.max(0, pageIndex - 1))}
       >
         <ChevronLeft data-icon="inline-start" />
-        <span className="hidden sm:inline">Anterior</span>
+        {showLabels && <span>Anterior</span>}
       </Button>
 
       {items.map((item, i) =>
@@ -117,14 +120,14 @@ export function DataTablePaginationNav({
         type="button"
         variant="ghost"
         size="sm"
-        className="gap-0 px-2 sm:gap-1.5 sm:px-3"
+        className={cn("px-2", showLabels && "gap-1.5 sm:px-3")}
         disabled={!canNextPage}
         aria-label="Página siguiente"
         onClick={() =>
           onPageIndexChange(Math.min(pageCount - 1, pageIndex + 1))
         }
       >
-        <span className="hidden sm:inline">Siguiente</span>
+        {showLabels && <span>Siguiente</span>}
         <ChevronRight data-icon="inline-end" />
       </Button>
     </nav>

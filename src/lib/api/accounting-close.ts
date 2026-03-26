@@ -20,7 +20,7 @@ export async function getMonthlyAccountingClose(businessId: string, params?: Dat
     const hasParams = params?.startDate || params?.endDate;
     const baseUrl = hasParams
         ? accountingCloseRoutes.getDailyAccountingCloseByRange(businessId)
-        : accountingCloseRoutes.getDailyAccountingClose(businessId);
+        : accountingCloseRoutes.getMonthlyAccountingClose(businessId);
 
     const url = new URL(baseUrl);
     if (params?.startDate) url.searchParams.set("startDate", params.startDate);
