@@ -66,7 +66,7 @@ export function DailyCloseStockTable({
   )
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 8,
+    pageSize: 5,
   })
 
   React.useEffect(() => {
