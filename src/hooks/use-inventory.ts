@@ -19,6 +19,7 @@ export function useAddStockToProductMutation() {
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
             queryClient.invalidateQueries({ queryKey: ["all-inventory-by-business-id", variables.businessId] });
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", variables.businessId] });
+            queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", variables.businessId] });
         },
     });
 }
