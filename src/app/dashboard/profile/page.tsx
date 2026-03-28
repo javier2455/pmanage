@@ -224,7 +224,7 @@ export default function ProfilePage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
               <Link
-                href="#"
+                href="/dashboard/profile/plans-history"
                 className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-card-foreground transition-colors hover:bg-muted"
               >
                 <History className="h-4 w-4" />

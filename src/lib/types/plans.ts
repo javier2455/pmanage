@@ -42,5 +42,18 @@ type AssignPlanResponseData = {
   updatedAt: string;
 }
 
+export interface PlanHistoryResponse {
+    id: string;
+    userId: string;
+    planId: string;
+    plan: PlanResponse;
+    startsAt: string;
+    expiresAt: string;
+    price: number;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export type PlanType = "free" | "basic" | "premium" | "enterprise";
 

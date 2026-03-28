@@ -5,4 +5,5 @@ export const plansRoutes = {
     getAllPlans: `${BASIC_ROUTE}/plans/`,
     createPlan: `${BASIC_ROUTE}/plans/`,
     assignPlan: `${BASIC_ROUTE}/plans/assign`,
+    getUserPlanHistory: `${BASIC_ROUTE}/plans/user/history`,
 }

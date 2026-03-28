@@ -1,6 +1,6 @@
 import apiClient from "@/lib/axios";
 import { plansRoutes } from "../routes/plans";
-import { AssignPlanPayload, AssignPlanResponse, CreateTypePlanPayload } from "../types/plans";
+import { AssignPlanPayload, AssignPlanResponse, CreateTypePlanPayload, PlanHistoryResponse } from "../types/plans";
 
 export async function getActivePlan() {
     const { data } = await apiClient.get(plansRoutes.getActivePlan);
@@ -19,5 +19,10 @@ export async function assignPlan(payload: AssignPlanPayload): Promise<AssignPlan
 
 export async function createPlan(payload: CreateTypePlanPayload) {
     const { data } = await apiClient.post(plansRoutes.createPlan, payload);
+    return data;
+}
+
+export async function getUserPlanHistory(): Promise<PlanHistoryResponse[]> {
+    const { data } = await apiClient.get(plansRoutes.getUserPlanHistory);
     return data;
 }

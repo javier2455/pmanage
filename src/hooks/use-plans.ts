@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { assignPlan, createPlan, getAllPlans } from "@/lib/api/plans";
+import { assignPlan, createPlan, getAllPlans, getUserPlanHistory } from "@/lib/api/plans";
 import { AssignPlanPayload, CreateTypePlanPayload } from "@/lib/types/plans";
 
 export function useGetAllPlans() {
@@ -8,6 +8,15 @@ export function useGetAllPlans() {
         queryFn: () => getAllPlans(),
     });
 }
+
+export function useGetUserPlanHistory() {
+    return useQuery({
+        queryKey: ["user-plan-history"],
+        queryFn: () => getUserPlanHistory(),
+    });
+}
+
+
 
 export function useAssignPlanMutation() {
     const queryClient = useQueryClient();
