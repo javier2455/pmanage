@@ -2,18 +2,27 @@ import { NewProductForm } from "@/components/products/new-product-form";
 import { AssignProductToBusinessForm } from "@/components/products/assign-product-to-business-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, PackagePlus } from "lucide-react";
+import { ArrowLeft, Link2, PackagePlus } from "lucide-react";
+import Link from "next/link";
 
 export default function CreateProductPage() {
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Crear producto
-        </h1>
-        <p className="text-muted-foreground">
-          Registra un producto nuevo o asígnalo a tu negocio
-        </p>
+      <div className="flex items-center gap-4">
+        <Link
+          href="/dashboard/business/products"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Crear producto
+          </h1>
+          <p className="text-muted-foreground">
+            Registra un producto nuevo o asígnalo a tu negocio
+          </p>
+        </div>
       </div>
 
       <Tabs defaultValue="new-product" className="w-full">

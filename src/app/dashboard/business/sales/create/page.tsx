@@ -27,7 +27,8 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
-import { ShoppingCart, Package, Check, X, DollarSign } from "lucide-react"
+import { ShoppingCart, Package, Check, X, DollarSign, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { CreateSaleFormData, createSaleSchema } from "@/lib/validations/business"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -118,13 +119,21 @@ export default function CreateSalesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Ventas
-        </h1>
-        <p className="text-muted-foreground">
-          Registra una nueva venta seleccionando el producto y la cantidad
-        </p>
+      <div className="flex items-center gap-4">
+        <Link
+          href="/dashboard/business/sales"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Ventas
+          </h1>
+          <p className="text-muted-foreground">
+            Registra una nueva venta seleccionando el producto y la cantidad
+          </p>
+        </div>
       </div>
 
       {/* {saved && ( ... mensaje de éxito ... )} */}

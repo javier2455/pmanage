@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Card,
   CardContent,
@@ -23,27 +25,24 @@ import {
   Rocket,
 } from "lucide-react"
 import Link from "next/link"
+import { useAuthUserData } from "@/hooks/use-auth"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const userData = {
-  name: "Carlos Rodriguez",
-  email: "carlos.rodriguez@empresa.com",
-  phone: "+52 55 1234 5678",
-  avatar: null,
-}
-
-const planData = {
-  name: "Pro",
-  price: 799,
-  description: "Para negocios en crecimiento que necesitan control total.",
-  maxProducts: "Ilimitados",
-  type: "Mensual",
-  startDate: "15 de Enero, 2024",
-  endDate: "15 de Febrero, 2024",
+function formatDate(dateString?: string | null): string {
+  if (!dateString) return "—"
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 }
 
 export default function ProfilePage() {
-  const initials = userData.name
-    .split(" ")
+  const { data: user, isLoading } = useAuthUserData();
+  console.log('user data', user);
+
+  const initials = user?.name
+    ?.split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
@@ -73,7 +72,7 @@ export default function ProfilePage() {
                 </CardTitle>
               </div>
               <Link
-                href="#"
+                href="/dashboard/profile/edit"
                 className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -85,54 +84,80 @@ export default function ProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20 border-2 border-border">
-                {userData.avatar ? (
-                  <AvatarImage src={userData.avatar} alt={userData.name} />
-                ) : null}
-                <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="text-lg font-semibold text-card-foreground">
-                  {userData.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">Administrador</p>
-              </div>
-            </div>
+            {isLoading ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-20 w-20 rounded-full shrink-0" />
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-5 w-36" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+                <Separator />
+                <div className="grid gap-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-lg shrink-0" />
+                      <div className="flex flex-col gap-1.5">
+                        <Skeleton className="h-3 w-28" />
+                        <Skeleton className="h-4 w-44" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-20 w-20 border-2 border-border">
+                    {user?.avatar ? (
+                      <AvatarImage src={user?.avatar} alt={user?.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="text-lg font-semibold text-card-foreground">
+                      {user?.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">Administrador</p>
+                  </div>
+                </div>
 
-            <Separator />
+                <Separator />
 
-            <div className="grid gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Correo electronico
-                  </span>
-                  <span className="text-sm text-card-foreground">
-                    {userData.email}
-                  </span>
-                </div>
-              </div>
+                <div className="grid gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Correo electronico
+                      </span>
+                      <span className="text-sm text-card-foreground">
+                        {user?.email}
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Telefono
+                      </span>
+                      <span className="text-sm text-card-foreground">
+                        {user?.phone || "No disponible"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Telefono
-                  </span>
-                  <span className="text-sm text-card-foreground">
-                    {userData.phone}
-                  </span>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -148,96 +173,126 @@ export default function ProfilePage() {
                   Plan activo
                 </CardTitle>
               </div>
-              <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-0">
-                {planData.name}
-              </Badge>
+              {isLoading ? (
+                <Skeleton className="h-5 w-16 rounded-full" />
+              ) : (
+                <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-0">
+                  {user?.plan?.name}
+                </Badge>
+              )}
             </div>
             <CardDescription>
               Detalles de tu suscripcion actual
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-card-foreground">
-                ${planData.price}
-              </span>
-              <span className="text-sm text-muted-foreground">MXN / mes</span>
-            </div>
-
-            <p className="text-sm text-muted-foreground">
-              {planData.description}
-            </p>
-
-            <Separator />
-
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2.5">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Max. productos
-                  </span>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-9 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Separator />
+                <div className="grid gap-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2.5">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-28" />
+                      </div>
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  ))}
                 </div>
-                <span className="text-sm font-medium text-card-foreground">
-                  {planData.maxProducts}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2.5">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Tipo de plan
-                  </span>
+                <Separator />
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+                  <Skeleton className="h-10 w-full sm:w-36 rounded-lg" />
+                  <Skeleton className="h-10 w-full sm:w-36 rounded-lg" />
                 </div>
-                <span className="text-sm font-medium text-card-foreground">
-                  {planData.type}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Fecha de inicio
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-card-foreground">
+                    ${user?.plan?.price}
                   </span>
+                  <span className="text-sm text-muted-foreground">CUP / mes</span>
                 </div>
-                <span className="text-sm font-medium text-card-foreground">
-                  {planData.startDate}
-                </span>
-              </div>
 
-              <div className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2.5">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Fecha de expiracion
-                  </span>
+                <p className="text-sm text-muted-foreground">
+                  {user?.plan?.description}
+                </p>
+
+                <Separator />
+
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2.5">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        Max. productos
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-card-foreground">
+                      {user?.plan?.maxProducts}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2.5">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        Tipo de plan
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-card-foreground">
+                      {user?.plan?.name}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2.5">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        Fecha de inicio
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-card-foreground">
+                      {formatDate(user?.plan?.createdAt)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        Fecha de expiracion
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-card-foreground">
+                      {formatDate(user?.plan?.updatedAt)}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-card-foreground">
-                  {planData.endDate}
-                </span>
-              </div>
-            </div>
 
-            <Separator />
+                <Separator />
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-              <Link
-                href="/dashboard/profile/plans-history"
-                className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-card-foreground transition-colors hover:bg-muted"
-              >
-                <History className="h-4 w-4" />
-                Ver historial
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Cambiar de plan
-              </Link>
-            </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+                  <Link
+                    href="/dashboard/profile/plans-history"
+                    className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-card-foreground transition-colors hover:bg-muted"
+                  >
+                    <History className="h-4 w-4" />
+                    Ver historial
+                  </Link>
+                  <Link
+                    href="#"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Cambiar de plan
+                  </Link>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

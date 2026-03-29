@@ -37,6 +37,15 @@ export interface UserDataResponse {
   _source: string;
 }
 
+
+export interface UpdateUserFormPayload {
+  name?: string;
+  description?: string;
+  phone?: string;
+  password?: string;
+  avatar?: File | null;
+}
+
 type Provider = {
   id: number;
   provider: string;

@@ -1,4 +1,4 @@
-import {
+  import {
     Card,
     CardContent,
     CardDescription,
@@ -8,18 +8,27 @@ import {
   import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
   import { UpdateStockForm } from "@/components/inventory/update-stock-form"
   // import { NewProductForm } from "@/components/products/new-product-form"
-  import { PackageOpen } from "lucide-react"
+  import { ArrowLeft, PackageOpen } from "lucide-react"
+  import Link from "next/link"
   
   export default function CreateInventoryPage() {
     return (
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Entrada de Productos
-          </h1>
-          <p className="text-muted-foreground">
-            Actualiza el stock de productos existentes.
-          </p>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard/business/inventory"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Entrada de Productos
+            </h1>
+            <p className="text-muted-foreground">
+              Actualiza el stock de productos existentes.
+            </p>
+          </div>
         </div>
   
         <Tabs defaultValue="update-stock" className="w-full">

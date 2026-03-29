@@ -35,7 +35,11 @@ interface AuthDataResponse {
   name: string;
   _source: string;
   plan: Plan;
+  expiredPlan: false,
+  hasNeverHadPlan: false
 }
+
+
 
 interface Role {
   id: number;
