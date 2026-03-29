@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { format } from "date-fns"
 import { useBusiness } from "@/context/business-context"
-import { useDailyAccountingClose } from "@/hooks/use-accounting-close"
+import { useDailyAccountingClose, useExportToPdf } from "@/hooks/use-accounting-close"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import type { BusinessWithProducts } from "@/lib/types/business"
 import {
@@ -15,9 +15,14 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Package, BarChart3, CalendarCheck } from "lucide-react"
+import { ShoppingCart, Package, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DateFilter } from "@/components/accounting-close/date-filter"
+import { PRO_STYLE } from "@/components/assign-plans/utils"
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
 import { DailyCloseEntryTable } from "@/components/accounting-close/daily-close-entry-table"
@@ -46,6 +51,7 @@ export default function DailyPage() {
   )
 
   const { activeBusinessId } = useBusiness()
+  const { isProPlan } = useUserRoleAndPlan()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
   const dateParams = selectedDate
@@ -54,6 +60,27 @@ export default function DailyPage() {
 
   const { data, isLoading, isError } = useDailyAccountingClose(activeBusinessId ?? "", dateParams)
   const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
+  const { mutate: exportPdf, isPending: isExportingPdf } = useExportToPdf(activeBusinessId ?? "")
+
+  function handleExportPdf() {
+    const date = selectedDate ?? new Date()
+    const dateStr = format(date, "yyyy-MM-dd")
+    exportPdf(
+      { startDate: dateStr, endDate: dateStr },
+      {
+        onSuccess: (blob) => {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement("a")
+          a.href = url
+          a.download = `cierre-diario-${format(date, "dd-MM-yyyy")}.pdf`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        },
+      },
+    )
+  }
 
   const today = new Date().toLocaleDateString("es-ES", {
     weekday: "long",
@@ -107,11 +134,61 @@ export default function DailyPage() {
             <span className="capitalize">{selectedDate ? format(selectedDate, "dd 'de' MMMM, yyyy") : today}</span>
           </p>
         </div>
-        <DateFilter
-          startDate={selectedDate}
-          onConfirm={(date) => setSelectedDate(date)}
-          onClear={() => setSelectedDate(undefined)}
-        />
+        <div className="flex items-center gap-2">
+          <DateFilter
+            startDate={selectedDate}
+            onConfirm={(date) => setSelectedDate(date)}
+            onClear={() => setSelectedDate(undefined)}
+          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={!isProPlan}
+                title={!isProPlan ? "Requiere plan Pro para exportar" : undefined}
+              >
+                <Download className="h-4 w-4" />
+                Exportar
+                <span className={cn(PRO_STYLE.className)}>
+                  <PRO_STYLE.icon className="size-2.5" />
+                  Pro
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-52 p-1">
+              <button
+                type="button"
+                disabled
+                className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-sm border border-transparent px-2 py-1.5 text-sm opacity-50 transition-colors"
+              >
+                <FileSpreadsheet className="size-4 shrink-0 text-emerald-600 dark:text-emerald-500" />
+                Exportar a Excel
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="ml-auto flex items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 p-0.5">
+                        <Clock className="size-2.5 text-amber-600 dark:text-amber-400" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      Esta función estará disponible en una próxima versión
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </button>
+              <button
+                type="button"
+                disabled={isExportingPdf}
+                onClick={handleExportPdf}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-red-400"
+              >
+                <FileText className="size-4 shrink-0 text-red-600 dark:text-red-500" />
+                {isExportingPdf ? "Generando PDF…" : "Exportar a PDF"}
+              </button>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       {/* Summary stat cards */}

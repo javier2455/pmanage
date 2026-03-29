@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { getDailyAccountingClose, getMonthlyAccountingClose } from "@/lib/api/accounting-close";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { exportToPdf, getDailyAccountingClose, getMonthlyAccountingClose } from "@/lib/api/accounting-close";
 import { DateRangeParameters } from "@/lib/types/accounting-close";
 
 export function useDailyAccountingClose(businessId: string, params?: DateRangeParameters) {
@@ -15,5 +15,11 @@ export function useMonthlyAccountingClose(businessId: string, params?: DateRange
         queryKey: ["monthly-accounting-close", businessId, params],
         queryFn: () => getMonthlyAccountingClose(businessId, params),
         enabled: !!businessId,
+    });
+}
+
+export function useExportToPdf(businessId: string) {
+    return useMutation({
+        mutationFn: (params: DateRangeParameters) => exportToPdf(businessId, params),
     });
 }

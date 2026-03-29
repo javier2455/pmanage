@@ -29,3 +29,12 @@ export async function getMonthlyAccountingClose(businessId: string, params?: Dat
     const { data } = await apiClient.get(url.toString());
     return data;
 }
+
+export async function exportToPdf(businessId: string, params?: DateRangeParameters): Promise<Blob> {
+    const url = new URL(accountingCloseRoutes.exportToPdf(businessId));
+    if (params?.startDate) url.searchParams.set("startDate", params.startDate);
+    if (params?.endDate) url.searchParams.set("endDate", params.endDate);
+
+    const { data } = await apiClient.get(url.toString(), { responseType: "blob" });
+    return data;
+}
