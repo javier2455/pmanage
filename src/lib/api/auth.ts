@@ -35,8 +35,8 @@ interface AuthDataResponse {
   name: string;
   _source: string;
   plan: Plan;
-  expiredPlan: false,
-  hasNeverHadPlan: false
+  expiredPlan: boolean,
+  hasNeverHadPlan: boolean
 }
 
 
@@ -58,6 +58,8 @@ interface Plan {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  startDate: string;
+  expireDate: string;
 }
 
 

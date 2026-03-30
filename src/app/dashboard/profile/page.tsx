@@ -256,7 +256,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {formatDate(user?.plan?.createdAt)}
+                      {formatDate(user?.plan?.startDate)}
                     </span>
                   </div>
 
@@ -268,7 +268,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {formatDate(user?.plan?.updatedAt)}
+                      {formatDate(user?.plan?.expireDate)}
                     </span>
                   </div>
                 </div>

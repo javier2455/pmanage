@@ -3,6 +3,8 @@
 import type { CSSProperties } from "react"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, Check, MoreHorizontal, X } from "lucide-react"
+import { differenceInDays, format, parseISO, startOfDay } from "date-fns"
+import { es } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -109,6 +111,45 @@ export function createAssignPlansColumns(
       cell: ({ row }) => (
         <PlanBadge plan={row.original.plan ?? null} plans={plans} />
       ),
+    },
+    {
+      id: "expiresAt",
+      accessorFn: (row) => row.plan?.expiresAt ?? "",
+      meta: {
+        headerClassName: "min-w-[9rem] whitespace-normal",
+        cellClassName: "min-w-[9rem] align-top",
+      } satisfies AssignPlansColumnMeta,
+      header: ({ column }) => (
+        <AssignPlansSortableHeader
+          column={column}
+          label="Vence"
+          className="-ml-2 h-auto min-h-8 flex-wrap justify-start gap-1 whitespace-normal px-2 py-2 text-left lg:-ml-4"
+        />
+      ),
+      cell: ({ row }) => {
+        const expiresAt = row.original.plan?.expiresAt
+        if (!expiresAt) return <span className="text-muted-foreground/50">—</span>
+
+        const expiry = startOfDay(parseISO(expiresAt))
+        const today = startOfDay(new Date())
+        const days = differenceInDays(expiry, today)
+        const label = format(expiry, "dd MMM yyyy", { locale: es })
+
+        const colorClass =
+          days < 0
+            ? "text-destructive"
+            : days <= 3
+              ? "text-amber-600 dark:text-amber-400"
+              : days <= 15
+                ? "text-yellow-600 dark:text-yellow-400"
+                : "text-muted-foreground"
+
+        return (
+          <span className={cn("text-sm tabular-nums", colorClass)}>
+            {label}
+          </span>
+        )
+      },
     },
     {
       id: "actions",

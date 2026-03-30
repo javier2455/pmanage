@@ -11,6 +11,17 @@ import { AssignPlansStatsCards } from "@/components/assign-plans/assign-plans-st
 import { AssignPlansTable } from "@/components/assign-plans/assign-plans-table"
 import { AssignPlanConfirmDialog } from "@/components/assign-plans/assign-plan-confirm-dialog"
 
+/** Devuelve la fecha local del sistema en formato YYYY-MM-DD sin conversión UTC */
+function localDateString(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** Convierte un string YYYY-MM-DD a ISO con mediodía UTC para evitar desfase de zona horaria */
+function toUtcNoon(dateStr: string): string {
+  return `${dateStr}T12:00:00.000Z`
+}
+
 export default function AssignPlansPage() {
   const { data: usersData, isLoading: isLoadingUsers } = useGetAllUsersData()
   const { data: plansData } = useGetAllPlans()
@@ -29,7 +40,7 @@ export default function AssignPlansPage() {
 
   const handlePlanSelect = useCallback(
     (user: UserDataResponse, plan: PlanResponse | null) => {
-      setStartDate(new Date().toISOString().split("T")[0])
+      setStartDate(localDateString(new Date()))
       setEndDate("")
       setConfirmDialog({ open: true, user, newPlan: plan })
     },
@@ -55,8 +66,8 @@ export default function AssignPlansPage() {
       await assignPlanMutation.mutateAsync({
         userId: user.id,
         planId: newPlan.id,
-        startDate,
-        expiresAt: endDate,
+        startDate: toUtcNoon(startDate),
+        expiresAt: toUtcNoon(endDate),
       })
       sileo.success({
         title: "Plan asignado",

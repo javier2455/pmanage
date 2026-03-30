@@ -2,7 +2,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/sidebar/sidebar"
 import { BusinessSwitcher } from "@/components/sidebar/business-switcher"
 import { BusinessProvider } from "@/context/business-context"
-
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
