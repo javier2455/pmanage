@@ -95,6 +95,12 @@ export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialo
                         </span>
                     </div>
                     <div className="flex items-center justify-between border-b border-border py-4">
+                        <span className="text-sm text-muted-foreground">Razón de cancelación</span>
+                        <span className={`text-sm font-medium text-card-foreground tabular-nums`}>
+                            {data?.cancelledReason || "--"}
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-border py-4">
                         <span className="text-sm text-muted-foreground">Fecha de creación</span>
                         <span className="text-sm font-medium text-card-foreground tabular-nums">
                             {data?.createdAt

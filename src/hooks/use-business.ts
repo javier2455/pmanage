@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllProductOfMyBusinesses, createBusiness, updateBusiness, deleteBusiness } from "@/lib/api/business";
+import { getAllProductOfMyBusinesses, createBusiness, updateBusiness, deleteBusiness, getDashboardSummary } from "@/lib/api/business";
 import type { CreateBusinessPayload, UpdateBusinessPayload } from "@/lib/types/business";
 
 export function useAllProductOfMyBusinesses(businessId: string) {
@@ -39,5 +39,13 @@ export function useDeleteBusinessMutation() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["businesses"] });
         },
+    });
+}
+
+export function useDashboardSummary(businessId: string) {
+    return useQuery({
+        queryKey: ["dashboard-summary", businessId],
+        queryFn: () => getDashboardSummary(businessId),
+        enabled: !!businessId,
     });
 }

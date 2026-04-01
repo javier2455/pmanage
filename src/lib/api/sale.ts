@@ -20,7 +20,6 @@ export async function getSaleById(saleId: string): Promise<SaleDetailsProps> {
 }
 
 export async function create(credentials: CreateSaleProps): Promise<BusinessWithProducts> {
-    console.log('credentials of create', credentials)
     const { data } = await apiClient.post(salesRoutes.createSale, credentials);
 
     return data;

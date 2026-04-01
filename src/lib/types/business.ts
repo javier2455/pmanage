@@ -68,3 +68,37 @@ export interface UpdateBusinessResponse {
   };
 }
 
+
+export interface DashboardSummaryResponse {
+  sales: {
+    today: number;
+    percentageChange: number;
+  };
+  transactions: {
+    today: number;
+    percentageChange: number;
+  };
+  lastFiveSales: DashboardSummarySalesProps[];
+  recentActivity: DashboardSummaryActivityProps[];
+}
+
+
+type DashboardSummarySalesProps = {
+  id: string;
+  productName: string;
+  cantidad: number;
+  precio: number;
+  total: number;
+  isCancelled: boolean;
+  cancelledReason: string | null;
+  createdAt: string;
+}
+
+type DashboardSummaryActivityProps = {
+  id: string;
+  actionType: string;
+  productName: string;
+  quantity: number;
+  description: string;
+  createdAt: string;
+}

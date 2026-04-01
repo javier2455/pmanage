@@ -31,6 +31,7 @@ export interface SaleDetailsProps {
   precio: string;
   descripcion: string;
   isCancelled: boolean;
+  cancelledReason: string; 
   createdAt: Date;
   productName: string;
 }

@@ -1,6 +1,6 @@
 import apiClient from "@/lib/axios";
 import { businessRoutes } from "../routes/business";
-import { CreateBusinessPayload, GetAllProductOfMyBusinessesProps, UpdateBusinessPayload } from "../types/business";
+import { CreateBusinessPayload, DashboardSummaryResponse, GetAllProductOfMyBusinessesProps, UpdateBusinessPayload } from "../types/business";
 
 export async function getAllProductOfMyBusinesses({ businessId }: GetAllProductOfMyBusinessesProps) {
     const { data } = await apiClient.get(businessRoutes.getAllProductOfMyBusinesses(businessId));
@@ -25,4 +25,9 @@ export async function deleteBusiness(businessId: string) {
     }
 
     return { success: false, message: "Error al eliminar el negocio" };
+}
+
+export async function getDashboardSummary(businessId: string): Promise<DashboardSummaryResponse> {
+    const { data } = await apiClient.get(businessRoutes.getDashboardSummary, { params: { businessId } });
+    return data;
 }

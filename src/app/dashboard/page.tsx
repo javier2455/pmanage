@@ -1,9 +1,11 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useBusiness } from "@/context/business-context";
+import { useDashboardSummary } from "@/hooks/use-business";
 import {
   DollarSign,
-  ShoppingCart,
-  TrendingUp,
-  Users,
+  ShoppingCart
 } from "lucide-react"
 
 const stats = [
@@ -20,24 +22,16 @@ const stats = [
     change: "+8.2%",
     icon: ShoppingCart,
     positive: true,
-  },
-  {
-    title: "Clientes nuevos",
-    value: "24",
-    change: "+4.1%",
-    icon: Users,
-    positive: true,
-  },
-  {
-    title: "Ticket promedio",
-    value: "$84.12",
-    change: "-2.3%",
-    icon: TrendingUp,
-    positive: false,
-  },
+  }
 ]
 
 export default function DashboardPage() {
+
+  const { activeBusinessId } = useBusiness();
+  const { data: dashboardSummary } = useDashboardSummary(activeBusinessId ?? "");
+
+  console.log("dashboardSummary", dashboardSummary)
+
   return (
     <div className="flex flex-col gap-6 p-4">
       <div>
@@ -49,7 +43,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
