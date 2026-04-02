@@ -1,10 +1,9 @@
-import { NewProductForm } from "@/components/products/new-product-form";
-import { Button } from "@/components/ui/button";
+import { AssignProductToBusinessForm } from "@/components/products/assign-product-to-business-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Link2, PackagePlus } from "lucide-react";
+import { ArrowLeft, Link2 } from "lucide-react";
 import Link from "next/link";
 
-export default function CreateProductPage() {
+export default function AsingProductToBusinessPage() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
@@ -16,33 +15,34 @@ export default function CreateProductPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Crear producto
+            Asignar producto
           </h1>
           <p className="text-muted-foreground">
-            Registra un producto nuevo o asígnalo a tu negocio
+            Asocia un producto existente con tu negocio
           </p>
         </div>
       </div>
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-              <PackagePlus className="h-4 w-4 text-primary" />
+              <Link2 className="h-4 w-4 text-primary" />
             </div>
             <div>
               <CardTitle className="text-card-foreground">
-                Registrar nuevo producto
+                Asignar producto a negocio
               </CardTitle>
               <CardDescription>
-                Agrega un producto nuevo al inventario del almacén
+                Asocia un producto existente con tu negocio
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <NewProductForm />
+          <AssignProductToBusinessForm />
         </CardContent>
       </Card>
     </section>
-  )
+  );
 }

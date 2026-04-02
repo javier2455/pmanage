@@ -304,7 +304,7 @@ export default function LoginPage() {
                             </p>
                         )}
 
-                        <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                        <Button type="submit" className="w-full cursor-pointer" disabled={loginMutation.isPending}>
                             {loginMutation.isPending ? "Ingresando..." : "Iniciar sesión"}
                         </Button>
                     </form>
@@ -318,7 +318,7 @@ export default function LoginPage() {
                     <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
+                        className="w-full cursor-pointer"
                         onClick={handleGoogleLogin}
                         disabled={isGoogleLoading}
                     >

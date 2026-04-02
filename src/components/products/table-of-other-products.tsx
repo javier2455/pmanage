@@ -171,7 +171,7 @@ export default function TableOfOtherProducts({
               <EmptyTitle>Sin otros productos</EmptyTitle>
               <EmptyDescription>
                 Todos los productos del catálogo ya están asignados a este
-                negocio, o el catálogo está vacío.
+                negocio o el catálogo está vacío.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

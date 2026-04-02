@@ -57,7 +57,7 @@ export default function ProductsPage() {
         </div>
 
         <div className="space-y-8">
-        <div>
+          <div>
             <h2 className="text-lg font-semibold text-foreground mb-3">
               Todos los productos
             </h2>
@@ -69,9 +69,20 @@ export default function ProductsPage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-3">
+            <h1 className="text-lg font-semibold text-foreground mb-3">
               Productos del negocio activo
-            </h2>
+            </h1>
+            <p className="text-muted-foreground">
+              Consulta, actualiza, añade y elimina productos de tu negocio
+            </p>
+            <div className="mb-4 flex items-center justify-end">
+          <Button asChild>
+            <Link href="/dashboard/business/products/asign-to-business">
+              <Plus data-icon="inline-start" />
+              Asignar producto
+            </Link>
+          </Button>
+        </div>
             {businessTableLoading ? (
               <SimpleTableSkeleton />
             ) : (
