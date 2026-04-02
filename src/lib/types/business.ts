@@ -78,12 +78,11 @@ export interface DashboardSummaryResponse {
     today: number;
     percentageChange: number;
   };
-  lastFiveSales: DashboardSummarySalesProps[];
-  recentActivity: DashboardSummaryActivityProps[];
+  lastFiveSales: DashboardSummarySale[];
+  recentActivity: DashboardSummaryActivity[];
 }
 
-
-type DashboardSummarySalesProps = {
+export type DashboardSummarySale = {
   id: string;
   productName: string;
   cantidad: number;
@@ -92,13 +91,13 @@ type DashboardSummarySalesProps = {
   isCancelled: boolean;
   cancelledReason: string | null;
   createdAt: string;
-}
+};
 
-type DashboardSummaryActivityProps = {
+export type DashboardSummaryActivity = {
   id: string;
   actionType: string;
   productName: string;
   quantity: number;
   description: string;
   createdAt: string;
-}
+};

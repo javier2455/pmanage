@@ -7,5 +7,5 @@ export const businessRoutes = {
     deleteBusiness: (businessId: string) => `${BASIC_ROUTE}/businesses/${businessId}`,
     updateBusiness: (businessId: string) => `${BASIC_ROUTE}/businesses/${businessId}`,
     deleteProductOfMyBusiness: (businessId: string, productId: string) => `${BASIC_ROUTE}/businesses/${businessId}/products/${productId}`,
-    getDashboardSummary: `${BASIC_ROUTE}/dashboard`,
+    getDashboardSummary: `${BASIC_ROUTE}/dashboard/`,
   };  

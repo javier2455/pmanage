@@ -27,6 +27,7 @@ export function useCreateSaleMutation() {
             queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close"] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
         },
     });
 }
