@@ -84,7 +84,9 @@ export function PlanIndicator() {
                     )}
                     style={{
                         width: `${100 - progressPercent}%`,
-                        backgroundColor: isUrgent ? undefined : (planStyle.style.color ?? "#d97706"),
+                        backgroundColor: isUrgent
+                            ? undefined
+                            : (planStyle.style.color ?? "#64748b"),
                     }}
                 />
             </div>

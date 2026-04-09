@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
 import {
     Card,
     CardContent,
@@ -16,17 +19,29 @@ import {
     Shield,
     Crown,
     ArrowLeft,
-    Zap,
 } from "lucide-react"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
+
+type StoredPlan = {
+    name?: string
+    type?: string
+}
+
+function normalizePlanKey(raw: string | undefined | null) {
+    return String(raw ?? "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+}
 
 const plans = [
     {
-        name: "Free",
+        name: "Gratuito",
         description: "Perfecto para probar la plataforma sin compromiso.",
         price: 0,
         period: "mes",
-        badge: null,
         icon: Shield,
         features: [
             { text: "Hasta 50 productos", included: true },
@@ -40,15 +55,12 @@ const plans = [
             { text: "Cierre mensual", included: false },
             { text: "Integracion facturacion", included: false },
         ],
-        highlighted: false,
-        current: false,
     },
     {
-        name: "Basico",
+        name: "Básico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        price: 299,
+        price: 100,
         period: "mes",
-        badge: null,
         icon: Sparkles,
         features: [
             { text: "Hasta 500 productos", included: true },
@@ -62,15 +74,12 @@ const plans = [
             { text: "Cierre mensual", included: false },
             { text: "Integracion facturacion", included: false },
         ],
-        highlighted: false,
-        current: false,
     },
     {
         name: "Pro",
         description: "Para negocios en crecimiento que necesitan control total.",
-        price: 799,
+        price: 200,
         period: "mes",
-        badge: "Recomendado",
         icon: Crown,
         features: [
             { text: "Productos ilimitados", included: true },
@@ -84,12 +93,43 @@ const plans = [
             { text: "Cierre mensual y anual", included: true },
             { text: "Integracion facturacion", included: true },
         ],
-        highlighted: true,
-        current: true,
     },
-]
+] as const
 
 export default function ChangePlanPage() {
+    const [storedPlan, setStoredPlan] = useState<StoredPlan | null>(null)
+
+    useEffect(() => {
+        const stored = sessionStorage.getItem("user")
+        if (!stored) return
+        try {
+            const parsed = JSON.parse(stored)
+            queueMicrotask(() => setStoredPlan(parsed?.plan ?? null))
+        } catch {
+            // ignore invalid session data
+        }
+    }, [])
+
+    const currentPlanKey = useMemo(() => {
+        const byType = normalizePlanKey(storedPlan?.type)
+        const byName = normalizePlanKey(storedPlan?.name)
+        return byType || byName
+    }, [storedPlan?.name, storedPlan?.type])
+
+    const plansWithCurrent = useMemo(() => {
+        return plans.map((p) => {
+            const key = normalizePlanKey(p.name)
+            const current =
+                currentPlanKey.length > 0 &&
+                (currentPlanKey === key ||
+                    (currentPlanKey === "free" && key.includes("gratuito")) ||
+                    (currentPlanKey === "basic" && key.includes("basico")) ||
+                    (currentPlanKey === "pro" && key === "pro"))
+
+            return { ...p, current }
+        })
+    }, [currentPlanKey])
+
     return (
         <div className="flex flex-col gap-6 p-4">
             <div className="flex items-center gap-4">
@@ -110,34 +150,21 @@ export default function ChangePlanPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-                {plans.map((plan) => {
+                {plansWithCurrent.map((plan) => {
                     const Icon = plan.icon
                     return (
                         <Card
                             key={plan.name}
-                            className={`relative flex flex-col transition-all ${plan.highlighted
-                                    ? "border-primary shadow-lg shadow-primary/5 ring-1 ring-primary/20"
-                                    : ""
-                                }`}
-                        >
-                            {plan.badge && (
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                                    <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold">
-                                        <Zap className="mr-1 h-3 w-3" />
-                                        {plan.badge}
-                                    </Badge>
-                                </div>
+                            className={cn(
+                                "relative flex flex-col transition-all",
+                                plan.current &&
+                                    "border-2 border-emerald-500 shadow-sm shadow-emerald-500/10",
                             )}
-
+                        >
                             <CardHeader className="pb-4">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
-                                        <div
-                                            className={`flex h-10 w-10 items-center justify-center rounded-lg ${plan.highlighted
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "bg-muted text-muted-foreground"
-                                                }`}
-                                        >
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                                             <Icon className="h-5 w-5" />
                                         </div>
                                         <CardTitle className="text-xl text-card-foreground">
@@ -170,7 +197,7 @@ export default function ChangePlanPage() {
                                                 ${plan.price}
                                             </span>
                                             <span className="text-sm text-muted-foreground">
-                                                MXN / {plan.period}
+                                                CUP / {plan.period}
                                             </span>
                                         </>
                                     )}
@@ -192,8 +219,8 @@ export default function ChangePlanPage() {
                                             )}
                                             <span
                                                 className={`text-sm ${feature.included
-                                                        ? "text-card-foreground"
-                                                        : "text-muted-foreground"
+                                                    ? "text-card-foreground"
+                                                    : "text-muted-foreground"
                                                     }`}
                                             >
                                                 {feature.text}
@@ -211,7 +238,7 @@ export default function ChangePlanPage() {
                                 ) : (
                                     <Button
                                         className="w-full"
-                                        variant={plan.highlighted ? "default" : "outline"}
+                                        variant="outline"
                                     >
                                         {plan.price === 0 ? "Cambiar a Free" : `Elegir ${plan.name}`}
                                     </Button>
@@ -222,7 +249,7 @@ export default function ChangePlanPage() {
                 })}
             </div>
 
-            <Card className="border-emerald-500/20 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/5">
+            <Card className="border-emerald-500/20 bg-linear-to-r from-emerald-500/5 via-transparent to-emerald-500/5">
                 <CardContent className="flex flex-col items-center gap-5 py-8 text-center sm:flex-row sm:text-left">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
                         <svg

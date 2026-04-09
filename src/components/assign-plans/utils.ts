@@ -24,25 +24,28 @@ export function getPlanStyle(plan: PlanResponse | { type?: string; name?: string
       color: "text-slate-600 dark:text-slate-400",
       bgColor: "bg-slate-500/10",
       borderColor: "border-slate-500/20",
-      // Sin inline color: respeta dark: en Badge / iconos
-      style: {},
+      style: {
+        color: "#64748b",
+        backgroundColor: "rgb(100 116 139 / 0.15)",
+        borderColor: "rgb(100 116 139 / 0.4)",
+      },
     }
-  // Pro antes que basic para que "Pro Basic" / "Basic Pro" reciba estilos Pro
-  if (type.includes("pro") || type.includes("profesional") || type.includes("premium") || type.includes("plus"))
-    return {
-      icon: Sparkles,
-      color: "text-amber-600",
-      bgColor: "bg-amber-500/10",
-      borderColor: "border-amber-500/20",
-      style: { color: "#d97706", backgroundColor: "rgb(245 158 11 / 0.15)", borderColor: "rgb(245 158 11 / 0.4)" },
-    }
-  if (type.includes("basico") || type.includes("basic"))
+  /* Antes que "pro": la palabra "basic" contiene la subcadena "pro" en JS (basic.includes("pro") === true). */
+  if (type.includes("basico") || type.includes("basic") || type.includes("básico"))
     return {
       icon: Star,
-      color: "text-blue-600",
+      color: "text-blue-600 dark:text-blue-400",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/20",
       style: { color: "#2563eb", backgroundColor: "rgb(59 130 246 / 0.15)", borderColor: "rgb(59 130 246 / 0.4)" },
+    }
+  if (type.includes("pro") || type.includes("profesional") || type.includes("premium") || type.includes("plus"))
+    return {
+      icon: Sparkles,
+      color: "text-amber-600 dark:text-amber-400",
+      bgColor: "bg-amber-500/10",
+      borderColor: "border-amber-500/20",
+      style: { color: "#d97706", backgroundColor: "rgb(245 158 11 / 0.15)", borderColor: "rgb(245 158 11 / 0.4)" },
     }
   if (type.includes("custom") || type.includes("personalizado"))
     return {
