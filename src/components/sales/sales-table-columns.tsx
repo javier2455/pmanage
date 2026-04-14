@@ -26,6 +26,16 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function formatDate(date: Date | string) {
+  return new Date(date).toLocaleDateString("es-CO", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function SalesSortableHeader({
   column,
   label,
@@ -56,57 +66,49 @@ export function createSalesColumns(
 ): ColumnDef<SaleWithProductAndBusiness>[] {
   return [
     {
-      id: "product",
-      accessorFn: (row) => row.product.name,
-      enableColumnFilter: true,
-      filterFn: (row, _columnId, filterValue) => {
-        const q = String(filterValue ?? "").toLowerCase().trim();
-        if (!q) return true;
-        const name = row.original.product?.name ?? "";
-        return name.toLowerCase().includes(q);
-      },
+      id: "fecha",
+      accessorFn: (row) => new Date(row.createdAt).getTime(),
       meta: {
-        headerClassName:
-          "min-w-[280px] max-w-none whitespace-normal align-top sm:max-w-[min(18rem,40vw)]",
-        cellClassName:
-          "min-w-[280px] max-w-none whitespace-normal break-words align-top sm:max-w-[min(18rem,40vw)]",
+        headerClassName: "min-w-[180px] whitespace-nowrap",
+        cellClassName: "min-w-[180px] whitespace-nowrap",
       } satisfies SalesColumnMeta,
       header: ({ column }) => (
-        <SalesSortableHeader
-          column={column}
-          label="Producto"
-          className="-ml-2 h-auto min-h-8 flex-wrap justify-start gap-1 whitespace-normal px-2 py-2 text-left lg:-ml-4"
-        />
+        <SalesSortableHeader column={column} label="Fecha" />
       ),
       cell: ({ row }) => (
-        <span className="block font-medium text-foreground">
-          {row.original.product.name}
+        <span className="text-sm text-foreground">
+          {formatDate(row.original.createdAt)}
         </span>
       ),
     },
     {
-      id: "precio",
-      accessorFn: (row) => row.precio,
+      id: "productos",
+      accessorFn: (row) => row.items.length,
       meta: compactColumnMeta,
       header: ({ column }) => (
-        <SalesSortableHeader column={column} label="Precio" />
+        <SalesSortableHeader column={column} label="Productos" />
       ),
-      cell: ({ row }) => (
-        <span className="tabular-nums text-foreground">
-          {formatCurrency(row.original.precio)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const count = row.original.items.length;
+        return (
+          <span className="text-sm tabular-nums text-foreground">
+            {count > 0
+              ? `${count} producto${count === 1 ? "" : "s"}`
+              : "--"}
+          </span>
+        );
+      },
     },
     {
-      id: "cantidad",
-      accessorFn: (row) => Number(row.cantidad),
+      id: "total",
+      accessorFn: (row) => Number(row.total),
       meta: compactColumnMeta,
       header: ({ column }) => (
-        <SalesSortableHeader column={column} label="Cantidad" />
+        <SalesSortableHeader column={column} label="Total" />
       ),
       cell: ({ row }) => (
-        <span className="tabular-nums text-foreground">
-          {row.original.cantidad}
+        <span className="tabular-nums font-medium text-foreground">
+          {formatCurrency(Number(row.original.total))}
         </span>
       ),
     },
@@ -169,7 +171,6 @@ export function createSalesColumns(
                 }
               />
               <CancelSaleDialog
-                productName={row.original.product.name}
                 onConfirm={(cancellationReason) =>
                   onCancelSale(row.original.id, cancellationReason)
                 }

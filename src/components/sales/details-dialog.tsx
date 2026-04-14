@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button"
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -13,6 +12,14 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useGetSaleById } from "@/hooks/use-sales"
+import { Loader2 } from "lucide-react"
+
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+    }).format(value)
+}
 
 interface DetailsDialogProps {
     saleId: string
@@ -21,10 +28,13 @@ interface DetailsDialogProps {
 }
 
 export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialogProps) {
-    const { data, isLoading, isError } = useGetSaleById(saleId)
-    // console.log('data of useGetSaleById', data)
+    const { data, isLoading } = useGetSaleById(saleId)
 
     const triggerContent = trigger ?? <Button variant="outline">Open Dialog</Button>
+
+    const total = Number(data?.total ?? 0)
+    const items = data?.items ?? []
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -44,77 +54,104 @@ export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialo
                     <DialogTitle className="text-card-foreground">
                         Resumen de venta
                     </DialogTitle>
-                    {/* <DialogDescription>
-                        Detalle y conversiones de moneda
-                    </DialogDescription> */}
                 </DialogHeader>
-                <div className="flex flex-col mt-4">
-                    <div className="flex items-start justify-between border-b border-border py-4 first:pt-0">
-                        <span className="text-sm text-muted-foreground">Producto</span>
-                        <span className="text-sm font-medium text-card-foreground text-right max-w-[55%]">
-                            {data?.productName ?? "--"}
-                        </span>
+
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="size-5 animate-spin text-muted-foreground" />
                     </div>
-                    <div className="flex items-center justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">Cantidad</span>
-                        <span className="text-sm font-medium text-card-foreground tabular-nums">
-                            {data?.cantidad ?? "--"}
-                        </span>
+                ) : (
+                    <div className="flex flex-col mt-4">
+                        {/* Items */}
+                        {items.length > 0 ? (
+                            <div className="flex flex-col border-b border-border pb-2">
+                                <span className="text-sm font-medium text-card-foreground mb-2">
+                                    Productos ({items.length})
+                                </span>
+                                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                                    {items.map((item, index) => (
+                                        <div
+                                            key={item.id}
+                                            className={`flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 ${item.isCancelled ? "opacity-60" : ""}`}
+                                        >
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-sm text-card-foreground">
+                                                    Producto {index + 1}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {item.cantidad} x {formatCurrency(item.precio)}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                <span className="text-sm font-medium tabular-nums text-card-foreground">
+                                                    {formatCurrency(item.cantidad * item.precio)}
+                                                </span>
+                                                {item.isCancelled && (
+                                                    <span className="text-xs text-destructive">Cancelado</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between border-b border-border py-4">
+                                <span className="text-sm text-muted-foreground">Productos</span>
+                                <span className="text-sm text-muted-foreground">--</span>
+                            </div>
+                        )}
+
+                        {/* Total */}
+                        <div className="flex items-center justify-between border-b border-border py-4">
+                            <span className="text-sm font-medium text-card-foreground">Total</span>
+                            <span className="text-sm font-semibold tabular-nums text-card-foreground">
+                                {formatCurrency(total)}
+                            </span>
+                        </div>
+
+                        {/* Descripción */}
+                        <div className="flex items-start justify-between border-b border-border py-4">
+                            <span className="text-sm text-muted-foreground">Descripción</span>
+                            <span className="text-sm font-medium text-card-foreground text-right max-w-[55%]">
+                                {data?.descripcion || "--"}
+                            </span>
+                        </div>
+
+                        {/* Estado */}
+                        <div className="flex items-center justify-between border-b border-border py-4">
+                            <span className="text-sm text-muted-foreground">Estado</span>
+                            <span className={`text-sm font-medium tabular-nums ${data?.isCancelled ? "text-destructive" : "text-primary"}`}>
+                                {data?.isCancelled ? "Cancelada" : "Activa"}
+                            </span>
+                        </div>
+
+                        {/* Razón de cancelación */}
+                        {data?.isCancelled && (
+                            <div className="flex items-center justify-between border-b border-border py-4">
+                                <span className="text-sm text-muted-foreground">Razón de cancelación</span>
+                                <span className="text-sm font-medium text-card-foreground tabular-nums">
+                                    {data?.cancelledReason || "--"}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Fecha */}
+                        <div className="flex items-center justify-between py-4">
+                            <span className="text-sm text-muted-foreground">Fecha de creación</span>
+                            <span className="text-sm font-medium text-card-foreground tabular-nums">
+                                {data?.createdAt
+                                    ? new Date(data.createdAt).toLocaleDateString("es-CO", {
+                                        day: "2-digit",
+                                        month: "long",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })
+                                    : "--"}
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex items-center justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">
-                            Precio unitario
-                        </span>
-                        <span className="text-sm font-medium text-card-foreground tabular-nums">
-                            {data?.precio ?? "--"}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">
-                            Total
-                        </span>
-                        <span className="text-sm font-semibold text-card-foreground tabular-nums">
-                            {data?.precio && data?.cantidad
-                                ? new Intl.NumberFormat("es-CO", {
-                                    style: "currency",
-                                    currency: "COP",
-                                }).format(Number(data.precio) * Number(data.cantidad))
-                                : "--"}
-                        </span>
-                    </div>
-                    <div className="flex items-start justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">Descripción</span>
-                        <span className="text-sm font-medium text-card-foreground text-right max-w-[55%]">
-                            {data?.descripcion || "--"}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">Estado</span>
-                        <span className={`text-sm font-medium tabular-nums ${data?.isCancelled ? "text-destructive" : "text-primary"}`}>
-                            {data?.isCancelled ? "Cancelada" : "Activa"}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">Razón de cancelación</span>
-                        <span className={`text-sm font-medium text-card-foreground tabular-nums`}>
-                            {data?.cancelledReason || "--"}
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between border-b border-border py-4">
-                        <span className="text-sm text-muted-foreground">Fecha de creación</span>
-                        <span className="text-sm font-medium text-card-foreground tabular-nums">
-                            {data?.createdAt
-                                ? new Date(data.createdAt).toLocaleDateString("es-CO", {
-                                    day: "2-digit",
-                                    month: "long",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                })
-                                : "--"}
-                        </span>
-                    </div>
-                </div>
+                )}
             </DialogContent>
         </Dialog>
     )

@@ -1,6 +1,6 @@
 import apiClient from "@/lib/axios";
 import { BusinessWithProducts } from "../types/business";
-import { CreateSaleProps, SaleDetailsProps } from "../types/sales";
+import { CreateSaleProps, SaleWithProductAndBusiness } from "../types/sales";
 import { salesRoutes } from "../routes/sales";
 
 interface GetAllSalesByBusinessIdProps {
@@ -14,7 +14,7 @@ export async function getAllSalesByBusinessId({ businessId }: GetAllSalesByBusin
     return data;
 }
 
-export async function getSaleById(saleId: string): Promise<SaleDetailsProps> {
+export async function getSaleById(saleId: string): Promise<SaleWithProductAndBusiness> {
     const { data } = await apiClient.get(salesRoutes.getSaleById(saleId));
     return data;
 }

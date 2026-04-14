@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createSaleSchema = z.object({
+export const addToCartSchema = z.object({
   stock: z
     .number()
     .min(1, "El monto es requerido")
@@ -33,6 +33,6 @@ export const updateBusinessSchema = z.object({
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),
 });
 
-export type CreateSaleFormData = z.infer<typeof createSaleSchema>;
+export type AddToCartFormData = z.infer<typeof addToCartSchema>;
 export type CreateBusinessFormData = z.infer<typeof createBusinessSchema>;
 export type UpdateBusinessFormData = z.infer<typeof updateBusinessSchema>;

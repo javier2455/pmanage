@@ -19,7 +19,6 @@ import { Plus, Receipt, Search } from "lucide-react";
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -154,22 +153,17 @@ export default function TableOfSales({ sales }: TableOfSalesProps) {
     }
   }, [maxPageIndex, pagination.pageIndex]);
 
-  const productColumn = table.getColumn("product");
   const statusColumn = table.getColumn("status");
-  const productFilterValue = String(productColumn?.getFilterValue() ?? "");
   const statusFilterRaw = statusColumn?.getFilterValue() as string | undefined;
   const statusSelectValue =
     statusFilterRaw && statusFilterRaw !== "all" ? statusFilterRaw : "all";
 
   const filteredTotal = table.getFilteredRowModel().rows.length;
-  const hasProductFilter = productFilterValue.trim().length > 0;
-  const hasStatusFilter = Boolean(
+  const hasActiveFilters = Boolean(
     statusFilterRaw && statusFilterRaw !== "all",
   );
-  const hasActiveFilters = hasProductFilter || hasStatusFilter;
 
   function clearAllFilters() {
-    productColumn?.setFilterValue(undefined);
     statusColumn?.setFilterValue(undefined);
   }
 
@@ -209,26 +203,6 @@ export default function TableOfSales({ sales }: TableOfSalesProps) {
           <div className="flex flex-col gap-3 px-4 pt-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-                <div className="flex w-full max-w-md flex-col gap-1.5">
-                  <label
-                    className="text-sm font-medium text-foreground"
-                    htmlFor="sales-product-filter"
-                  >
-                    Buscar por producto
-                  </label>
-                  <Input
-                    id="sales-product-filter"
-                    type="search"
-                    placeholder="Nombre del producto…"
-                    value={productFilterValue}
-                    onChange={(e) =>
-                      productColumn?.setFilterValue(
-                        e.target.value.length ? e.target.value : undefined,
-                      )
-                    }
-                    aria-controls="sales-table"
-                  />
-                </div>
                 <div className="flex w-full max-w-xs flex-col gap-1.5">
                   <span className="text-sm font-medium text-foreground">
                     Estado

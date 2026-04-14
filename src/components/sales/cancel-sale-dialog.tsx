@@ -23,13 +23,12 @@ import {
 } from "@/components/ui/tooltip"
 
 interface CancelSaleDialogProps {
-    productName: string
     onConfirm: (description: string) => void | Promise<void>
     trigger?: React.ReactNode
     tooltip?: string
 }
 
-export function CancelSaleDialog({ productName, onConfirm, trigger, tooltip }: CancelSaleDialogProps) {
+export function CancelSaleDialog({ onConfirm, trigger, tooltip }: CancelSaleDialogProps) {
     const [open, setOpen] = useState(false)
     const [description, setDescription] = useState("")
     const [isLoading, setIsLoading] = useState(false)
@@ -78,9 +77,8 @@ export function CancelSaleDialog({ productName, onConfirm, trigger, tooltip }: C
                         </DialogTitle>
                     </div>
                     <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                        ¿Estás seguro de querer cancelar la venta de{" "}
-                        <span className="font-bold text-foreground">{productName}</span>?
-                        El stock del producto se restablecerá. Esta acción no se puede deshacer.
+                        ¿Estás seguro de querer cancelar esta venta?
+                        El stock de los productos se restablecerá. Esta acción no se puede deshacer.
                     </DialogDescription>
                 </DialogHeader>
 

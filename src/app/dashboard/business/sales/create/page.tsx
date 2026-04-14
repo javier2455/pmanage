@@ -27,15 +27,22 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
-import { ShoppingCart, Package, Check, X, DollarSign, ArrowLeft } from "lucide-react"
+import { ShoppingCart, Package, Plus, X, DollarSign, ArrowLeft, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { CreateSaleFormData, createSaleSchema } from "@/lib/validations/business"
+import { AddToCartFormData, addToCartSchema } from "@/lib/validations/business"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import { sileo } from "sileo"
 
-// const EXCHANGE_RATES = { usd: 1, eur: 0.92, mn: 17.25 }
+interface CartItem {
+  productId: string;
+  productName: string;
+  cantidad: number;
+  precio: number;
+  subtotal: number;
+  stock: number;
+}
 
 export default function CreateSalesPage() {
   const router = useRouter()
@@ -44,6 +51,7 @@ export default function CreateSalesPage() {
   const createSaleMutation = useCreateSaleMutation()
 
   const [selectedProduct, setSelectedProduct] = useState<BusinessWithProducts | null>(null)
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
 
   const {
     register,
@@ -53,8 +61,8 @@ export default function CreateSalesPage() {
     setError,
     reset,
     formState: { errors },
-  } = useForm<CreateSaleFormData>({
-    resolver: zodResolver(createSaleSchema),
+  } = useForm<AddToCartFormData>({
+    resolver: zodResolver(addToCartSchema),
     defaultValues: {
       stock: 0,
       productId: "",
@@ -66,47 +74,104 @@ export default function CreateSalesPage() {
 
   const products: BusinessWithProducts[] = data?.data ?? []
 
+  const cartQuantityForSelected = useMemo(() => {
+    if (!selectedProduct) return 0
+    return cartItems.find(i => i.productId === selectedProduct.product.id)?.cantidad ?? 0
+  }, [selectedProduct, cartItems])
+
+  const effectiveStock = useMemo(() => {
+    if (!selectedProduct) return 0
+    return selectedProduct.stock - cartQuantityForSelected
+  }, [selectedProduct, cartQuantityForSelected])
+
   const stockStatus = useMemo(() => {
     if (!selectedProduct) return null
-    if (selectedProduct.stock === 0) return { label: "Sin stock", variant: "destructive" as const }
-    if (selectedProduct.stock <= 10) return { label: "Stock bajo", variant: "secondary" as const }
+    if (effectiveStock === 0) return { label: "Sin stock", variant: "destructive" as const }
+    if (effectiveStock <= 10) return { label: "Stock bajo", variant: "secondary" as const }
     return { label: "Disponible", variant: "secondary" as const }
-  }, [selectedProduct])
+  }, [selectedProduct, effectiveStock])
 
   const unitPrice = selectedProduct?.price ?? 0
-  const totalUsd = Number(unitPrice) * quantityNum
-  const isValid = selectedProduct && quantityNum > 0 && quantityNum <= selectedProduct.stock
+
+  const grandTotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.subtotal, 0)
+  }, [cartItems])
+
+  const isAddValid = selectedProduct && quantityNum > 0 && quantityNum <= effectiveStock
 
   function handleCancel() {
     setSelectedProduct(null)
+    setCartItems([])
     reset({ stock: 0, productId: "" })
     router.push("/dashboard/business/sales")
   }
 
-  async function onSubmit(data: CreateSaleFormData) {
+  function addToCart(data: AddToCartFormData) {
+    if (!selectedProduct) return
+
+    const precio = Number(unitPrice)
+    const existingIndex = cartItems.findIndex(i => i.productId === data.productId)
+
+    if (existingIndex >= 0) {
+      const updated = [...cartItems]
+      const existing = updated[existingIndex]
+      const newCantidad = existing.cantidad + data.stock
+      if (newCantidad > selectedProduct.stock) {
+        setError("stock", { message: `La cantidad total (${newCantidad}) excede el stock disponible (${selectedProduct.stock})` })
+        return
+      }
+      updated[existingIndex] = {
+        ...existing,
+        cantidad: newCantidad,
+        subtotal: newCantidad * precio,
+      }
+      setCartItems(updated)
+    } else {
+      setCartItems(prev => [...prev, {
+        productId: data.productId,
+        productName: selectedProduct.product.name,
+        cantidad: data.stock,
+        precio,
+        subtotal: data.stock * precio,
+        stock: selectedProduct.stock,
+      }])
+    }
+
+    setSelectedProduct(null)
+    reset({ stock: 0, productId: "" })
+  }
+
+  function removeFromCart(productId: string) {
+    setCartItems(prev => prev.filter(i => i.productId !== productId))
+  }
+
+  async function submitSale() {
+    if (cartItems.length === 0) return
+
     try {
-      if (!isValid) return
-      console.log('data of onSubmit', data)
-      console.log('activeBusinessId of onSubmit', activeBusinessId)
       const response = await createSaleMutation.mutateAsync({
         idbusiness: activeBusinessId ?? "",
-        idproducto: data.productId,
-        cantidad: data.stock,
-        precio: Number(unitPrice),
         descripcion: "",
+        items: cartItems.map(({ productId, cantidad, precio }) => ({
+          idproducto: productId,
+          cantidad,
+          precio,
+        })),
       })
-      console.log('response of create sale', response)
+
       if (response) {
         sileo.success({
           title: "Venta registrada correctamente", fill: '', styles: {
             title: "text-white! text-[16px]! font-bold!",
             description: "text-white/90! text-[15px]!",
-          }, description: "La venta se ha registrado correctamente"
+          }, description: `Se registraron ${cartItems.length} producto(s) en la venta`
         });
-        handleCancel()
+        setCartItems([])
+        setSelectedProduct(null)
+        reset({ stock: 0, productId: "" })
+        router.push("/dashboard/business/sales")
       }
     } catch (error) {
-      console.log('error of onSubmit', error)
       if (axios.isAxiosError(error) && error.response?.data?.error === "Not Found") {
         setError("root", { message: "Producto no encontrado o negocio no encontrado" });
       } else if (axios.isAxiosError(error) && error.response?.data?.message) {
@@ -131,123 +196,129 @@ export default function CreateSalesPage() {
             Ventas
           </h1>
           <p className="text-muted-foreground">
-            Registra una nueva venta seleccionando el producto y la cantidad
+            Registra una nueva venta agregando productos al carrito
           </p>
         </div>
       </div>
 
-      {/* {saved && ( ... mensaje de éxito ... )} */}
-
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* Form - left side */}
-        <Card className="lg:col-span-3">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                  <ShoppingCart className="h-4 w-4 text-primary" />
+        {/* Form + Cart - left side */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          <Card>
+            <form onSubmit={handleSubmit(addToCart)}>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                    <ShoppingCart className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-card-foreground">
+                      Agregar producto
+                    </CardTitle>
+                    <CardDescription>
+                      Selecciona un producto y la cantidad a vender
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-card-foreground">
-                    Nueva venta
-                  </CardTitle>
-                  <CardDescription>
-                    Completa los datos del producto a vender
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6">
-              {/* Selector de productos - carga desde data.data (BusinessWithProducts) */}
-              <div className="flex flex-col gap-2">
-                <Label className="text-card-foreground">Producto</Label>
-                <Combobox<BusinessWithProducts | null>
-                  value={selectedProduct}
-                  onValueChange={(item) => {
-                    setSelectedProduct(item)
-                    setValue("stock", 0)
-                  }}
-                  items={products}
-                  itemToStringLabel={(bp) => (bp ? bp.product.name : "")}
-                  isItemEqualToValue={(a, b) => a?.id === b?.id}
-                >
-                  <ComboboxInput
-                    placeholder="Buscar producto..."
-                    className="w-full"
-                    showClear={!!selectedProduct}
-
-                  />
-                  <ComboboxContent>
-                    <ComboboxList className="max-h-64">
-                      <ComboboxCollection>
-                        {(bp: BusinessWithProducts) => (
-                          <ComboboxItem value={bp} onClick={() => setValue("productId", bp.product.id)}>
-                            <div className="flex flex-1 items-start p-1">
-                              <span>{bp.product.name}</span>
-                            </div>
-                          </ComboboxItem>
-                        )}
-                      </ComboboxCollection>
-                      <ComboboxEmpty>No se encontró ningún producto.</ComboboxEmpty>
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-                {errors.productId && (
-                  <p className="text-xs text-destructive">{errors.productId.message}</p>
-                )}
-              </div>
-
-              {/* Stock disponible */}
-              <div className="grid gap-4 sm:grid-cols-2">
+              </CardHeader>
+              <CardContent className="flex flex-col gap-6">
+                {/* Selector de productos */}
                 <div className="flex flex-col gap-2">
-                  <Label className="text-card-foreground">
-                    Stock disponible
-                  </Label>
-                  <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm tabular-nums text-card-foreground">
-                      {selectedProduct ? selectedProduct.stock : "--"}
-                    </span>
-                    {stockStatus && (
-                      <Badge
-                        variant={stockStatus.variant}
-                        className={cn(
-                          "ml-auto text-xs",
-                          stockStatus.label === "Sin stock"
-                            ? "bg-destructive/10 text-destructive border-destructive/20"
-                            : stockStatus.label === "Stock bajo"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-                        )}
-                      >
-                        {stockStatus.label}
-                      </Badge>
+                  <Label className="text-card-foreground">Producto</Label>
+                  <Combobox<BusinessWithProducts | null>
+                    value={selectedProduct}
+                    onValueChange={(item) => {
+                      setSelectedProduct(item)
+                      setValue("stock", 0)
+                    }}
+                    items={products}
+                    itemToStringLabel={(bp) => (bp ? bp.product.name : "")}
+                    isItemEqualToValue={(a, b) => a?.id === b?.id}
+                  >
+                    <ComboboxInput
+                      placeholder="Buscar producto..."
+                      className="w-full"
+                      showClear={!!selectedProduct}
+                    />
+                    <ComboboxContent>
+                      <ComboboxList className="max-h-64">
+                        <ComboboxCollection>
+                          {(bp: BusinessWithProducts) => (
+                            <ComboboxItem value={bp} onClick={() => setValue("productId", bp.product.id)}>
+                              <div className="flex flex-1 items-start p-1">
+                                <span>{bp.product.name}</span>
+                              </div>
+                            </ComboboxItem>
+                          )}
+                        </ComboboxCollection>
+                        <ComboboxEmpty>No se encontró ningún producto.</ComboboxEmpty>
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
+                  {errors.productId && (
+                    <p className="text-xs text-destructive">{errors.productId.message}</p>
+                  )}
+                </div>
+
+                {/* Stock disponible + Cantidad */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-card-foreground">
+                      Stock disponible
+                    </Label>
+                    <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm tabular-nums text-card-foreground">
+                        {selectedProduct ? effectiveStock : "--"}
+                      </span>
+                      {stockStatus && (
+                        <Badge
+                          variant={stockStatus.variant}
+                          className={cn(
+                            "ml-auto text-xs",
+                            stockStatus.label === "Sin stock"
+                              ? "bg-destructive/10 text-destructive border-destructive/20"
+                              : stockStatus.label === "Stock bajo"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+                          )}
+                        >
+                          {stockStatus.label}
+                        </Badge>
+                      )}
+                    </div>
+                    {cartQuantityForSelected > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {cartQuantityForSelected} ya en el carrito
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="stock" className="text-card-foreground">
+                      Cantidad a vender
+                    </Label>
+                    <Input
+                      id="stock"
+                      type="number"
+                      min={1}
+                      max={effectiveStock}
+                      {...register("stock", { valueAsNumber: true })}
+                      disabled={!selectedProduct || effectiveStock === 0}
+                      placeholder="0"
+                    />
+                    {errors.stock && (
+                      <p className="text-xs text-destructive">{errors.stock.message}</p>
+                    )}
+                    {selectedProduct && quantityNum > effectiveStock && (
+                      <p className="text-xs text-destructive">
+                        La cantidad excede el stock disponible ({effectiveStock})
+                      </p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="stock" className="text-card-foreground">
-                    Cantidad a vender
-                  </Label>
-                  <Input
-                    id="stock"
-                    type="number"
-                    min={1}
-                    max={selectedProduct?.stock ?? 0}
-                    {...register("stock", { valueAsNumber: true })}
-                    disabled={!selectedProduct || selectedProduct.stock === 0}
-                    placeholder="0"
-                  />
-                  {selectedProduct && quantityNum > selectedProduct.stock && (
-                    <p className="text-xs text-destructive">
-                      La cantidad excede el stock disponible ({selectedProduct.stock})
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Precio unitario */}
                 <div className="flex flex-col gap-2">
                   <Label className="text-card-foreground">
                     Precio unitario
@@ -256,94 +327,159 @@ export default function CreateSalesPage() {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm tabular-nums text-card-foreground">
                       {selectedProduct
-                        ? `${unitPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
+                        ? `${Number(unitPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
                         : "--"}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label className="text-card-foreground">Total a pagar</Label>
-                  <div className="flex h-10 items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                      {quantityNum > 0
-                        ? `${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
-                        : "--"}
+                {errors.root && (
+                  <p className="text-sm text-destructive">{errors.root.message}</p>
+                )}
+
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={!isAddValid}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Agregar al carrito
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+
+          {/* Cart items table */}
+          {cartItems.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-card-foreground text-base">
+                  Carrito ({cartItems.length} {cartItems.length === 1 ? "producto" : "productos"})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-3">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.productId}
+                      className="flex items-center justify-between rounded-lg border border-border p-3"
+                    >
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <span className="text-sm font-medium text-card-foreground truncate">
+                          {item.productName}
+                        </span>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>Cant: {item.cantidad}</span>
+                          <span>Precio: ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold tabular-nums text-card-foreground whitespace-nowrap">
+                          ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => removeFromCart(item.productId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Grand total + actions */}
+                  <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
+                    <span className="text-sm font-semibold text-card-foreground">
+                      Total
+                    </span>
+                    <span className="text-base font-bold tabular-nums text-card-foreground">
+                      ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                     </span>
                   </div>
+
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancel}
+                      className="bg-transparent"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={submitSale}
+                      disabled={cartItems.length === 0 || createSaleMutation.isPending}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  className="bg-transparent"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={!isValid || createSaleMutation.isPending}>
-                  <Check className="mr-2 h-4 w-4" />
-                  {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
-                </Button>
-              </div>
-            </CardContent>
-          </form>
-        </Card>
-
-        {/* Summary - right side - comentado */}
-        <Card className="lg:col-span-2">
+        {/* Summary - right side */}
+        <Card className="lg:col-span-2 h-fit">
           <CardHeader>
             <CardTitle className="text-card-foreground">
               Resumen de venta
             </CardTitle>
             <CardDescription>
-              Detalle y conversiones de moneda
+              Detalle de productos en el carrito
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col">
-              <div className="flex items-start justify-between border-b border-border py-4 first:pt-0">
-                <span className="text-sm text-muted-foreground">Producto</span>
-                <span className="text-sm font-medium text-card-foreground text-right max-w-[55%]">
-                  {selectedProduct?.product.name ?? "--"}
-                </span>
+            {cartItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <ShoppingCart className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  Agrega productos para ver el resumen
+                </p>
               </div>
-              <div className="flex items-center justify-between border-b border-border py-4">
-                <span className="text-sm text-muted-foreground">Cantidad</span>
-                <span className="text-sm font-medium text-card-foreground tabular-nums">
-                  {quantityNum > 0 ? quantityNum : "--"}
-                </span>
+            ) : (
+              <div className="flex flex-col">
+                {cartItems.map((item, index) => (
+                  <div
+                    key={item.productId}
+                    className={cn(
+                      "flex items-start justify-between py-4",
+                      index < cartItems.length - 1 && "border-b border-border"
+                    )}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm text-card-foreground">
+                        {item.productName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-card-foreground tabular-nums">
+                      ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                ))}
+
+                <div className="flex items-center justify-between border-t border-border pt-4 mt-1">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-card-foreground">
+                      Total
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {cartItems.length} {cartItems.length === 1 ? "producto" : "productos"}
+                    </span>
+                  </div>
+                  <span className="text-lg font-bold tabular-nums text-card-foreground">
+                    ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between border-b border-border py-4">
-                <span className="text-sm text-muted-foreground">
-                  Precio unitario
-                </span>
-                <span className="text-sm font-medium text-card-foreground tabular-nums">
-                  {selectedProduct
-                    ? `$${unitPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
-                    : "--"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-border py-4">
-                <span className="text-sm text-muted-foreground">
-                  Total (MN)
-                </span>
-                <span className="text-sm font-semibold text-card-foreground tabular-nums">
-                  {quantityNum > 0
-                    ? `$${totalUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
-                    : "--"}
-                </span>
-              </div>
-              {/* Cantidad, Precio unitario, Total USD, Conversiones EUR/MN, Tasa de cambio - comentados */}
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
   )
 }
-
