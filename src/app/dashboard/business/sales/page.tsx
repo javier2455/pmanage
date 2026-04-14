@@ -12,7 +12,6 @@ export default function SalesPage() {
     activeBusinessId ?? "",
   );
 
-  console.log(data)
   const sales: SaleWithProductAndBusiness[] = data ?? [];
 
   if (isError) return <div>Error al cargar las ventas</div>;

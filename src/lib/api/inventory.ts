@@ -8,7 +8,6 @@ export async function getAllInventoryByBusinessId(businessId: string): Promise<I
 }
 
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
-    console.log('credentials of create', credentials)
     const { quantity, entryPrice, description } = credentials
     const { data } = await apiClient.post(inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId), { quantity, entryPrice, description });
     return data;

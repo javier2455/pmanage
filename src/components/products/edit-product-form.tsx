@@ -27,7 +27,7 @@ import axios from "axios"
 import { sileo } from "sileo"
 import Link from "next/link"
 
-const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL ", "ud"]
+const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
 
 export function EditProductForm() {
     const router = useRouter()

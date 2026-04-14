@@ -1,7 +1,6 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-// import { useBusiness } from "@/context/business-context"
 import { useCreateProductMutation } from "@/hooks/use-product"
 import { ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
@@ -26,12 +25,11 @@ import { sileo } from "sileo"
 import Link from "next/link"
 
 
-const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL ", "ud"]
+const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
 
 export function NewProductForm() {
     const router = useRouter()
     const pathname = usePathname()
-    // const { activeBusinessId } = useBusiness()
     const createProductMutation = useCreateProductMutation();
 
     const {

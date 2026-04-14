@@ -56,7 +56,6 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
         try {
             let response
             if (isEditing) {
-                console.log('entro aqui? update')
                 response = await updateMutation.mutateAsync({
                     businessId,
                     payload: {
@@ -66,7 +65,6 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                     },
                 })
             } else {
-                console.log('entro aqui? create')
                 response = await createMutation.mutateAsync({
                     idbusiness: businessId,
                     USD: formData.USD,

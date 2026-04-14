@@ -89,7 +89,6 @@ export function UpdateStockForm() {
       router.push("/dashboard/business/inventory")
       // handleCancel()
     } catch (error) {
-      console.log('error of onSubmit', error)
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         setError("root", { message: error.response.data.message });
         sileo.error({

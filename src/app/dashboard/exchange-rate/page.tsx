@@ -12,8 +12,6 @@ export default function ExchangeRatePage() {
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar las tasas de cambio</div>;
 
-  console.log('data', data);
-
   return (
     <section className="flex flex-col gap-6 p-4">
       <div>

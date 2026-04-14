@@ -1,6 +1,6 @@
 import { BusinessProduct, BusinessType } from "./business";
 
-export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL " | "ud";
+export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL" | "ud";
 
 export type Product = {
     id: string;

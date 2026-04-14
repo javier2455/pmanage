@@ -18,7 +18,6 @@ export async function create(credentials: CreateProductProps): Promise<CreatePro
     const { category, description, name, unit } = credentials
     const { data } = await apiClient.post(productRoutes.createProduct,
         { category, description, name, unit });
-    console.log('response of create product', data)
     return data;
 }
 

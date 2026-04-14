@@ -39,7 +39,6 @@ function formatDate(dateString?: string | null): string {
 
 export default function ProfilePage() {
   const { data: user, isLoading } = useAuthUserData();
-  console.log('user data', user);
 
   const initials = user?.name
     ?.split(" ")

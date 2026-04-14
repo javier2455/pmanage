@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls c:/Users/jalea/Desktop/Projects/Personal/Buscador/pmanage/*.md)"
+    ]
+  }
+}

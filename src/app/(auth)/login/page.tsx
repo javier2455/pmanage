@@ -145,35 +145,6 @@ export default function LoginPage() {
         }, 500);
     };
 
-    // async function handleDeleteUser() {
-    //     const user = sessionStorage.getItem("user")
-    //     const userId = JSON.parse(user || '{}').id
-    //     if (!userId) {
-    //         setError("root", { message: "Usuario no encontrado" })
-    //         return
-    //     }
-    //     try {
-    //         const response = await axios.delete('https://psearch.dveloxsoft.com/api/auth/delete-user-by-id', {
-    //             data: {
-    //                 userId: userId
-    //             },
-    //             headers: {
-    //                 "Content-Type": "application/json",
-    //             },
-    //         });
-    //         console.log('response of delete user', response);
-    //     } catch (error) {
-    //         console.log('error of delete user', error);
-    //         if (axios.isAxiosError(error) && error.response?.data?.message) {
-    //             setError("root", { message: error.response.data.message });
-    //         } else {
-    //             setError("root", { message: "Error al eliminar usuario. Intenta de nuevo." });
-    //         }
-    //     }
-    // }
-
-
-
     const onSubmit = async (data: LoginFormData) => {
         try {
             const response = await loginMutation.mutateAsync(data);
