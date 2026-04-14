@@ -338,8 +338,8 @@ export default function CreateSalesPage() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={!isAddValid}>
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button type="submit" disabled={!isAddValid} className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-4 w-4 shrink-0" />
                     Agregar al carrito
                   </Button>
                 </div>
@@ -360,29 +360,28 @@ export default function CreateSalesPage() {
                   {cartItems.map((item) => (
                     <div
                       key={item.productId}
-                      className="flex items-center justify-between rounded-lg border border-border p-3"
+                      className="flex flex-col gap-2 rounded-lg border border-border p-3"
                     >
-                      <div className="flex flex-col gap-1 min-w-0 flex-1">
-                        <span className="text-sm font-medium text-card-foreground truncate">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-sm font-medium text-card-foreground min-w-0 break-words">
                           {item.productName}
-                        </span>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>Cant: {item.cantidad}</span>
-                          <span>Precio: ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold tabular-nums text-card-foreground whitespace-nowrap">
-                          ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                         </span>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                           onClick={() => removeFromCart(item.productId)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums text-card-foreground">
+                          ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -444,20 +443,20 @@ export default function CreateSalesPage() {
                   <div
                     key={item.productId}
                     className={cn(
-                      "flex items-start justify-between py-4",
+                      "flex flex-col gap-1 py-4",
                       index < cartItems.length - 1 && "border-b border-border"
                     )}
                   >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm text-card-foreground">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm text-card-foreground min-w-0 break-words">
                         {item.productName}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span className="text-sm font-medium text-card-foreground tabular-nums shrink-0">
+                        ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-card-foreground tabular-nums">
-                      ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <span className="text-xs text-muted-foreground">
+                      {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 ))}
@@ -471,7 +470,7 @@ export default function CreateSalesPage() {
                       {cartItems.length} {cartItems.length === 1 ? "producto" : "productos"}
                     </span>
                   </div>
-                  <span className="text-lg font-bold tabular-nums text-card-foreground">
+                  <span className="text-base font-bold tabular-nums text-card-foreground shrink-0">
                     ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                   </span>
                 </div>
