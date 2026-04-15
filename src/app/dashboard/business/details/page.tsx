@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -8,6 +8,10 @@ import {
   type UpdateBusinessFormData,
 } from "@/lib/validations/business";
 import { useUpdateBusinessMutation, useDeleteBusinessMutation } from "@/hooks/use-business";
+import {
+  useGetAllProvinces,
+  useGetAllMunicipalitiesByProvinceId,
+} from "@/hooks/use-search";
 import {
   Card,
   CardContent,
@@ -27,11 +31,13 @@ import {
 } from "@/components/ui/select";
 import { Store, Building2, MapPin, Phone, Mail, Pencil, X, Save, Tags, Trash2, TriangleAlert } from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { useBusiness } from "@/context/business-context";
 import { sileo } from "sileo";
 import axios from "axios";
 import { BusinessType } from "@/lib/types/business";
+import { getAllMunicipalitiesByProvinceId } from "@/lib/api/search";
 
 const businessTypeLabels: Record<string, string> = {
   mipyme: "MiPyme",
@@ -56,6 +62,58 @@ export default function BusinessDetailsPage() {
   const updateBusinessMutation = useUpdateBusinessMutation();
   const deleteBusinessMutation = useDeleteBusinessMutation();
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedProvinceId, setSelectedProvinceId] = useState("");
+  const [resolvedProvinceName, setResolvedProvinceName] = useState<string | null>(null);
+  const [resolvedMunicipalityName, setResolvedMunicipalityName] = useState<string | null>(null);
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+
+  const { data: provincesData, isLoading: isLoadingProvinces } = useGetAllProvinces();
+  const { data: municipalitiesData, isLoading: isLoadingMunicipalities } =
+    useGetAllMunicipalitiesByProvinceId(selectedProvinceId);
+
+  const provinces = provincesData?.data ?? [];
+  const municipalities = municipalitiesData?.data ?? [];
+
+  // Resolve the province that contains the business's municipality
+  useEffect(() => {
+    if (!activeBusiness?.municipalityId || provinces.length === 0 || selectedProvinceId) return;
+
+    let cancelled = false;
+    setIsResolvingLocation(true);
+
+    async function findProvince() {
+      const municipalityId = activeBusiness?.municipalityId;
+      if (!municipalityId) return;
+
+      for (const province of provinces) {
+        if (cancelled) return;
+        try {
+          const res = await getAllMunicipalitiesByProvinceId(String(province.id));
+          const mun = res.data.find((m) => String(m.id) === municipalityId);
+          if (mun && !cancelled) {
+            setSelectedProvinceId(String(province.id));
+            setResolvedProvinceName(province.name);
+            setResolvedMunicipalityName(mun.name);
+            return;
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    findProvince().finally(() => {
+      if (!cancelled) setIsResolvingLocation(false);
+    });
+    return () => { cancelled = true; };
+  }, [activeBusiness?.municipalityId, provinces, selectedProvinceId]);
+
+  // Update resolved municipality name when municipalities change (e.g. user changes province in edit mode)
+  useEffect(() => {
+    if (!selectedProvinceId || provinces.length === 0) return;
+    const province = provinces.find((p) => String(p.id) === selectedProvinceId);
+    if (province) setResolvedProvinceName(province.name);
+  }, [selectedProvinceId, provinces]);
 
   const {
     register,
@@ -74,6 +132,7 @@ export default function BusinessDetailsPage() {
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
+      municipalityId: activeBusiness?.municipalityId ?? "",
     },
   });
 
@@ -87,6 +146,7 @@ export default function BusinessDetailsPage() {
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
+      municipalityId: activeBusiness?.municipalityId ?? "",
     });
     setIsEditing(true);
   }
@@ -109,6 +169,7 @@ export default function BusinessDetailsPage() {
           address: data.address,
           phone: data.phone || null,
           email: data.email || null,
+          municipalityId: data.municipalityId || undefined,
         },
       });
 
@@ -300,19 +361,105 @@ export default function BusinessDetailsPage() {
               )}
             </div>
 
-            {/* Provincia / Municipio (solo lectura) */}
+            {/* Provincia / Municipio */}
             <div className="grid gap-5 md:grid-cols-2">
               <div className="flex flex-col gap-2">
-                <Label className="text-card-foreground">Provincia</Label>
-                <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                  <span className="text-sm text-foreground">-</span>
-                </div>
+                <Label htmlFor="province" className="text-card-foreground">
+                  Provincia
+                </Label>
+                {isEditing ? (
+                  <Select
+                    value={selectedProvinceId}
+                    onValueChange={(value) => {
+                      setSelectedProvinceId(value);
+                      setValue("municipalityId", "", { shouldValidate: false });
+                    }}
+                  >
+                    <SelectTrigger id="province" disabled={isLoadingProvinces} className="w-full">
+                      <SelectValue
+                        placeholder={
+                          isLoadingProvinces
+                            ? "Cargando..."
+                            : "Selecciona una provincia"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {provinces.map((province) => (
+                        <SelectItem key={province.id} value={String(province.id)}>
+                          {province.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : isResolvingLocation || isLoadingProvinces ? (
+                  <Skeleton className="h-9 w-full rounded-md" />
+                ) : (
+                  <EditableFieldWrapper>
+                    <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
+                        {resolvedProvinceName ?? "-"}
+                      </span>
+                    </div>
+                  </EditableFieldWrapper>
+                )}
               </div>
+
               <div className="flex flex-col gap-2">
-                <Label className="text-card-foreground">Municipio</Label>
-                <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2">
-                  <span className="text-sm text-foreground">-</span>
-                </div>
+                <Label htmlFor="municipality" className="text-card-foreground">
+                  Municipio
+                </Label>
+                {isEditing ? (
+                  <>
+                    <Select
+                      value={watch("municipalityId") ?? ""}
+                      disabled={!selectedProvinceId || isLoadingMunicipalities}
+                      onValueChange={(value) =>
+                        setValue("municipalityId", value, { shouldValidate: true })
+                      }
+                    >
+                      <SelectTrigger
+                        id="municipality"
+                        aria-invalid={!!errors.municipalityId}
+                        className="w-full"
+                      >
+                        <SelectValue
+                          placeholder={
+                            !selectedProvinceId
+                              ? "Selecciona una provincia primero"
+                              : isLoadingMunicipalities
+                                ? "Cargando..."
+                                : "Selecciona un municipio"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {municipalities.map((municipality) => (
+                          <SelectItem key={municipality.id} value={String(municipality.id)}>
+                            {municipality.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.municipalityId && (
+                      <p className="text-sm text-destructive" role="alert">
+                        {errors.municipalityId.message}
+                      </p>
+                    )}
+                  </>
+                ) : isResolvingLocation || isLoadingProvinces ? (
+                  <Skeleton className="h-9 w-full rounded-md" />
+                ) : (
+                  <EditableFieldWrapper>
+                    <div className="flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                      <MapPin className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
+                        {resolvedMunicipalityName ?? "-"}
+                      </span>
+                    </div>
+                  </EditableFieldWrapper>
+                )}
               </div>
             </div>
 

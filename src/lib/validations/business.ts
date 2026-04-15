@@ -38,6 +38,7 @@ export const updateBusinessSchema = z.object({
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
   phone: phoneSchema.optional().or(z.literal("")),
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),
+  municipalityId: z.string().min(1, "El municipio es requerido").optional(),
 });
 
 export type AddToCartFormData = z.infer<typeof addToCartSchema>;
