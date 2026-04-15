@@ -79,12 +79,12 @@ export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialo
                                                     Producto {index + 1}
                                                 </span>
                                                 <span className="text-xs text-muted-foreground">
-                                                    {item.cantidad} x {formatCurrency(item.precio)}
+                                                    {Number(item.cantidad)} x {formatCurrency(Number(item.precio))}
                                                 </span>
                                             </div>
                                             <div className="flex flex-col items-end gap-0.5">
                                                 <span className="text-sm font-medium tabular-nums text-card-foreground">
-                                                    {formatCurrency(item.cantidad * item.precio)}
+                                                    {formatCurrency(Number(item.cantidad) * Number(item.precio))}
                                                 </span>
                                                 {item.isCancelled && (
                                                     <span className="text-xs text-destructive">Cancelado</span>

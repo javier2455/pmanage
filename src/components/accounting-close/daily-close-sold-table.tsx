@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-table"
 import { Receipt, Search } from "lucide-react"
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales"
+import type { SalesProductInfoResponse } from "@/lib/types/product"
 import { CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,6 +61,10 @@ export function DailyCloseSoldTable({
   sales,
   totalIncome,
 }: DailyCloseSoldTableProps) {
+  const flatItems = React.useMemo<SalesProductInfoResponse[]>(() => {
+    return sales.flatMap((sale) => sale.items)
+  }, [sales])
+
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -71,14 +76,14 @@ export function DailyCloseSoldTable({
 
   React.useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, [sales])
+  }, [flatItems])
 
   React.useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }))
   }, [columnFilters])
 
   const table = useReactTable({
-    data: sales,
+    data: flatItems,
     columns: dailyCloseSoldColumns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
@@ -114,31 +119,32 @@ export function DailyCloseSoldTable({
 
   return (
     <CardContent className="flex min-h-0 flex-col gap-0 p-0">
-      <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex w-full max-w-md flex-col gap-1.5">
-          <label
-            className="text-sm font-medium text-foreground"
-            htmlFor="daily-close-sold-search"
-          >
-            Buscar producto
-          </label>
-          <Input
-            id="daily-close-sold-search"
-            type="search"
-            placeholder="Nombre del producto…"
-            value={productFilterValue}
-            onChange={(e) =>
-              productColumn?.setFilterValue(
-                e.target.value.length ? e.target.value : undefined,
-              )
-            }
-            aria-controls="daily-close-sold-table"
-            disabled={sales.length === 0}
-          />
+      {flatItems.length > 0 && (
+        <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex w-full max-w-md flex-col gap-1.5">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="daily-close-sold-search"
+            >
+              Buscar producto
+            </label>
+            <Input
+              id="daily-close-sold-search"
+              type="search"
+              placeholder="Nombre del producto..."
+              value={productFilterValue}
+              onChange={(e) =>
+                productColumn?.setFilterValue(
+                  e.target.value.length ? e.target.value : undefined,
+                )
+              }
+              aria-controls="daily-close-sold-table"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {sales.length === 0 ? (
+      {flatItems.length === 0 ? (
         <div className="px-4 pb-4 pt-4">
           <Empty className="flex-none border-border border bg-muted/30 py-8 md:p-8">
             <EmptyHeader>
@@ -237,26 +243,26 @@ export function DailyCloseSoldTable({
               </span>{" "}
               línea{filteredTotal === 1 ? "" : "s"} de{" "}
               <span className="font-medium text-foreground">
-                {sales.length}
+                {flatItems.length}
               </span>
             </>
           ) : (
             <>
               <span className="font-medium text-foreground">
-                {sales.length}
+                {flatItems.length}
               </span>{" "}
-              venta{sales.length === 1 ? "" : "s"} en la tabla
+              producto{flatItems.length === 1 ? "" : "s"} vendido{flatItems.length === 1 ? "" : "s"}
             </>
           )}
         </p>
-        {sales.length > 0 && filteredTotal > 0 ? (
+        {flatItems.length > 0 && filteredTotal > 0 ? (
           <DataTablePaginationNav
             pageIndex={pagination.pageIndex}
             pageCount={pageCount}
             onPageIndexChange={(nextIndex) =>
               setPagination((p) => ({ ...p, pageIndex: nextIndex }))
             }
-            navLabel="Paginación de ventas del día"
+            navLabel="Paginación de productos vendidos"
           />
         ) : null}
       </div>

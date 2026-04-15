@@ -107,9 +107,11 @@ export type BusinessResponseForGetProductById = {
 
 export interface SalesProductInfoResponse {
     id: string;
+    idsale?: string;
     idproducto: string;
-    cantidad: number;
-    precio: number;
+    product?: Product;
+    cantidad: string | number;
+    precio: string | number;
     isCancelled: boolean;
-    cancelledReason: string | null
+    cancelledReason: string | null;
 }

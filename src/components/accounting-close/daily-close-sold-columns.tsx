@@ -1,13 +1,14 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import type { SaleWithProductAndBusiness } from "@/lib/types/sales"
+import type { SalesProductInfoResponse } from "@/lib/types/product"
 import { formatClosingCurrency } from "./format-closing-currency"
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header"
 import {
   dailyCloseLineTotalCol,
   dailyCloseProductCol,
   dailyCloseQtyCol,
+  dailyCloseUnitPriceCol,
 } from "./daily-close-table-layout"
 
 export type DailyCloseSoldColumnMeta = {
@@ -15,10 +16,17 @@ export type DailyCloseSoldColumnMeta = {
   cellClassName?: string
 }
 
-export const dailyCloseSoldColumns: ColumnDef<SaleWithProductAndBusiness>[] = [
+export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
   {
-    id: "fecha",
-    accessorFn: (row) => new Date(row.createdAt).getTime(),
+    id: "product",
+    accessorFn: (row) => row.product?.name?.trim() || "-",
+    enableColumnFilter: true,
+    filterFn: (row, _columnId, filterValue) => {
+      const q = String(filterValue ?? "").toLowerCase().trim()
+      if (!q) return true
+      const name = (row.original.product?.name || "").toLowerCase()
+      return name.includes(q)
+    },
     meta: {
       headerClassName: dailyCloseProductCol.headerClassName,
       cellClassName: `${dailyCloseProductCol.cellClassName} font-medium`,
@@ -26,25 +34,19 @@ export const dailyCloseSoldColumns: ColumnDef<SaleWithProductAndBusiness>[] = [
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
-        label="Fecha"
+        label="Producto"
         className="-ml-2 h-auto min-h-8 flex-wrap justify-start gap-1 whitespace-normal px-2 py-2 text-left lg:-ml-4"
       />
     ),
     cell: ({ row }) => (
       <span className="block font-medium text-foreground">
-        {new Date(row.original.createdAt).toLocaleDateString("es-CO", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+        {row.original.product?.name?.trim() || "-"}
       </span>
     ),
   },
   {
-    id: "productos",
-    accessorFn: (row) => row.items.length,
+    id: "cantidad",
+    accessorFn: (row) => Number(row.cantidad),
     meta: {
       headerClassName: dailyCloseQtyCol.headerClassName,
       cellClassName: dailyCloseQtyCol.cellClassName,
@@ -52,22 +54,33 @@ export const dailyCloseSoldColumns: ColumnDef<SaleWithProductAndBusiness>[] = [
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
-        label="Productos"
+        label="Cantidad"
         className="-mr-2 h-8 w-full justify-end px-2 lg:-mr-4 lg:pr-4"
       />
     ),
-    cell: ({ row }) => {
-      const count = row.original.items.length
-      return (
-        <span>
-          {count > 0 ? `${count} producto${count === 1 ? "" : "s"}` : "--"}
-        </span>
-      )
-    },
+    cell: ({ row }) => <span>{Number(row.original.cantidad)}</span>,
   },
   {
-    id: "total",
-    accessorFn: (row) => Number(row.total),
+    id: "precio",
+    accessorFn: (row) => Number(row.precio),
+    meta: {
+      headerClassName: dailyCloseUnitPriceCol.headerClassName,
+      cellClassName: dailyCloseUnitPriceCol.cellClassName,
+    } satisfies DailyCloseSoldColumnMeta,
+    header: ({ column }) => (
+      <DailyCloseSortableHeader
+        column={column}
+        label="Precio unit."
+        className="-mr-2 h-8 w-full justify-end px-2 lg:-mr-4 lg:pr-4"
+      />
+    ),
+    cell: ({ row }) => (
+      <span>${formatClosingCurrency(Number(row.original.precio))}</span>
+    ),
+  },
+  {
+    id: "lineTotal",
+    accessorFn: (row) => Number(row.cantidad) * Number(row.precio),
     meta: {
       headerClassName: dailyCloseLineTotalCol.headerClassName,
       cellClassName: `${dailyCloseLineTotalCol.cellClassName} font-semibold`,
@@ -79,8 +92,8 @@ export const dailyCloseSoldColumns: ColumnDef<SaleWithProductAndBusiness>[] = [
         className="-mr-2 h-8 w-full justify-end px-2 lg:-mr-4 lg:pr-4"
       />
     ),
-    cell: ({ row }) => (
-      <span>${formatClosingCurrency(Number(row.original.total))}</span>
+    cell: ({ getValue }) => (
+      <span>${formatClosingCurrency(Number(getValue()))}</span>
     ),
   },
 ]
