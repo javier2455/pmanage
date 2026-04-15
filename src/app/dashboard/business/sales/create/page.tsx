@@ -377,7 +377,7 @@ export default function CreateSalesPage() {
                 </div>
 
                 {/* Items */}
-                <div className="flex flex-col divide-y divide-border">
+                <div className="flex flex-col divide-y divide-border max-h-57 overflow-y-auto">
                   {cartItems.map((item) => (
                     <div
                       key={item.productId}
@@ -435,7 +435,7 @@ export default function CreateSalesPage() {
                   ))}
                 </div>
 
-                {/* Grand total + actions */}
+                {/* Grand total */}
                 <div className="flex items-center justify-between border-t border-border px-4 pt-4 mt-1">
                   <span className="text-sm font-semibold text-card-foreground">
                     Total
@@ -443,24 +443,6 @@ export default function CreateSalesPage() {
                   <span className="text-base font-bold tabular-nums text-card-foreground">
                     ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                   </span>
-                </div>
-
-                <div className="flex flex-col-reverse gap-3 px-4 pt-4 sm:flex-row sm:justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={handleCancel}
-                    className="bg-transparent"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={submitSale}
-                    disabled={cartItems.length === 0 || createSaleMutation.isPending}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -487,27 +469,29 @@ export default function CreateSalesPage() {
               </div>
             ) : (
               <div className="flex flex-col">
-                {cartItems.map((item, index) => (
-                  <div
-                    key={item.productId}
-                    className={cn(
-                      "flex flex-col gap-1 py-4",
-                      index < cartItems.length - 1 && "border-b border-border"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm text-card-foreground min-w-0 break-words">
-                        {item.productName}
-                      </span>
-                      <span className="text-sm font-medium text-card-foreground tabular-nums shrink-0">
-                        ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <div className="flex flex-col max-h-48 overflow-y-auto">
+                  {cartItems.map((item, index) => (
+                    <div
+                      key={item.productId}
+                      className={cn(
+                        "flex flex-col gap-1 py-4",
+                        index < cartItems.length - 1 && "border-b border-border"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-sm text-card-foreground min-w-0 wrap-break-word">
+                          {item.productName}
+                        </span>
+                        <span className="text-sm font-medium text-card-foreground tabular-nums shrink-0">
+                          ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
 
                 <div className="flex items-center justify-between border-t border-border pt-4 mt-1">
                   <div className="flex flex-col gap-0.5">
@@ -521,6 +505,25 @@ export default function CreateSalesPage() {
                   <span className="text-base font-bold tabular-nums text-card-foreground shrink-0">
                     ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                   </span>
+                </div>
+
+                <div className="flex flex-col gap-3 pt-4">
+                  <Button
+                    onClick={submitSale}
+                    disabled={cartItems.length === 0 || createSaleMutation.isPending}
+                    className="w-full bg-emerald-500 text-white font-semibold uppercase tracking-wide hover:bg-emerald-600 disabled:opacity-50"
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCancel}
+                    className="w-full bg-transparent"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancelar
+                  </Button>
                 </div>
               </div>
             )}
