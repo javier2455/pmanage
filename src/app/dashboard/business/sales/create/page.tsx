@@ -27,7 +27,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
-import { ShoppingCart, Package, Plus, X, DollarSign, ArrowLeft, Trash2 } from "lucide-react"
+import { ShoppingCart, Package, Plus, X, DollarSign, ArrowLeft, Trash2, Box } from "lucide-react"
 import Link from "next/link"
 import { AddToCartFormData, addToCartSchema } from "@/lib/validations/business"
 import { useForm } from "react-hook-form"
@@ -38,6 +38,9 @@ import { sileo } from "sileo"
 interface CartItem {
   productId: string;
   productName: string;
+  category: string;
+  unit: string;
+  imageUrl: string | null;
   cantidad: number;
   precio: number;
   subtotal: number;
@@ -130,6 +133,9 @@ export default function CreateSalesPage() {
       setCartItems(prev => [...prev, {
         productId: data.productId,
         productName: selectedProduct.product.name,
+        category: selectedProduct.product.category,
+        unit: selectedProduct.product.unit,
+        imageUrl: selectedProduct.product.imageUrl,
         cantidad: data.stock,
         precio,
         subtotal: data.stock * precio,
@@ -351,68 +357,110 @@ export default function CreateSalesPage() {
           {cartItems.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-card-foreground text-base">
-                  Carrito ({cartItems.length} {cartItems.length === 1 ? "producto" : "productos"})
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-card-foreground text-base">
+                    Artículos en la venta
+                  </CardTitle>
+                  <Badge variant="secondary" className="text-xs">
+                    {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+                  </Badge>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-3">
+              <CardContent className="px-0">
+                {/* Table header */}
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-3 border-b border-border px-4 pb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span>Producto</span>
+                  <span className="w-12 text-center">Cant.</span>
+                  <span className="w-20 text-right hidden sm:block">Precio unit.</span>
+                  <span className="w-24 text-right">Subtotal</span>
+                  <span className="w-8" />
+                </div>
+
+                {/* Items */}
+                <div className="flex flex-col divide-y divide-border">
                   {cartItems.map((item) => (
                     <div
                       key={item.productId}
-                      className="flex flex-col gap-2 rounded-lg border border-border p-3"
+                      className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-3 px-4 py-3"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-medium text-card-foreground min-w-0 break-words">
-                          {item.productName}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeFromCart(item.productId)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                      {/* Product info */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/50">
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.productName}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <Box className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-medium text-card-foreground truncate">
+                            {item.productName}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate">
+                            {item.category} · {item.unit}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                        <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                          ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
-                        </span>
-                      </div>
+
+                      {/* Quantity */}
+                      <span className="w-12 text-center text-sm tabular-nums text-card-foreground">
+                        {item.cantidad}
+                      </span>
+
+                      {/* Unit price */}
+                      <span className="w-20 text-right text-sm tabular-nums text-muted-foreground hidden sm:block">
+                        ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+
+                      {/* Subtotal */}
+                      <span className="w-24 text-right text-sm font-semibold tabular-nums text-card-foreground">
+                        ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+
+                      {/* Delete */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeFromCart(item.productId)}
+                        aria-label={`Eliminar ${item.productName}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   ))}
+                </div>
 
-                  {/* Grand total + actions */}
-                  <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
-                    <span className="text-sm font-semibold text-card-foreground">
-                      Total
-                    </span>
-                    <span className="text-base font-bold tabular-nums text-card-foreground">
-                      ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
-                    </span>
-                  </div>
+                {/* Grand total + actions */}
+                <div className="flex items-center justify-between border-t border-border px-4 pt-4 mt-1">
+                  <span className="text-sm font-semibold text-card-foreground">
+                    Total
+                  </span>
+                  <span className="text-base font-bold tabular-nums text-card-foreground">
+                    ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
+                  </span>
+                </div>
 
-                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end pt-2">
-                    <Button
-                      variant="outline"
-                      onClick={handleCancel}
-                      className="bg-transparent"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={submitSale}
-                      disabled={cartItems.length === 0 || createSaleMutation.isPending}
-                    >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
-                    </Button>
-                  </div>
+                <div className="flex flex-col-reverse gap-3 px-4 pt-4 sm:flex-row sm:justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={handleCancel}
+                    className="bg-transparent"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={submitSale}
+                    disabled={cartItems.length === 0 || createSaleMutation.isPending}
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    {createSaleMutation.isPending ? "Registrando..." : "Registrar venta"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
