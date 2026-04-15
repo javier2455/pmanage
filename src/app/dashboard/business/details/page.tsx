@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   updateBusinessSchema,
@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Store, Building2, MapPin, Phone, Mail, Pencil, X, Save, Tags, Trash2, TriangleAlert } from "lucide-react";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { useBusiness } from "@/context/business-context";
 import { sileo } from "sileo";
@@ -62,6 +63,7 @@ export default function BusinessDetailsPage() {
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<UpdateBusinessFormData>({
     resolver: zodResolver(updateBusinessSchema),
@@ -359,17 +361,19 @@ export default function BusinessDetailsPage() {
                 </Label>
                 {isEditing ? (
                   <>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+53 5555 5555"
-                        {...register("phone")}
-                        aria-invalid={!!errors.phone}
-                        className="pl-9"
-                      />
-                    </div>
+                    <Controller
+                      name="phone"
+                      control={control}
+                      render={({ field }) => (
+                        <PhoneInput
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          defaultCountry="cu"
+                          placeholder="5555 5555"
+                          aria-invalid={!!errors.phone}
+                        />
+                      )}
+                    />
                     {errors.phone && (
                       <p className="text-sm text-destructive" role="alert">
                         {errors.phone.message}

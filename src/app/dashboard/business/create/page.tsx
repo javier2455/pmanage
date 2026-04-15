@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createBusinessSchema,
@@ -33,7 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Store, Building2, MapPin, Phone, Mail, X } from "lucide-react";
+import { Store, Building2, MapPin, Mail, X } from "lucide-react";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { sileo } from "sileo";
 
 const businessTypes = [
@@ -75,6 +76,7 @@ export default function CreateBusinessPage() {
     setValue,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<CreateBusinessFormData>({
     resolver: zodResolver(createBusinessSchema),
@@ -355,17 +357,19 @@ export default function CreateBusinessPage() {
                     (opcional)
                   </span>
                 </Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+53 5555 5555"
-                    {...register("phone")}
-                    aria-invalid={!!errors.phone}
-                    className="pl-9"
-                  />
-                </div>
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      defaultCountry="cu"
+                      placeholder="5555 5555"
+                      aria-invalid={!!errors.phone}
+                    />
+                  )}
+                />
                 {errors.phone && (
                   <p className="text-sm text-destructive" role="alert">
                     {errors.phone.message}

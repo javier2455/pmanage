@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const phoneSchema = z
+  .string()
+  .refine(
+    (val) => !val || /^\+[1-9]\d{6,14}$/.test(val),
+    { message: "El número de teléfono no es válido" }
+  );
+
 export const addToCartSchema = z.object({
   stock: z
     .number()
@@ -15,7 +22,7 @@ export const createBusinessSchema = z.object({
     message: "El tipo de negocio es requerido",
   }),
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
-  phone: z.string().max(20, "El teléfono no puede exceder 20 caracteres").nullable(),
+  phone: phoneSchema.nullable(),
   email: z.string().email("El correo no es válido").nullable().or(z.literal("")),
   municipalityId: z.string().min(1, "La ciudad es requerida"),
   // lat: z.number(),
@@ -29,7 +36,7 @@ export const updateBusinessSchema = z.object({
     message: "El tipo de negocio es requerido",
   }),
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
-  phone: z.string().max(20, "El teléfono no puede exceder 20 caracteres").optional().or(z.literal("")),
+  phone: phoneSchema.optional().or(z.literal("")),
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),
 });
 
