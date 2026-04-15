@@ -1,6 +1,19 @@
+import axios from "axios";
 import apiClient from "@/lib/axios";
 import { businessRoutes } from "../routes/business";
 import { CreateBusinessPayload, DashboardSummaryResponse, GetAllProductOfMyBusinessesProps, UpdateBusinessPayload } from "../types/business";
+
+/**
+ * Standalone fetch (no apiClient) – usable before BusinessProvider mounts,
+ * e.g. right after login to decide where to redirect.
+ */
+export async function getMyBusinessesList(): Promise<unknown[]> {
+    const token = sessionStorage.getItem("token");
+    const { data } = await axios.get(businessRoutes.getMyBusinesses, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    return Array.isArray(data?.data) ? data.data : [];
+}
 
 export async function getAllProductOfMyBusinesses({ businessId }: GetAllProductOfMyBusinessesProps) {
     const { data } = await apiClient.get(businessRoutes.getAllProductOfMyBusinesses(businessId));

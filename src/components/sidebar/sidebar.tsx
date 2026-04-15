@@ -20,6 +20,7 @@ import {
 import { NavMain } from "@/components/sidebar/nav-main"
 import { NavUser } from "@/components/sidebar/nav-user"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
+import { useBusiness } from "@/context/business-context"
 import {
   Sidebar,
   SidebarContent,
@@ -107,6 +108,8 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isAdmin, isProPlan } = useUserRoleAndPlan()
+  const { businesses, isLoading: isLoadingBusinesses } = useBusiness()
+  const hasNoBusinesses = !isLoadingBusinesses && businesses.length === 0
 
   const filteredNavMain = React.useMemo(() => {
     return data.navMain
@@ -118,14 +121,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         if (item.items) {
           const itemsWithDisabled = item.items.map((sub) => ({
             ...sub,
-            disabled: sub.pro ? !isProPlan : false,
+            disabled: hasNoBusinesses || (sub.pro ? !isProPlan : false),
           }))
-          return { ...item, items: itemsWithDisabled }
+          return { ...item, items: itemsWithDisabled, disabled: hasNoBusinesses }
         }
-        return item
+        return { ...item, disabled: hasNoBusinesses }
       })
       .filter((item) => !item.items || item.items.length > 0)
-  }, [isAdmin, isProPlan])
+  }, [isAdmin, isProPlan, hasNoBusinesses])
 
   return (
     <Sidebar className="" collapsible="icon" {...props}>

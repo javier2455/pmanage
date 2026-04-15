@@ -31,6 +31,7 @@ export function NavMain({
     url: string
     icon?: LucideIcon
     isActive?: boolean
+    disabled?: boolean
     items?: {
       title: string
       url: string
@@ -59,7 +60,12 @@ export function NavMain({
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    className={cn(
+                      item.disabled && "pointer-events-none opacity-50 cursor-not-allowed"
+                    )}
+                  >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -109,14 +115,24 @@ export function NavMain({
           ) : (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                asChild
+                asChild={!item.disabled}
                 tooltip={item.title}
-                isActive={pathname === item.url}
+                isActive={pathname === item.url && !item.disabled}
+                className={cn(
+                  item.disabled && "pointer-events-none opacity-50 cursor-not-allowed"
+                )}
               >
-                <Link href={item.url}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
+                {item.disabled ? (
+                  <span>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </span>
+                ) : (
+                  <Link href={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           )

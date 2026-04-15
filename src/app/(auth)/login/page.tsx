@@ -22,6 +22,7 @@ import axios from "axios";
 import { getActivePlan } from "@/lib/api/plans";
 import { authRoutes } from "@/lib/routes/auth";
 import { getMe } from "@/lib/api/auth";
+import { getMyBusinessesList } from "@/lib/api/business";
 import { setAuthCookies } from "@/lib/cookies";
 import { useState } from "react";
 
@@ -110,7 +111,8 @@ export default function LoginPage() {
                     }
 
                     if (activePlan?.data?.isActive || activePlan?.isActive) {
-                        router.push("/dashboard");
+                        const businesses = await getMyBusinessesList();
+                        router.push(businesses.length > 0 ? "/dashboard" : "/dashboard/business/create");
                     } else {
                         router.push("/plans");
                     }
@@ -175,7 +177,8 @@ export default function LoginPage() {
                     planType,
                 });
 
-                router.push("/dashboard");
+                const businesses = await getMyBusinessesList();
+                router.push(businesses.length > 0 ? "/dashboard" : "/dashboard/business/create");
             } else {
                 /* Guardar cookies */
                 const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";

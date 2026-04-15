@@ -143,11 +143,12 @@ export default function CreateBusinessPage() {
     <div className="flex flex-col gap-6 p-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Crear negocio
+          {businesses.length === 0 ? "Crea tu primer negocio" : "Crear negocio"}
         </h1>
         <p className="text-muted-foreground">
-          Registra tu negocio para comenzar a gestionar productos, ventas e
-          inventario
+          {businesses.length === 0
+            ? "Registra tu negocio para comenzar a usar la plataforma"
+            : "Registra tu negocio para comenzar a gestionar productos, ventas e inventario"}
         </p>
       </div>
 
@@ -405,19 +406,21 @@ export default function CreateBusinessPage() {
             )}
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-transparent"
-                onClick={() => {
-                  reset();
-                  setSelectedProvinceId("");
-                  router.push("/dashboard/business/details");
-                }}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancelar
-              </Button>
+              {businesses.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="bg-transparent"
+                  onClick={() => {
+                    reset();
+                    setSelectedProvinceId("");
+                    router.push("/dashboard/business/details");
+                  }}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+              )}
               <Button
                 type="submit"
                 disabled={createBusinessMutation.isPending}
