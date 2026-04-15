@@ -5,7 +5,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -124,7 +123,7 @@ export default function ChangePlanPage() {
                 (currentPlanKey === key ||
                     (currentPlanKey === "free" && key.includes("gratuito")) ||
                     (currentPlanKey === "basic" && key.includes("basico")) ||
-                    (currentPlanKey === "pro" && key === "pro"))
+                    ((currentPlanKey === "pro" || currentPlanKey === "premium") && key === "pro"))
 
             return { ...p, current }
         })
@@ -230,7 +229,7 @@ export default function ChangePlanPage() {
                                 </ul>
                             </CardContent>
 
-                            <CardFooter className="pt-4">
+                            {/* <CardFooter className="pt-4">
                                 {plan.current ? (
                                     <Button className="w-full" variant="secondary" disabled>
                                         Plan actual
@@ -243,7 +242,7 @@ export default function ChangePlanPage() {
                                         {plan.price === 0 ? "Cambiar a Free" : `Elegir ${plan.name}`}
                                     </Button>
                                 )}
-                            </CardFooter>
+                            </CardFooter> */}
                         </Card>
                     )
                 })}
@@ -263,7 +262,7 @@ export default function ChangePlanPage() {
                     </div>
                     <div className="flex-1">
                         <h3 className="text-lg font-semibold text-card-foreground">
-                            Necesitas ayuda para cambiar de plan?
+                            ¿Quieres cambiar de plan?
                         </h3>
                         <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
                             Nuestro equipo de soporte esta disponible para ayudarte a elegir

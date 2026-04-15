@@ -30,6 +30,7 @@ interface DetailsDialogProps {
 export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialogProps) {
     const { data, isLoading } = useGetSaleById(saleId)
 
+    console.log('Details of dialog', data)
     const triggerContent = trigger ?? <Button variant="outline">Open Dialog</Button>
 
     const total = Number(data?.total ?? 0)
@@ -69,14 +70,14 @@ export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialo
                                     Productos ({items.length})
                                 </span>
                                 <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                                    {items.map((item, index) => (
+                                    {items.map((item) => (
                                         <div
                                             key={item.id}
                                             className={`flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 ${item.isCancelled ? "opacity-60" : ""}`}
                                         >
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-sm text-card-foreground">
-                                                    Producto {index + 1}
+                                                    {item.product?.name}
                                                 </span>
                                                 <span className="text-xs text-muted-foreground">
                                                     {Number(item.cantidad)} x {formatCurrency(Number(item.precio))}
