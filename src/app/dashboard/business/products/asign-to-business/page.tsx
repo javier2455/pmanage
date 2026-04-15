@@ -31,10 +31,10 @@ export default function AsingProductToBusinessPage() {
             </div>
             <div>
               <CardTitle className="text-card-foreground">
-                Asignar producto a negocio
+                Vincular producto
               </CardTitle>
               <CardDescription>
-                Asocia un producto existente con tu negocio
+                Busca y selecciona el producto que deseas agregar
               </CardDescription>
             </div>
           </div>

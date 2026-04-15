@@ -19,7 +19,7 @@ export default function CreateProductPage() {
             Crear producto
           </h1>
           <p className="text-muted-foreground">
-            Registra un producto nuevo o asígnalo a tu negocio
+            Agrega un producto nuevo al inventario del almacén
           </p>
         </div>
       </div>
@@ -31,10 +31,10 @@ export default function CreateProductPage() {
             </div>
             <div>
               <CardTitle className="text-card-foreground">
-                Registrar nuevo producto
+                Nuevo producto
               </CardTitle>
               <CardDescription>
-                Agrega un producto nuevo al inventario del almacén
+                Completa la información del producto
               </CardDescription>
             </div>
           </div>

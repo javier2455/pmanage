@@ -51,7 +51,7 @@ export default function ProductsPage() {
           <Button asChild>
             <Link href="/dashboard/business/products/create">
               <Plus data-icon="inline-start" />
-              Agregar producto
+              Crear producto
             </Link>
           </Button>
         </div>
