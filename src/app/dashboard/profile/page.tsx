@@ -22,7 +22,7 @@ import {
   Clock,
   History,
   RefreshCw,
-  Rocket,
+  // Rocket,
 } from "lucide-react"
 import Link from "next/link"
 import { useAuthUserData } from "@/hooks/use-auth"
@@ -296,7 +296,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Card de funcionalidades futuras */}
-        <Card className="lg:col-span-2">
+        {/* <Card className="lg:col-span-2">
           <CardContent className="flex flex-col items-center gap-4 py-10 text-center sm:flex-row sm:text-left">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <Rocket className="h-7 w-7 text-primary" />
@@ -318,7 +318,7 @@ export default function ProfilePage() {
               En desarrollo
             </Badge>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   )
