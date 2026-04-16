@@ -21,8 +21,8 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DateFilter } from "@/components/accounting-close/date-filter"
-import { PRO_STYLE } from "@/components/assign-plans/utils"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
+import { ProBadge } from "@/components/ui/pro-badge"
 import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
 import { DailyCloseEntryTable } from "@/components/accounting-close/daily-close-entry-table"
@@ -150,10 +150,7 @@ export default function DailyPage() {
               >
                 <Download className="h-4 w-4" />
                 Exportar
-                <span className={cn(PRO_STYLE.className)}>
-                  <PRO_STYLE.icon className="size-2.5" />
-                  Pro
-                </span>
+                <ProBadge className="ml-1" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-52 p-1">

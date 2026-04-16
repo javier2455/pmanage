@@ -15,12 +15,14 @@ import {
   Store,
   Settings,
   BadgeDollarSign,
+  BarChart3,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
 import { NavUser } from "@/components/sidebar/nav-user"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
+import { isProRoute } from "@/lib/pro-gates"
 import {
   Sidebar,
   SidebarContent,
@@ -32,8 +34,23 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import type { LucideIcon } from "lucide-react"
 
-const data = {
+type NavSubItem = {
+  title: string
+  url: string
+  icon?: LucideIcon
+}
+
+type NavItem = {
+  title: string
+  url: string
+  icon?: LucideIcon
+  isActive?: boolean
+  items?: NavSubItem[]
+}
+
+const data: { navMain: NavItem[] } = {
   navMain: [
     {
       title: "Panel Principal",
@@ -82,9 +99,13 @@ const data = {
           title: "Mensual",
           url: "/dashboard/accounting-close/monthly",
           icon: CalendarRange,
-          pro: true,
         },
       ],
+    },
+    {
+      title: "Analítica",
+      url: "/dashboard/analytics",
+      icon: BarChart3,
     },
     {
       title: "Tipo de Cambio",
@@ -119,13 +140,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       })
       .map((item) => {
         if (item.items) {
-          const itemsWithDisabled = item.items.map((sub) => ({
-            ...sub,
-            disabled: hasNoBusinesses || (sub.pro ? !isProPlan : false),
-          }))
+          const itemsWithDisabled = item.items.map((sub) => {
+            const pro = isProRoute(sub.url)
+            return {
+              ...sub,
+              pro,
+              disabled: hasNoBusinesses || (pro ? !isProPlan : false),
+            }
+          })
           return { ...item, items: itemsWithDisabled, disabled: hasNoBusinesses }
         }
-        return { ...item, disabled: hasNoBusinesses }
+        const pro = isProRoute(item.url)
+        return { ...item, pro, disabled: hasNoBusinesses || (pro ? !isProPlan : false) }
       })
       .filter((item) => !item.items || item.items.length > 0)
   }, [isAdmin, isProPlan, hasNoBusinesses])

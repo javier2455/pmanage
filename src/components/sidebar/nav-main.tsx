@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-import { PRO_STYLE } from "@/components/assign-plans/utils"
+import { ProBadge } from "@/components/ui/pro-badge"
 import { cn } from "@/lib/utils"
 import {
   Collapsible,
@@ -31,6 +31,7 @@ export function NavMain({
     url: string
     icon?: LucideIcon
     isActive?: boolean
+    pro?: boolean
     disabled?: boolean
     items?: {
       title: string
@@ -86,23 +87,13 @@ export function NavMain({
                             <span className="flex flex-1 items-center gap-2 px-2 py-1.5">
                               {subItem.icon && <subItem.icon className="size-4" />}
                               <span>{subItem.title}</span>
-                              {subItem.pro && (
-                                <span className={cn("ml-auto", PRO_STYLE.className)}>
-                                  <PRO_STYLE.icon className="size-2.5" />
-                                  Pro
-                                </span>
-                              )}
+                              {subItem.pro && <ProBadge />}
                             </span>
                           ) : (
                             <Link href={subItem.url}>
                               {subItem.icon && <subItem.icon className="size-4" />}
                               <span>{subItem.title}</span>
-                              {subItem.pro && (
-                                <span className={cn("ml-auto", PRO_STYLE.className)}>
-                                  <PRO_STYLE.icon className="size-2.5" />
-                                  Pro
-                                </span>
-                              )}
+                              {subItem.pro && <ProBadge />}
                             </Link>
                           )}
                         </SidebarMenuSubButton>
@@ -126,11 +117,13 @@ export function NavMain({
                   <span>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
+                    {item.pro && <ProBadge />}
                   </span>
                 ) : (
                   <Link href={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
+                    {item.pro && <ProBadge />}
                   </Link>
                 )}
               </SidebarMenuButton>

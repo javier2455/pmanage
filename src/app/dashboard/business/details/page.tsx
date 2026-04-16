@@ -37,7 +37,6 @@ import { useBusiness } from "@/context/business-context";
 import { sileo } from "sileo";
 import axios from "axios";
 import { BusinessType } from "@/lib/types/business";
-import { getAllMunicipalitiesByProvinceId } from "@/lib/api/search";
 
 const businessTypeLabels: Record<string, string> = {
   mipyme: "MiPyme",
@@ -65,7 +64,6 @@ export default function BusinessDetailsPage() {
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
   const [resolvedProvinceName, setResolvedProvinceName] = useState<string | null>(null);
   const [resolvedMunicipalityName, setResolvedMunicipalityName] = useState<string | null>(null);
-  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
 
   const { data: provincesData, isLoading: isLoadingProvinces } = useGetAllProvinces();
   const { data: municipalitiesData, isLoading: isLoadingMunicipalities } =
@@ -74,41 +72,19 @@ export default function BusinessDetailsPage() {
   const provinces = provincesData?.data ?? [];
   const municipalities = municipalitiesData?.data ?? [];
 
-  // Resolve the province that contains the business's municipality
+  // Resolve province and municipality names from the nested municipality object
   useEffect(() => {
-    if (!activeBusiness?.municipalityId || provinces.length === 0 || selectedProvinceId) return;
+    if (!activeBusiness?.municipality || provinces.length === 0) return;
 
-    let cancelled = false;
-    setIsResolvingLocation(true);
+    const mun = activeBusiness.municipality;
+    setResolvedMunicipalityName(mun.name);
+    setSelectedProvinceId(mun.provinceId);
 
-    async function findProvince() {
-      const municipalityId = activeBusiness?.municipalityId;
-      if (!municipalityId) return;
+    const province = provinces.find((p) => String(p.id) === mun.provinceId);
+    if (province) setResolvedProvinceName(province.name);
+  }, [activeBusiness?.municipality, provinces]);
 
-      for (const province of provinces) {
-        if (cancelled) return;
-        try {
-          const res = await getAllMunicipalitiesByProvinceId(String(province.id));
-          const mun = res.data.find((m) => String(m.id) === municipalityId);
-          if (mun && !cancelled) {
-            setSelectedProvinceId(String(province.id));
-            setResolvedProvinceName(province.name);
-            setResolvedMunicipalityName(mun.name);
-            return;
-          }
-        } catch {
-          continue;
-        }
-      }
-    }
-
-    findProvince().finally(() => {
-      if (!cancelled) setIsResolvingLocation(false);
-    });
-    return () => { cancelled = true; };
-  }, [activeBusiness?.municipalityId, provinces, selectedProvinceId]);
-
-  // Update resolved municipality name when municipalities change (e.g. user changes province in edit mode)
+  // Update resolved province name when user changes province in edit mode
   useEffect(() => {
     if (!selectedProvinceId || provinces.length === 0) return;
     const province = provinces.find((p) => String(p.id) === selectedProvinceId);
@@ -132,7 +108,7 @@ export default function BusinessDetailsPage() {
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
-      municipalityId: activeBusiness?.municipalityId ?? "",
+      municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
     },
   });
 
@@ -146,7 +122,7 @@ export default function BusinessDetailsPage() {
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
-      municipalityId: activeBusiness?.municipalityId ?? "",
+      municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
     });
     setIsEditing(true);
   }
@@ -392,7 +368,7 @@ export default function BusinessDetailsPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                ) : isResolvingLocation || isLoadingProvinces ? (
+                ) : isLoadingProvinces ? (
                   <Skeleton className="h-9 w-full rounded-md" />
                 ) : (
                   <EditableFieldWrapper>
@@ -448,7 +424,7 @@ export default function BusinessDetailsPage() {
                       </p>
                     )}
                   </>
-                ) : isResolvingLocation || isLoadingProvinces ? (
+                ) : isLoadingProvinces ? (
                   <Skeleton className="h-9 w-full rounded-md" />
                 ) : (
                   <EditableFieldWrapper>

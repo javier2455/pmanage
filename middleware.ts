@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isProPlan, PRO_ROUTES } from "@/lib/pro-gates";
 
 const AUTH_COOKIE_NAMES = {
   token: "auth_token",
   role: "user_role",
   planType: "user_plan_type",
 } as const;
-
-function isProPlan(planType: string | undefined): boolean {
-  if (!planType) return false;
-  const normalized = planType.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-  return (
-    normalized.includes("pro") ||
-    normalized.includes("profesional") ||
-    normalized.includes("premium") ||
-    normalized.includes("plus")
-  );
-}
 
 function isAdminRole(role: string | undefined): boolean {
   if (!role) return false;
@@ -44,9 +34,9 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname.startsWith("/dashboard/accounting-close/monthly")) {
-    if (!isProPlan(planType)) {
-      return NextResponse.redirect(new URL("/dashboard/accounting-close/daily", request.url));
+  for (const route of PRO_ROUTES) {
+    if (pathname.startsWith(route.path) && !isProPlan(planType)) {
+      return NextResponse.redirect(new URL(route.redirect, request.url));
     }
   }
 

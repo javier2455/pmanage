@@ -13,6 +13,11 @@ export type Business = {
   lat: number;
   lng: number;
   municipalityId: string | null;
+  municipality: {
+    id: string;
+    name: string;
+    provinceId: string;
+  } | null;
   userId: string | null;
   geocoded: boolean;
   active: boolean;

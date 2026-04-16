@@ -2,10 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { getAuthCookies } from "@/lib/cookies";
-
-function normalize(s: string): string {
-  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-}
+import { isProPlan as checkProPlan } from "@/lib/pro-gates";
 
 function readRoleName(): string {
   if (typeof window === "undefined") return "";
@@ -47,12 +44,7 @@ export function useUserRoleAndPlan() {
   const planType = useSyncExternalStore(subscribe, readPlanType, () => "");
 
   const isAdmin = roleName.toLowerCase() === "admin";
-  const planNormalized = normalize(planType);
-  const isProPlan =
-    planNormalized.includes("pro") ||
-    planNormalized.includes("profesional") ||
-    planNormalized.includes("premium") ||
-    planNormalized.includes("plus");
+  const isProPlan = checkProPlan(planType);
 
   return { roleName, planType, isAdmin, isProPlan };
 }
