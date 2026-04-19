@@ -10,6 +10,27 @@ export interface SalesTrendResponse {
   data: SalesTrendValuesResponse[];
 }
 
+export interface TopProductsResponse {
+  data: TopProductValueResponse[];
+}
+
+export type TopProductValueResponse = {
+  productId: string;
+  name: string;
+  category: string;
+  quantity: number;
+  revenue: number;
+};
+
+export type TopProductsSortBy = "quantity" | "revenue";
+export type TopProductsLimit = 5 | 10;
+
+export type TopProductsParameters = {
+  period?: AnalyticsPeriod;
+  limit?: TopProductsLimit;
+  sortBy?: TopProductsSortBy;
+};
+
 type SimpleValuesResponse = {
   value: number;
   change: number;

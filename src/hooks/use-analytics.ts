@@ -1,5 +1,9 @@
-import { getKPIS, getSalesTrend } from "@/lib/api/analytics";
-import { PeriodParameters, SalesTrendParameters } from "@/lib/types/analytics";
+import { getKPIS, getSalesTrend, getTopProducts } from "@/lib/api/analytics";
+import {
+  PeriodParameters,
+  SalesTrendParameters,
+  TopProductsParameters,
+} from "@/lib/types/analytics";
 import { useQuery } from "@tanstack/react-query";
 
 export function useAnalyticsKPIs(
@@ -20,6 +24,17 @@ export function useAnalyticsSalesTrend(
   return useQuery({
     queryKey: ["analytics-sales-trend", businessId, params],
     queryFn: () => getSalesTrend(businessId, params),
+    enabled: !!businessId,
+  });
+}
+
+export function useAnalyticsTopProducts(
+  businessId: string,
+  params?: TopProductsParameters,
+) {
+  return useQuery({
+    queryKey: ["analytics-top-products", businessId, params],
+    queryFn: () => getTopProducts(businessId, params),
     enabled: !!businessId,
   });
 }
