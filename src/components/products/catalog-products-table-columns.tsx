@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Product } from "@/lib/types/product";
 import ProductDetailsDialog from "@/components/products/details-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
+import { ProductImage } from "@/components/products/product-image";
 
 export type CatalogProductsColumnMeta = {
   headerClassName?: string;
@@ -68,9 +69,16 @@ export function createCatalogProductsColumns(
         />
       ),
       cell: ({ row }) => (
-        <span className="block font-medium text-foreground">
-          {row.original.name}
-        </span>
+        <div className="flex items-center gap-3">
+          <ProductImage
+            src={row.original.imageUrl}
+            alt={row.original.name}
+            size="sm"
+          />
+          <span className="block font-medium text-foreground">
+            {row.original.name}
+          </span>
+        </div>
       ),
     },
     {

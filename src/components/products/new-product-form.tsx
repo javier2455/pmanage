@@ -1,5 +1,7 @@
 "use client"
 
+import { useRef, useState } from "react"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useCreateProductMutation } from "@/hooks/use-product"
 import { ProductUnit } from "@/lib/types/product"
@@ -16,7 +18,7 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox"
-import { X, PackagePlus } from "lucide-react"
+import { X, PackagePlus, ImagePlus, Upload } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateProductFormData, createProductSchema } from "@/lib/validations/products"
@@ -31,6 +33,10 @@ export function NewProductForm() {
     const router = useRouter()
     const pathname = usePathname()
     const createProductMutation = useCreateProductMutation();
+
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
 
     const {
         register,
@@ -52,13 +58,27 @@ export function NewProductForm() {
 
     const selectedUnit = watch("unit")
 
+    function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setImageFile(file)
+        setImagePreview(URL.createObjectURL(file))
+    }
+
+    function clearImage() {
+        setImageFile(null)
+        setImagePreview(null)
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+
     async function onSubmit(data: CreateProductFormData) {
         try {
             const response = await createProductMutation.mutateAsync({
                 name: data.name,
                 description: data.description ?? null,
                 category: data.category,
-                unit: data.unit
+                unit: data.unit,
+                imageUrl: imageFile ?? undefined,
             })
             if (response) {
                 sileo.success({
@@ -231,33 +251,56 @@ export function NewProductForm() {
                 </div>
 
                 {/* Image upload */}
-                {/* <div className="flex flex-col gap-2">
-                <Label className="text-card-foreground">Imagen del producto</Label>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                    aria-label="Subir imagen del producto"
-                />
+                <div className="flex flex-col gap-2 mb-6">
+                    <Label className="text-card-foreground">Imagen del producto</Label>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleImageChange}
+                        aria-label="Subir imagen del producto"
+                    />
 
-                <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-32 w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 sm:w-64"
-                >
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                            <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                    {imagePreview ? (
+                        <div className="relative h-32 w-full overflow-hidden rounded-lg border border-border sm:w-64">
+                            <Image
+                                src={imagePreview}
+                                alt="Vista previa"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                            <button
+                                type="button"
+                                onClick={clearImage}
+                                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
+                                aria-label="Quitar imagen"
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Upload className="h-3 w-3" />
-                            <span>Subir imagen</span>
-                        </div>
-                    </div>
-                </button>
-            </div> */}
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex h-32 w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 sm:w-64"
+                        >
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Upload className="h-3 w-3" />
+                                    <span>Subir imagen</span>
+                                </div>
+                            </div>
+                        </button>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                        JPG, PNG o WEBP. Máximo 2MB.
+                    </p>
+                </div>
 
                 {/* Active toggle */}
                 {/* <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-4">

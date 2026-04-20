@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { useParams, usePathname, useRouter } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
 import { useEditProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
@@ -19,7 +20,7 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "@/components/ui/combobox"
-import { X, RefreshCw } from "lucide-react"
+import { X, RefreshCw, ImagePlus, Upload } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EditProductFormData, editProductSchema } from "@/lib/validations/products"
@@ -38,6 +39,10 @@ export function EditProductForm() {
 
     const { data, isLoading, isError } = useGetProductByIdQuery((id as string) ?? "")
     const editProductMutation = useEditProductMutation();
+
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
 
     const {
         register,
@@ -74,6 +79,19 @@ export function EditProductForm() {
     }, [data, activeBusinessId, reset])
 
 
+    function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setImageFile(file)
+        setImagePreview(URL.createObjectURL(file))
+    }
+
+    function clearImage() {
+        setImageFile(null)
+        setImagePreview(null)
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+
     async function onSubmit(data: EditProductFormData) {
         try {
             await editProductMutation.mutateAsync({
@@ -83,7 +101,7 @@ export function EditProductForm() {
                     description: data.description ?? null,
                     category: data.category ?? null,
                     unit: data.unit,
-                    imageUrl: data.imageUrl ?? null
+                    imageUrl: imageFile ?? data.imageUrl ?? null,
                 }
             })
             sileo.success({
@@ -222,33 +240,66 @@ export function EditProductForm() {
                 </div>
 
                 {/* Image upload */}
-                {/* <div className="flex flex-col gap-2">
-                <Label className="text-card-foreground">Imagen del producto</Label>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                    aria-label="Subir imagen del producto"
-                />
+                <div className="flex flex-col gap-2 mb-6">
+                    <Label className="text-card-foreground">Imagen del producto</Label>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleImageChange}
+                        aria-label="Subir imagen del producto"
+                    />
 
-                <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex h-32 w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 sm:w-64"
-                >
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                            <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                    {imagePreview || data?.data?.imageUrl ? (
+                        <div className="relative h-32 w-full overflow-hidden rounded-lg border border-border sm:w-64">
+                            <Image
+                                src={imagePreview ?? data!.data!.imageUrl!}
+                                alt="Imagen del producto"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                            {imagePreview && (
+                                <button
+                                    type="button"
+                                    onClick={clearImage}
+                                    className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
+                                    aria-label="Quitar imagen"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-background/90 px-2 py-1 text-xs text-foreground shadow hover:bg-background"
+                            >
+                                <Upload className="h-3 w-3" />
+                                Cambiar
+                            </button>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Upload className="h-3 w-3" />
-                            <span>Subir imagen</span>
-                        </div>
-                    </div>
-                </button>
-            </div> */}
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex h-32 w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 sm:w-64"
+                        >
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Upload className="h-3 w-3" />
+                                    <span>Subir imagen</span>
+                                </div>
+                            </div>
+                        </button>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                        JPG, PNG o WEBP. Máximo 2MB.
+                    </p>
+                </div>
 
                 {/* Active toggle */}
                 {/* <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-4">

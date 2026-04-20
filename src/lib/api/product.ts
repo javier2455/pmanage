@@ -15,7 +15,22 @@ export async function getProductById(productId: string) {
 }
 
 export async function create(credentials: CreateProductProps): Promise<CreateProductResponse> {
-    const { category, description, name, unit } = credentials
+    const { category, description, name, unit, imageUrl } = credentials
+
+    if (imageUrl instanceof File) {
+        const formData = new FormData();
+        formData.append("name", name);
+        if (description) formData.append("description", description);
+        if (category) formData.append("category", category);
+        formData.append("unit", unit);
+        formData.append("img", imageUrl);
+
+        const { data } = await apiClient.post(productRoutes.createProduct, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return data;
+    }
+
     const { data } = await apiClient.post(productRoutes.createProduct,
         { category, description, name, unit });
     return data;
@@ -30,6 +45,23 @@ export async function createInBusiness(credentials: CreateProductInBusinessProps
 }
 
 export async function edit(productId: string, credentials: EditProductProps) {
+    const { imageUrl } = credentials
+
+    if (imageUrl instanceof File) {
+        const formData = new FormData();
+        formData.append("name", credentials.name);
+        if (credentials.description !== null) formData.append("description", credentials.description);
+        if (credentials.category !== null) formData.append("category", credentials.category);
+        formData.append("unit", credentials.unit);
+        if (credentials.active !== undefined && credentials.active !== null) formData.append("active", String(credentials.active));
+        formData.append("img", imageUrl);
+
+        const { data } = await apiClient.put(productRoutes.editProduct(productId), formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return data;
+    }
+
     const { data } = await apiClient.put(productRoutes.editProduct(productId), credentials);
     return data;
 }

@@ -22,6 +22,8 @@ export default function ProductsPage() {
   const businessProducts = data?.data;
   const allProducts = allProductsData?.data;
 
+  console.log("all products",allProducts)
+
   /* useMemo - evita recalcular en cada render. */
   const productIdsInBusiness = useMemo(
     () => new Set((businessProducts ?? []).map((bp: ProductToShowInTable) => bp.product.id)),

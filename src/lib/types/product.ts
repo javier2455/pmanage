@@ -40,7 +40,7 @@ export type CreateProductProps = {
     description: string | null;
     category: string | null;
     unit: ProductUnit;
-    imageUrl?: string | null | undefined;
+    imageUrl?: string | File | null | undefined;
 };
 
 export type CreateProductInBusinessProps = {
@@ -61,7 +61,7 @@ export type EditProductProps = {
     description: string | null;
     category: string | null;
     unit: ProductUnit;
-    imageUrl: string | null;
+    imageUrl: string | File | null;
     active?: boolean | null;
 };
 

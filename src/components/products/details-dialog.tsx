@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useGetProductByIdQuery } from "@/hooks/use-product"
 import { Badge } from "@/components/ui/badge"
+import { ProductImage } from "@/components/products/product-image"
 
 interface ProductDetailsDialogProps {
     productId: string
@@ -54,6 +55,13 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger }: Pr
                     </div>
                 ) : (
                     <div className="flex flex-col mt-4">
+                        <div className="flex justify-center pb-4">
+                            <ProductImage
+                                src={product?.imageUrl}
+                                alt={product?.name ?? "Producto"}
+                                size="lg"
+                            />
+                        </div>
                         <div className="flex items-start justify-between border-b border-border py-4 first:pt-0">
                             <span className="text-sm text-muted-foreground">Nombre</span>
                             <span className="text-sm font-medium text-card-foreground text-right max-w-[55%]">
