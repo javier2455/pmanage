@@ -28,6 +28,7 @@ import Link from "next/link"
 
 
 const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
 
 export function NewProductForm() {
     const router = useRouter()
@@ -61,6 +62,15 @@ export function NewProductForm() {
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
         if (!file) return
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
+            if (fileInputRef.current) fileInputRef.current.value = ""
+            sileo.error({
+                title: "Imagen demasiado grande",
+                description: "La imagen no debe superar los 2 MB. Elige un archivo más pequeño.",
+                styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+            })
+            return
+        }
         setImageFile(file)
         setImagePreview(URL.createObjectURL(file))
     }
@@ -298,7 +308,7 @@ export function NewProductForm() {
                         </button>
                     )}
                     <p className="text-xs text-muted-foreground">
-                        JPG, PNG o WEBP. Máximo 2MB.
+                        Formatos aceptados: JPG, PNG o WEBP. Tamaño máximo: 2&nbsp;MB.
                     </p>
                 </div>
 
