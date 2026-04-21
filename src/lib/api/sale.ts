@@ -10,7 +10,6 @@ export async function getAllSalesByBusinessId({ businessId }: GetAllSalesByBusin
     const { data } = await apiClient.get(
         salesRoutes.getAllSalesByBusinessId(businessId)
     );
-
     return data;
 }
 
