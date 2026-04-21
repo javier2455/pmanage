@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useGetSaleById } from "@/hooks/use-sales"
 import { Loader2 } from "lucide-react"
+import { ProductImage } from "@/components/products/product-image"
 
 function formatCurrency(value: number) {
     return new Intl.NumberFormat("es-CO", {
@@ -73,17 +74,24 @@ export default function DetailsDialog({ saleId, tooltip, trigger }: DetailsDialo
                                     {items.map((item) => (
                                         <div
                                             key={item.id}
-                                            className={`flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 ${item.isCancelled ? "opacity-60" : ""}`}
+                                            className={`flex items-center justify-between gap-3 rounded-md bg-muted/50 px-3 py-2 ${item.isCancelled ? "opacity-60" : ""}`}
                                         >
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm text-card-foreground">
-                                                    {item.product?.name}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {Number(item.cantidad)} x {formatCurrency(Number(item.precio))}
-                                                </span>
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                <ProductImage
+                                                    src={item.product?.imageUrl}
+                                                    alt={item.product?.name ?? "Producto"}
+                                                    size="sm"
+                                                />
+                                                <div className="flex min-w-0 flex-col gap-0.5">
+                                                    <span className="truncate text-sm text-card-foreground">
+                                                        {item.product?.name}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {Number(item.cantidad)} x {formatCurrency(Number(item.precio))}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col items-end gap-0.5">
+                                            <div className="flex shrink-0 flex-col items-end gap-0.5">
                                                 <span className="text-sm font-medium tabular-nums text-card-foreground">
                                                     {formatCurrency(Number(item.cantidad) * Number(item.precio))}
                                                 </span>

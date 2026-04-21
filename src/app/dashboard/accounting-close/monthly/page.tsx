@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { format, startOfMonth, endOfMonth } from "date-fns"
 import { useBusiness } from "@/context/business-context"
-import { useMonthlyAccountingClose, useExportToPdf } from "@/hooks/use-accounting-close"
+import { useMonthlyAccountingClose, useExportToExcel, useExportToPdf } from "@/hooks/use-accounting-close"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import type { BusinessWithProducts } from "@/lib/types/business"
 import { Button } from "@/components/ui/button"
@@ -16,10 +16,9 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Package, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText, Clock } from "lucide-react"
+import { ShoppingCart, Package, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { MonthFilter, type SelectedMonth } from "@/components/accounting-close/month-filter"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
@@ -64,27 +63,46 @@ export default function MonthlyPage() {
   const { data, isLoading, isError } = useMonthlyAccountingClose(activeBusinessId ?? "", dateParams)
   const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const { mutate: exportPdf, isPending: isExportingPdf } = useExportToPdf(activeBusinessId ?? "")
+  const { mutate: exportExcel, isPending: isExportingExcel } = useExportToExcel(activeBusinessId ?? "")
 
-  function handleExportPdf() {
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function getMonthRange() {
     const now = new Date()
     const month = selectedMonth ?? { year: now.getFullYear(), month: now.getMonth() }
     const base = new Date(month.year, month.month, 1)
+    return {
+      base,
+      startDate: format(startOfMonth(base), "yyyy-MM-dd"),
+      endDate: format(endOfMonth(base), "yyyy-MM-dd"),
+    }
+  }
+
+  function handleExportPdf() {
+    const { base, startDate, endDate } = getMonthRange()
     exportPdf(
+      { startDate, endDate },
       {
-        startDate: format(startOfMonth(base), "yyyy-MM-dd"),
-        endDate: format(endOfMonth(base), "yyyy-MM-dd"),
+        onSuccess: (blob) => downloadBlob(blob, `cierre-mensual-${format(base, "MMMM-yyyy")}.pdf`),
       },
+    )
+  }
+
+  function handleExportExcel() {
+    const { base, startDate, endDate } = getMonthRange()
+    exportExcel(
+      { startDate, endDate },
       {
-        onSuccess: (blob) => {
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement("a")
-          a.href = url
-          a.download = `cierre-mensual-${format(base, "MMMM-yyyy")}.pdf`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        },
+        onSuccess: (blob) => downloadBlob(blob, `cierre-mensual-${format(base, "MMMM-yyyy")}.xlsx`),
       },
     )
   }
@@ -166,23 +184,12 @@ export default function MonthlyPage() {
             <PopoverContent align="end" className="w-52 p-1">
               <button
                 type="button"
-                disabled
-                className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-sm border border-transparent px-2 py-1.5 text-sm opacity-50 transition-colors"
+                disabled={isExportingExcel}
+                onClick={handleExportExcel}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-emerald-400"
               >
                 <FileSpreadsheet className="size-4 shrink-0 text-emerald-600 dark:text-emerald-500" />
-                Exportar a Excel
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="ml-auto flex items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 p-0.5">
-                        <Clock className="size-2.5 text-amber-600 dark:text-amber-400" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      Esta función estará disponible en una próxima versión
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {isExportingExcel ? "Generando Excel…" : "Exportar a Excel"}
               </button>
               <button
                 type="button"

@@ -38,3 +38,12 @@ export async function exportToPdf(businessId: string, params?: DateRangeParamete
     const { data } = await apiClient.get(url.toString(), { responseType: "blob" });
     return data;
 }
+
+export async function exportToExcel(businessId: string, params?: DateRangeParameters): Promise<Blob> {
+    const url = new URL(accountingCloseRoutes.exportToExcel(businessId));
+    if (params?.startDate) url.searchParams.set("startDate", params.startDate);
+    if (params?.endDate) url.searchParams.set("endDate", params.endDate);
+
+    const { data } = await apiClient.get(url.toString(), { responseType: "blob" });
+    return data;
+}

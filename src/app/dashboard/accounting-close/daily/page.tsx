@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { format } from "date-fns"
 import { useBusiness } from "@/context/business-context"
-import { useDailyAccountingClose, useExportToPdf } from "@/hooks/use-accounting-close"
+import { useDailyAccountingClose, useExportToExcel, useExportToPdf } from "@/hooks/use-accounting-close"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import type { BusinessWithProducts } from "@/lib/types/business"
 import {
@@ -15,11 +15,10 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Package, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText, Clock } from "lucide-react"
+import { ShoppingCart, Package, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DateFilter } from "@/components/accounting-close/date-filter"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
@@ -61,6 +60,18 @@ export default function DailyPage() {
   const { data, isLoading, isError } = useDailyAccountingClose(activeBusinessId ?? "", dateParams)
   const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const { mutate: exportPdf, isPending: isExportingPdf } = useExportToPdf(activeBusinessId ?? "")
+  const { mutate: exportExcel, isPending: isExportingExcel } = useExportToExcel(activeBusinessId ?? "")
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
 
   function handleExportPdf() {
     const date = selectedDate ?? new Date()
@@ -68,16 +79,18 @@ export default function DailyPage() {
     exportPdf(
       { startDate: dateStr, endDate: dateStr },
       {
-        onSuccess: (blob) => {
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement("a")
-          a.href = url
-          a.download = `cierre-diario-${format(date, "dd-MM-yyyy")}.pdf`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        },
+        onSuccess: (blob) => downloadBlob(blob, `cierre-diario-${format(date, "dd-MM-yyyy")}.pdf`),
+      },
+    )
+  }
+
+  function handleExportExcel() {
+    const date = selectedDate ?? new Date()
+    const dateStr = format(date, "yyyy-MM-dd")
+    exportExcel(
+      { startDate: dateStr, endDate: dateStr },
+      {
+        onSuccess: (blob) => downloadBlob(blob, `cierre-diario-${format(date, "dd-MM-yyyy")}.xlsx`),
       },
     )
   }
@@ -156,23 +169,12 @@ export default function DailyPage() {
             <PopoverContent align="end" className="w-52 p-1">
               <button
                 type="button"
-                disabled
-                className="flex w-full cursor-not-allowed items-center gap-2.5 rounded-sm border border-transparent px-2 py-1.5 text-sm opacity-50 transition-colors"
+                disabled={isExportingExcel}
+                onClick={handleExportExcel}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm border border-transparent px-2 py-1.5 text-sm transition-colors hover:border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-emerald-400"
               >
                 <FileSpreadsheet className="size-4 shrink-0 text-emerald-600 dark:text-emerald-500" />
-                Exportar a Excel
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="ml-auto flex items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 p-0.5">
-                        <Clock className="size-2.5 text-amber-600 dark:text-amber-400" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      Esta función estará disponible en una próxima versión
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {isExportingExcel ? "Generando Excel…" : "Exportar a Excel"}
               </button>
               <button
                 type="button"
