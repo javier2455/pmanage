@@ -140,7 +140,7 @@ export function createCatalogProductsColumns(
                 }
               />
               <Link
-                href={`/dashboard/business/products/${row.original.id}/edit`}
+                href={`/dashboard/business/products/catalog/${row.original.id}/edit`}
                 className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
               >
                 <Pencil className="size-4 text-primary" />

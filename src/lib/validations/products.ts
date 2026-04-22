@@ -35,7 +35,15 @@ export const editProductSchema = z.object({
   active: z.boolean().nullable().optional(),
 });
 
+export const updateBusinessProductPriceSchema = z.object({
+  price: z
+    .number({ error: "Ingresa un precio válido" })
+    .positive("El precio debe ser mayor a 0")
+    .max(1000000, "El precio máximo es de 1,000,000"),
+});
+
 export type CreateProductFormData = z.infer<typeof createProductSchema>;
 export type CreateProductInBusinessFormData = z.infer<typeof createProductInBusinessSchema>;
 export type AssignProductToBusinessFormData = z.infer<typeof assignProductToBusinessSchema>;
 export type EditProductFormData = z.infer<typeof editProductSchema>;
+export type UpdateBusinessProductPriceFormData = z.infer<typeof updateBusinessProductPriceSchema>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState } from "react";
 import TableOfProducts from "@/components/products/table";
 import TableOfOtherProducts from "@/components/products/table-of-other-products";
 import { useBusiness } from "@/context/business-context";
@@ -10,32 +10,33 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
-import { ProductToShowInTable } from "@/lib/types/product";
+
+const DEFAULT_CATALOG_LIMIT = 5;
 
 export default function ProductsPage() {
   const { activeBusinessId } = useBusiness();
-  const businessId = activeBusinessId ?? "";
+
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [catalogLimit, setCatalogLimit] = useState(DEFAULT_CATALOG_LIMIT);
 
   const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(activeBusinessId ?? "");
-  const { data: allProductsData, isLoading: allProductsLoading, isFetching: allProductsFetching, isError: allProductsError } = useGetAllProductsQuery();
+  const {
+    data: allProductsData,
+    isLoading: allProductsLoading,
+    isFetching: allProductsFetching,
+    isError: allProductsError,
+  } = useGetAllProductsQuery({ page: catalogPage, limit: catalogLimit });
 
   const businessProducts = data?.data;
-  const allProducts = allProductsData?.data;
-
-  console.log("all products",allProducts)
-
-  /* useMemo - evita recalcular en cada render. */
-  const productIdsInBusiness = useMemo(
-    () => new Set((businessProducts ?? []).map((bp: ProductToShowInTable) => bp.product.id)),
-    [businessProducts]
-  );
-  const otherProducts = useMemo(
-    () => (allProducts ?? []).filter((p) => !productIdsInBusiness.has(p.id)),
-    [allProducts, productIdsInBusiness]
-  );
+  const catalogProducts = allProductsData?.data ?? [];
 
   const businessTableLoading = isLoading || isFetching;
-  const otherTableLoading = allProductsLoading || allProductsFetching;
+  const showCatalogInitialSkeleton = allProductsLoading && !allProductsData;
+
+  function handleCatalogLimitChange(nextLimit: number) {
+    setCatalogLimit(nextLimit);
+    setCatalogPage(1);
+  }
 
   if (isError) return <div>Error al cargar los productos del negocio</div>;
   if (allProductsError) return <div>Error al cargar el catálogo de productos</div>;
@@ -61,12 +62,25 @@ export default function ProductsPage() {
         <div className="space-y-8">
           <div>
             <h2 className="text-lg font-semibold text-foreground mb-3">
-              Todos los productos
+              Catálogo global
             </h2>
-            {otherTableLoading ? (
+            {showCatalogInitialSkeleton ? (
               <SimpleTableSkeleton />
             ) : (
-              <TableOfOtherProducts products={otherProducts} />
+              <TableOfOtherProducts
+                products={catalogProducts}
+                meta={
+                  allProductsData?.meta ?? {
+                    total: 0,
+                    page: catalogPage,
+                    limit: catalogLimit,
+                    totalPages: 0,
+                  }
+                }
+                isFetching={allProductsFetching}
+                onPageChange={setCatalogPage}
+                onLimitChange={handleCatalogLimitChange}
+              />
             )}
           </div>
 

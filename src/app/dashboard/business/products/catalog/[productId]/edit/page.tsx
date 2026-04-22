@@ -1,14 +1,13 @@
-import { EditProductForm } from "@/components/products/edit-product-form";
-import { NewProductForm } from "@/components/products/new-product-form";
+import { EditCatalogProductForm } from "@/components/products/edit-catalog-product-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackagePlus } from "lucide-react";
 
-export default function EditProductPage() {
+export default function EditCatalogProductPage() {
   return (
     <section className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Editar producto
+          Editar producto del catálogo
         </h1>
       </div>
       <Card>
@@ -19,19 +18,18 @@ export default function EditProductPage() {
             </div>
             <div>
               <CardTitle className="text-card-foreground">
-                Editar producto
+                Editar producto del catálogo
               </CardTitle>
               <CardDescription>
-                Edita los datos del producto
+                Modifica nombre, descripción, categoría, unidad e imagen del producto
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="">
-          <EditProductForm />
+          <EditCatalogProductForm />
         </CardContent>
       </Card>
     </section>
   )
 }
-

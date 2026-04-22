@@ -1,15 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { create, createInBusiness, deleteProduct, deleteProductInBusiness, edit, getAllProducts, getProductById } from "@/lib/api/product";
+import { create, createInBusiness, deleteProduct, deleteProductInBusiness, edit, getAllProducts, getProductById, updateBusinessProductPrice } from "@/lib/api/product";
 import { CreateProductInBusinessProps, CreateProductProps, EditProductProps } from "@/lib/types/product";
 
+interface UseGetAllProductsParams {
+    page?: number;
+    limit?: number;
+}
 
-
-export function useGetAllProductsQuery() {
+export function useGetAllProductsQuery(params: UseGetAllProductsParams = {}) {
     return useQuery({
-        queryKey: ["all-products"],
-        queryFn: () => getAllProducts(),
-        // enabled,
+        queryKey: ["all-products", params],
+        queryFn: () => getAllProducts(params),
+        placeholderData: keepPreviousData,
     });
 }
 
@@ -50,6 +53,18 @@ export function useEditProductMutation() {
         mutationFn: ({ productId, credentials }: { productId: string, credentials: EditProductProps }) => edit(productId, credentials),
         onSuccess: (_, { productId }) => {
             queryClient.invalidateQueries({ queryKey: ["product", productId] });
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
+            queryClient.invalidateQueries({ queryKey: ["all-products"] });
+        },
+    });
+}
+
+export function useUpdateBusinessProductPriceMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ businessProductId, price }: { businessProductId: string; price: number }) =>
+            updateBusinessProductPrice(businessProductId, price),
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
             queryClient.invalidateQueries({ queryKey: ["all-products"] });
         },

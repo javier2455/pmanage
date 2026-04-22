@@ -1,0 +1,326 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
+import { useParams, useRouter } from "next/navigation"
+import { useEditProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
+import { ProductUnit } from "@/lib/types/product"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox"
+import { X, RefreshCw, ImagePlus, Upload } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { EditProductFormData, editProductSchema } from "@/lib/validations/products"
+import axios from "axios"
+import { sileo } from "sileo"
+import Link from "next/link"
+
+const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
+
+export function EditCatalogProductForm() {
+    const router = useRouter()
+    const { productId: productIdParam } = useParams()
+    const productId = (productIdParam as string) ?? ""
+
+    const { data, isLoading, isError } = useGetProductByIdQuery(productId)
+    const editProductMutation = useEditProductMutation()
+
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        setError,
+        reset,
+        formState: { errors },
+    } = useForm<EditProductFormData>({
+        resolver: zodResolver(editProductSchema),
+        defaultValues: {
+            name: "",
+            description: "",
+            category: "",
+            unit: "kg",
+            imageUrl: "",
+        },
+    })
+
+    const selectedUnit = watch("unit")
+
+    useEffect(() => {
+        if (!data?.data) return
+
+        const productData = data.data
+        reset({
+            name: productData.name,
+            description: productData.description ?? "",
+            category: productData.category,
+            unit: productData.unit,
+            imageUrl: productData.imageUrl ?? "",
+        })
+    }, [data, reset])
+
+    function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0]
+        if (!file) return
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
+            if (fileInputRef.current) fileInputRef.current.value = ""
+            sileo.error({
+                title: "Imagen demasiado grande",
+                description: "La imagen no debe superar los 2 MB. Elige un archivo más pequeño.",
+                styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+            })
+            return
+        }
+        setImageFile(file)
+        setImagePreview(URL.createObjectURL(file))
+    }
+
+    function clearImage() {
+        setImageFile(null)
+        setImagePreview(null)
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+
+    async function onSubmit(data: EditProductFormData) {
+        try {
+            await editProductMutation.mutateAsync({
+                productId: productId,
+                credentials: {
+                    name: data.name,
+                    description: data.description ?? null,
+                    category: data.category ?? null,
+                    unit: data.unit,
+                    imageUrl: imageFile ?? data.imageUrl ?? null,
+                },
+            })
+            sileo.success({
+                title: "Producto actualizado correctamente",
+                fill: "",
+                styles: {
+                    title: "text-white! text-[16px]! font-bold!",
+                    description: "text-white/90! text-[15px]!",
+                },
+                description: "El producto se ha actualizado correctamente",
+            })
+            reset()
+            router.push("/dashboard/business/products")
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                setError("root", { message: error.response.data.message })
+                sileo.error({
+                    title: error.response?.data?.error,
+                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+                    description: error.response?.data?.message,
+                })
+            }
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <p className="text-muted-foreground">Cargando producto...</p>
+            </div>
+        )
+    }
+
+    if (isError || !data?.data) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 py-12">
+                <p className="text-destructive text-center">
+                    No se pudo cargar el producto. Verifica que el ID sea correcto.
+                </p>
+                <Link
+                    href="/dashboard/business/products"
+                    className="text-sm text-primary hover:underline"
+                >
+                    Volver a productos
+                </Link>
+            </div>
+        )
+    }
+
+    return (
+        <div className="flex flex-col gap-6">
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="flex flex-col gap-2 mb-6">
+                    <Label htmlFor="product-name" className="text-card-foreground">
+                        Nombre del producto <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                        id="product-name"
+                        placeholder="Ej: Laptop HP Pavilion 15"
+                        {...register("name")}
+                        aria-invalid={errors.name ? "true" : "false"}
+                    />
+                    {errors.name && (
+                        <p className="text-xs text-destructive">{errors.name.message}</p>
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <Label htmlFor="product-desc" className="text-card-foreground">
+                        Descripcion
+                    </Label>
+                    <Textarea
+                        id="product-desc"
+                        placeholder="Descripcion breve del producto..."
+                        rows={3}
+                        className="resize-none"
+                        {...register("description")}
+                        aria-invalid={errors.description ? "true" : "false"}
+                    />
+                    <p className="text-xs text-muted-foreground">/200 caracteres</p>
+                    {errors.description && (
+                        <p className="text-xs text-destructive">{errors.description.message}</p>
+                    )}
+                </div>
+
+                <div className="my-4">
+                    <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="product-category" className="text-card-foreground">
+                                Categoria <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="product-category"
+                                placeholder="Ej: Electrónica, Ropa..."
+                                {...register("category")}
+                                aria-invalid={errors.category ? "true" : "false"}
+                            />
+                            {errors.category && (
+                                <p className="text-xs text-destructive">{errors.category.message}</p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-card-foreground">
+                                Unidad de medida <span className="text-destructive">*</span>
+                            </Label>
+                            <Combobox<ProductUnit>
+                                value={selectedUnit}
+                                onValueChange={(u) => setValue("unit", u ?? "kg")}
+                                items={UNITS}
+                                itemToStringLabel={(u) => u ?? ""}
+                                isItemEqualToValue={(a, b) => a === b}
+                                {...register("unit")}
+                                aria-invalid={errors.unit ? "true" : "false"}
+                            >
+                                <ComboboxInput
+                                    placeholder="Buscar unidad..."
+                                    className="w-full"
+                                    showClear={!!selectedUnit}
+                                />
+                                <ComboboxContent>
+                                    <ComboboxList className="max-h-64">
+                                        {UNITS.map((u) => (
+                                            <ComboboxItem key={u} value={u}>
+                                                {u}
+                                            </ComboboxItem>
+                                        ))}
+                                        <ComboboxEmpty>No se encontró ninguna unidad.</ComboboxEmpty>
+                                    </ComboboxList>
+                                </ComboboxContent>
+                            </Combobox>
+                            {errors.unit && (
+                                <p className="text-xs text-destructive">{errors.unit.message}</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-2 mb-6">
+                    <Label className="text-card-foreground">Imagen del producto</Label>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleImageChange}
+                        aria-label="Subir imagen del producto"
+                    />
+
+                    {imagePreview || data?.data?.imageUrl ? (
+                        <div className="relative h-32 w-full overflow-hidden rounded-lg border border-border sm:w-64">
+                            <Image
+                                src={imagePreview ?? data!.data!.imageUrl!}
+                                alt="Imagen del producto"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                            {imagePreview && (
+                                <button
+                                    type="button"
+                                    onClick={clearImage}
+                                    className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
+                                    aria-label="Quitar imagen"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-background/90 px-2 py-1 text-xs text-foreground shadow hover:bg-background"
+                            >
+                                <Upload className="h-3 w-3" />
+                                Cambiar
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex h-32 w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 sm:w-64"
+                        >
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Upload className="h-3 w-3" />
+                                    <span>Subir imagen</span>
+                                </div>
+                            </div>
+                        </button>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                        Formatos aceptados: JPG, PNG o WEBP. Tamaño máximo: 2&nbsp;MB.
+                    </p>
+                </div>
+
+                <Separator />
+
+                <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="default" asChild>
+                        <Link href="/dashboard/business/products">
+                            <X className="mr-2 h-4 w-4" />
+                            Cancelar
+                        </Link>
+                    </Button>
+                    <Button type="submit" disabled={editProductMutation.isPending}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        {editProductMutation.isPending ? "Actualizando..." : "Actualizar producto"}
+                    </Button>
+                </div>
+            </form>
+        </div>
+    )
+}
