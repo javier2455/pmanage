@@ -1,13 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreateSaleProps } from "@/lib/types/sales";
 import { cancelSale, create, getAllSalesByBusinessId, getSaleById } from "@/lib/api/sale";
 
-export function useAllSalesByBusinessId(businessId: string) {
+interface UseAllSalesByBusinessIdParams {
+    page?: number;
+    limit?: number;
+}
+
+export function useAllSalesByBusinessId(
+    businessId: string,
+    params: UseAllSalesByBusinessIdParams = {},
+) {
     return useQuery({
-        queryKey: ["all-sales-by-business-id", businessId],
-        queryFn: () => getAllSalesByBusinessId({ businessId }),
-        // enabled: !!productId, // evita ejecutar si no hay id
-        // staleTime: 1000 * 60, // 1 minuto
+        queryKey: ["all-sales-by-business-id", businessId, params],
+        queryFn: () => getAllSalesByBusinessId({ businessId, ...params }),
+        enabled: !!businessId,
+        placeholderData: keepPreviousData,
     });
 }
 

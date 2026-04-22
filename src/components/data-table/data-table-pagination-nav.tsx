@@ -51,6 +51,7 @@ export function DataTablePaginationNav({
   onPageIndexChange,
   navLabel = "Paginación de la tabla",
   showLabels = false,
+  disabled = false,
 }: {
   pageIndex: number;
   pageCount: number;
@@ -59,14 +60,16 @@ export function DataTablePaginationNav({
   navLabel?: string;
   /** Muestra los textos "Anterior" / "Siguiente" junto a los iconos. Por defecto `false`. */
   showLabels?: boolean;
+  /** Desactiva todos los botones (p.ej. mientras se recarga la tabla). */
+  disabled?: boolean;
 }) {
   const items = React.useMemo(
     () => getPaginationStripItems(pageIndex, pageCount),
     [pageIndex, pageCount],
   );
 
-  const canPreviousPage = pageIndex > 0;
-  const canNextPage = pageCount > 0 && pageIndex < pageCount - 1;
+  const canPreviousPage = !disabled && pageIndex > 0;
+  const canNextPage = !disabled && pageCount > 0 && pageIndex < pageCount - 1;
 
   if (pageCount <= 1) return null;
 
@@ -109,6 +112,7 @@ export function DataTablePaginationNav({
             )}
             aria-label={`Ir a la página ${item}`}
             aria-current={pageIndex === item - 1 ? "page" : undefined}
+            disabled={disabled}
             onClick={() => onPageIndexChange(item - 1)}
           >
             {item}
