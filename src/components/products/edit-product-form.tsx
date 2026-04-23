@@ -62,7 +62,7 @@ export function EditProductForm() {
 
     useEffect(() => {
         if (currentPrice === undefined) return
-        reset({ price: currentPrice })
+        reset({ price: currentPrice }, { keepDirtyValues: true })
     }, [currentPrice, reset])
 
     async function onSubmit(formData: UpdateBusinessProductPriceFormData) {
