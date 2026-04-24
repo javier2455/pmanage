@@ -8,5 +8,5 @@ export const inventoryRoutes = {
   getCurrentInventoryByBusinessId: (businessId: string) =>
     `${BASIC_ROUTE}/inventory/business/${businessId}/current`,
   getInventoryByBusinessId: (businessId: string) =>
-    `${BASIC_ROUTE}/inventory/business/${businessId}/history?stockIncrease=true`,
+    `${BASIC_ROUTE}/inventory/business/${businessId}/history`,
 };

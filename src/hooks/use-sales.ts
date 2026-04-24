@@ -33,7 +33,8 @@ export function useCreateSaleMutation() {
         mutationFn: (credentials: CreateSaleProps) => create(credentials),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
-            queryClient.invalidateQueries({ queryKey: ["all-inventory-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["current-inventory-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["inventory-history-by-business-id"] });
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close"] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close"] });
