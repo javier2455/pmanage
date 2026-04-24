@@ -111,7 +111,7 @@ export default function InventoryHistoryItem({
             </div>
 
             {entry.description ? (
-              <p className="text-sm text-muted-foreground">{entry.description}</p>
+              <p className="text-sm text-foreground">{entry.description}</p>
             ) : null}
             <div className="flex items-start gap-x-2">
               <span className="text-xs text-muted-foreground">
@@ -119,7 +119,7 @@ export default function InventoryHistoryItem({
               </span>
               <time
                 dateTime={entry.createdAt}
-                className="text-xs text-muted-foreground tabular-nums"
+                className="text-xs text-foreground tabular-nums"
               >
                 {formatTimeOnly(entry.createdAt)}
               </time>
