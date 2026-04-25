@@ -19,7 +19,9 @@ export default function ProductsPage() {
   const [catalogPage, setCatalogPage] = useState(1);
   const [catalogLimit, setCatalogLimit] = useState(DEFAULT_CATALOG_LIMIT);
 
-  const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(activeBusinessId ?? "");
+  const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(
+    activeBusinessId ?? "",
+  );
   const {
     data: allProductsData,
     isLoading: allProductsLoading,
@@ -39,7 +41,8 @@ export default function ProductsPage() {
   }
 
   if (isError) return <div>Error al cargar los productos del negocio</div>;
-  if (allProductsError) return <div>Error al cargar el catálogo de productos</div>;
+  if (allProductsError)
+    return <div>Error al cargar el catálogo de productos</div>;
 
   return (
     <section className="flex flex-col gap-8">
@@ -62,7 +65,7 @@ export default function ProductsPage() {
         <div className="space-y-8">
           <div>
             <h2 className="text-lg font-semibold text-foreground mb-3">
-              Catálogo global
+              Catálogo del almacén
             </h2>
             {showCatalogInitialSkeleton ? (
               <SimpleTableSkeleton />
@@ -85,20 +88,20 @@ export default function ProductsPage() {
           </div>
 
           <div>
-            <h1 className="text-lg font-semibold text-foreground mb-3">
-              Productos del negocio activo
+            <h1 className="text-lg font-semibold text-foreground mb-2">
+              Productos a la venta
             </h1>
             <p className="text-muted-foreground">
               Consulta, actualiza, añade y elimina productos de tu negocio
             </p>
             <div className="mb-4 flex items-center justify-end">
-          <Button asChild>
-            <Link href="/dashboard/business/products/asign-to-business">
-              <Plus data-icon="inline-start" />
-              Asignar producto
-            </Link>
-          </Button>
-        </div>
+              <Button asChild>
+                <Link href="/dashboard/business/products/asign-to-business">
+                  <Plus data-icon="inline-start" />
+                  Asignar producto
+                </Link>
+              </Button>
+            </div>
             {businessTableLoading ? (
               <SimpleTableSkeleton />
             ) : (
@@ -108,5 +111,5 @@ export default function ProductsPage() {
         </div>
       </div>
     </section>
-  )
+  );
 }

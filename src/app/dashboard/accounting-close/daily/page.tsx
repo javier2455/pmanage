@@ -287,11 +287,11 @@ export default function DailyPage() {
 
       {/* Productos vendidos + ingresos de inventario */}
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <Card className="gap-4 py-4">
+        <Card className="gap-4 border-t-2 border-t-emerald-500/60 bg-emerald-500/3 py-4 dark:border-t-emerald-400/50 dark:bg-emerald-400/10">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                <ShoppingCart className="h-4 w-4 text-primary" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500/10">
+                <ShoppingCart className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
               </div>
               <div>
                 <CardTitle className="text-card-foreground">
@@ -309,11 +309,11 @@ export default function DailyPage() {
           />
         </Card>
 
-        <Card className="gap-4 py-4">
+        <Card className="gap-4 border-t-2 border-t-destructive/50 bg-destructive/3 py-4 dark:bg-destructive/10">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                <Package className="h-4 w-4 text-primary" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/10">
+                <Package className="h-4 w-4 text-destructive" aria-hidden="true" />
               </div>
               <div>
                 <CardTitle className="text-card-foreground">

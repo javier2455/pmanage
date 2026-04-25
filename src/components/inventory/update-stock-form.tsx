@@ -240,7 +240,7 @@ export function UpdateStockForm() {
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="description" className="text-card-foreground">
-              Descripción
+              Observación
             </Label>
             <Input id="description" {...register("description")} />
             {errors.description && (

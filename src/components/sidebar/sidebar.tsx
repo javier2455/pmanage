@@ -16,6 +16,7 @@ import {
   Settings,
   BadgeDollarSign,
   BarChart3,
+  HandCoins,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -47,6 +48,7 @@ type NavItem = {
   url: string
   icon?: LucideIcon
   isActive?: boolean
+  hidden?: boolean
   items?: NavSubItem[]
 }
 
@@ -79,6 +81,11 @@ const data: { navMain: NavItem[] } = {
           icon: ShoppingBag,
         },
         {
+          title: "Gastos",
+          url: "/dashboard/business/spents",
+          icon: HandCoins,
+        },
+        {
           title: "Inventario",
           url: "/dashboard/business/inventory",
           icon: Warehouse,
@@ -106,6 +113,7 @@ const data: { navMain: NavItem[] } = {
       title: "Analítica",
       url: "/dashboard/analytics",
       icon: BarChart3,
+      hidden: true,
     },
     {
       title: "Tipo de Cambio",
@@ -135,6 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const filteredNavMain = React.useMemo(() => {
     return data.navMain
       .filter((item) => {
+        if (item.hidden) return false
         if (item.title === "Administrar") return isAdmin
         return true
       })
