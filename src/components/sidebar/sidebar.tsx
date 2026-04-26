@@ -17,6 +17,7 @@ import {
   BadgeDollarSign,
   BarChart3,
   HandCoins,
+  Users,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -89,6 +90,11 @@ const data: { navMain: NavItem[] } = {
           title: "Inventario",
           url: "/dashboard/business/inventory",
           icon: Warehouse,
+        },
+        {
+          title: "Trabajadores",
+          url: "/dashboard/business/workers",
+          icon: Users,
         },
       ],
     },
