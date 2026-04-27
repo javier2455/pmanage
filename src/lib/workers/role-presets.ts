@@ -20,7 +20,7 @@ export const ROLE_PRESETS: Record<
     sales: { view: true },
     products: { view: true, create: true, edit: true },
     inventory: { view: true, create: true, edit: true },
-    spents: { view: true, create: true },
+    expenses: { view: true, create: true },
     dailyClose: { view: true, create: true },
     monthlyClose: { view: true, create: true },
     analytics: { view: true },

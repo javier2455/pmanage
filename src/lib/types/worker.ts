@@ -12,7 +12,7 @@ export type PermissionModule =
   | "sales"
   | "products"
   | "inventory"
-  | "spents"
+  | "expenses"
   | "dailyClose"
   | "monthlyClose"
   | "analytics"
@@ -62,7 +62,7 @@ export const PERMISSION_MODULES: PermissionModule[] = [
   "sales",
   "products",
   "inventory",
-  "spents",
+  "expenses",
   "dailyClose",
   "monthlyClose",
   "analytics",
@@ -73,7 +73,7 @@ export const PERMISSION_MODULE_LABELS: Record<PermissionModule, string> = {
   sales: "Ventas",
   products: "Productos",
   inventory: "Inventario",
-  spents: "Gastos",
+  expenses: "Gastos",
   dailyClose: "Cierre diario",
   monthlyClose: "Cierre mensual",
   analytics: "Analítica",
@@ -87,7 +87,7 @@ export const PERMISSION_MODULE_ACTIONS: Record<
   sales: ["view", "create", "delete"],
   products: ["view", "create", "edit", "delete"],
   inventory: ["view", "create", "edit"],
-  spents: ["view", "create", "edit", "delete"],
+  expenses: ["view", "create", "edit", "delete"],
   dailyClose: ["view", "create"],
   monthlyClose: ["view", "create"],
   analytics: ["view"],

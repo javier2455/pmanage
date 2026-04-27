@@ -83,7 +83,7 @@ const data: { navMain: NavItem[] } = {
         },
         {
           title: "Gastos",
-          url: "/dashboard/business/spents",
+          url: "/dashboard/business/expenses",
           icon: HandCoins,
         },
         {

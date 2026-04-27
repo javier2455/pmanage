@@ -78,7 +78,7 @@ function seedIfNeeded(businessId: string) {
       permissions: {
         ...emptyPermissions(),
         sales: { view: true, create: true },
-        spents: { view: true, create: true },
+        expenses: { view: true, create: true },
         dailyClose: { view: true },
       },
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
