@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -11,12 +11,12 @@ import {
   type PaginationState,
   type SortingState,
   useReactTable,
-} from "@tanstack/react-table"
-import { Package, Search } from "lucide-react"
-import type { InventoryEntry } from "@/lib/types/inventory"
-import { CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "@tanstack/react-table";
+import { HandCoins, Search } from "lucide-react";
+import type { ExpenseInAccountingClose } from "@/lib/types/accounting-close";
+import { CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Empty,
   EmptyContent,
@@ -24,7 +24,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty"
+} from "@/components/ui/empty";
 import {
   Table,
   TableBody,
@@ -32,54 +32,58 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
-import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav"
-import { formatClosingCurrency } from "./format-closing-currency"
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
+import { formatClosingCurrency } from "./format-closing-currency";
 import {
-  dailyCloseEntryColumns,
-  type DailyCloseEntryColumnMeta,
-} from "./daily-close-entry-columns"
+  dailyCloseExpenseColumns,
+  type DailyCloseExpenseColumnMeta,
+} from "./daily-close-expense-columns";
 
 function columnMeta(column: {
-  columnDef: { meta?: unknown }
-}): DailyCloseEntryColumnMeta {
-  const meta = column.columnDef.meta
+  columnDef: { meta?: unknown };
+}): DailyCloseExpenseColumnMeta {
+  const meta = column.columnDef.meta;
   if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as DailyCloseEntryColumnMeta
+    return meta as DailyCloseExpenseColumnMeta;
   }
-  return {}
+  return {};
 }
 
-interface DailyCloseEntryTableProps {
-  entries: InventoryEntry[]
-  totalExpense: number
+interface DailyCloseExpenseTableProps {
+  expenses: ExpenseInAccountingClose[];
+  totalExpense: number;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }
 
-export function DailyCloseEntryTable({
-  entries,
+export function DailyCloseExpenseTable({
+  expenses,
   totalExpense,
-}: DailyCloseEntryTableProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  emptyTitle = "Sin gastos en este período",
+  emptyDescription = "No hay gastos registrados para el rango seleccionado.",
+}: DailyCloseExpenseTableProps) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
-  )
+  );
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
-  })
+  });
 
   React.useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, [entries])
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [expenses]);
 
   React.useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, [columnFilters])
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [columnFilters]);
 
   const table = useReactTable({
-    data: entries,
-    columns: dailyCloseEntryColumns,
+    data: expenses,
+    columns: dailyCloseExpenseColumns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -93,23 +97,23 @@ export function DailyCloseEntryTable({
       columnFilters,
       pagination,
     },
-  })
+  });
 
-  const pageCount = table.getPageCount()
-  const maxPageIndex = Math.max(0, pageCount - 1)
+  const pageCount = table.getPageCount();
+  const maxPageIndex = Math.max(0, pageCount - 1);
   React.useEffect(() => {
     if (pagination.pageIndex > maxPageIndex) {
-      setPagination((p) => ({ ...p, pageIndex: maxPageIndex }))
+      setPagination((p) => ({ ...p, pageIndex: maxPageIndex }));
     }
-  }, [maxPageIndex, pagination.pageIndex])
+  }, [maxPageIndex, pagination.pageIndex]);
 
-  const productColumn = table.getColumn("product")
-  const productFilterValue = String(productColumn?.getFilterValue() ?? "")
-  const filteredTotal = table.getFilteredRowModel().rows.length
-  const hasProductFilter = productFilterValue.trim().length > 0
+  const titleColumn = table.getColumn("title");
+  const titleFilterValue = String(titleColumn?.getFilterValue() ?? "");
+  const filteredTotal = table.getFilteredRowModel().rows.length;
+  const hasTitleFilter = titleFilterValue.trim().length > 0;
 
-  function clearProductFilter() {
-    productColumn?.setFilterValue(undefined)
+  function clearTitleFilter() {
+    titleColumn?.setFilterValue(undefined);
   }
 
   return (
@@ -118,38 +122,35 @@ export function DailyCloseEntryTable({
         <div className="flex w-full max-w-md flex-col gap-1.5">
           <label
             className="text-sm font-medium text-foreground"
-            htmlFor="daily-close-entry-search"
+            htmlFor="daily-close-expense-search"
           >
-            Buscar producto
+            Buscar gasto
           </label>
           <Input
-            id="daily-close-entry-search"
+            id="daily-close-expense-search"
             type="search"
-            placeholder="Nombre del producto…"
-            value={productFilterValue}
+            placeholder="Título del gasto…"
+            value={titleFilterValue}
             onChange={(e) =>
-              productColumn?.setFilterValue(
+              titleColumn?.setFilterValue(
                 e.target.value.length ? e.target.value : undefined,
               )
             }
-            aria-controls="daily-close-entry-table"
-            disabled={entries.length === 0}
+            aria-controls="daily-close-expense-table"
+            disabled={expenses.length === 0}
           />
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {expenses.length === 0 ? (
         <div className="px-4 pb-4 pt-4">
           <Empty className="flex-none border-border border bg-muted/30 py-8 md:p-8">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Package />
+                <HandCoins />
               </EmptyMedia>
-              <EmptyTitle>Sin ingresos este día</EmptyTitle>
-              <EmptyDescription>
-                No hay movimientos de inventario registrados para la fecha
-                seleccionada.
-              </EmptyDescription>
+              <EmptyTitle>{emptyTitle}</EmptyTitle>
+              <EmptyDescription>{emptyDescription}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </div>
@@ -162,7 +163,7 @@ export function DailyCloseEntryTable({
               </EmptyMedia>
               <EmptyTitle>Sin resultados</EmptyTitle>
               <EmptyDescription>
-                No hay productos que coincidan con «{productFilterValue.trim()}».
+                No hay gastos que coincidan con «{titleFilterValue.trim()}».
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
@@ -170,7 +171,7 @@ export function DailyCloseEntryTable({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={clearProductFilter}
+                onClick={clearTitleFilter}
               >
                 Limpiar búsqueda
               </Button>
@@ -180,7 +181,7 @@ export function DailyCloseEntryTable({
       ) : (
         <div className="max-w-full overflow-x-auto">
           <Table
-            id="daily-close-entry-table"
+            id="daily-close-expense-table"
             className="w-full min-w-0 table-fixed"
           >
             <TableHeader>
@@ -231,45 +232,45 @@ export function DailyCloseEntryTable({
 
       <div className="flex flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          {hasProductFilter ? (
+          {hasTitleFilter ? (
             <>
               <span className="font-medium text-foreground">
                 {filteredTotal}
               </span>{" "}
-              línea{filteredTotal === 1 ? "" : "s"} de{" "}
+              gasto{filteredTotal === 1 ? "" : "s"} de{" "}
               <span className="font-medium text-foreground">
-                {entries.length}
+                {expenses.length}
               </span>
             </>
           ) : (
             <>
               <span className="font-medium text-foreground">
-                {entries.length}
+                {expenses.length}
               </span>{" "}
-              ingreso{entries.length === 1 ? "" : "s"} en la tabla
+              gasto{expenses.length === 1 ? "" : "s"} en la tabla
             </>
           )}
         </p>
-        {entries.length > 0 && filteredTotal > 0 ? (
+        {expenses.length > 0 && filteredTotal > 0 ? (
           <DataTablePaginationNav
             pageIndex={pagination.pageIndex}
             pageCount={pageCount}
             onPageIndexChange={(nextIndex) =>
               setPagination((p) => ({ ...p, pageIndex: nextIndex }))
             }
-            navLabel="Paginación de ingresos del día"
+            navLabel="Paginación de gastos"
           />
         ) : null}
       </div>
 
       <div className="flex items-center justify-between border-t border-border px-4 py-4">
         <span className="text-sm font-semibold text-card-foreground">
-          Total gastos del día
+          Total gastos
         </span>
         <span className="text-base font-bold tabular-nums text-destructive">
           ${formatClosingCurrency(totalExpense)}
         </span>
       </div>
     </CardContent>
-  )
+  );
 }

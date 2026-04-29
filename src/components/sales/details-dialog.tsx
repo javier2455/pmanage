@@ -145,7 +145,7 @@ export default function DetailsDialog({
               <span
                 className={`text-sm font-medium tabular-nums ${data?.isCancelled ? "text-destructive" : "text-primary"}`}
               >
-                {data?.isCancelled ? "Cancelada" : "Activa"}
+                {data?.isCancelled ? "Cancelada" : "Efectuada"}
               </span>
             </div>
 

@@ -1,34 +1,22 @@
 "use client"
 
 import * as React from "react"
-import {
-  LayoutDashboard,
-  ShoppingCart,
-  Package,
-  FileText,
-  ShoppingBag,
-  Warehouse,
-  CalendarCheck,
-  CalendarDays,
-  CalendarRange,
-  ArrowLeftRight,
-  Store,
-  Settings,
-  BadgeDollarSign,
-  BarChart3,
-  HandCoins,
-  Users,
-} from "lucide-react"
+import { Store } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
 import { NavUser } from "@/components/sidebar/nav-user"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useGetAllMenuItemsQuery } from "@/hooks/use-menu"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
 import { isProRoute } from "@/lib/pro-gates"
+import { resolveIcon } from "@/lib/icon-map"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -36,12 +24,13 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import type { LucideIcon } from "lucide-react"
 
 type NavSubItem = {
   title: string
   url: string
   icon?: LucideIcon
+  pro?: boolean
+  disabled?: boolean
 }
 
 type NavItem = {
@@ -49,127 +38,53 @@ type NavItem = {
   url: string
   icon?: LucideIcon
   isActive?: boolean
-  hidden?: boolean
+  pro?: boolean
+  disabled?: boolean
   items?: NavSubItem[]
 }
 
-const data: { navMain: NavItem[] } = {
-  navMain: [
-    {
-      title: "Panel Principal",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-      isActive: true,
-    },
-    {
-      title: "Negocio",
-      url: "#",
-      icon: ShoppingCart,
-      items: [
-        {
-          title: "Detalles",
-          url: "/dashboard/business/details",
-          icon: FileText,
-        },
-        {
-          title: "Productos",
-          url: "/dashboard/business/products",
-          icon: Package,
-        },
-        {
-          title: "Ventas",
-          url: "/dashboard/business/sales",
-          icon: ShoppingBag,
-        },
-        {
-          title: "Gastos",
-          url: "/dashboard/business/expenses",
-          icon: HandCoins,
-        },
-        {
-          title: "Inventario",
-          url: "/dashboard/business/inventory",
-          icon: Warehouse,
-        },
-        {
-          title: "Trabajadores",
-          url: "/dashboard/business/workers",
-          icon: Users,
-        },
-      ],
-    },
-    {
-      title: "Cierre Contable",
-      url: "#",
-      icon: CalendarCheck,
-      items: [
-        {
-          title: "Diario",
-          url: "/dashboard/accounting-close/daily",
-          icon: CalendarDays,
-        },
-        {
-          title: "Mensual",
-          url: "/dashboard/accounting-close/monthly",
-          icon: CalendarRange,
-        },
-      ],
-    },
-    {
-      title: "Analítica",
-      url: "/dashboard/analytics",
-      icon: BarChart3,
-      hidden: true,
-    },
-    {
-      title: "Tipo de Cambio",
-      url: "/dashboard/exchange-rate",
-      icon: ArrowLeftRight,
-    },
-    {
-      title: "Administrar",
-      url: "#",
-      icon: Settings,
-      items: [
-        {
-          title: "Asignar Planes",
-          url: "/dashboard/admin/assign-plans",
-          icon: BadgeDollarSign,
-        },
-      ],
-    },
-  ],
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { isAdmin, isProPlan } = useUserRoleAndPlan()
+  const { data: menu, isLoading } = useGetAllMenuItemsQuery()
+  const { roleId, isProPlan } = useUserRoleAndPlan()
   const { businesses, isLoading: isLoadingBusinesses } = useBusiness()
   const hasNoBusinesses = !isLoadingBusinesses && businesses.length === 0
 
-  const filteredNavMain = React.useMemo(() => {
-    return data.navMain
-      .filter((item) => {
-        if (item.hidden) return false
-        if (item.title === "Administrar") return isAdmin
-        return true
-      })
-      .map((item) => {
-        if (item.items) {
-          const itemsWithDisabled = item.items.map((sub) => {
-            const pro = isProRoute(sub.url)
+  React.useEffect(() => {
+    if (menu) console.log("[menu endpoint response]", menu)
+  }, [menu])
+
+  const navMain = React.useMemo<NavItem[]>(() => {
+    if (!menu) return []
+    return menu
+      .filter((item) => item.active)
+      .filter((item) => !item.roles || item.roles.includes(roleId))
+      .map<NavItem>((item) => {
+        const subs: NavSubItem[] = (item.submenus ?? [])
+          .filter((s) => s.active)
+          .filter((s) => !s.roles || s.roles.includes(roleId))
+          .map((s) => {
+            const pro = s.badge === "Pro" || isProRoute(s.url)
             return {
-              ...sub,
+              title: s.name,
+              url: s.url,
+              icon: resolveIcon(s.icon),
               pro,
-              disabled: hasNoBusinesses || (pro ? !isProPlan : false),
+              disabled: hasNoBusinesses || (pro && !isProPlan),
             }
           })
-          return { ...item, items: itemsWithDisabled, disabled: hasNoBusinesses }
+
+        const pro = item.badge === "Pro" || isProRoute(item.url)
+        return {
+          title: item.name,
+          url: item.url || "#",
+          icon: resolveIcon(item.icon),
+          items: subs.length ? subs : undefined,
+          pro,
+          disabled: hasNoBusinesses || (pro && !isProPlan),
         }
-        const pro = isProRoute(item.url)
-        return { ...item, pro, disabled: hasNoBusinesses || (pro ? !isProPlan : false) }
       })
       .filter((item) => !item.items || item.items.length > 0)
-  }, [isAdmin, isProPlan, hasNoBusinesses])
+  }, [menu, roleId, isProPlan, hasNoBusinesses])
 
   return (
     <Sidebar className="" collapsible="icon" {...props}>
@@ -191,12 +106,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={filteredNavMain} />
+        {isLoading ? <NavMainSkeleton /> : <NavMain items={navMain} />}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+function NavMainSkeleton() {
+  return (
+    <SidebarGroup>
+      <SidebarMenu>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SidebarMenuItem key={i}>
+            <div className="flex items-center gap-2 px-2 py-1.5">
+              <Skeleton className="size-4 rounded" />
+              <Skeleton className="h-4 flex-1" />
+            </div>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
   )
 }

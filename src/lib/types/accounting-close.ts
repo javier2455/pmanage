@@ -1,4 +1,3 @@
-import { InventoryEntry } from "./inventory";
 import { SaleWithProductAndBusiness } from "./sales";
 
 export interface DateRangeParameters {
@@ -6,10 +5,18 @@ export interface DateRangeParameters {
     endDate?: string;
 }
 
+export interface ExpenseInAccountingClose {
+    id: string;
+    title: string;
+    amount: number;
+    description: string;
+    createdAt: string;
+}
+
 export type AccountingCloseResponse = {
     date: string;
     sales: SaleWithProductAndBusiness[];
-    inventoryEntries: InventoryEntry[];
+    expenses: ExpenseInAccountingClose[];
     totalIncome: number;
     totalExpense: number;
     total: number;

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Package, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText } from "lucide-react"
+import { ShoppingCart, Package, HandCoins, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { MonthFilter, type SelectedMonth } from "@/components/accounting-close/month-filter"
@@ -24,7 +24,7 @@ import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
-import { DailyCloseEntryTable } from "@/components/accounting-close/daily-close-entry-table"
+import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-close-expense-table"
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
 
 function MonthlyClosePageSkeleton() {
@@ -112,7 +112,7 @@ export default function MonthlyPage() {
     month: "long",
   })
 
-  const inventoryEntries = data?.inventoryEntries ?? []
+  const expenses = data?.expenses ?? []
   const activeSales = useMemo(
     () => (data?.sales ?? []).filter((s) => !s.isCancelled),
     [data?.sales],
@@ -233,21 +233,23 @@ export default function MonthlyPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/10">
-                <Package className="h-4 w-4 text-destructive" aria-hidden="true" />
+                <HandCoins className="h-4 w-4 text-destructive" aria-hidden="true" />
               </div>
               <div>
                 <CardTitle className="text-card-foreground">
-                  Productos ingresados en el mes
+                  Gastos del mes
                 </CardTitle>
                 <CardDescription>
-                  Detalle de los productos ingresados en el mes
+                  Detalle de los gastos registrados en el mes
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <DailyCloseEntryTable
-            entries={inventoryEntries}
+          <DailyCloseExpenseTable
+            expenses={expenses}
             totalExpense={totalExpenses}
+            emptyTitle="Sin gastos este mes"
+            emptyDescription="No hay gastos registrados para el mes seleccionado."
           />
         </Card>
       </div>
@@ -286,7 +288,7 @@ export default function MonthlyPage() {
                 Resumen financiero del mes
               </CardTitle>
               <CardDescription>
-                Balance entre ventas y gastos de productos ingresados
+                Balance entre ventas y gastos del mes
               </CardDescription>
             </div>
           </div>

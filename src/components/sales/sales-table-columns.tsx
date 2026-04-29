@@ -131,7 +131,7 @@ export function createSalesColumns(
         row.original.isCancelled ? (
           <StatusBadge text="Cancelada" />
         ) : (
-          <StatusBadge text="Activa" />
+          <StatusBadge text="Efectuada" />
         ),
     },
     {

@@ -20,6 +20,23 @@ function readRoleName(): string {
   return getAuthCookies().role ?? "";
 }
 
+function readRoleId(): string {
+  if (typeof window === "undefined") return "";
+  const stored = sessionStorage.getItem("user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const role = parsed.role ?? parsed.rol;
+      if (role && typeof role === "object" && role.id != null) {
+        return String(role.id);
+      }
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
 function readPlanType(): string {
   if (typeof window === "undefined") return "";
   const stored = sessionStorage.getItem("user");
@@ -41,10 +58,11 @@ function subscribe() {
 
 export function useUserRoleAndPlan() {
   const roleName = useSyncExternalStore(subscribe, readRoleName, () => "");
+  const roleId = useSyncExternalStore(subscribe, readRoleId, () => "");
   const planType = useSyncExternalStore(subscribe, readPlanType, () => "");
 
   const isAdmin = roleName.toLowerCase() === "admin";
   const isProPlan = checkProPlan(planType);
 
-  return { roleName, planType, isAdmin, isProPlan };
+  return { roleName, roleId, planType, isAdmin, isProPlan };
 }

@@ -15,7 +15,7 @@ export function StatusBadge({ text, className }: SaleStatusBadgeProps) {
             </Badge>
         )
     }
-    if (text.toLowerCase().includes("activa")) {
+    if (text.toLowerCase().includes("efectuada")) {
         return (
             <Badge variant="ghost" className="bg-emerald-500 text-white border border-emerald-500">
                 <CircleCheck className="size-3" />
