@@ -51,12 +51,13 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Check if it's a 401 error and not the login or refresh endpoint
-    const isAuthEndpoint = 
-      originalRequest.url?.includes('/auth/login') || 
+    const isAuthEndpoint =
+      originalRequest.url?.includes('/auth/login') ||
       originalRequest.url?.includes('/auth/refresh') ||
       originalRequest.url?.includes('/auth/register') ||
       originalRequest.url?.includes('/auth/activate') ||
-      originalRequest.url?.includes('/auth/send-confirmation-token');
+      originalRequest.url?.includes('/auth/send-confirmation-token') ||
+      originalRequest.url?.includes('/business-workers/invitation/');
 
     if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
       if (isRefreshing) {
@@ -139,14 +140,14 @@ apiClient.interceptors.response.use(
     }
 
     // For 401 on auth endpoints or other errors, just reject
-    if (error.response?.status === 401 && typeof window !== "undefined") {
+    if (error.response?.status === 401 && !isAuthEndpoint && typeof window !== "undefined") {
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("refresh_token");
       sessionStorage.removeItem("user");
       clearAuthCookies();
       window.location.href = "/login";
     }
-    
+
     return Promise.reject(error);
   }
 );
