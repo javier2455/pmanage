@@ -20,7 +20,7 @@ import { useEffect } from "react"
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const invitationId = searchParams.get("invitationId");
+  const invitationId = searchParams.get("invitation");
   const registerMutation = useRegisterMutation();
 
   const invitationQuery = useQuery({
