@@ -15,9 +15,9 @@ import axios from 'axios'
 import { useRegisterMutation } from '@/hooks/use-auth'
 import { useQuery } from "@tanstack/react-query"
 import { getInvitationInformation } from "@/lib/api/auth"
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitationId = searchParams.get("invitation");
@@ -310,4 +310,22 @@ export default function RegisterPage() {
       </Card>
     </div>
   )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
+          <Card className="w-full max-w-md">
+            <CardContent className="flex flex-col items-center gap-3 py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
+  );
 }
