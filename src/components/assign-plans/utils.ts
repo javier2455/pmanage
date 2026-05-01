@@ -64,6 +64,25 @@ export function getPlanStyle(plan: PlanResponse | { type?: string; name?: string
   }
 }
 
+/**
+ * Devuelve la etiqueta localizada (es) del plan, a partir de su `type` o `name`
+ * crudos del backend. Usa la misma normalización que `getPlanStyle`.
+ */
+export function getPlanLabel(
+  plan: { type?: string | null; name?: string | null } | null | undefined,
+): string {
+  if (!plan) return ""
+  const raw = (plan.type ?? plan.name ?? "").toString()
+  const t = normalize(raw)
+  if (t.includes("free") || t.includes("gratis") || t.includes("gratuito")) return "Gratuito"
+  if (t.includes("basico") || t.includes("basic") || t.includes("básico")) return "Básico"
+  if (t.includes("premium") || t.includes("plus")) return "Premium"
+  if (t.includes("pro") || t.includes("profesional")) return "Pro"
+  if (t.includes("enterprise") || t.includes("empresarial")) return "Empresarial"
+  if (t.includes("custom") || t.includes("personalizado")) return "Personalizado"
+  return plan.name ?? raw
+}
+
 /** Estilo unificado para funcionalidades Pro (sidebar, navbar, etc.) */
 export const PRO_STYLE = {
   icon: Sparkles,

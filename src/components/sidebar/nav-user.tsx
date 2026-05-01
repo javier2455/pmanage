@@ -5,7 +5,7 @@ import packageJson from "../../../package.json"
 import { ChevronsUpDown, LogOut, Moon, Sun, User } from "lucide-react"
 import { useTheme } from "next-themes"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,6 +27,7 @@ import { PlanIndicator } from "@/components/sidebar/plan-indicator"
 interface StoredUser {
     name?: string
     email?: string
+    avatar?: string | null
 }
 
 export function NavUser() {
@@ -44,6 +45,7 @@ export function NavUser() {
 
     const userName = user.name ?? ""
     const userEmail = user.email ?? ""
+    const userAvatar = user.avatar ?? ""
 
     function handleLogout() {
         sessionStorage.removeItem("token")
@@ -67,6 +69,9 @@ export function NavUser() {
                                 className="cursor-pointer data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
                                 <Avatar className="h-8 w-8 rounded-lg">
+                                    {userAvatar ? (
+                                        <AvatarImage src={userAvatar} alt={userName} className="rounded-lg" />
+                                    ) : null}
                                     <AvatarFallback className="rounded-lg bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
                                         {userName.split(" ").map((n) => n[0]).join("").toUpperCase()}
                                     </AvatarFallback>

@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { login, register, verifyCode, resendCode, getMe } from "@/lib/api/auth";
+import {
+  login,
+  register,
+  verifyCode,
+  resendCode,
+  getMe,
+  requestPasswordReset,
+  changePassword,
+} from "@/lib/api/auth";
 import type { LoginFormData, RegisterFormData, VerifyFormData } from "@/lib/validations/auth";
 
 export function useLoginMutation() {
@@ -33,5 +41,19 @@ export function useAuthUserData() {
   return useQuery({
     queryKey: ["auth-user-data"],
     queryFn: () => getMe(),
+  });
+}
+
+export function useRequestPasswordResetMutation() {
+  return useMutation({
+    mutationFn: (payload: { email: string; urlCallback: string }) =>
+      requestPasswordReset(payload),
+  });
+}
+
+export function useChangePasswordMutation() {
+  return useMutation({
+    mutationFn: (payload: { password: string; token: string }) =>
+      changePassword(payload),
   });
 }

@@ -21,6 +21,7 @@ export type Business = {
   userId: string | null;
   geocoded: boolean;
   active: boolean;
+  isWorker: boolean;
 };
 
 export type BusinessWithProducts = {

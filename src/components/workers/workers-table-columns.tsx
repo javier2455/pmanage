@@ -1,14 +1,7 @@
 "use client";
 
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import {
-  ArrowUpDown,
-  Eye,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Avatar,
@@ -16,19 +9,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { DeleteDialog } from "@/components/delete-dialog";
-import {
-  PERMISSION_MODULE_LABELS,
-  ROLE_PRESET_LABELS,
-  countModulesWithAccess,
-  listModulesWithAccess,
-  type Worker,
-} from "@/lib/types/worker";
+import type { Worker } from "@/lib/types/worker";
 
 export type WorkersColumnMeta = {
   headerClassName?: string;
@@ -48,9 +29,9 @@ function formatDate(date: string) {
   });
 }
 
-function getInitials(fullName: string | null) {
-  if (!fullName) return "TR";
-  return fullName
+function getInitials(name: string | null) {
+  if (!name) return "TR";
+  return name
     .split(" ")
     .map((part) => part[0])
     .filter(Boolean)
@@ -81,13 +62,11 @@ function WorkerSortableHeader({
   );
 }
 
-export function createWorkersColumns(
-  onDelete: (worker: Worker) => void | Promise<void>,
-): ColumnDef<Worker>[] {
+export function createWorkersColumns(): ColumnDef<Worker>[] {
   return [
     {
       id: "trabajador",
-      accessorFn: (row) => row.fullName ?? row.email ?? row.phone ?? "",
+      accessorFn: (row) => row.name ?? row.email ?? row.phone ?? "",
       meta: {
         headerClassName: "min-w-[220px]",
         cellClassName: "min-w-[220px]",
@@ -101,13 +80,13 @@ export function createWorkersColumns(
           <div className="flex items-center gap-3">
             <Avatar size="lg">
               {worker.avatar ? (
-                <AvatarImage src={worker.avatar} alt={worker.fullName ?? ""} />
+                <AvatarImage src={worker.avatar} alt={worker.name ?? ""} />
               ) : null}
-              <AvatarFallback>{getInitials(worker.fullName)}</AvatarFallback>
+              <AvatarFallback>{getInitials(worker.name)}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium text-foreground">
-                {worker.fullName ?? "Sin nombre"}
+                {worker.name ?? "Sin nombre"}
               </span>
               {worker.email ? (
                 <span className="truncate text-xs text-muted-foreground">
@@ -134,51 +113,36 @@ export function createWorkersColumns(
     },
     {
       id: "rol",
-      accessorFn: (row) => row.rolePreset,
+      accessorFn: (row) => row.rol ?? "",
       meta: compactColumnMeta,
       header: ({ column }) => (
         <WorkerSortableHeader column={column} label="Rol" />
       ),
       cell: ({ row }) => (
         <Badge variant="secondary" className="text-xs">
-          {ROLE_PRESET_LABELS[row.original.rolePreset]}
+          {row.original.rol ?? "—"}
         </Badge>
       ),
     },
     {
-      id: "modulos",
-      accessorFn: (row) => countModulesWithAccess(row.permissions),
-      meta: {
-        headerClassName: "min-w-[200px]",
-        cellClassName: "min-w-[200px]",
-      } satisfies WorkersColumnMeta,
+      id: "permisos",
+      accessorFn: (row) => row.permissions.length,
+      meta: compactColumnMeta,
       header: () => (
-        <span className="font-medium text-foreground">Módulos con acceso</span>
+        <span className="font-medium text-foreground">Permisos</span>
       ),
       cell: ({ row }) => {
-        const modules = listModulesWithAccess(row.original.permissions);
-        if (modules.length === 0) {
+        const count = row.original.permissions.length;
+        if (count === 0) {
           return <span className="text-xs text-muted-foreground">Sin acceso</span>;
         }
-        const visible = modules.slice(0, 2);
-        const remaining = modules.length - visible.length;
         return (
-          <div className="flex flex-wrap items-center gap-1">
-            {visible.map((module) => (
-              <Badge
-                key={module}
-                variant="secondary"
-                className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs"
-              >
-                {PERMISSION_MODULE_LABELS[module]}
-              </Badge>
-            ))}
-            {remaining > 0 ? (
-              <Badge variant="secondary" className="text-xs">
-                +{remaining}
-              </Badge>
-            ) : null}
-          </div>
+          <Badge
+            variant="secondary"
+            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-xs"
+          >
+            {count} {count === 1 ? "permiso" : "permisos"}
+          </Badge>
         );
       },
     },
@@ -194,66 +158,6 @@ export function createWorkersColumns(
           {formatDate(row.original.createdAt)}
         </span>
       ),
-    },
-    {
-      id: "actions",
-      enableSorting: false,
-      meta: {
-        headerClassName: "w-[1%] whitespace-nowrap text-right",
-        cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies WorkersColumnMeta,
-      header: () => (
-        <div className="text-right font-medium text-foreground">Acciones</div>
-      ),
-      cell: ({ row }) => {
-        const worker = row.original;
-        return (
-          <div className="flex justify-end">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Abrir acciones"
-                >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-52 p-1">
-                <Link
-                  href={`/dashboard/business/workers/${worker.id}`}
-                  className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                >
-                  <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                  Ver detalles
-                </Link>
-                <Link
-                  href={`/dashboard/business/workers/${worker.id}/edit`}
-                  className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                >
-                  <Pencil className="size-4 text-amber-500 dark:text-amber-400" />
-                  Editar
-                </Link>
-                <DeleteDialog
-                  deleteType="Trabajador"
-                  name={worker.fullName ?? "Sin nombre"}
-                  onConfirm={() => onDelete(worker)}
-                  trigger={
-                    <button
-                      type="button"
-                      className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-muted"
-                    >
-                      <Trash2 className="size-4 shrink-0 text-destructive" />
-                      Eliminar
-                    </button>
-                  }
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        );
-      },
     },
   ];
 }

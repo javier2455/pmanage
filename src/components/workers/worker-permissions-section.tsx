@@ -1,146 +1,144 @@
 "use client";
 
+import { useMemo } from "react";
+import { AlertCircle } from "lucide-react";
+
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  PERMISSION_MODULES,
-  PERMISSION_MODULE_LABELS,
-  ROLE_PRESET_LABELS,
-  isModuleEnabled,
-  permissionsEqual,
-  setModuleEnabled,
-  type PermissionModule,
-  type WorkerPermissions,
-  type WorkerRolePreset,
-} from "@/lib/types/worker";
-import { getPresetPermissions } from "@/lib/workers/role-presets";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGetMenuListQuery } from "@/hooks/use-menu";
+import type { MenuListItem } from "@/lib/types/menu";
 
 interface WorkerPermissionsSectionProps {
-  rolePreset: WorkerRolePreset;
-  permissions: WorkerPermissions;
-  onRolePresetChange: (
-    next: WorkerRolePreset,
-    nextPermissions: WorkerPermissions,
-  ) => void;
-  onPermissionsChange: (
-    nextPermissions: WorkerPermissions,
-    nextRolePreset: WorkerRolePreset,
-  ) => void;
+  selectedKeys: Set<string>;
+  onToggle: (item: MenuListItem) => void;
 }
 
-const ROLE_OPTIONS: WorkerRolePreset[] = [
-  "dependiente",
-  "contador",
-  "almacenero",
-  "custom",
-];
+interface MenuGroup {
+  parent: MenuListItem | null;
+  parentKey: string | null;
+  children: MenuListItem[];
+}
 
-const CHECKBOX_CLASS =
-  "size-5 border-2 border-muted-foreground/50 bg-background data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground dark:bg-muted dark:border-muted-foreground/60 dark:data-[state=checked]:bg-primary dark:data-[state=checked]:border-primary";
+function groupKey(item: MenuListItem): string {
+  return item.idSubmenu ?? item.idMenu;
+}
 
-function deriveRolePreset(permissions: WorkerPermissions): WorkerRolePreset {
-  for (const preset of ["dependiente", "contador", "almacenero"] as const) {
-    if (permissionsEqual(permissions, getPresetPermissions(preset))) {
-      return preset;
+function groupMenuItems(items: MenuListItem[]): MenuGroup[] {
+  const groups = new Map<string, MenuGroup>();
+
+  for (const item of items) {
+    let group = groups.get(item.idMenu);
+    if (!group) {
+      group = { parent: null, parentKey: null, children: [] };
+      groups.set(item.idMenu, group);
+    }
+    if (!item.idSubmenu) {
+      group.parent = item;
+      group.parentKey = item.idMenu;
+    } else {
+      group.children.push(item);
     }
   }
-  return "custom";
+
+  return Array.from(groups.values());
 }
 
 export function WorkerPermissionsSection({
-  rolePreset,
-  permissions,
-  onRolePresetChange,
-  onPermissionsChange,
+  selectedKeys,
+  onToggle,
 }: WorkerPermissionsSectionProps) {
-  function handleRoleChange(value: string) {
-    const next = value as WorkerRolePreset;
-    const nextPermissions =
-      next === "custom" ? permissions : getPresetPermissions(next);
-    onRolePresetChange(next, nextPermissions);
+  const { data, isLoading, isError } = useGetMenuListQuery();
+
+  const groups = useMemo(() => groupMenuItems(data ?? []), [data]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    );
   }
 
-  function handleToggle(module: PermissionModule, checked: boolean) {
-    const nextPermissions = setModuleEnabled(permissions, module, checked);
-    const nextRolePreset = deriveRolePreset(nextPermissions);
-    onPermissionsChange(nextPermissions, nextRolePreset);
+  if (isError || !data) {
+    return (
+      <div
+        role="alert"
+        className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive"
+      >
+        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="font-semibold">No se pudieron cargar los módulos</span>
+          <span className="text-destructive/90">
+            Intenta recargar la página.
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="worker-role-preset" className="text-card-foreground">
-          Rol del trabajador
-        </Label>
-        <Select value={rolePreset} onValueChange={handleRoleChange}>
-          <SelectTrigger id="worker-role-preset" className="w-full sm:w-72">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLE_OPTIONS.map((option) => (
-              <SelectItem key={option} value={option}>
-                {ROLE_PRESET_LABELS[option]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Selecciona un rol para precargar permisos. Si modificas un permiso,
-          el rol pasará a &quot;Personalizado&quot;.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      {groups.map((group, idx) => {
+        const parent = group.parent;
+        const parentKey = group.parentKey;
+        const groupId = parent?.idMenu ?? `group-${idx}`;
 
-      <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium text-card-foreground">
-          Módulos del sistema
-        </span>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <ul className="divide-y divide-border">
-            {PERMISSION_MODULES.map((module) => {
-              const id = `perm-${module}`;
-              const checked = isModuleEnabled(permissions, module);
-              return (
-                <li
-                  key={module}
-                  className="flex items-center justify-between gap-4 px-4 py-3"
-                >
-                  <Label
-                    htmlFor={id}
-                    className="cursor-pointer text-sm font-medium text-card-foreground"
-                  >
-                    {PERMISSION_MODULE_LABELS[module]}
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {checked ? "Habilitado" : "Deshabilitado"}
-                    </span>
-                    <Checkbox
-                      id={id}
-                      checked={checked}
-                      onCheckedChange={(value) =>
-                        handleToggle(module, value === true)
-                      }
-                      className={CHECKBOX_CLASS}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Habilita un módulo para que el trabajador pueda usarlo. Más adelante
-          podrás definir acciones específicas dentro de cada módulo (ver,
-          crear, editar, etc.).
-        </p>
-      </div>
+        return (
+          <div
+            key={groupId}
+            className="rounded-lg border border-border bg-card/40"
+          >
+            {parent && parentKey ? (
+              <label
+                htmlFor={`perm-${parentKey}`}
+                className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3"
+              >
+                <span className="text-sm font-semibold text-foreground">
+                  {parent.name}
+                </span>
+                <Checkbox
+                  id={`perm-${parentKey}`}
+                  checked={selectedKeys.has(parentKey)}
+                  onCheckedChange={() => onToggle(parent)}
+                />
+              </label>
+            ) : null}
+
+            {group.children.length > 0 ? (
+              <ul
+                className={
+                  parent
+                    ? "divide-y divide-border border-t border-border"
+                    : "divide-y divide-border"
+                }
+              >
+                {group.children.map((child) => {
+                  const childKey = groupKey(child);
+                  return (
+                    <li key={childKey}>
+                      <label
+                        htmlFor={`perm-${childKey}`}
+                        className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 pl-8"
+                      >
+                        <span className="text-sm text-foreground">
+                          {child.name}
+                        </span>
+                        <Checkbox
+                          id={`perm-${childKey}`}
+                          checked={selectedKeys.has(childKey)}
+                          onCheckedChange={() => onToggle(child)}
+                        />
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }

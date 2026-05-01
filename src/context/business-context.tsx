@@ -33,12 +33,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [activeBusinessId, setActiveBusinessId] = useState<string | null>(
-    () =>
-      typeof window !== "undefined"
-        ? sessionStorage.getItem("activeBusinessId")
-        : null
-  );
+  const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("activeBusinessId");
+    if (stored) setActiveBusinessId(stored);
+  }, []);
 
   // 🔥 Traer negocios del usuario
   const { data, isLoading, isError, error } = useQuery({

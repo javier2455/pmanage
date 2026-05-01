@@ -7,7 +7,7 @@ import Link from "next/link"
 import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import type { PlanType } from "@/lib/types/plans"
-import { getPlanStyle } from "@/components/assign-plans/utils"
+import { getPlanLabel, getPlanStyle } from "@/components/assign-plans/utils"
 
 interface StoredPlan {
     name?: string
@@ -64,7 +64,7 @@ export function PlanIndicator() {
                     "text-xs font-medium",
                     isUrgent ? "text-amber-700 dark:text-amber-300" : planStyle.color
                 )}>
-                    Plan {plan?.name}
+                    Plan {getPlanLabel(plan)}
                 </span>
                 <span className={cn(
                     "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",

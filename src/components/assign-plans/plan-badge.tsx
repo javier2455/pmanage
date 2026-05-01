@@ -1,7 +1,7 @@
 import { Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { getPlanStyle } from "./utils"
+import { getPlanLabel, getPlanStyle } from "./utils"
 import type { PlanResponse } from "@/lib/types/plans"
 
 interface PlanBadgeProps {
@@ -33,7 +33,7 @@ export function PlanBadge({ plan, plans }: PlanBadgeProps) {
       style={s.color ? { backgroundColor: s.backgroundColor, borderColor: s.borderColor, color: s.color } : undefined}
     >
       <Icon className="h-3 w-3 shrink-0" style={s.color ? { color: s.color } : undefined} />
-      {plan.name}
+      {getPlanLabel(plan)}
     </Badge>
   )
 }

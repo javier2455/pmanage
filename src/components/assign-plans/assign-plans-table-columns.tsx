@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
 import { PlanBadge } from "./plan-badge"
-import { getPlanStyle } from "./utils"
+import { getPlanLabel, getPlanStyle } from "./utils"
 
 export type AssignPlansColumnMeta = {
   headerClassName?: string
@@ -225,7 +225,7 @@ export function createAssignPlansColumns(
                     <span
                       style={hasIconTextColor ? { color: s.color } : undefined}
                     >
-                      {plan.name}
+                      {getPlanLabel(plan)}
                     </span>
                     {isActive ? (
                       <Check className="ml-auto size-4 shrink-0 text-primary" />

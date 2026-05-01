@@ -44,14 +44,15 @@ type NavItem = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: menu, isLoading } = useGetAllMenuItemsQuery()
   const { roleId, isProPlan } = useUserRoleAndPlan()
-  const { businesses, isLoading: isLoadingBusinesses } = useBusiness()
+  const { activeBusiness, businesses, isLoading: isLoadingBusinesses } = useBusiness()
   const hasNoBusinesses = !isLoadingBusinesses && businesses.length === 0
+  const businessIdForMenu = activeBusiness?.isWorker ? activeBusiness.id : undefined
 
-  React.useEffect(() => {
-    if (menu) console.log("[menu endpoint response]", menu)
-  }, [menu])
+  const { data: menu, isLoading } = useGetAllMenuItemsQuery({
+    businessId: businessIdForMenu,
+    enabled: !isLoadingBusinesses,
+  })
 
   const navMain = React.useMemo<NavItem[]>(() => {
     if (!menu) return []

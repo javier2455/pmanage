@@ -26,6 +26,7 @@ import {
 import Link from "next/link"
 import { useGetUserPlanHistory } from "@/hooks/use-plans"
 import type { PlanHistoryResponse } from "@/lib/types/plans"
+import { getPlanLabel } from "@/components/assign-plans/utils"
 
 function PlanHistorySkeleton() {
   return (
@@ -69,15 +70,6 @@ function getPlanBadgeStyles(type: string) {
   }
 }
 
-function getPlanTypeLabel(type: string): string {
-  switch (type) {
-    case "premium": return "Premium"
-    case "enterprise": return "Empresarial"
-    case "basic": return "Básico"
-    case "free": return "Gratuito"
-    default: return type
-  }
-}
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
   if (isActive) {
@@ -159,7 +151,7 @@ function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
             <div>
               <p className="text-sm text-muted-foreground">Plan actual</p>
               <p className="text-2xl font-bold text-card-foreground">
-                {activePlan?.plan.name ?? "Sin plan"}
+                {activePlan?.plan ? getPlanLabel(activePlan.plan) : "Sin plan"}
               </p>
             </div>
           </CardContent>
@@ -220,10 +212,10 @@ function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
                       <div className="flex flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-card-foreground">
-                            {item.plan.name}
+                            {getPlanLabel(item.plan)}
                           </h3>
                           <Badge className={getPlanBadgeStyles(item.plan.type)}>
-                            {getPlanTypeLabel(item.plan.type)}
+                            {getPlanLabel({ type: item.plan.type })}
                           </Badge>
                           <StatusBadge isActive={item.isActive} />
                         </div>

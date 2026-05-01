@@ -1,7 +1,7 @@
 import { Users } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { getPlanStyle } from "./utils"
+import { getPlanLabel, getPlanStyle } from "./utils"
 import type { PlanResponse } from "@/lib/types/plans"
 import type { UserDataResponse } from "@/lib/types/user"
 
@@ -36,7 +36,7 @@ export function AssignPlansStatsCards({ users, plans }: AssignPlansStatsCardsPro
                 <Icon className={cn("h-5 w-5", style.color)} />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Plan {plan.name}</p>
+                <p className="text-sm text-muted-foreground">Plan {getPlanLabel(plan)}</p>
                 <p className="text-2xl font-bold text-card-foreground">{count}</p>
               </div>
             </CardContent>

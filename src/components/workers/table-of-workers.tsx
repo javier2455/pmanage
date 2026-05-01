@@ -9,7 +9,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
-import { sileo } from "sileo";
 import { Loader2, Plus, Users } from "lucide-react";
 
 import {
@@ -33,7 +32,6 @@ import {
 import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
-import { useDeleteWorkerMutation } from "@/hooks/use-workers";
 import type {
   Worker,
   WorkersResponseInterface,
@@ -68,36 +66,7 @@ export default function TableOfWorkers({
   onPageChange,
   onLimitChange,
 }: TableOfWorkersProps) {
-  const deleteWorkerMutation = useDeleteWorkerMutation();
-
-  const handleDelete = React.useCallback(
-    async (worker: Worker) => {
-      try {
-        await deleteWorkerMutation.mutateAsync(worker.id);
-        sileo.success({
-          title: "Trabajador eliminado",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
-          description: "El trabajador se ha eliminado correctamente",
-        });
-      } catch {
-        sileo.error({
-          title: "Error al eliminar",
-          description: "No se pudo eliminar el trabajador. Intenta de nuevo.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        });
-      }
-    },
-    [deleteWorkerMutation],
-  );
-
-  const columns = React.useMemo(
-    () => createWorkersColumns(handleDelete),
-    [handleDelete],
-  );
+  const columns = React.useMemo(() => createWorkersColumns(), []);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 

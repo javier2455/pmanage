@@ -27,6 +27,7 @@ import {
 import Link from "next/link"
 import { useAuthUserData } from "@/hooks/use-auth"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getPlanLabel } from "@/components/assign-plans/utils"
 
 function formatDate(dateString?: string | null): string {
   if (!dateString) return "—"
@@ -176,7 +177,7 @@ export default function ProfilePage() {
                 <Skeleton className="h-5 w-16 rounded-full" />
               ) : (
                 <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-0">
-                  {user?.plan?.name}
+                  {getPlanLabel(user?.plan)}
                 </Badge>
               )}
             </div>
@@ -243,7 +244,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {user?.plan?.name}
+                      {getPlanLabel(user?.plan)}
                     </span>
                   </div>
 

@@ -25,8 +25,20 @@ import { getMe } from "@/lib/api/auth";
 import { getMyBusinessesList } from "@/lib/api/business";
 import { setAuthCookies } from "@/lib/cookies";
 import { useState } from "react";
-import { LoginTypeSelectionModal } from "@/components/auth/login-type-selection-modal";
+import {
+    LoginTypeSelectionModal,
+    type LoginType,
+} from "@/components/auth/login-type-selection-modal";
 
+type LoginMode = "owner" | "worker";
+
+type AuthUser = Awaited<ReturnType<typeof getMe>>;
+
+type PendingLogin = {
+    accessToken: string;
+    refreshToken?: string;
+    user: AuthUser;
+};
 
 export default function LoginPage() {
     const router = useRouter();
@@ -34,7 +46,7 @@ export default function LoginPage() {
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [showLoginTypeModal, setShowLoginTypeModal] = useState(false);
-    const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
+    const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
 
     const isSubmitBusy = isAuthenticating || loginMutation.isPending;
     const isGoogleBusy = isGoogleLoading;
@@ -52,10 +64,93 @@ export default function LoginPage() {
         },
     });
 
+    const persistSessionUser = (user: AuthUser, accessToken: string, refreshToken?: string) => {
+        sessionStorage.setItem("token", accessToken);
+        if (refreshToken) {
+            sessionStorage.setItem("refresh_token", refreshToken);
+        }
+        sessionStorage.setItem(
+            "user",
+            JSON.stringify({
+                name: user.name,
+                role: user.rol,
+                email: user.email,
+                plan: user.plan,
+                avatar: user.avatar,
+            }),
+        );
+        const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
+        const planType = user.plan?.type ?? user.plan?.name ?? "";
+        setAuthCookies({
+            token: accessToken,
+            role: roleName,
+            planType,
+        });
+    };
+
+    const finalizePostLogin = async ({
+        accessToken,
+        refreshToken,
+        user,
+        mode,
+    }: PendingLogin & { mode: LoginMode }) => {
+        persistSessionUser(user, accessToken, refreshToken);
+        sessionStorage.setItem("loginMode", mode);
+
+        if (mode === "worker") {
+            const businesses = await getMyBusinessesList();
+            const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
+            router.push(target);
+            return;
+        }
+
+        const activePlan = await getActivePlan();
+        if (activePlan?.data?.isActive || activePlan?.isActive) {
+            const businesses = await getMyBusinessesList();
+            const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
+            router.push(target);
+        } else {
+            router.push("/plans");
+        }
+    };
+
+    const routeAfterGetMe = async (params: PendingLogin) => {
+        const { user } = params;
+        if (user.isWorker && !user.isOwner) {
+            await finalizePostLogin({ ...params, mode: "worker" });
+            return;
+        }
+        if (user.isOwner && user.isWorker) {
+            setPendingLogin(params);
+            setShowLoginTypeModal(true);
+            return;
+        }
+        await finalizePostLogin({ ...params, mode: "owner" });
+    };
+
+    const handleLoginTypeSelect = async (type: LoginType) => {
+        if (!pendingLogin) return;
+        const mode: LoginMode = type === "business-member" ? "worker" : "owner";
+        setShowLoginTypeModal(false);
+        try {
+            await finalizePostLogin({ ...pendingLogin, mode });
+        } catch (error) {
+            setIsAuthenticating(false);
+            setIsGoogleLoading(false);
+            setError("root", {
+                message:
+                    axios.isAxiosError(error) && error.response?.data?.message
+                        ? error.response.data.message
+                        : "Error al iniciar sesión. Intenta de nuevo.",
+            });
+        } finally {
+            setPendingLogin(null);
+        }
+    };
+
     const handleGoogleLogin = () => {
         setIsGoogleLoading(true);
 
-        // Abrir popup con las dimensiones especificadas
         const width = 500;
         const height = 600;
         const left = window.screenX + (window.outerWidth - width) / 2;
@@ -73,59 +168,25 @@ export default function LoginPage() {
             return;
         }
 
-        // Escuchar mensajes del popup
         const handleMessage = async (event: MessageEvent) => {
-            // Verificar que el mensaje viene de nuestro dominio
             if (!event.origin.includes('ms.dveloxsoft.com')) return;
 
             if (event.isTrusted) {
                 const { accessToken, refreshToken } = event.data;
 
                 try {
-                    // Llamar al endpoint auth/me para obtener los datos completos del usuario
-                    // Guardar token en sessionStorage antes de hacer llamadas autenticadas
                     sessionStorage.setItem("token", accessToken);
                     const user = await getMe();
-                    const activePlan = await getActivePlan();
-
-                    // Guardar datos en sessionStorage (misma forma que login email: `role` para compatibilidad con UI)
-                    sessionStorage.setItem("token", accessToken);
-                    sessionStorage.setItem("refresh_token", refreshToken);
-                    sessionStorage.setItem(
-                        "user",
-                        JSON.stringify({
-                            name: user.name,
-                            role: user.rol,
-                            email: user.email,
-                            plan: user.plan,
-                        })
-                    );
-
-                    const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
-                    const planType = user.plan?.type ?? user.plan?.name ?? "";
-                    setAuthCookies({
-                        token: accessToken,
-                        role: roleName,
-                        planType,
-                    });
 
                     window.removeEventListener('message', handleMessage);
 
-                    // Cerrar el popup si sigue abierto
                     if (popup && !popup.closed) {
                         popup.close();
                     }
 
-                    if (activePlan?.data?.isActive || activePlan?.isActive) {
-                        const businesses = await getMyBusinessesList();
-                        const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
-                        setPendingRedirect(target);
-                        setShowLoginTypeModal(true);
-                    } else {
-                        router.push("/plans");
-                    }
+                    await routeAfterGetMe({ accessToken, refreshToken, user });
 
-                } catch (error) {
+                } catch {
                     if (popup && !popup.closed) {
                         popup.close();
                     }
@@ -145,7 +206,6 @@ export default function LoginPage() {
 
         window.addEventListener('message', handleMessage);
 
-        // Verificar si el popup se cierra sin completar la autenticación
         const checkPopupClosed = setInterval(() => {
             if (popup && popup.closed) {
                 clearInterval(checkPopupClosed);
@@ -161,47 +221,17 @@ export default function LoginPage() {
             const response = await loginMutation.mutateAsync(data);
             const { access_token, refresh_token } = response;
 
-            /* Verificar si el usuario tiene o no un plan activo */
-            // Guardar token en sessionStorage antes de llamar a getMe y getActivePlan
             sessionStorage.setItem("token", access_token);
             if (refresh_token) {
                 sessionStorage.setItem("refresh_token", refresh_token);
             }
             const user = await getMe();
 
-            const activePlan = await getActivePlan();
-            if (activePlan?.data?.isActive || activePlan?.isActive) {
-                sessionStorage.setItem("token", access_token);
-                if (refresh_token) {
-                    sessionStorage.setItem("refresh_token", refresh_token);
-                }
-                sessionStorage.setItem("user", JSON.stringify({ name: user.name, role: user.rol, email: user.email, plan: user.plan }));
-
-                /* Guardar cookies */
-                const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
-                const planType = user.plan?.type ?? user.plan?.name ?? "";
-                setAuthCookies({
-                    token: access_token,
-                    role: roleName,
-                    planType,
-                });
-
-                const businesses = await getMyBusinessesList();
-                const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
-                setPendingRedirect(target);
-                setShowLoginTypeModal(true);
-            } else {
-                /* Guardar cookies */
-                const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
-                const planType = user.plan?.type ?? user.plan?.name ?? "";
-                setAuthCookies({
-                    token: access_token,
-                    role: roleName,
-                    planType,
-                });
-                /* Guardar cookies */
-                router.push("/plans");
-            }
+            await routeAfterGetMe({
+                accessToken: access_token,
+                refreshToken: refresh_token,
+                user,
+            });
 
         } catch (error) {
             setIsAuthenticating(false);
@@ -262,9 +292,17 @@ export default function LoginPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="password" className="text-card-foreground">
-                                Contraseña
-                            </Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="text-card-foreground">
+                                    Contraseña
+                                </Label>
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-xs font-medium text-primary hover:underline underline-offset-4"
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
+                            </div>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
@@ -355,23 +393,11 @@ export default function LoginPage() {
                         </Link>
                     </p>
                 </CardContent>
-                <LoginTypeSelectionModal
-                    open={showLoginTypeModal}
-                    onSelect={() => {
-                        if (pendingRedirect) {
-                            router.push(pendingRedirect);
-                        }
-                    }}
-                />
-                {/* <CardFooter className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3">
-                        <Separator className="flex-1" />
-                        <span className="text-xs text-muted-foreground">Solo para pruebas</span>
-                        <Separator className="flex-1" />
-                    </div>
-                    <Button onClick={handleDeleteUser} className="w-full">Eliminar usuario</Button>
-                </CardFooter> */}
             </Card>
+            <LoginTypeSelectionModal
+                open={showLoginTypeModal}
+                onSelect={handleLoginTypeSelect}
+            />
         </div>
     )
 }

@@ -23,8 +23,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatsCard title="Ventas del dia" today={dashboardSummary?.sales.today ?? 0} percentageChange={dashboardSummary?.sales.percentageChange ?? 0} />
-        <StatsCard title="Transacciones" today={dashboardSummary?.transactions.today ?? 0} percentageChange={dashboardSummary?.transactions.percentageChange ?? 0} />
+        <StatsCard title="Ventas del dia" today={dashboardSummary?.sales?.today ?? 0} percentageChange={dashboardSummary?.sales?.percentageChange ?? 0} />
+        <StatsCard title="Transacciones" today={dashboardSummary?.transactions?.today ?? 0} percentageChange={dashboardSummary?.transactions?.percentageChange ?? 0} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
