@@ -111,7 +111,7 @@ export async function register(credentials: RegisterFormData): Promise<UserRespo
   const body = invitationId
     ? { email, name, password, invitationId }
     : { email, name, password, rolId };
-  const { data } = await apiClient.post(authRoutes.registerLocal, body);
+  const { data } = await apiClient.post(authRoutes.register, body);
   // const { data } = await apiClient.post(authRoutes.register, body);
   return data;
 }
