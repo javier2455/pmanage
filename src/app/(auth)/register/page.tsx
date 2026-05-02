@@ -67,27 +67,24 @@ function RegisterPageContent() {
   }, [invitationData, reset]);
 
 
-  const onSubmit = (data: RegisterFormData) => {
-    const payload: RegisterFormData = invitationId
-      ? { ...data, invitationId, rolId: undefined }
-      : data;
+  const onSubmit = async (data: RegisterFormData) => {
+    try {
+      const payload: RegisterFormData = invitationId
+        ? { ...data, invitationId, rolId: undefined }
+        : data;
+      await registerMutation.mutateAsync(payload);
 
-    registerMutation.mutate(payload, {
-      onSuccess: () => {
-        const email = invitationData?.email ?? data.email;
-        if (email) {
-          localStorage.setItem("userEmail", JSON.stringify(email));
-        }
-        router.push("/verify");
-      },
-      onError: (error) => {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          setError("root", { message: error.response.data.message });
-        } else {
-          setError("root", { message: "Error al iniciar sesión. Intenta de nuevo." });
-        }
-      },
-    });
+      const email = invitationData?.email ?? data.email;
+      localStorage.setItem("userEmail", JSON.stringify(email));
+      router.push("/verify");
+
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        setError("root", { message: error.response.data.message });
+      } else {
+        setError("root", { message: "Error al iniciar sesión. Intenta de nuevo." });
+      }
+    }
   };
 
   if (isInvitationLoading) {
