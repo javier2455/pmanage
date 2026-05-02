@@ -9,13 +9,13 @@ import { Separator } from "@/components/ui/separator"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { registerSchema, type RegisterFormData } from "@/lib/validations/auth"
-import { Lock, Mail, Store, User, Loader2, AlertTriangle } from 'lucide-react'
+import { Lock, Mail, Store, User, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from 'axios'
 import { useRegisterMutation } from '@/hooks/use-auth'
 import { useQuery } from "@tanstack/react-query"
 import { getInvitationInformation } from "@/lib/api/auth"
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 
 function RegisterPageContent() {
   const router = useRouter();
@@ -35,6 +35,8 @@ function RegisterPageContent() {
   const invitationExpired =
     Boolean(invitationId) &&
     (invitationQuery.isError || invitationQuery.data?.expired === true);
+
+  const [invitationRegistrationDone, setInvitationRegistrationDone] = useState(false);
 
   const {
     register,
@@ -79,7 +81,12 @@ function RegisterPageContent() {
         : data;
       await registerMutation.mutateAsync(payload);
 
-      const email = invitationData?.email ?? data.email;
+      if (invitationId) {
+        setInvitationRegistrationDone(true);
+        return;
+      }
+
+      const email = data.email;
       localStorage.setItem("userEmail", JSON.stringify(email));
       router.push("/verify");
 
@@ -127,6 +134,33 @@ function RegisterPageContent() {
           <CardContent className="flex flex-col gap-3 pt-4">
             <Button asChild className="w-full">
               <Link href="/login">Ir al inicio de sesión</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (invitationRegistrationDone) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
+        <Card className="w-full max-w-md">
+          <CardHeader className="flex flex-col items-center gap-4 pb-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <CardTitle className="text-2xl font-bold text-card-foreground">
+                ¡Registro exitoso!
+              </CardTitle>
+              <CardDescription>
+                Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión y acceder a {invitationData?.business?.name ?? "tu negocio"}.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 pt-4">
+            <Button asChild className="w-full">
+              <Link href="/login">Iniciar sesión</Link>
             </Button>
           </CardContent>
         </Card>
