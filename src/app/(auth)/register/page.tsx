@@ -70,7 +70,12 @@ function RegisterPageContent() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const payload: RegisterFormData = invitationId
-        ? { ...data, invitationId, rolId: undefined }
+        ? {
+            ...data,
+            email: invitationData?.email ?? data.email,
+            invitationId,
+            rolId: undefined,
+          }
         : data;
       await registerMutation.mutateAsync(payload);
 
@@ -185,11 +190,11 @@ function RegisterPageContent() {
                   placeholder="tu@correo.com"
                   {...register("email")}
                   aria-invalid={!!errors.email}
-                  className="pl-9 disabled:cursor-not-allowed disabled:opacity-70"
+                  className={`pl-9 ${invitationData ? "cursor-not-allowed bg-muted opacity-70" : ""}`}
                   autoComplete="email"
                   required
-                  disabled={Boolean(invitationData)}
                   readOnly={Boolean(invitationData)}
+                  tabIndex={invitationData ? -1 : undefined}
                 />
               </div>
               {errors.email && (
