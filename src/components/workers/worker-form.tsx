@@ -37,7 +37,11 @@ import {
   type WorkerEditFormData,
   type WorkerFormData,
 } from "@/lib/validations/workers";
-import { WorkerPermissionsSection } from "./worker-permissions-section";
+import {
+  groupKey,
+  groupMenuItems,
+  WorkerPermissionsSection,
+} from "./worker-permissions-section";
 
 interface WorkerFormProps {
   mode: "create" | "edit";
@@ -83,12 +87,11 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
 
   useEffect(() => {
     if (!isEdit || !worker || !menuList) return;
-    const permissionIds = new Set(worker.permissions);
+    const permissionNames = new Set(worker.permissions);
     const next = new Map<string, MenuListItem>();
     for (const item of menuList) {
-      const key = item.idSubmenu ?? item.idMenu;
-      if (permissionIds.has(key)) {
-        next.set(key, item);
+      if (permissionNames.has(item.name)) {
+        next.set(item.idSubmenu ?? item.idMenu, item);
       }
     }
     setSelected(next);
@@ -111,14 +114,43 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
     },
   });
 
-  function handleToggle(item: MenuListItem) {
+  function handleToggle(item: MenuListItem, children?: MenuListItem[]) {
     const key = item.idSubmenu ?? item.idMenu;
     setSelected((prev) => {
       const next = new Map(prev);
-      if (next.has(key)) next.delete(key);
-      else next.set(key, item);
+      const isSelected = next.has(key);
+      if (isSelected) {
+        next.delete(key);
+        if (children) {
+          for (const child of children) {
+            next.delete(child.idSubmenu ?? child.idMenu);
+          }
+        }
+      } else {
+        next.set(key, item);
+        if (children) {
+          for (const child of children) {
+            next.set(child.idSubmenu ?? child.idMenu, child);
+          }
+        }
+      }
       return next;
     });
+  }
+
+  function getIncompleteParentName(): string | null {
+    if (!menuList) return null;
+    const groups = groupMenuItems(menuList);
+    for (const group of groups) {
+      if (!group.parent || !group.parentKey) continue;
+      if (!selected.has(group.parentKey)) continue;
+      if (group.children.length === 0) continue;
+      const hasChildSelected = group.children.some((child) =>
+        selected.has(groupKey(child)),
+      );
+      if (!hasChildSelected) return group.parent.name;
+    }
+    return null;
   }
 
   async function handleCreate(data: WorkerFormData) {
@@ -126,6 +158,16 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
       sileo.error({
         title: "Selecciona un negocio",
         description: "Activa un negocio antes de gestionar trabajadores.",
+        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+      });
+      return;
+    }
+
+    const incompleteParent = getIncompleteParentName();
+    if (incompleteParent) {
+      sileo.error({
+        title: "Permisos incompletos",
+        description: `Selecciona al menos un submenú de "${incompleteParent}" o desmarca el menú principal.`,
         styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       return;
@@ -168,6 +210,16 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
 
   async function handleUpdate(data: WorkerEditFormData) {
     if (!worker) return;
+
+    const incompleteParent = getIncompleteParentName();
+    if (incompleteParent) {
+      sileo.error({
+        title: "Permisos incompletos",
+        description: `Selecciona al menos un submenú de "${incompleteParent}" o desmarca el menú principal.`,
+        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+      });
+      return;
+    }
 
     const permisos = buildPermisos(Array.from(selected.values()));
 

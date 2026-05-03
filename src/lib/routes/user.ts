@@ -11,7 +11,7 @@ export const userRoutes = {
     `${BASIC_ROUTE}/business-workers/${id}`,
   createBusinessWorker: `${BASIC_ROUTE}/business-workers`,
   updateBusinessWorker: (id: string) =>
-    `${BASIC_ROUTE}/business-workers/business/${id}`,
+    `${BASIC_ROUTE}/business-workers/${id}`,
   deleteBusinessWorker: (id: string) =>
-    `${BASIC_ROUTE}/business-workers/business/${id}`,
+    `${BASIC_ROUTE}/business-workers/${id}`,
 };

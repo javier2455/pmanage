@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,20 +10,20 @@ import type { MenuListItem } from "@/lib/types/menu";
 
 interface WorkerPermissionsSectionProps {
   selectedKeys: Set<string>;
-  onToggle: (item: MenuListItem) => void;
+  onToggle: (item: MenuListItem, children?: MenuListItem[]) => void;
 }
 
-interface MenuGroup {
+export interface MenuGroup {
   parent: MenuListItem | null;
   parentKey: string | null;
   children: MenuListItem[];
 }
 
-function groupKey(item: MenuListItem): string {
+export function groupKey(item: MenuListItem): string {
   return item.idSubmenu ?? item.idMenu;
 }
 
-function groupMenuItems(items: MenuListItem[]): MenuGroup[] {
+export function groupMenuItems(items: MenuListItem[]): MenuGroup[] {
   const groups = new Map<string, MenuGroup>();
 
   for (const item of items) {
@@ -84,6 +84,12 @@ export function WorkerPermissionsSection({
         const parent = group.parent;
         const parentKey = group.parentKey;
         const groupId = parent?.idMenu ?? `group-${idx}`;
+        const parentSelected = parentKey ? selectedKeys.has(parentKey) : false;
+        const hasChildSelected = group.children.some((child) =>
+          selectedKeys.has(groupKey(child)),
+        );
+        const showIncompleteWarning =
+          parentSelected && group.children.length > 0 && !hasChildSelected;
 
         return (
           <div
@@ -100,10 +106,24 @@ export function WorkerPermissionsSection({
                 </span>
                 <Checkbox
                   id={`perm-${parentKey}`}
-                  checked={selectedKeys.has(parentKey)}
-                  onCheckedChange={() => onToggle(parent)}
+                  checked={parentSelected}
+                  onCheckedChange={() =>
+                    onToggle(
+                      parent,
+                      group.children.length > 0 ? group.children : undefined,
+                    )
+                  }
                 />
               </label>
+            ) : null}
+
+            {showIncompleteWarning ? (
+              <div className="flex items-start gap-2 border-t border-amber-500/20 bg-amber-500/10 px-4 py-2 text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span className="text-xs">
+                  Selecciona al menos un submenú o desmarca el menú principal.
+                </span>
+              </div>
             ) : null}
 
             {group.children.length > 0 ? (
