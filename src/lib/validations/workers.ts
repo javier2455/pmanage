@@ -8,3 +8,9 @@ export const workerFormSchema = z.object({
 });
 
 export type WorkerFormData = z.infer<typeof workerFormSchema>;
+
+export const workerEditFormSchema = z.object({
+  job: z.string().min(1, "Indica un cargo"),
+});
+
+export type WorkerEditFormData = z.infer<typeof workerEditFormSchema>;

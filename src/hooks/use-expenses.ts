@@ -43,6 +43,7 @@ export function useCreateExpenseMutation() {
     mutationFn: (credentials: CreateExpenseProps) => createExpense(credentials),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["all-expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 }
@@ -60,6 +61,7 @@ export function useUpdateExpenseMutation() {
     onSuccess: (_, { expenseId }) => {
       queryClient.invalidateQueries({ queryKey: ["all-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["expense", expenseId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 }
@@ -70,6 +72,7 @@ export function useDeleteExpenseMutation() {
     mutationFn: (expenseId: string) => deleteExpense(expenseId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["all-expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
     },
   });
 }

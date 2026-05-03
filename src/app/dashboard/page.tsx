@@ -1,6 +1,6 @@
 "use client"
 
-import RecentActivityTable from "@/components/dashboard/recent-activity-table";
+import RecentExpensesTable from "@/components/dashboard/recent-expenses-table";
 import RecentSalesTable from "@/components/dashboard/recent-sales-table";
 import StatsCard from "@/components/dashboard/stats-card";
 import { useBusiness } from "@/context/business-context";
@@ -23,13 +23,25 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatsCard title="Ventas del dia" today={dashboardSummary?.sales?.today ?? 0} percentageChange={dashboardSummary?.sales?.percentageChange ?? 0} />
-        <StatsCard title="Transacciones" today={dashboardSummary?.transactions?.today ?? 0} percentageChange={dashboardSummary?.transactions?.percentageChange ?? 0} />
+        <StatsCard
+          variant="sales"
+          title="Ventas"
+          today={dashboardSummary?.sales?.today ?? 0}
+          yesterday={dashboardSummary?.sales?.yesterday ?? 0}
+          percentageChange={dashboardSummary?.sales?.percentageChange ?? 0}
+        />
+        <StatsCard
+          variant="expenses"
+          title="Gastos"
+          today={dashboardSummary?.expenses?.today ?? 0}
+          yesterday={dashboardSummary?.expenses?.yesterday ?? 0}
+          percentageChange={dashboardSummary?.expenses?.percentageChange ?? 0}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <RecentSalesTable sales={dashboardSummary?.lastFiveSales} />
-        <RecentActivityTable activities={dashboardSummary?.recentActivity} />
+        <RecentExpensesTable expenses={dashboardSummary?.lastFiveExpenses} />
       </div>
     </div>
   )

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Avatar,
@@ -9,7 +10,14 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { DeleteDialog } from "@/components/delete-dialog";
 import type { Worker } from "@/lib/types/worker";
+import WorkerDetailsDialog from "./worker-details-dialog";
 
 export type WorkersColumnMeta = {
   headerClassName?: string;
@@ -62,7 +70,9 @@ function WorkerSortableHeader({
   );
 }
 
-export function createWorkersColumns(): ColumnDef<Worker>[] {
+export function createWorkersColumns(
+  onDeleteWorker: (workerId: string) => void | Promise<void>,
+): ColumnDef<Worker>[] {
   return [
     {
       id: "trabajador",
@@ -158,6 +168,72 @@ export function createWorkersColumns(): ColumnDef<Worker>[] {
           {formatDate(row.original.createdAt)}
         </span>
       ),
+    },
+    {
+      id: "actions",
+      enableSorting: false,
+      meta: {
+        headerClassName: "w-[1%] whitespace-nowrap text-right",
+        cellClassName: "w-[1%] whitespace-nowrap",
+      } satisfies WorkersColumnMeta,
+      header: () => (
+        <div className="text-right font-medium text-foreground">Acciones</div>
+      ),
+      cell: ({ row }) => {
+        const worker = row.original;
+        const displayName = worker.name ?? worker.email ?? "Trabajador";
+        return (
+          <div className="flex justify-end">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Abrir acciones"
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-1">
+                <WorkerDetailsDialog
+                  workerId={worker.id}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+                    >
+                      <Eye className="size-4 text-blue-500 dark:text-blue-400" />
+                      Ver detalles
+                    </button>
+                  }
+                />
+                <Link
+                  href={`/dashboard/business/workers/${worker.id}/edit`}
+                  className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+                >
+                  <Pencil className="size-4 text-amber-500 dark:text-amber-400" />
+                  Editar
+                </Link>
+                <DeleteDialog
+                  deleteType="Trabajador"
+                  name={displayName}
+                  onConfirm={() => onDeleteWorker(worker.id)}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-muted"
+                    >
+                      <Trash2 className="size-4 shrink-0 text-destructive" />
+                      Eliminar
+                    </button>
+                  }
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        );
+      },
     },
   ];
 }

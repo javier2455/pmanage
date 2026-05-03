@@ -77,17 +77,18 @@ export interface UpdateBusinessResponse {
 
 
 export interface DashboardSummaryResponse {
-  sales: {
-    today: number;
-    percentageChange: number;
-  };
-  transactions: {
-    today: number;
-    percentageChange: number;
-  };
+  sales: DashboardSummaryStat;
+  expenses: DashboardSummaryStat;
   lastFiveSales: DashboardSummarySale[];
+  lastFiveExpenses: DashboardSummaryExpense[];
   recentActivity: DashboardSummaryActivity[];
 }
+
+export type DashboardSummaryStat = {
+  today: number;
+  yesterday: number;
+  percentageChange: number;
+};
 
 export type DashboardSummarySale = {
   id: string;
@@ -97,6 +98,14 @@ export type DashboardSummarySale = {
   total: number;
   isCancelled: boolean;
   cancelledReason: string | null;
+  createdAt: string;
+};
+
+export type DashboardSummaryExpense = {
+  id: string;
+  title: string;
+  amount: number;
+  description: string;
   createdAt: string;
 };
 

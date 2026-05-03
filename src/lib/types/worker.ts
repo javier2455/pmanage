@@ -10,6 +10,10 @@ export interface Worker {
   permissions: string[];
   createdAt: string;
   updatedAt: string;
+  business?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface WorkersResponseInterface {
@@ -45,5 +49,24 @@ export interface CreateWorkerInput {
 
 export interface CreateWorkerResponse {
   message: string;
+  data: Worker;
+}
+
+export interface UpdateWorkerInput {
+  job: string;
+  permisos: WorkerPermissoEntry[];
+}
+
+export interface UpdateWorkerResponse {
+  message: string;
+  data: Worker;
+}
+
+export interface DeleteWorkerResponse {
+  message: string;
+}
+
+export interface GetWorkerByIdResponse {
+  message?: string;
   data: Worker;
 }

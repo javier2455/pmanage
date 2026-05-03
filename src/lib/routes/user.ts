@@ -7,6 +7,8 @@ export const userRoutes = {
   /* Business-workers */
   getAllBusinessWorkers: (businessId: string) =>
     `${BASIC_ROUTE}/business-workers/business/${businessId}`,
+  getBusinessWorkerbyID: (id: string) =>
+    `${BASIC_ROUTE}/business-workers/${id}`,
   createBusinessWorker: `${BASIC_ROUTE}/business-workers`,
   updateBusinessWorker: (id: string) =>
     `${BASIC_ROUTE}/business-workers/business/${id}`,

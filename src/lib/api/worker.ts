@@ -3,6 +3,10 @@ import { userRoutes } from "@/lib/routes/user";
 import {
   CreateWorkerInput,
   CreateWorkerResponse,
+  DeleteWorkerResponse,
+  GetWorkerByIdResponse,
+  UpdateWorkerInput,
+  UpdateWorkerResponse,
   WorkersResponseInterface,
 } from "@/lib/types/worker";
 
@@ -24,12 +28,41 @@ export async function getAllBusinessWorkers({
   return data;
 }
 
+export async function getBusinessWorkerById(
+  workerId: string,
+): Promise<GetWorkerByIdResponse> {
+  const { data } = await apiClient.get<GetWorkerByIdResponse>(
+    userRoutes.getBusinessWorkerbyID(workerId),
+  );
+  return data;
+}
+
 export async function createBusinessWorker(
   input: CreateWorkerInput,
 ): Promise<CreateWorkerResponse> {
   const { data } = await apiClient.post<CreateWorkerResponse>(
     userRoutes.createBusinessWorker,
     input,
+  );
+  return data;
+}
+
+export async function updateBusinessWorker(
+  workerId: string,
+  input: UpdateWorkerInput,
+): Promise<UpdateWorkerResponse> {
+  const { data } = await apiClient.patch<UpdateWorkerResponse>(
+    userRoutes.updateBusinessWorker(workerId),
+    input,
+  );
+  return data;
+}
+
+export async function deleteBusinessWorker(
+  workerId: string,
+): Promise<DeleteWorkerResponse> {
+  const { data } = await apiClient.delete<DeleteWorkerResponse>(
+    userRoutes.deleteBusinessWorker(workerId),
   );
   return data;
 }

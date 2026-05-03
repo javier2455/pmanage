@@ -9,7 +9,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
+import axios from "axios";
+import { sileo } from "sileo";
 import { Loader2, Plus, Users } from "lucide-react";
+
+import { useDeleteWorkerMutation } from "@/hooks/use-workers";
 
 import {
   Empty,
@@ -66,7 +70,48 @@ export default function TableOfWorkers({
   onPageChange,
   onLimitChange,
 }: TableOfWorkersProps) {
-  const columns = React.useMemo(() => createWorkersColumns(), []);
+  const deleteWorkerMutation = useDeleteWorkerMutation();
+
+  const handleDeleteWorker = React.useCallback(
+    async (workerId: string) => {
+      try {
+        await deleteWorkerMutation.mutateAsync(workerId);
+        sileo.success({
+          title: "Trabajador eliminado",
+          fill: "",
+          styles: {
+            title: "text-white! text-[16px]! font-bold!",
+            description: "text-white/90! text-[15px]!",
+          },
+          description: "El trabajador se ha eliminado correctamente",
+        });
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.data?.message) {
+          sileo.error({
+            title: error.response?.data?.error ?? "Error",
+            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+            description: error.response.data.message,
+          });
+        } else {
+          sileo.error({
+            title: "Error al eliminar el trabajador",
+            fill: "",
+            styles: {
+              title: "text-white! text-[16px]! font-bold!",
+              description: "text-white/90! text-[15px]!",
+            },
+            description: "Error al eliminar el trabajador. Intenta de nuevo.",
+          });
+        }
+      }
+    },
+    [deleteWorkerMutation],
+  );
+
+  const columns = React.useMemo(
+    () => createWorkersColumns(handleDeleteWorker),
+    [handleDeleteWorker],
+  );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
 

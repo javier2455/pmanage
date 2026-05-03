@@ -1,5 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { DashboardSummarySale } from "@/lib/types/business";
 import { StatusBadge } from "@/components/generic/status-badge";
 import { cn } from "@/lib/utils";
@@ -29,8 +31,15 @@ export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
                 <CardTitle className="text-card-foreground">Ventas recientes</CardTitle>
+                <Link
+                    href="/dashboard/business/sales"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                    Ver todas
+                    <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
             </CardHeader>
             <CardContent>
                 {rows.length === 0 ? (

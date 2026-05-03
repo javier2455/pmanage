@@ -52,6 +52,11 @@ export function useCancelSaleMutation() {
             queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id"] });
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
             queryClient.invalidateQueries({ queryKey: ["sale-by-id"] });
+            queryClient.invalidateQueries({ queryKey: ["current-inventory-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["inventory-history-by-business-id"] });
+            queryClient.invalidateQueries({ queryKey: ["daily-accounting-close"] });
+            queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
         },
     });
 }
