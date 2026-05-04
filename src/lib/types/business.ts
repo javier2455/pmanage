@@ -55,6 +55,8 @@ export interface CreateBusinessPayload {
   phone: string | null;
   email: string | null;
   municipalityId: string;
+  lat: number;
+  lng: number;
 }
 
 export interface UpdateBusinessPayload {
@@ -65,6 +67,8 @@ export interface UpdateBusinessPayload {
   phone: string | null;
   email: string | null;
   municipalityId?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface UpdateBusinessResponse {

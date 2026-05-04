@@ -4,6 +4,7 @@ export interface Expense {
   amount: number;
   description: string;
   createdBy: string;
+  userName: string;
   createdAt: string;
   updatedAt: string;
 }

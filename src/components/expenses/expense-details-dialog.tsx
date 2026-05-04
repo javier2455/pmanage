@@ -109,8 +109,8 @@ export default function ExpenseDetailsDialog({
 
             <div className="flex items-center justify-between border-b border-border py-4">
               <span className="text-sm font-medium text-card-foreground">Registrado por</span>
-              <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {data.createdBy || "--"}
+              <span className="text-sm font-medium text-card-foreground">
+                {data.userName || "--"}
               </span>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -37,6 +37,16 @@ import { useBusiness } from "@/context/business-context";
 import { sileo } from "sileo";
 import axios from "axios";
 import { BusinessType } from "@/lib/types/business";
+import { LocationMap } from "@/components/business/location-map";
+import { BusinessLocationStep } from "@/components/business/business-location-step";
+
+const HAVANA_LAT = 23.1444;
+const HAVANA_LNG = -82.3855;
+
+function toCoord(value: unknown, fallback: number): number {
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
 
 const businessTypeLabels: Record<string, string> = {
   mipyme: "MiPyme",
@@ -109,10 +119,25 @@ export default function BusinessDetailsPage() {
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
       municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
+      lat: toCoord(activeBusiness?.lat, HAVANA_LAT),
+      lng: toCoord(activeBusiness?.lng, HAVANA_LNG),
     },
   });
 
   const selectedType = watch("type");
+  const watchedLat = toCoord(watch("lat"), toCoord(activeBusiness?.lat, HAVANA_LAT));
+  const watchedLng = toCoord(watch("lng"), toCoord(activeBusiness?.lng, HAVANA_LNG));
+  const watchedAddress = watch("address");
+  const watchedMunicipalityId = watch("municipalityId");
+
+  const editingMunicipalityName =
+    municipalities.find((m) => String(m.id) === watchedMunicipalityId)?.name ??
+    resolvedMunicipalityName;
+
+  const handleLocationChange = (newLat: number, newLng: number) => {
+    setValue("lat", newLat, { shouldDirty: true });
+    setValue("lng", newLng, { shouldDirty: true });
+  };
 
   function handleEdit() {
     reset({
@@ -123,6 +148,8 @@ export default function BusinessDetailsPage() {
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
       municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
+      lat: toCoord(activeBusiness?.lat, HAVANA_LAT),
+      lng: toCoord(activeBusiness?.lng, HAVANA_LNG),
     });
     setIsEditing(true);
   }
@@ -146,6 +173,8 @@ export default function BusinessDetailsPage() {
           phone: data.phone || null,
           email: data.email || null,
           municipalityId: data.municipalityId || undefined,
+          lat: data.lat,
+          lng: data.lng,
         },
       });
 
@@ -572,6 +601,50 @@ export default function BusinessDetailsPage() {
               </div>
             )}
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-card-foreground">Ubicación</CardTitle>
+              <CardDescription>
+                {isEditing
+                  ? "Arrastra el marcador o haz clic en el mapa para ajustar la ubicación"
+                  : "Ubicación actual del negocio en el mapa"}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isEditing ? (
+            <BusinessLocationStep
+              lat={watchedLat}
+              lng={watchedLng}
+              onLocationChange={handleLocationChange}
+              manualAddress={watchedAddress}
+              provinceName={resolvedProvinceName}
+              municipalityName={editingMunicipalityName}
+              onAddressSuggestion={(address) =>
+                setValue("address", address, { shouldValidate: true, shouldDirty: true })
+              }
+            />
+          ) : activeBusiness?.lat != null && activeBusiness?.lng != null ? (
+            <LocationMap
+              lat={toCoord(activeBusiness.lat, HAVANA_LAT)}
+              lng={toCoord(activeBusiness.lng, HAVANA_LNG)}
+              readOnly
+              className="w-full h-80 rounded-lg border border-border overflow-hidden"
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Este negocio aún no tiene una ubicación fijada en el mapa. Edita el negocio para añadirla.
+            </p>
+          )}
         </CardContent>
       </Card>
 

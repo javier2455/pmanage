@@ -25,8 +25,8 @@ export const createBusinessSchema = z.object({
   phone: phoneSchema.nullable(),
   email: z.string().email("El correo no es válido").nullable().or(z.literal("")),
   municipalityId: z.string().min(1, "La ciudad es requerida"),
-  // lat: z.number(),
-  // lng: z.number(),
+  lat: z.number({ message: "La ubicación es requerida" }),
+  lng: z.number({ message: "La ubicación es requerida" }),
 });
 
 export const updateBusinessSchema = z.object({
@@ -39,6 +39,8 @@ export const updateBusinessSchema = z.object({
   phone: phoneSchema.optional().or(z.literal("")),
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),
   municipalityId: z.string().min(1, "El municipio es requerido").optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 
 export type AddToCartFormData = z.infer<typeof addToCartSchema>;

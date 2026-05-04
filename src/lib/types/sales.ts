@@ -18,6 +18,8 @@ export interface SaleWithProductAndBusiness {
   isCancelled: boolean;
   cancelledReason: string | null;
   createdAt: Date;
+  createdBy: string;
+  userName: string;
   items: SalesProductInfoResponse[];
 }
 

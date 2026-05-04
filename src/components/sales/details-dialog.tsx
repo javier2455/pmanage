@@ -35,7 +35,6 @@ export default function DetailsDialog({
 }: DetailsDialogProps) {
   const { data, isLoading } = useGetSaleById(saleId);
 
-  console.log("Details of dialog", data);
   const triggerContent = trigger ?? (
     <Button variant="outline">Open Dialog</Button>
   );
@@ -160,6 +159,16 @@ export default function DetailsDialog({
                 </span>
               </div>
             )}
+
+            {/* Usuario */}
+            <div className="flex items-center justify-between border-b border-border py-4">
+              <span className="text-sm text-muted-foreground">
+                Registrado por
+              </span>
+              <span className="text-sm font-medium text-card-foreground">
+                {data?.userName || "--"}
+              </span>
+            </div>
 
             {/* Fecha */}
             <div className="flex items-center justify-between py-4">
