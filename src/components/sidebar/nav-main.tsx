@@ -84,11 +84,11 @@ export function NavMain({
                           )}
                         >
                           {subItem.disabled ? (
-                            <span className="flex flex-1 items-center gap-2 px-2 py-1.5">
+                            <>
                               {subItem.icon && <subItem.icon className="size-4" />}
                               <span>{subItem.title}</span>
                               {subItem.pro && <ProBadge />}
-                            </span>
+                            </>
                           ) : (
                             <Link href={subItem.url}>
                               {subItem.icon && <subItem.icon className="size-4" />}
@@ -114,11 +114,11 @@ export function NavMain({
                 )}
               >
                 {item.disabled ? (
-                  <span>
+                  <>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     {item.pro && <ProBadge />}
-                  </span>
+                  </>
                 ) : (
                   <Link href={item.url}>
                     {item.icon && <item.icon />}

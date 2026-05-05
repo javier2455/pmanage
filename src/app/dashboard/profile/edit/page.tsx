@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { updateUserSchema, type UpdateUserFormData } from "@/lib/validations/user"
 import { useAuthUserData } from "@/hooks/use-auth"
@@ -16,13 +16,13 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import {
   User,
   Mail,
-  Phone,
   Lock,
   ArrowLeft,
   Camera,
@@ -51,6 +51,7 @@ export default function EditProfilePage() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<UpdateUserFormData>({
@@ -240,17 +241,17 @@ export default function EditProfilePage() {
                   Teléfono{" "}
                   <span className="font-normal text-muted-foreground">(opcional)</span>
                 </Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+53 5555 5555"
-                    className="pl-9"
-                    {...register("phone")}
-                    aria-invalid={!!errors.phone}
-                  />
-                </div>
+                <Controller
+                  control={control}
+                  name="phone"
+                  render={({ field }) => (
+                    <PhoneInput
+                      value={field.value ?? ""}
+                      onChange={(value) => field.onChange(value)}
+                      aria-invalid={!!errors.phone}
+                    />
+                  )}
+                />
                 {errors.phone && (
                   <p className="text-sm text-destructive" role="alert">
                     {errors.phone.message}
