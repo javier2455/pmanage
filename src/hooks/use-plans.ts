@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { assignPlan, createPlan, getAllPlans, getUserPlanHistory } from "@/lib/api/plans";
+import { assignPlan, createPlan, getAllPlans, getUserPlanHistory, removeUserPlan } from "@/lib/api/plans";
 import { AssignPlanPayload, CreateTypePlanPayload } from "@/lib/types/plans";
 
 export function useGetAllPlans() {
@@ -23,6 +23,17 @@ export function useAssignPlanMutation() {
 
     return useMutation({
         mutationFn: (payload: AssignPlanPayload) => assignPlan(payload),
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ["all-users"] });
+        },
+    });
+}
+
+export function useRemoveUserPlanMutation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (userId: string) => removeUserPlan(userId),
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: ["all-users"] });
         },

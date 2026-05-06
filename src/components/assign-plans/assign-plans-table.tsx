@@ -63,6 +63,7 @@ interface AssignPlansTableProps {
   plans: PlanResponse[]
   isLoading: boolean
   onPlanSelect: (user: UserDataResponse, plan: PlanResponse | null) => void
+  onExtendPlan: (user: UserDataResponse) => void
 }
 
 export function AssignPlansTable({
@@ -70,10 +71,11 @@ export function AssignPlansTable({
   plans,
   isLoading,
   onPlanSelect,
+  onExtendPlan,
 }: AssignPlansTableProps) {
   const columns = React.useMemo(
-    () => createAssignPlansColumns(plans, onPlanSelect),
-    [plans, onPlanSelect],
+    () => createAssignPlansColumns(plans, onPlanSelect, onExtendPlan),
+    [plans, onPlanSelect, onExtendPlan],
   )
 
   const [sorting, setSorting] = React.useState<SortingState>([])

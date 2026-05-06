@@ -79,7 +79,7 @@ export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip, ac
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-2">
                     <DialogClose asChild>
-                        <Button variant="outline" type="button" disabled={isLoading}>
+                        <Button variant="outline" type="button" disabled={isLoading} className="cursor-pointer">
                             {actionText === 'Cancelar' ? 'Regresar' : 'Cancelar'}
                         </Button>
                     </DialogClose>
@@ -88,6 +88,7 @@ export function DeleteDialog({ deleteType, name, onConfirm, trigger, tooltip, ac
                         variant="destructive"
                         disabled={isLoading}
                         onClick={handleConfirm}
+                        className="cursor-pointer"
                     >
                         {isLoading ? (
                             <>

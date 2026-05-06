@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react"
 import type { Column, ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, Check, MoreHorizontal, X } from "lucide-react"
+import { ArrowUpDown, CalendarPlus, Check, MoreHorizontal, X } from "lucide-react"
 import { differenceInDays, format, parseISO, startOfDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -48,6 +48,7 @@ function AssignPlansSortableHeader({
 export function createAssignPlansColumns(
   plans: PlanResponse[],
   onPlanSelect: (user: UserDataResponse, plan: PlanResponse | null) => void,
+  onExtendPlan: (user: UserDataResponse) => void,
 ): ColumnDef<UserDataResponse>[] {
   return [
     {
@@ -176,9 +177,26 @@ export function createAssignPlansColumns(
                 <span className="sr-only">Abrir menú</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-52 p-1">
-              <div className="px-2 py-1.5 text-sm font-medium">Asignar plan</div>
-              <div className="my-1 h-px bg-border" />
+            <PopoverContent align="end" className="w-56 p-1">
+              {user.plan ? (
+                <>
+                  <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Acciones del plan
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onExtendPlan(user)}
+                    className="flex w-full items-center gap-2.5 rounded-sm border-l-4 border-transparent px-2 py-1.5 text-left text-sm transition-colors cursor-pointer hover:bg-muted hover:border-primary/60"
+                  >
+                    <CalendarPlus className="size-4 shrink-0 text-primary" />
+                    <span>Extender plan actual</span>
+                  </button>
+                  <div className="my-1 h-px bg-border" />
+                </>
+              ) : null}
+              <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {user.plan ? "Cambiar plan" : "Asignar plan"}
+              </div>
               {plans.map((plan) => {
                 const planStyle = getPlanStyle(plan)
                 const Icon = planStyle.icon
@@ -233,21 +251,19 @@ export function createAssignPlansColumns(
                   </button>
                 )
               })}
-              <div className="my-1 h-px bg-border" />
-              <button
-                type="button"
-                onClick={() => onPlanSelect(user, null)}
-                disabled={!user.plan}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left text-sm transition-colors text-destructive",
-                  user.plan
-                    ? "cursor-pointer hover:bg-muted"
-                    : "cursor-default opacity-50",
-                )}
-              >
-                <X className="size-4 shrink-0" />
-                <span>Quitar plan</span>
-              </button>
+              {user.plan ? (
+                <>
+                  <div className="my-1 h-px bg-border" />
+                  <button
+                    type="button"
+                    onClick={() => onPlanSelect(user, null)}
+                    className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left text-sm transition-colors text-destructive cursor-pointer hover:bg-destructive/10"
+                  >
+                    <X className="size-4 shrink-0" />
+                    <span>Quitar plan</span>
+                  </button>
+                </>
+              ) : null}
             </PopoverContent>
           </Popover>
         )

@@ -103,7 +103,7 @@ export function CancelSaleDialog({ onConfirm, trigger, tooltip }: CancelSaleDial
 
                 <DialogFooter className="gap-2 sm:gap-2">
                     <DialogClose asChild>
-                        <Button variant="outline" type="button" disabled={isLoading}>
+                        <Button variant="outline" type="button" disabled={isLoading} className="cursor-pointer">
                             Regresar
                         </Button>
                     </DialogClose>
@@ -112,6 +112,7 @@ export function CancelSaleDialog({ onConfirm, trigger, tooltip }: CancelSaleDial
                         variant="destructive"
                         disabled={isLoading || !description.trim()}
                         onClick={handleConfirm}
+                        className="cursor-pointer"
                     >
                         {isLoading ? (
                             <>

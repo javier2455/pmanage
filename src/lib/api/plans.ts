@@ -17,6 +17,11 @@ export async function assignPlan(payload: AssignPlanPayload): Promise<AssignPlan
     return data;
 }
 
+export async function removeUserPlan(userId: string) {
+    const { data } = await apiClient.put(plansRoutes.removeUserPlan(userId));
+    return data;
+}
+
 export async function createPlan(payload: CreateTypePlanPayload) {
     const { data } = await apiClient.post(plansRoutes.createPlan, payload);
     return data;
