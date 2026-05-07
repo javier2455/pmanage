@@ -33,7 +33,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Store, Building2, MapPin, Mail, X, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  Store,
+  Building2,
+  MapPin,
+  Mail,
+  X,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { sileo } from "sileo";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
@@ -70,15 +78,14 @@ function StepIndicator({ step }: { step: Step }) {
     <div className="flex items-center gap-3">
       {steps.map((s, idx) => {
         const isActive = s.id === step;
-        const isCompleted =
-          step === "location" && s.id === "info";
+        const isCompleted = step === "location" && s.id === "info";
         return (
           <div key={s.id} className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold",
-                  (isActive || isCompleted)
+                  isActive || isCompleted
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-muted text-muted-foreground",
                 )}
@@ -130,7 +137,8 @@ export default function CreateBusinessPage() {
     }
   }, [isProPlan, businesses.length, isLoadingBusinesses, router]);
 
-  const { data: provincesData, isLoading: isLoadingProvinces } = useGetAllProvinces();
+  const { data: provincesData, isLoading: isLoadingProvinces } =
+    useGetAllProvinces();
   const { data: municipalitiesData, isLoading: isLoadingMunicipalities } =
     useGetAllMunicipalitiesByProvinceId(selectedProvinceId);
 
@@ -170,7 +178,8 @@ export default function CreateBusinessPage() {
   const selectedProvinceName =
     provinces.find((p) => String(p.id) === selectedProvinceId)?.name ?? null;
   const selectedMunicipalityName =
-    municipalities.find((m) => String(m.id) === watchedMunicipalityId)?.name ?? null;
+    municipalities.find((m) => String(m.id) === watchedMunicipalityId)?.name ??
+    null;
 
   const handleLocationChange = (newLat: number, newLng: number) => {
     setValue("lat", newLat, { shouldValidate: true, shouldDirty: true });
@@ -188,7 +197,6 @@ export default function CreateBusinessPage() {
       const payload = {
         ...data,
         description: data.description || null,
-        phone: data.phone || null,
         email: data.email || null,
       };
 
@@ -203,17 +211,20 @@ export default function CreateBusinessPage() {
         },
       });
       router.push("/dashboard");
-
     } catch (error) {
       if (axios.isAxiosError(error)) {
         sileo.error({
           title: error.response?.data?.error ?? "Error",
-          description: error.response?.data?.message ?? "Error al crear el negocio",
+          description:
+            error.response?.data?.message ?? "Error al crear el negocio",
           styles: {
             description: "text-[#dc2626]/90! text-[15px]!",
           },
         });
-        setError("root", { message: error.response?.data?.message ?? "Error al crear el negocio." });
+        setError("root", {
+          message:
+            error.response?.data?.message ?? "Error al crear el negocio.",
+        });
       } else {
         sileo.error({
           title: "Error",
@@ -248,7 +259,12 @@ export default function CreateBusinessPage() {
 
       <StepIndicator step={step} />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+        }}
+        className="flex flex-col gap-5"
+      >
         {step === "info" && (
           <Card>
             <CardHeader>
@@ -297,12 +313,20 @@ export default function CreateBusinessPage() {
                     </Label>
                     <Select
                       onValueChange={(value) =>
-                        setValue("type", value as CreateBusinessFormData["type"], {
-                          shouldValidate: true,
-                        })
+                        setValue(
+                          "type",
+                          value as CreateBusinessFormData["type"],
+                          {
+                            shouldValidate: true,
+                          },
+                        )
                       }
                     >
-                      <SelectTrigger id="type" aria-invalid={!!errors.type} className="w-full">
+                      <SelectTrigger
+                        id="type"
+                        aria-invalid={!!errors.type}
+                        className="w-full"
+                      >
                         <SelectValue placeholder="Selecciona un tipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -351,10 +375,16 @@ export default function CreateBusinessPage() {
                     <Select
                       onValueChange={(value) => {
                         setSelectedProvinceId(value);
-                        setValue("municipalityId", "", { shouldValidate: false });
+                        setValue("municipalityId", "", {
+                          shouldValidate: false,
+                        });
                       }}
                     >
-                      <SelectTrigger id="province" disabled={isLoadingProvinces} className="w-full">
+                      <SelectTrigger
+                        id="province"
+                        disabled={isLoadingProvinces}
+                        className="w-full"
+                      >
                         <SelectValue
                           placeholder={
                             isLoadingProvinces
@@ -377,13 +407,18 @@ export default function CreateBusinessPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <Label htmlFor="municipality" className="text-card-foreground">
+                    <Label
+                      htmlFor="municipality"
+                      className="text-card-foreground"
+                    >
                       Municipio
                     </Label>
                     <Select
                       disabled={!selectedProvinceId || isLoadingMunicipalities}
                       onValueChange={(value) =>
-                        setValue("municipalityId", value, { shouldValidate: true })
+                        setValue("municipalityId", value, {
+                          shouldValidate: true,
+                        })
                       }
                     >
                       <SelectTrigger
@@ -445,9 +480,6 @@ export default function CreateBusinessPage() {
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="phone" className="text-card-foreground">
                       Teléfono{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (opcional)
-                      </span>
                     </Label>
                     <Controller
                       name="phone"
@@ -508,7 +540,10 @@ export default function CreateBusinessPage() {
             provinceName={selectedProvinceName}
             municipalityName={selectedMunicipalityName}
             onAddressSuggestion={(address) =>
-              setValue("address", address, { shouldValidate: true, shouldDirty: true })
+              setValue("address", address, {
+                shouldValidate: true,
+                shouldDirty: true,
+              })
             }
           />
         )}
@@ -555,7 +590,8 @@ export default function CreateBusinessPage() {
             </Button>
           ) : (
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSubmit(onSubmit)}
               disabled={createBusinessMutation.isPending}
             >
               {createBusinessMutation.isPending

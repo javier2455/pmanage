@@ -1,9 +1,23 @@
 import { z } from "zod";
 
-const phoneSchema = z
+export function isDialCodeOnly(value: string | null | undefined): boolean {
+  if (!value) return false;
+  return /^\+\d{1,4}$/.test(value.trim());
+}
+
+const requiredPhoneSchema = z
+  .string()
+  .refine((val) => !!val && !isDialCodeOnly(val), {
+    message: "El número de teléfono es requerido",
+  })
+  .refine((val) => !val || isDialCodeOnly(val) || /^\+[1-9]\d{6,14}$/.test(val), {
+    message: "El número de teléfono no es válido",
+  });
+
+const optionalPhoneSchema = z
   .string()
   .refine(
-    (val) => !val || /^\+[1-9]\d{6,14}$/.test(val),
+    (val) => !val || isDialCodeOnly(val) || /^\+[1-9]\d{6,14}$/.test(val),
     { message: "El número de teléfono no es válido" }
   );
 
@@ -22,7 +36,7 @@ export const createBusinessSchema = z.object({
     message: "El tipo de negocio es requerido",
   }),
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
-  phone: phoneSchema.nullable(),
+  phone: requiredPhoneSchema,
   email: z.string().email("El correo no es válido").nullable().or(z.literal("")),
   municipalityId: z.string().min(1, "La ciudad es requerida"),
   lat: z.number({ message: "La ubicación es requerida" }),
@@ -36,7 +50,7 @@ export const updateBusinessSchema = z.object({
     message: "El tipo de negocio es requerido",
   }),
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
-  phone: phoneSchema.optional().or(z.literal("")),
+  phone: optionalPhoneSchema.optional().or(z.literal("")),
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),
   municipalityId: z.string().min(1, "El municipio es requerido").optional(),
   lat: z.number().optional(),

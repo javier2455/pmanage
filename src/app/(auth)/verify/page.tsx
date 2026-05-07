@@ -12,7 +12,7 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Store, RefreshCw, MailCheck } from "lucide-react"
+import { Store, RefreshCw, MailCheck, CheckCircle2, AlertTriangle } from "lucide-react"
 import axios, { AxiosError } from "axios"
 import { useRouter } from "next/navigation"
 import { authRoutes } from "@/lib/routes/auth";
@@ -115,21 +115,59 @@ export default function VerifyPage() {
             )
             if (response.data?.active === true) {
                 setSucessfulVerification(true)
-                setTimeout(() => {
-                    localStorage.removeItem("userEmail")
-                    router.push("/login")
-                }, 5000)
+                return
             }
+            setError("root", { message: "No pudimos verificar el código. Intenta de nuevo." })
         } catch (error: unknown) {
             if (error instanceof AxiosError) {
-                if (error.response?.data?.error === "Unauthorized" && error.response?.data?.message === "Invalid verification code") {
+                const data = error.response?.data
+                if (data?.error === "Unauthorized" && data?.message === "Invalid verification code") {
                     setError("code", { message: "Código de verificación inválido o expirado" })
+                } else if (error.code === "ERR_NETWORK") {
+                    setError("root", { message: "Error de conexión. Verifica tu internet e intenta de nuevo." })
+                } else if (typeof data?.message === "string" && data.message.length > 0) {
+                    setError("root", { message: data.message })
+                } else {
+                    setError("root", { message: "No pudimos verificar el código. Intenta de nuevo en unos momentos." })
                 }
+            } else {
+                setError("root", { message: "Ocurrió un error inesperado. Intenta de nuevo." })
             }
         } finally {
             setLoading(false)
-            setSucessfulVerification(false)
         }
+    }
+
+    function handleGoToLogin() {
+        localStorage.removeItem("userEmail")
+        router.push("/login")
+    }
+
+    if (sucessfulVerification) {
+        return (
+            <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="flex flex-col items-center gap-4 pb-2">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <CheckCircle2 className="h-6 w-6" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1 text-center">
+                            <CardTitle className="text-2xl font-bold text-card-foreground">
+                                ¡Cuenta verificada!
+                            </CardTitle>
+                            <CardDescription>
+                                Tu correo ha sido verificado correctamente. Ya puedes iniciar sesión y comenzar a usar VentasPro.
+                            </CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-3 pt-4">
+                        <Button className="w-full cursor-pointer" onClick={handleGoToLogin}>
+                            Iniciar sesión
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        )
     }
 
     return (
@@ -155,12 +193,13 @@ export default function VerifyPage() {
                             Revisa tu bandeja de entrada
                         </span>
                     </div>
-                    {sucessfulVerification && (
-                        <div className="mx-auto flex items-center gap-2 rounded-lg bg-muted px-4 py-3">
-                            <MailCheck className="h-5 w-5 text-primary" />
-                            <span className="text-sm text-muted-foreground">
-                                Código de verificación verificado correctamente
-                            </span>
+                    {errors.root && (
+                        <div
+                            className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive"
+                            role="alert"
+                        >
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                            <p className="text-sm">{errors.root.message}</p>
                         </div>
                     )}
                     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -195,11 +234,6 @@ export default function VerifyPage() {
                             {errors.code && (
                                 <p className="text-center text-sm text-destructive" role="alert">
                                     {errors.code.message}
-                                </p>
-                            )}
-                            {errors.root && (
-                                <p className="text-center text-sm text-destructive" role="alert">
-                                    {errors.root.message}
                                 </p>
                             )}
                         </fieldset>

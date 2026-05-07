@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { registerSchema, type RegisterFormData } from "@/lib/validations/auth"
-import { Lock, Mail, Store, User, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { Lock, Mail, Store, User, Loader2, AlertTriangle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from 'axios'
 import { useRegisterMutation } from '@/hooks/use-auth'
@@ -37,6 +37,8 @@ function RegisterPageContent() {
     (invitationQuery.isError || invitationQuery.data?.expired === true);
 
   const [invitationRegistrationDone, setInvitationRegistrationDone] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -246,7 +248,7 @@ function RegisterPageContent() {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Mínimo 8 caracteres"
                   className="pl-9 pr-10"
                   {...register("password")}
@@ -254,6 +256,19 @@ function RegisterPageContent() {
                   autoComplete="new-password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="text-sm text-destructive" role="alert">
@@ -270,7 +285,7 @@ function RegisterPageContent() {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="confirm-password"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Repite tu contrasena"
                   {...register("confirmPassword")}
                   aria-invalid={!!errors.confirmPassword}
@@ -279,6 +294,19 @@ function RegisterPageContent() {
                   autoComplete="new-password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer"
+                  aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
               {errors.confirmPassword && (
                 <p className="text-sm text-destructive" role="alert">

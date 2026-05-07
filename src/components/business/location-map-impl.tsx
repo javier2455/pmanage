@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -32,6 +32,14 @@ function MapClickHandler({
       onLocationChange(e.latlng.lat, e.latlng.lng);
     },
   });
+  return null;
+}
+
+function MapRecenter({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], map.getZoom(), { animate: true });
+  }, [map, lat, lng]);
   return null;
 }
 
@@ -87,6 +95,7 @@ export default function LocationMap({
           draggable={!readOnly}
           eventHandlers={!readOnly ? { dragend: handleMarkerDragEnd } : undefined}
         />
+        <MapRecenter lat={position[0]} lng={position[1]} />
         {!readOnly && onLocationChange && (
           <MapClickHandler onLocationChange={handleClick} />
         )}

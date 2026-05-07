@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Store, Mail, Lock, Loader2 } from "lucide-react"
+import { Store, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react"
 import Link from 'next/link'
 import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -47,9 +47,11 @@ export default function LoginPage() {
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [showLoginTypeModal, setShowLoginTypeModal] = useState(false);
     const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const isSubmitBusy = isAuthenticating || loginMutation.isPending;
     const isGoogleBusy = isGoogleLoading;
+    const isAnyAuthBusy = isSubmitBusy || isGoogleBusy;
 
     const {
         register,
@@ -168,6 +170,9 @@ export default function LoginPage() {
             return;
         }
 
+        let checkPopupClosed: ReturnType<typeof setInterval> | null = null;
+        let authResolved = false;
+
         const handleMessage = async (event: MessageEvent) => {
             if (!event.origin.includes('ms.dveloxsoft.com')) return;
 
@@ -175,6 +180,8 @@ export default function LoginPage() {
                 const { accessToken, refreshToken } = event.data;
 
                 try {
+                    authResolved = true;
+                    if (checkPopupClosed) clearInterval(checkPopupClosed);
                     sessionStorage.setItem("token", accessToken);
                     const user = await getMe();
 
@@ -195,6 +202,8 @@ export default function LoginPage() {
                     setError("root", { message: "Error al obtener los datos del usuario" });
                 }
             } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+                authResolved = true;
+                if (checkPopupClosed) clearInterval(checkPopupClosed);
                 if (popup && !popup.closed) {
                     popup.close();
                 }
@@ -206,11 +215,13 @@ export default function LoginPage() {
 
         window.addEventListener('message', handleMessage);
 
-        const checkPopupClosed = setInterval(() => {
+        checkPopupClosed = setInterval(() => {
             if (popup && popup.closed) {
-                clearInterval(checkPopupClosed);
+                if (checkPopupClosed) clearInterval(checkPopupClosed);
                 window.removeEventListener('message', handleMessage);
-                setIsGoogleLoading(false);
+                if (!authResolved) {
+                    setIsGoogleLoading(false);
+                }
             }
         }, 500);
     };
@@ -307,13 +318,26 @@ export default function LoginPage() {
                                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     id="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     placeholder="Ingresa tu contraseña"
                                     {...register("password")}
                                     aria-invalid={!!errors.password}
                                     className="pl-9 pr-10"
                                     autoComplete="current-password"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer"
+                                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
                             </div>
                             {errors.password && (
                                 <p className="text-sm text-destructive" role="alert">
@@ -331,7 +355,7 @@ export default function LoginPage() {
                         <Button
                             type="submit"
                             className="w-full cursor-pointer"
-                            disabled={isSubmitBusy}
+                            disabled={isAnyAuthBusy}
                             aria-busy={isSubmitBusy}
                         >
                             {isSubmitBusy ? (
@@ -356,7 +380,7 @@ export default function LoginPage() {
                         variant="outline"
                         className="w-full cursor-pointer"
                         onClick={handleGoogleLogin}
-                        disabled={isGoogleBusy}
+                        disabled={isAnyAuthBusy}
                         aria-busy={isGoogleBusy}
                     >
                         {isGoogleBusy ? (

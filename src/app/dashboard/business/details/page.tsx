@@ -5,6 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   updateBusinessSchema,
+  isDialCodeOnly,
   type UpdateBusinessFormData,
 } from "@/lib/validations/business";
 import { useUpdateBusinessMutation, useDeleteBusinessMutation } from "@/hooks/use-business";
@@ -170,7 +171,7 @@ export default function BusinessDetailsPage() {
           description: data.description || null,
           type: data.type,
           address: data.address,
-          phone: data.phone || null,
+          phone: data.phone && !isDialCodeOnly(data.phone) ? data.phone : null,
           email: data.email || null,
           municipalityId: data.municipalityId || undefined,
           lat: data.lat,
