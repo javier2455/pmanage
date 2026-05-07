@@ -1,9 +1,9 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import axios from "axios"
 import { sileo } from "sileo"
-import { useGetAllUsersData } from "@/hooks/use-user"
+import { useGetAllUsersData, useGetUserPlanStats } from "@/hooks/use-user"
 import { useGetAllPlans, useAssignPlanMutation, useRemoveUserPlanMutation } from "@/hooks/use-plans"
 import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
@@ -13,6 +13,9 @@ import {
   AssignPlanConfirmDialog,
   type AssignPlanDialogMode,
 } from "@/components/assign-plans/assign-plan-confirm-dialog"
+
+const SEARCH_DEBOUNCE_MS = 350
+const DEFAULT_PAGE_SIZE = 10
 
 const SUCCESS_TOAST_STYLES = {
   title: "text-white! text-[16px]! font-bold!",
@@ -41,8 +44,34 @@ function isoToLocalDate(iso: string): string {
 }
 
 export default function AssignPlansPage() {
-  const { data: usersData, isLoading: isLoadingUsers } = useGetAllUsersData()
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [searchInput, setSearchInput] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setDebouncedSearch(searchInput.trim())
+    }, SEARCH_DEBOUNCE_MS)
+    return () => window.clearTimeout(handle)
+  }, [searchInput])
+
+  /** Reset a la primera página cuando cambia la búsqueda o el tamaño de página. */
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, pageSize])
+
+  const {
+    data: usersData,
+    isLoading: isLoadingUsers,
+    isFetching: isFetchingUsers,
+  } = useGetAllUsersData({
+    page,
+    limit: pageSize,
+    search: debouncedSearch || undefined,
+  })
   const { data: plansData } = useGetAllPlans()
+  const { data: statsData, isLoading: isLoadingStats } = useGetUserPlanStats()
   const assignPlanMutation = useAssignPlanMutation()
   const removeUserPlanMutation = useRemoveUserPlanMutation()
 
@@ -208,12 +237,24 @@ export default function AssignPlansPage() {
         </p>
       </div>
 
-      <AssignPlansStatsCards users={users} plans={plans ?? []} />
+      <AssignPlansStatsCards
+        stats={statsData}
+        plans={plans ?? []}
+        isLoading={isLoadingStats}
+      />
 
       <AssignPlansTable
         users={users}
         plans={plans}
         isLoading={isLoadingUsers}
+        isFetching={isFetchingUsers && !isLoadingUsers}
+        totalUsers={statsData?.total ?? 0}
+        pageIndex={page - 1}
+        pageSize={pageSize}
+        onPageChange={(nextIndex) => setPage(nextIndex + 1)}
+        onPageSizeChange={(nextSize) => setPageSize(nextSize)}
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
         onPlanSelect={handlePlanSelect}
         onExtendPlan={handleExtendPlan}
       />

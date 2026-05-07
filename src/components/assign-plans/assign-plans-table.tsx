@@ -4,16 +4,12 @@ import * as React from "react"
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
-  type ColumnFiltersState,
-  type PaginationState,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
 import Link from "next/link"
-import { Plus, Search, Users } from "lucide-react"
+import { Loader2, Plus, Search, Users, X } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -43,6 +39,7 @@ import { cn } from "@/lib/utils"
 import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav"
+import { PageSizeSelect } from "@/components/data-table/page-size-select"
 import {
   createAssignPlansColumns,
   type AssignPlansColumnMeta,
@@ -62,6 +59,14 @@ interface AssignPlansTableProps {
   users: UserDataResponse[]
   plans: PlanResponse[]
   isLoading: boolean
+  isFetching: boolean
+  totalUsers: number
+  pageIndex: number
+  pageSize: number
+  onPageChange: (nextIndex: number) => void
+  onPageSizeChange: (nextSize: number) => void
+  searchValue: string
+  onSearchChange: (value: string) => void
   onPlanSelect: (user: UserDataResponse, plan: PlanResponse | null) => void
   onExtendPlan: (user: UserDataResponse) => void
 }
@@ -70,6 +75,14 @@ export function AssignPlansTable({
   users,
   plans,
   isLoading,
+  isFetching,
+  totalUsers,
+  pageIndex,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  searchValue,
+  onSearchChange,
   onPlanSelect,
   onExtendPlan,
 }: AssignPlansTableProps) {
@@ -79,55 +92,36 @@ export function AssignPlansTable({
   )
 
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  )
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  })
-
-  React.useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, [users])
-
-  React.useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }))
-  }, [columnFilters])
 
   const table = useReactTable({
     data: users,
     columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
-    state: {
-      sorting,
-      columnFilters,
-      pagination,
-    },
+    state: { sorting },
+    manualPagination: true,
+    manualFiltering: true,
   })
 
-  const pageCount = table.getPageCount()
-  const maxPageIndex = Math.max(0, pageCount - 1)
-  React.useEffect(() => {
-    if (pagination.pageIndex > maxPageIndex) {
-      setPagination((p) => ({ ...p, pageIndex: maxPageIndex }))
-    }
-  }, [maxPageIndex, pagination.pageIndex])
+  const hasSearch = searchValue.trim().length > 0
 
-  const nameColumn = table.getColumn("name")
-  const nameFilterValue = String(nameColumn?.getFilterValue() ?? "")
-  const filteredTotal = table.getFilteredRowModel().rows.length
-  const hasNameFilter = nameFilterValue.trim().length > 0
+  /**
+   * Si hay búsqueda activa el backend no devuelve `total` filtrado, así que usamos
+   * una heurística: hay siguiente página solo si la página actual viene llena.
+   */
+  const pageCount = hasSearch
+    ? users.length === pageSize
+      ? pageIndex + 2
+      : pageIndex + 1
+    : Math.max(1, Math.ceil(totalUsers / pageSize))
 
-  function clearNameFilter() {
-    nameColumn?.setFilterValue(undefined)
+  const canShowNoResults = !isLoading && hasSearch && users.length === 0
+  const canShowEmptyState = !isLoading && !hasSearch && users.length === 0
+
+  function clearSearch() {
+    onSearchChange("")
   }
 
   const cardHeader = (
@@ -142,7 +136,7 @@ export function AssignPlansTable({
               Lista de usuarios
             </CardTitle>
             <CardDescription>
-              Selecciona un usuario para asignarle un plan
+              Busca un usuario o navega entre páginas para administrar planes
             </CardDescription>
           </div>
         </div>
@@ -153,16 +147,22 @@ export function AssignPlansTable({
               id="assign-plans-user-search"
               type="search"
               placeholder="Buscar por nombre o correo…"
-              value={nameFilterValue}
-              disabled={isLoading || users.length === 0}
-              onChange={(e) =>
-                nameColumn?.setFilterValue(
-                  e.target.value.length ? e.target.value : undefined,
-                )
-              }
-              className="h-10 pl-9"
+              value={searchValue}
+              disabled={isLoading}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="h-10 pl-9 pr-9"
               aria-controls="assign-plans-users-table"
             />
+            {hasSearch ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Limpiar búsqueda"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
           </div>
           <Button asChild className="h-10 w-full sm:w-auto">
             <Link href="/dashboard/admin/assign-plans/create">
@@ -180,13 +180,16 @@ export function AssignPlansTable({
       <Card className="w-full max-w-full overflow-x-hidden">
         {cardHeader}
         <CardContent className="w-full max-w-full p-6">
-          <p className="text-center text-muted-foreground">Cargando usuarios…</p>
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Cargando usuarios…</span>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
-  if (users.length === 0) {
+  if (canShowEmptyState) {
     return (
       <Card className="w-full max-w-full overflow-x-hidden">
         {cardHeader}
@@ -211,7 +214,7 @@ export function AssignPlansTable({
     <Card className="w-full max-w-full overflow-x-hidden">
       {cardHeader}
       <CardContent className="w-full max-w-full p-0">
-        {filteredTotal === 0 ? (
+        {canShowNoResults ? (
           <div className="px-4 pb-6 pt-2">
             <Empty className="border-border border bg-muted/30">
               <EmptyHeader>
@@ -220,8 +223,8 @@ export function AssignPlansTable({
                 </EmptyMedia>
                 <EmptyTitle>Sin resultados</EmptyTitle>
                 <EmptyDescription>
-                  No hay usuarios que coincidan con «{nameFilterValue.trim()}».
-                  Prueba con otro término o limpia la búsqueda.
+                  No hay usuarios que coincidan con «{searchValue.trim()}». Prueba
+                  con otro término o limpia la búsqueda.
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
@@ -229,7 +232,7 @@ export function AssignPlansTable({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={clearNameFilter}
+                  onClick={clearSearch}
                 >
                   Limpiar búsqueda
                 </Button>
@@ -237,7 +240,18 @@ export function AssignPlansTable({
             </Empty>
           </div>
         ) : (
-          <div className="w-full max-w-full overflow-x-auto">
+          <div
+            className={cn(
+              "relative w-full max-w-full overflow-x-auto transition-opacity",
+              isFetching && "opacity-60",
+            )}
+          >
+            {isFetching ? (
+              <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-background/80 px-2 py-1 text-xs text-muted-foreground shadow-sm">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Actualizando…
+              </div>
+            ) : null}
             <Table id="assign-plans-users-table" className="min-w-[600px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -285,39 +299,50 @@ export function AssignPlansTable({
           </div>
         )}
 
-        <div className="flex flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            {hasNameFilter ? (
-              <>
-                <span className="font-medium text-foreground">
-                  {filteredTotal}
-                </span>{" "}
-                coincidencia{filteredTotal === 1 ? "" : "s"} de{" "}
-                <span className="font-medium text-foreground">
-                  {users.length}
-                </span>{" "}
-                usuarios
-              </>
+            {hasSearch ? (
+              users.length === 0 ? (
+                <>Sin coincidencias</>
+              ) : (
+                <>
+                  Mostrando{" "}
+                  <span className="font-medium text-foreground">
+                    {users.length}
+                  </span>{" "}
+                  resultado{users.length === 1 ? "" : "s"} de{" "}
+                  <span className="font-medium text-foreground">
+                    {totalUsers}
+                  </span>{" "}
+                  usuarios
+                </>
+              )
             ) : (
               <>
                 Total:{" "}
                 <span className="font-medium text-foreground">
-                  {users.length}
+                  {totalUsers}
                 </span>{" "}
-                usuario{users.length === 1 ? "" : "s"}
+                usuario{totalUsers === 1 ? "" : "s"}
               </>
             )}
           </p>
-          {filteredTotal > 0 ? (
-            <DataTablePaginationNav
-              pageIndex={pagination.pageIndex}
-              pageCount={pageCount}
-              onPageIndexChange={(nextIndex) =>
-                setPagination((p) => ({ ...p, pageIndex: nextIndex }))
-              }
-              navLabel="Paginación de usuarios"
+          <div className="flex flex-wrap items-center gap-3">
+            <PageSizeSelect
+              value={pageSize}
+              onChange={onPageSizeChange}
+              disabled={isFetching && users.length === 0}
             />
-          ) : null}
+            {pageCount > 1 ? (
+              <DataTablePaginationNav
+                pageIndex={pageIndex}
+                pageCount={pageCount}
+                onPageIndexChange={onPageChange}
+                navLabel="Paginación de usuarios"
+                disabled={isFetching}
+              />
+            ) : null}
+          </div>
         </div>
       </CardContent>
     </Card>

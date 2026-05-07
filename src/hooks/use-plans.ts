@@ -24,7 +24,10 @@ export function useAssignPlanMutation() {
     return useMutation({
         mutationFn: (payload: AssignPlanPayload) => assignPlan(payload),
         onSuccess: async () => {
-            await queryClient.refetchQueries({ queryKey: ["all-users"] });
+            await Promise.all([
+                queryClient.refetchQueries({ queryKey: ["all-users"] }),
+                queryClient.refetchQueries({ queryKey: ["user-plan-stats"] }),
+            ]);
         },
     });
 }
@@ -35,7 +38,10 @@ export function useRemoveUserPlanMutation() {
     return useMutation({
         mutationFn: (userId: string) => removeUserPlan(userId),
         onSuccess: async () => {
-            await queryClient.refetchQueries({ queryKey: ["all-users"] });
+            await Promise.all([
+                queryClient.refetchQueries({ queryKey: ["all-users"] }),
+                queryClient.refetchQueries({ queryKey: ["user-plan-stats"] }),
+            ]);
         },
     });
 }

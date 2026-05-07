@@ -18,6 +18,13 @@ export interface UserResponseOfRegister {
     pageId: string;
 }
 
+export interface UserRole {
+  id: number;
+  name: string;
+  pageId: string;
+  permission: string;
+}
+
 export interface UserDataResponse {
   id: string;
   email: string;
@@ -27,14 +34,25 @@ export interface UserDataResponse {
   updatedAt: string;
   lastLogin: string;
   pageId: string;
-  rol: string | null;
+  rol: string | UserRole | null;
   active: number;
   twoFactorEnabled: boolean;
   plan: Plan | null
   providers: Provider[];
   hasPassword: boolean;
   name: string;
-  _source: string;
+  _source?: string;
+}
+
+export interface UserPlanStatsResponse {
+  total: number;
+  byPlan: Record<string, number>;
+}
+
+export interface GetAllUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
 
@@ -58,7 +76,7 @@ export type Plan = {
   id: string;
   name: string;
   description: string | null;
-  price: number | null;
+  price: number | string | null;
   isActive: boolean;
   startsAt: string;
   expiresAt: string;

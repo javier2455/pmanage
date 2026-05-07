@@ -1,13 +1,24 @@
-import { getAllUsersData, updateUser } from "@/lib/api/user";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { UpdateUserFormPayload } from "@/lib/types/user";
+import { getAllUsersData, getUserPlanStats, updateUser } from "@/lib/api/user";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
+import { GetAllUsersParams, UpdateUserFormPayload } from "@/lib/types/user";
 
-export function useGetAllUsersData() {
+export function useGetAllUsersData(params: GetAllUsersParams = {}) {
     return useQuery({
-        queryKey: ["all-users"],
-        queryFn: () => getAllUsersData(),
-        // enabled: !!productId, // evita ejecutar si no hay id
-        // staleTime: 1000 * 60, // 1 minuto
+        queryKey: ["all-users", params],
+        queryFn: () => getAllUsersData(params),
+        placeholderData: keepPreviousData,
+    });
+}
+
+export function useGetUserPlanStats() {
+    return useQuery({
+        queryKey: ["user-plan-stats"],
+        queryFn: () => getUserPlanStats(),
     });
 }
 

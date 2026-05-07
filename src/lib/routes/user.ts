@@ -2,6 +2,7 @@ import { BASIC_ROUTE } from ".";
 
 export const userRoutes = {
   getUserData: `${BASIC_ROUTE}/users/get-all`,
+  getUserPlanStats: `${BASIC_ROUTE}/users/plan-stats`,
   updateUser: (userId: string) => `${BASIC_ROUTE}/users/update/${userId}`,
 
   /* Business-workers */

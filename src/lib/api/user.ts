@@ -1,10 +1,31 @@
 import apiClient from "@/lib/axios";
 import { userRoutes } from "../routes/user";
-import { UpdateUserFormPayload, UserDataResponse } from "../types/user";
+import {
+    GetAllUsersParams,
+    UpdateUserFormPayload,
+    UserDataResponse,
+    UserPlanStatsResponse,
+} from "../types/user";
 
-export async function getAllUsersData(): Promise<UserDataResponse[]> {
-    const { data } = await apiClient.get(userRoutes.getUserData);
+export async function getAllUsersData(
+    params: GetAllUsersParams = {},
+): Promise<UserDataResponse[]> {
+    const search = params.search?.trim() ? params.search.trim() : undefined;
+    const { data } = await apiClient.get<UserDataResponse[]>(userRoutes.getUserData, {
+        params: {
+            page: params.page,
+            limit: params.limit,
+            search,
+        },
+    });
 
+    return data;
+}
+
+export async function getUserPlanStats(): Promise<UserPlanStatsResponse> {
+    const { data } = await apiClient.get<UserPlanStatsResponse>(
+        userRoutes.getUserPlanStats,
+    );
     return data;
 }
 
