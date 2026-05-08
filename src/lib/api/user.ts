@@ -3,15 +3,15 @@ import { userRoutes } from "../routes/user";
 import {
     GetAllUsersParams,
     UpdateUserFormPayload,
-    UserDataResponse,
+    UsersListResponse,
     UserPlanStatsResponse,
 } from "../types/user";
 
 export async function getAllUsersData(
     params: GetAllUsersParams = {},
-): Promise<UserDataResponse[]> {
+): Promise<UsersListResponse> {
     const search = params.search?.trim() ? params.search.trim() : undefined;
-    const { data } = await apiClient.get<UserDataResponse[]>(userRoutes.getUserData, {
+    const { data } = await apiClient.get<UsersListResponse>(userRoutes.getUserData, {
         params: {
             page: params.page,
             limit: params.limit,

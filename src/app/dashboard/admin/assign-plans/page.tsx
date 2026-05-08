@@ -75,7 +75,8 @@ export default function AssignPlansPage() {
   const assignPlanMutation = useAssignPlanMutation()
   const removeUserPlanMutation = useRemoveUserPlanMutation()
 
-  const users: UserDataResponse[] = usersData ?? []
+  const users: UserDataResponse[] = usersData?.data ?? []
+  const usersMeta = usersData?.meta
   const plans = plansData?.data ?? []
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -248,7 +249,8 @@ export default function AssignPlansPage() {
         plans={plans}
         isLoading={isLoadingUsers}
         isFetching={isFetchingUsers && !isLoadingUsers}
-        totalUsers={statsData?.total ?? 0}
+        totalUsers={usersMeta?.total ?? statsData?.total ?? 0}
+        totalPages={usersMeta?.totalPages ?? 0}
         pageIndex={page - 1}
         pageSize={pageSize}
         onPageChange={(nextIndex) => setPage(nextIndex + 1)}

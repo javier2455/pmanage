@@ -44,6 +44,18 @@ export interface UserDataResponse {
   _source?: string;
 }
 
+export interface UsersListMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface UsersListResponse {
+  data: UserDataResponse[];
+  meta: UsersListMeta;
+}
+
 export interface UserPlanStatsResponse {
   total: number;
   byPlan: Record<string, number>;

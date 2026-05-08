@@ -61,6 +61,7 @@ interface AssignPlansTableProps {
   isLoading: boolean
   isFetching: boolean
   totalUsers: number
+  totalPages: number
   pageIndex: number
   pageSize: number
   onPageChange: (nextIndex: number) => void
@@ -77,6 +78,7 @@ export function AssignPlansTable({
   isLoading,
   isFetching,
   totalUsers,
+  totalPages,
   pageIndex,
   pageSize,
   onPageChange,
@@ -107,15 +109,7 @@ export function AssignPlansTable({
 
   const hasSearch = searchValue.trim().length > 0
 
-  /**
-   * Si hay búsqueda activa el backend no devuelve `total` filtrado, así que usamos
-   * una heurística: hay siguiente página solo si la página actual viene llena.
-   */
-  const pageCount = hasSearch
-    ? users.length === pageSize
-      ? pageIndex + 2
-      : pageIndex + 1
-    : Math.max(1, Math.ceil(totalUsers / pageSize))
+  const pageCount = Math.max(1, totalPages)
 
   const canShowNoResults = !isLoading && hasSearch && users.length === 0
   const canShowEmptyState = !isLoading && !hasSearch && users.length === 0
