@@ -176,11 +176,12 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
     const permisos = buildPermisos(Array.from(selected.values()));
 
     try {
+      const trimmedPhone = data.phone?.trim() ?? "";
       await createMutation.mutateAsync({
         businessId: activeBusinessId,
         name: data.name.trim(),
         email: data.email.trim(),
-        phone: data.phone.trim(),
+        ...(trimmedPhone ? { phone: trimmedPhone } : {}),
         job: data.job.trim(),
         permisos,
       });

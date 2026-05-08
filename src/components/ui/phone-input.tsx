@@ -61,7 +61,13 @@ function PhoneInput({
       countries: defaultCountries,
       forceDialCode: true,
       onChange: (data) => {
-        onChange?.(data.phone);
+        const dialCodeOnly = `+${data.country.dialCode}`;
+        const digitsOnly = data.phone.replace(/\D/g, "");
+        const emitted =
+          data.phone === dialCodeOnly || digitsOnly === data.country.dialCode
+            ? ""
+            : data.phone;
+        onChange?.(emitted);
       },
       inputRef,
     });
