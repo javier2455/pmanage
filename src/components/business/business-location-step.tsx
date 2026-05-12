@@ -41,6 +41,7 @@ export function BusinessLocationStep({
   const requestIdRef = useRef(0);
   const [suggestedAddress, setSuggestedAddress] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isResolvingAddress, setIsResolvingAddress] = useState(false);
 
   useEffect(() => {
     if (!suggestedAddress) return;
@@ -56,9 +57,11 @@ export function BusinessLocationStep({
     if (!onAddressSuggestion) return;
 
     const requestId = ++requestIdRef.current;
+    setIsResolvingAddress(true);
     void (async () => {
       const result = await resolveAddressFromCoords(newLat, newLng);
       if (requestId !== requestIdRef.current) return;
+      setIsResolvingAddress(false);
       if (!result?.address) return;
 
       const detected = result.address;
@@ -103,6 +106,7 @@ export function BusinessLocationStep({
           provinceName={provinceName}
           municipalityName={municipalityName}
           hasAddressSuggestion={!!suggestedAddress}
+          isResolvingAddress={isResolvingAddress}
           onShowAddressSuggestion={() => setIsDialogOpen(true)}
         />
       </div>

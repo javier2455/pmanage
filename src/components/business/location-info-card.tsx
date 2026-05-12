@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, MapPin, RefreshCcw } from "lucide-react";
+import { Building2, Loader2, MapPin, RefreshCcw } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ interface LocationInfoCardProps {
   provinceName?: string | null;
   municipalityName?: string | null;
   hasAddressSuggestion?: boolean;
+  isResolvingAddress?: boolean;
   onShowAddressSuggestion?: () => void;
 }
 
@@ -24,6 +25,7 @@ export function LocationInfoCard({
   provinceName,
   municipalityName,
   hasAddressSuggestion = false,
+  isResolvingAddress = false,
   onShowAddressSuggestion,
 }: LocationInfoCardProps) {
   const locationParts = [municipalityName, provinceName].filter(Boolean);
@@ -73,7 +75,26 @@ export function LocationInfoCard({
           </div>
         )}
 
-        {hasAddressSuggestion && onShowAddressSuggestion && (
+        {isResolvingAddress && (
+          <>
+            <Separator />
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                Analizando la ubicación seleccionada...
+              </p>
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex h-9 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-3 text-sm font-medium text-muted-foreground"
+              >
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span>Cargando nueva ubicación...</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {!isResolvingAddress && hasAddressSuggestion && onShowAddressSuggestion && (
           <>
             <Separator />
             <div className="flex flex-col gap-2">
