@@ -1,6 +1,7 @@
 import apiClient from "@/lib/axios";
 import { invitationRoutes } from "@/lib/routes/invitations";
 import type {
+  AcceptInvitationResponse,
   DeleteInvitationResponse,
   GetInvitationByIdResponse,
   InvitationsResponseInterface,
@@ -38,6 +39,15 @@ export async function deleteInvitation(
 ): Promise<DeleteInvitationResponse> {
   const { data } = await apiClient.delete<DeleteInvitationResponse>(
     invitationRoutes.deleteInvitation(invitationId),
+  );
+  return data;
+}
+
+export async function acceptInvitation(
+  invitationId: string,
+): Promise<AcceptInvitationResponse> {
+  const { data } = await apiClient.post<AcceptInvitationResponse>(
+    invitationRoutes.acceptInvitation(invitationId),
   );
   return data;
 }

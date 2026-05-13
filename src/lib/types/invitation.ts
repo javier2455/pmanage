@@ -60,3 +60,8 @@ export interface GetInvitationByIdResponse {
 export interface DeleteInvitationResponse {
   message: string;
 }
+
+export interface AcceptInvitationResponse {
+  message: string;
+  data?: unknown;
+}

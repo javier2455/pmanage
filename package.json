@@ -1,6 +1,6 @@
 {
   "name": "pmanage",
-  "version": "0.20.7-beta",
+  "version": "0.20.8-beta",
   "private": true,
   "scripts": {
     "dev": "next dev",

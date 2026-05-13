@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  acceptInvitation,
   deleteInvitation,
   getAllInvitations,
   getInvitationById,
@@ -41,6 +42,12 @@ export function useGetInvitationByIdQuery(invitationId: string) {
     queryKey: ["invitation", invitationId],
     queryFn: () => getInvitationById(invitationId),
     enabled: !!invitationId,
+  });
+}
+
+export function useAcceptInvitationMutation() {
+  return useMutation({
+    mutationFn: (invitationId: string) => acceptInvitation(invitationId),
   });
 }
 
