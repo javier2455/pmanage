@@ -49,6 +49,12 @@ export function useCreateWorkerMutation() {
       queryClient.invalidateQueries({
         queryKey: ["all-workers-by-business-id"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["all-invitations-by-business-id"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["invitations-count"],
+      });
     },
   });
 }
