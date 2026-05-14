@@ -20,7 +20,7 @@ import { Suspense, useEffect, useState } from "react"
 function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const invitationId = searchParams.get("invitation");
+  const invitationId = searchParams.get("invitationId");
   const registerMutation = useRegisterMutation();
 
   const invitationQuery = useQuery({

@@ -18,7 +18,7 @@ import { useAcceptInvitationMutation } from "@/hooks/use-invitations";
 
 function AcceptInvitationPageContent() {
   const searchParams = useSearchParams();
-  const invitationId = searchParams.get("invitation");
+  const invitationId = searchParams.get("invitationId");
   const mutation = useAcceptInvitationMutation();
 
   if (!invitationId) {
