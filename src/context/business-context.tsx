@@ -10,9 +10,10 @@ import {
   ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { isAxiosError } from "axios";
 import { Business } from "@/lib/types/business";
 import { businessRoutes } from "@/lib/routes/business";
+import apiClient from "@/lib/axios";
 import { useRouter, usePathname } from "next/navigation";
 import { sileo } from "sileo";
 import { clearAuthCookies } from "@/lib/cookies";
@@ -44,19 +45,15 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["businesses"],
     queryFn: async () => {
-      const { data } = await axios.get(businessRoutes.getMyBusinesses, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-      });
+      const { data } = await apiClient.get(businessRoutes.getMyBusinesses);
 
       if (Array.isArray(data?.data)) {
         return data.data;
       }
       return [];
     },
-    retry: (failureCount, error) => {
-      if (axios.isAxiosError(error) && error.response?.status === 401) return false;
+    retry: (failureCount, error: unknown) => {
+      if (error instanceof Error && "response" in error && (error as { response?: { status?: number } }).response?.status === 401) return false;
       return failureCount < 2;
     },
   });
@@ -72,7 +69,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     if (isError) {
       console.error("BusinessProvider error:", error);
 
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
+      if (isAxiosError(error) && error.response?.status === 401) {
         sileo.error({
           title: "Sesión expirada",
           description: "Tu sesión ha expirado. Inicia sesión nuevamente.",
@@ -87,7 +84,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       } else {
         sileo.error({
           title: "Error al cargar negocios",
-          description: axios.isAxiosError(error)
+          description: isAxiosError(error)
             ? error.response?.data?.message ?? "Error de conexión con el servidor"
             : "Error inesperado. Intenta recargar la página.",
           styles: { description: "text-[#dc2626]/90! text-[15px]!" },
