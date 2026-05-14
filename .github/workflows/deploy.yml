@@ -30,21 +30,12 @@ jobs:
       - name: Build Next.js project
         run: pnpm run build
 
-      - name: Create production package.json
+      - name: Prepare standalone deployment
         run: |
-          node -e "
-            const pkg = require('./package.json');
-            const prodPkg = {
-              name: pkg.name,
-              version: pkg.version,
-              private: true,
-              scripts: {
-                start: 'NODE_ENV=production node server.js'
-              },
-              dependencies: pkg.dependencies
-            };
-            require('fs').writeFileSync('package.json', JSON.stringify(prodPkg, null, 2));
-          "
+          # Copy static assets and public into the standalone folder
+          # The standalone output has its own minimal node_modules — no pnpm install needed on server
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
 
       - name: Clean remote folder
         uses: appleboy/ssh-action@v1.0.0
@@ -56,83 +47,28 @@ jobs:
           script: |
             TARGET=~/psearch.dveloxsoft.com
             cd $TARGET
-            # Eliminar todos los archivos y carpetas excepto los protegidos
+            # shopt -s dotglob ensures hidden files (.cache, .pnpm-store, etc.) are also matched
+            shopt -s dotglob
             for item in *; do
-              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "tmp" ] && [ "$item" != "node_modules" ] && [ "$item" != "apiv1" ]; then
-                rm -rf "$item"
-              fi
+              case "$item" in
+                ".htaccess"|".well-known"|"tmp"|"apiv1") ;;
+                *) rm -rf "$item" ;;
+              esac
             done
+            shopt -u dotglob
 
-      - name: Upload .next folder to cPanel
+      - name: Upload standalone to cPanel
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.CPANEL_HOST }}
           username: ${{ secrets.CPANEL_USER }}
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: ".next/**"
+          source: ".next/standalone/**"
           target: "~/psearch.dveloxsoft.com/"
           overwrite: true
           rm: false
-          strip_components: 0
-
-      - name: Upload public folder to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "public/**"
-          target: "~/psearch.dveloxsoft.com/public/"
-          overwrite: true
-          rm: false
-          strip_components: 1
-
-      - name: Upload server.js to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "server.js"
-          target: "~/psearch.dveloxsoft.com/"
-          overwrite: true
-
-      - name: Upload package.json to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "package.json"
-          target: "~/psearch.dveloxsoft.com/"
-          overwrite: true
-
-      - name: Upload pnpm-lock.yaml to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_USER }}
-          key: ${{ secrets.CPANEL_KEY }}
-          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "pnpm-lock.yaml"
-          target: "~/psearch.dveloxsoft.com/"
-          overwrite: true
-
-      # - name: Upload .env file if exists
-      #   uses: appleboy/scp-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.CPANEL_HOST }}
-      #     username: ${{ secrets.CPANEL_USER }}
-      #     key: ${{ secrets.CPANEL_KEY }}
-      #     passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-      #     source: ".env.production"
-      #     target: "~/psearch.dveloxsoft.com/api/"
-      #     overwrite: true
-      #   continue-on-error: true
+          strip_components: 2
 
       - name: Restart Passenger
         uses: appleboy/ssh-action@v1.0.0
