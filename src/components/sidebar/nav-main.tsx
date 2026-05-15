@@ -44,9 +44,12 @@ export function NavMain({
 }) {
   const pathname = usePathname()
 
+  const isActive = (url: string) =>
+    pathname === url || pathname.startsWith(url + "/")
+
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Navegacion</SidebarGroupLabel>
+      <SidebarGroupLabel>Navegación</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) =>
           item.items && item.items.length > 0 ? (
@@ -55,7 +58,7 @@ export function NavMain({
               asChild
               defaultOpen={
                 item.isActive ||
-                item.items.some((sub) => pathname === sub.url)
+                item.items.some((sub) => isActive(sub.url))
               }
               className="group/collapsible"
             >
@@ -78,7 +81,7 @@ export function NavMain({
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild={!subItem.disabled}
-                          isActive={pathname === subItem.url && !subItem.disabled}
+                          isActive={isActive(subItem.url) && !subItem.disabled}
                           className={cn(
                             subItem.disabled && "pointer-events-none opacity-50 cursor-not-allowed"
                           )}
