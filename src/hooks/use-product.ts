@@ -42,7 +42,6 @@ export function useCreateProductInBusinessMutation() {
         mutationFn: (credentials: CreateProductInBusinessProps) => createInBusiness(credentials),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
-            queryClient.invalidateQueries({ queryKey: ["all-products"] });
         },
     });
 }

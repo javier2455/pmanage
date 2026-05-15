@@ -107,6 +107,32 @@ Dos componentes concentraban cientos o miles de líneas sin ninguna estrategia d
 
 ---
 
+## Punto 1.5 — staleTime global mal calibrado
+
+**Estado:** Resuelto dentro del Punto 1.4.
+
+### Nota
+
+El punto 1.5 (calibrar el `staleTime` por dominio en lugar de usar un único valor global) fue implementado directamente dentro del Punto 1.4. Al reescribir `query-provider.tsx` con `setQueryDefaults`, se abordaron ambos problemas en la misma sesión de trabajo. Ver la entrada del Punto 1.4 para el detalle completo.
+
+---
+
+## Punto 1.6 — Imágenes sin optimizar (`next/image`)
+
+**Estado:** Pendiente — requiere información del backend.
+
+### ¿Por qué se hará?
+
+Varios componentes usan el tag `<img>` nativo de HTML en lugar de `next/image`. Esto implica que las imágenes se sirven sin optimización de formato (sin conversión a WebP/AVIF), sin lazy load automático por parte del browser, y sin el sistema de `sizes` que adapta la resolución al viewport del usuario.
+
+### ¿Qué se necesita para implementarlo?
+
+Para configurar `next/image` con imágenes remotas se debe declarar el dominio o patrón del CDN en `next.config.ts` bajo `images.remotePatterns`. Sin este dato, Next.js rechaza las imágenes remotas y lanza un error de seguridad en producción.
+
+Se implementará una vez el equipo de backend confirme el dominio del CDN donde se almacenan las imágenes de productos y avatares.
+
+---
+
 ## Punto 1.4 — Cache persistente y staleTime por dominio
 
 **Fecha:** 2026-05-14
@@ -151,6 +177,88 @@ Adicionalmente, la query de `businesses` en `BusinessProvider` usaba `axios` dir
 - El dashboard y las ventas reflejan el estado real en 30 segundos sin esperar 5 minutos.
 - La query de negocios se beneficia del refresh automático de token si este expira, eliminando errores silenciosos que dejaban el sidebar vacío.
 - El código del contexto es más limpio y sin lógica duplicada de autenticación.
+
+---
+
+## Punto 1.7 — Invalidación innecesaria en asignación de producto a negocio
+
+**Fecha:** 2026-05-14
+
+### ¿Por qué se hizo?
+
+`useCreateProductInBusinessMutation` en [src/hooks/use-product.ts](src/hooks/use-product.ts) invalidaba dos query keys al completarse:
+
+1. `["all-product-of-my-businesses", businessId]` — correcto, el inventario del negocio cambió.
+2. `["all-products"]` — **incorrecto**.
+
+La función `createInBusiness` en la API (`src/lib/api/product.ts`) solo envía `{ productId, price, entryPrice, stock }` al backend. Es una operación de asignación: vincula un producto existente del catálogo a un negocio específico. El catálogo global de productos (`["all-products"]`) no cambia en absoluto con esta operación.
+
+Invalidar `["all-products"]` causaba que el catálogo completo se recargara del servidor cada vez que un usuario asignaba un producto a su negocio, sin ningún motivo real.
+
+### ¿Qué se cambió?
+
+Eliminada la línea `queryClient.invalidateQueries({ queryKey: ["all-products"] })` de `useCreateProductInBusinessMutation`.
+
+### Archivo modificado
+
+| Archivo | Cambio |
+|---|---|
+| [src/hooks/use-product.ts](src/hooks/use-product.ts) | Eliminada invalidación innecesaria de `["all-products"]` en `useCreateProductInBusinessMutation`. |
+
+### ¿Qué mejora?
+
+- Asignar un producto a un negocio dejó de disparar una recarga del catálogo completo.
+- La operación ahora solo invalida el cache del negocio afectado, que es lo único que realmente cambió.
+
+---
+
+---
+
+## Punto 1.8 — Auth en sessionStorage + refresh sin deduplicación
+
+**Estado:** Pendiente — requiere coordinación con backend.
+
+### ¿Qué hay que hacer?
+
+El token de acceso se guarda en `sessionStorage`, que es accesible desde cualquier script en la página (vulnerable a XSS). La solución ideal es migrar a `httpOnly cookies`, que el browser gestiona automáticamente y JavaScript no puede leer. También existe un riesgo de race condition si múltiples requests 401 disparan el refresh simultáneamente (aunque el interceptor en `axios.ts` ya tiene lógica de cola, merece revisión bajo carga).
+
+**Requiere:** Que el backend devuelva el token en una cookie `httpOnly` al hacer login/refresh en lugar de en el body del response. Coordinar con el equipo de backend antes de implementar.
+
+---
+
+## Punto 1.9 — Paginación server-side consistente y virtualización
+
+**Estado:** Pendiente.
+
+### ¿Qué hay que hacer?
+
+Algunas tablas de la app (historial de inventario, ventas, cierre contable) pueden crecer indefinidamente. Con paginación solo del lado cliente, el backend sigue enviando todos los registros aunque el usuario solo vea 10. Hay que:
+- Asegurar que todos los endpoints aceptan `page` y `limit` y el frontend los usa correctamente.
+- Para tablas con más de 200 filas, implementar virtualización con `@tanstack/react-virtual`.
+- Persistir el estado de paginación y filtros en la URL con `useSearchParams` para que recargar la página no salte a página 1.
+
+---
+
+## Punto 1.10 — Bundle size: dependencias pesadas
+
+**Estado:** Pendiente.
+
+### ¿Qué hay que hacer?
+
+Instalar `@next/bundle-analyzer`, correr `npm run analyze` y medir el First Load JS actual como baseline. Luego:
+- Verificar que los imports de `date-fns`, `lucide-react` y `recharts` son puntuales (no barrel imports).
+- Agregar `experimental.optimizePackageImports` en `next.config.ts` para las librerías que lo soporten.
+- Medir el before/after con Lighthouse.
+
+---
+
+## Punto 1.11 — Server Actions para operaciones de escritura
+
+**Estado:** Pendiente — evaluar con backend.
+
+### ¿Qué hay que hacer?
+
+Las mutaciones (crear venta, gasto, producto) actualmente van de cliente → API externa. Se podría interponer un Route Handler de Next.js como proxy con cache HTTP (`Cache-Control: s-maxage`) para lecturas frecuentes. Para escrituras, Server Actions eliminarían el JS del cliente asociado a los calls de axios. Requiere evaluar si el backend soporta headers de cache y si la latencia del proxy adicional compensa.
 
 ---
 
