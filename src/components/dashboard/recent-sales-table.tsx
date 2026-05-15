@@ -51,9 +51,9 @@ export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
                         {rows.map((sale) => (
                             <div
                                 key={sale.id}
-                                className="flex items-start justify-between gap-3 py-2 border-b border-border last:border-0"
+                                className="grid grid-cols-[1fr_auto] items-start gap-3 py-2 border-b border-border last:border-0"
                             >
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 max-w-[65%]">
                                     <p
                                         className={cn(
                                             "text-sm font-medium text-card-foreground",
@@ -69,7 +69,7 @@ export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
                                         <p className="text-xs text-destructive/90 mt-1"><span className="font-medium text-white dark:text-muted-foreground">Motivo:</span> {sale.cancelledReason}</p>
                                     ) : null}
                                 </div>
-                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                <div className="flex flex-col items-end gap-1">
                                     <span
                                         className={cn(
                                             "text-sm font-semibold text-card-foreground",
