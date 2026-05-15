@@ -1,0 +1,19 @@
+Options -MultiViews
+RewriteEngine On
+
+# Skip rewriting if path already contains the placeholder
+RewriteRule __dynamic__ - [L]
+
+# Rewrite dynamic route params to the __dynamic__ placeholder
+# Order matters: more specific paths first
+RewriteRule ^dashboard/business/workers/([^/]+)/edit/?$ /dashboard/business/workers/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/workers/([^/]+)/?$ /dashboard/business/workers/__dynamic__/ [L]
+RewriteRule ^dashboard/business/products/catalog/([^/]+)/edit/?$ /dashboard/business/products/catalog/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/products/([^/]+)/edit/?$ /dashboard/business/products/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/expenses/([^/]+)/edit/?$ /dashboard/business/expenses/__dynamic__/edit/ [L]
+RewriteRule ^reset-password/([^/]+)/?$ /reset-password/__dynamic__/ [L]
+
+# Serve existing static files and directories normally
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]

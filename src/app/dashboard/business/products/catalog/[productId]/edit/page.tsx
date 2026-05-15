@@ -1,4 +1,8 @@
 import { EditCatalogProductForm } from "@/components/products/edit-catalog-product-form";
+
+export function generateStaticParams() {
+  return [{ productId: "__dynamic__" }];
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackagePlus } from "lucide-react";
 

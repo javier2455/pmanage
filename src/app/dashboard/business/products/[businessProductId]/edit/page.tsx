@@ -1,4 +1,8 @@
 import { EditProductForm } from "@/components/products/edit-product-form";
+
+export function generateStaticParams() {
+  return [{ businessProductId: "__dynamic__" }];
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackagePlus } from "lucide-react";
 
