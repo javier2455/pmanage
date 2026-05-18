@@ -209,7 +209,7 @@ export function createWorkersColumns(
                   }
                 />
                 <Link
-                  href={`/dashboard/business/workers/${worker.id}/edit`}
+                  href={`/dashboard/business/workers/edit?id=${worker.id}`}
                   className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
                 >
                   <Pencil className="size-4 text-amber-500 dark:text-amber-400" />

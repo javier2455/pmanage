@@ -1,9 +1,9 @@
-import WorkerEditClient from "./worker-edit-client";
+import { redirect } from "next/navigation";
 
 export function generateStaticParams() {
   return [{ workerId: "__dynamic__" }];
 }
 
 export default function EditWorkerPage() {
-  return <WorkerEditClient />;
+  redirect("/dashboard/business/workers");
 }

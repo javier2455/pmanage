@@ -1,9 +1,9 @@
-import ExpenseEditClient from "./expense-edit-client";
+import { redirect } from "next/navigation";
 
 export function generateStaticParams() {
   return [{ expenseId: "__dynamic__" }];
 }
 
 export default function EditExpensePage() {
-  return <ExpenseEditClient />;
+  redirect("/dashboard/business/expenses");
 }
