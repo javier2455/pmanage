@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - move-to-spa
+      - develop
 
 jobs:
 
@@ -45,7 +45,8 @@ jobs:
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
             TARGET=~/psearch.dveloxsoft.com
-            cd $TARGET
+            cd $TARGET || exit 1
+
             for item in *; do
               if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "api" ]; then
                 rm -rf "$item"
@@ -67,10 +68,10 @@ jobs:
 
 
   ##############################################
-  # DEPLOY Develop → psearch.dveloxsoft.com
+  # DEPLOY DEVELOP → psearch.dveloxsoft.com/dev
   ##############################################
   deploy-dev:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
 
     steps:
@@ -94,7 +95,7 @@ jobs:
       - name: Build Next.js project
         run: pnpm run build
 
-      - name: Clean remote folder
+      - name: Clean ONLY the /dev folder (safe)
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -103,7 +104,9 @@ jobs:
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
             TARGET=~/psearch.dveloxsoft.com/dev
-            cd $TARGET
+            cd $TARGET || exit 1
+
+            # Elimina SOLO el contenido dentro de /dev
             for item in *; do
               if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "api" ]; then
                 rm -rf "$item"
