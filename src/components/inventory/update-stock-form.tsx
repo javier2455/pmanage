@@ -174,7 +174,7 @@ export function UpdateStockForm() {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
-                    USD
+                    CUP
                   </span>
                 </div>
               </div>
