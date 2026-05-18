@@ -149,7 +149,7 @@ export function createExpensesColumns(
                 }
               />
               <Link
-                href={`/dashboard/business/expenses/${row.original.id}/edit`}
+                href={`/dashboard/business/expenses/edit?id=${row.original.id}`}
                 className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
               >
                 <Pencil className="size-4 text-amber-500 dark:text-amber-400" />

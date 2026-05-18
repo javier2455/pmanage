@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
