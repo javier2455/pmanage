@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { useParams, useRouter } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useEditProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
 import { ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
@@ -31,8 +31,8 @@ const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
 
 export function EditCatalogProductForm() {
     const router = useRouter()
-    const { productId: productIdParam } = useParams()
-    const productId = (productIdParam as string) ?? ""
+    const searchParams = useSearchParams()
+    const productId = searchParams.get("id") ?? ""
 
     const { data, isLoading, isError } = useGetProductByIdQuery(productId)
     const editProductMutation = useEditProductMutation()

@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { ChevronRight } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
@@ -44,8 +45,20 @@ export function NavMain({
 }) {
   const pathname = usePathname()
 
-  const isActive = (url: string) =>
-    pathname === url || pathname.startsWith(url + "/")
+  const activeUrl = React.useMemo(() => {
+    const allUrls = items.flatMap((item) => [
+      item.url,
+      ...(item.items?.map((sub) => sub.url) ?? []),
+    ]).filter((url) => url && url !== "#")
+
+    return allUrls
+      .filter((url) => pathname === url || pathname.startsWith(url + "/"))
+      .sort((a, b) => b.length - a.length)[0]
+  }, [items, pathname])
+
+  const isPathActive = (url: string) => url === activeUrl
+
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({})
 
   return (
     <SidebarGroup>
@@ -56,9 +69,12 @@ export function NavMain({
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={
-                item.isActive ||
-                item.items.some((sub) => isActive(sub.url))
+              open={
+                item.items.some((sub) => sub.url === activeUrl) ||
+                (openGroups[item.title] ?? false)
+              }
+              onOpenChange={(open) =>
+                setOpenGroups((prev) => ({ ...prev, [item.title]: open }))
               }
               className="group/collapsible"
             >
@@ -81,7 +97,7 @@ export function NavMain({
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild={!subItem.disabled}
-                          isActive={isActive(subItem.url) && !subItem.disabled}
+                          isActive={isPathActive(subItem.url) && !subItem.disabled}
                           className={cn(
                             subItem.disabled && "pointer-events-none opacity-50 cursor-not-allowed"
                           )}
@@ -111,7 +127,7 @@ export function NavMain({
               <SidebarMenuButton
                 asChild={!item.disabled}
                 tooltip={item.title}
-                isActive={pathname === item.url && !item.disabled}
+                isActive={isPathActive(item.url) && !item.disabled}
                 className={cn(
                   item.disabled && "pointer-events-none opacity-50 cursor-not-allowed"
                 )}
