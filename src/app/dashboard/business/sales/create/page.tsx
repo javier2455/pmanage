@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useBusiness } from "@/context/business-context"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
@@ -387,10 +388,12 @@ export default function CreateSalesPage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/50">
                           {item.imageUrl ? (
-                            <img
+                            <Image
                               src={item.imageUrl}
                               alt={item.productName}
-                              className="h-10 w-10 rounded-lg object-cover"
+                              width={40}
+                              height={40}
+                              className="rounded-lg object-cover"
                             />
                           ) : (
                             <Box className="h-4 w-4 text-muted-foreground" />

@@ -119,17 +119,43 @@ El punto 1.5 (calibrar el `staleTime` por dominio en lugar de usar un único val
 
 ## Punto 1.6 — Imágenes sin optimizar (`next/image`)
 
-**Estado:** Pendiente — requiere información del backend.
+**Fecha:** 2026-05-20
 
-### ¿Por qué se hará?
+### ¿Por qué se hizo?
 
-Varios componentes usan el tag `<img>` nativo de HTML en lugar de `next/image`. Esto implica que las imágenes se sirven sin optimización de formato (sin conversión a WebP/AVIF), sin lazy load automático por parte del browser, y sin el sistema de `sizes` que adapta la resolución al viewport del usuario.
+Varios componentes usaban el tag `<img>` nativo de HTML en lugar de `next/image`. Esto significaba que las imágenes de productos, historial de inventario y el carrito de ventas se descargaban siempre en su tamaño y formato original (JPEG/PNG), sin ninguna de las optimizaciones de Next.js:
 
-### ¿Qué se necesita para implementarlo?
+- Sin conversión automática a **WebP/AVIF** (formatos hasta 40% más livianos).
+- Sin **lazy loading** gestionado por el framework.
+- Sin adaptación de resolución al tamaño real del contenedor (`sizes`).
+- Sin el beneficio del CDN de imágenes de Next.js.
 
-Para configurar `next/image` con imágenes remotas se debe declarar el dominio o patrón del CDN en `next.config.ts` bajo `images.remotePatterns`. Sin este dato, Next.js rechaza las imágenes remotas y lanza un error de seguridad en producción.
+Adicionalmente, dos formularios (`edit-catalog-product-form`, `new-product-form`) ya usaban `next/image` pero con `unoptimized` forzado siempre, lo que desactivaba todas las optimizaciones incluso cuando la imagen venía del CDN.
 
-Se implementará una vez el equipo de backend confirme el dominio del CDN donde se almacenan las imágenes de productos y avatares.
+### ¿Qué se cambió?
+
+- Registrado el dominio del CDN (`bucket.dveloxsoft.com`) en `next.config.ts` bajo `images.remotePatterns`.
+- Convertidos todos los `<img>` a `<Image>` de `next/image` con `fill` o dimensiones explícitas según el contexto.
+- En `edit-catalog-product-form.tsx`: `unoptimized` cambiado a `unoptimized={!!imagePreview}` — solo se desactiva la optimización cuando el `src` es un blob local (preview de archivo subido); cuando muestra la imagen del CDN, aplican todas las optimizaciones.
+- En `new-product-form.tsx`: sin cambios — el `src` siempre es un blob local, `unoptimized` es correcto.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| [next.config.ts](next.config.ts) | Añadido `images.remotePatterns` para `bucket.dveloxsoft.com`. |
+| [src/components/products/product-image.tsx](src/components/products/product-image.tsx) | `<img>` → `<Image fill sizes="96px">`. |
+| [src/components/inventory/inventory-history-item.tsx](src/components/inventory/inventory-history-item.tsx) | `<img>` → `<Image fill sizes="(max-width: 640px) 100vw, 160px">`. |
+| [src/app/dashboard/business/sales/create/page.tsx](src/app/dashboard/business/sales/create/page.tsx) | `<img>` → `<Image width={40} height={40}>` en el carrito. |
+| [src/components/auth/login-type-selection-modal.tsx](src/components/auth/login-type-selection-modal.tsx) | SVGs locales convertidos a `<Image width={160} height={160}>`. |
+| [src/components/products/edit-catalog-product-form.tsx](src/components/products/edit-catalog-product-form.tsx) | `unoptimized` → `unoptimized={!!imagePreview}` + `sizes="256px"`. |
+
+### ¿Qué mejora?
+
+- Las imágenes de productos se sirven en WebP/AVIF en lugar de JPEG/PNG original, reduciendo el peso de cada imagen entre un 25% y un 40%.
+- Next.js gestiona el lazy loading y solo descarga las imágenes visibles en el viewport.
+- El atributo `sizes` le indica al browser exactamente qué resolución necesita para cada contenedor, evitando descargar imágenes más grandes de lo necesario.
+- Las imágenes del CDN en formularios de edición ahora pasan por el optimizador de Next.js.
 
 ---
 

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls c:/Users/jalea/Desktop/Projects/Personal/Buscador/pmanage/*.md)"
+      "Bash(ls c:/Users/jalea/Desktop/Projects/Personal/Buscador/pmanage/*.md)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\jalea\\\\Desktop\\\\Projects\\\\Personal\\\\Buscador\\\\pmanage\" -Force)",
+      "Bash(Select-Object Name, Mode)"
     ]
   }
 }

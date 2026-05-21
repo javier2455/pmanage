@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Ensure trailing slashes for cPanel compatibility
   trailingSlash: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "bucket.dveloxsoft.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { InventoryEntry } from "@/lib/types/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -128,12 +129,12 @@ export default function InventoryHistoryItem({
 
           <div className="relative h-40 w-full shrink-0 bg-white sm:mx-4 sm:h-auto sm:w-36 sm:self-stretch md:w-40">
             {entry.product?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={entry.product.imageUrl}
                 alt={entry.product?.name ?? "Producto"}
-                className="absolute inset-0 h-full w-full object-contain sm:object-cover"
-                loading="lazy"
+                fill
+                className="object-contain sm:object-cover"
+                sizes="(max-width: 640px) 100vw, 160px"
               />
             ) : (
               <div

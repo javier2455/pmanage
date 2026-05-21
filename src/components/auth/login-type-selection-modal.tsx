@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Briefcase, Users } from "lucide-react";
 
 import {
@@ -47,11 +48,12 @@ export function LoginTypeSelectionModal({
                         className="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center shadow-sm transition-all duration-500 ease-out hover:border-primary hover:shadow-lg focus-visible:border-primary focus-visible:outline-none dark:hover:shadow-[0_0_24px_rgba(34,197,94,0.45)]"
                     >
                         <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-lg bg-white">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <Image
                                 src="/business-owner.svg"
                                 alt="Dueño de Negocio"
-                                className="h-full w-full object-contain"
+                                width={160}
+                                height={160}
+                                className="object-contain"
                             />
                         </div>
                         <Briefcase className="h-6 w-6 text-primary" />
@@ -69,11 +71,12 @@ export function LoginTypeSelectionModal({
                         className="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center shadow-sm transition-all duration-500 ease-out hover:border-primary hover:shadow-lg focus-visible:border-primary focus-visible:outline-none dark:hover:shadow-[0_0_24px_rgba(34,197,94,0.45)]"
                     >
                         <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-lg bg-white">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <Image
                                 src="/business-member.svg"
                                 alt="Miembro de Negocio"
-                                className="h-full w-full object-contain"
+                                width={160}
+                                height={160}
+                                className="object-contain"
                             />
                         </div>
                         <Users className="h-6 w-6 text-primary" />

@@ -263,7 +263,8 @@ export function EditCatalogProductForm() {
                                 alt="Imagen del producto"
                                 fill
                                 className="object-cover"
-                                unoptimized
+                                sizes="256px"
+                                unoptimized={!!imagePreview}
                             />
                             {imagePreview && (
                                 <button
