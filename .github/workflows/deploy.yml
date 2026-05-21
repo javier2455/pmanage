@@ -1,0 +1,127 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+
+  ##############################################
+  # DEPLOY MAIN → psearch.dveloxsoft.com
+  ##############################################
+  deploy-main:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Next.js project
+        run: pnpm run build
+
+      - name: Clean remote folder
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          script: |
+            TARGET=~/psearch.dveloxsoft.com
+            cd $TARGET || exit 1
+
+            for item in *; do
+              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "api" ] && [ "$item" != "dev" ]; then
+                rm -rf "$item"
+              fi
+            done
+
+      - name: Upload static site (out/)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "out/**"
+          target: "~/psearch.dveloxsoft.com/"
+          overwrite: true
+          rm: false
+          strip_components: 1
+
+
+  ##############################################
+  # DEPLOY DEVELOP → psearch.dveloxsoft.com/dev
+  ##############################################
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Next.js project
+        run: pnpm run build
+
+      - name: Clean ONLY the /dev folder (safe)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          script: |
+            TARGET=~/psearch.dveloxsoft.com/dev
+            cd $TARGET || exit 1
+
+            # Elimina SOLO el contenido dentro de /dev
+            for item in *; do
+              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "api" ]; then
+                rm -rf "$item"
+              fi
+            done
+
+      - name: Upload static site (out/)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USER }}
+          key: ${{ secrets.CPANEL_KEY }}
+          passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
+          source: "out/**"
+          target: "~/psearch.dveloxsoft.com/dev/"
+          overwrite: true
+          rm: false
+          strip_components: 1
