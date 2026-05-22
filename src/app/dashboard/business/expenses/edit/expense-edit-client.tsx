@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { ArrowLeft, HandCoins, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import {
   Card,
@@ -15,9 +15,8 @@ import { ExpenseForm } from "@/components/expenses/expense-form";
 import { useGetExpenseByIdQuery } from "@/hooks/use-expenses";
 
 export default function ExpenseEditClient() {
-  const params = useParams();
-  const expenseId = (params?.expenseId as string) ?? "";
-  const isPlaceholder = !expenseId || expenseId === "__dynamic__";
+  const searchParams = useSearchParams();
+  const expenseId = searchParams.get("id") ?? "";
   const { data, isLoading, isError } = useGetExpenseByIdQuery(expenseId);
 
   return (
@@ -55,7 +54,7 @@ export default function ExpenseEditClient() {
           </div>
         </CardHeader>
         <CardContent>
-          {isPlaceholder || isLoading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>

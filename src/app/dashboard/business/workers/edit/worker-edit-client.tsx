@@ -1,19 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 import { WorkerForm } from "@/components/workers/worker-form";
 import { useGetWorkerByIdQuery } from "@/hooks/use-workers";
 
 export default function WorkerEditClient() {
-  const params = useParams();
-  const workerId = (params?.workerId as string) ?? "";
-  const isPlaceholder = !workerId || workerId === "__dynamic__";
+  const searchParams = useSearchParams();
+  const workerId = searchParams.get("id") ?? "";
   const { data, isLoading, isError } = useGetWorkerByIdQuery(workerId);
 
-  if (isPlaceholder || isLoading) {
+  if (isLoading) {
     return (
       <section className="flex items-center justify-center py-12">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />

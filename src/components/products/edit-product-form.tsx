@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { useBusiness } from "@/context/business-context"
 import { useUpdateBusinessProductPriceMutation } from "@/hooks/use-product"
@@ -30,8 +30,8 @@ function formatCurrency(value: number) {
 
 export function EditProductForm() {
     const router = useRouter()
-    const { businessProductId: businessProductIdParam } = useParams()
-    const businessProductId = (businessProductIdParam as string) ?? ""
+    const searchParams = useSearchParams()
+    const businessProductId = searchParams.get("id") ?? ""
     const { activeBusinessId } = useBusiness()
     const queryClient = useQueryClient()
 

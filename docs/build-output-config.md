@@ -245,14 +245,72 @@ Cada vez que se añada una ruta dinámica nueva al proyecto, hay que actualizar 
 
 Si añades el primero pero olvidas el segundo, el build pasa limpio pero la ruta dará 404 en producción.
 
-### 6.5. Implicación práctica al añadir nuevas rutas dinámicas
+### 6.5. ⚠️ Trampa crítica: `useParams()` devuelve `"__dynamic__"`, no el valor real
+
+El patrón `__dynamic__` resuelve el problema del **build** (que falla por falta de `generateStaticParams()`), pero introduce un problema **en runtime** que es fácil de pasar por alto y muy difícil de diagnosticar después.
+
+Cuando Apache reescribe internamente `/dashboard/business/products/abc123/edit/` → `/dashboard/business/products/__dynamic__/edit/index.html`, el navegador:
+
+1. Recibe el HTML pre-renderizado con `params.businessProductId = "__dynamic__"` ya bakeado en el RSC payload.
+2. Hidrata React con ese valor.
+3. `useParams()` en el cliente devuelve `{ businessProductId: "__dynamic__" }`, **no el `abc123` que aparece en la URL**.
+
+Si el componente cliente toma ese valor y lo pasa a una llamada API (`GET /api/v2/product/${id}`), la petición se hace literalmente con `"__dynamic__"` como id y el backend responde 400 con un mensaje del tipo *"Producto con ID __dynamic__ no encontrado"*.
+
+#### La solución: usar query string en lugar de segmento dinámico para los detalles
+
+`main` resuelve esto rediseñando las URLs de detalle/edición para que **no dependan del segmento dinámico**:
+
+- Antes: `/dashboard/business/products/{id}/edit/` con `[businessProductId]` como segmento.
+- Después: `/dashboard/business/products/edit/?id={id}` con segmento estático y el id como query param.
+
+En el cliente, en vez de `useParams()`, se usa `useSearchParams().get("id")`. Los search params **sí** se leen en runtime desde la URL real del navegador, no del HTML pre-renderizado, así que devuelven el valor correcto.
+
+Las rutas dinámicas viejas (`[businessProductId]/edit/page.tsx`) se mantienen pero se reducen a un simple `redirect()` a la lista, para que los links antiguos no devuelvan 404. Ese redirect no necesita leer el id, así que el `__dynamic__` no le afecta.
+
+#### Cuándo aplica esta trampa
+
+Aplica siempre que un client component lea el segmento dinámico vía `useParams()` para hacer un fetch o construir contenido específico de esa instancia. Si la página dinámica:
+
+- **No usa el param** (solo redirige, muestra un placeholder genérico, etc.): seguro, no aplica.
+- **Lo usa para fetch o renderizar datos de esa instancia**: rota silenciosamente. Reemplaza con query string.
+
+#### Patrón recomendado
+
+```ts
+// ❌ NO usar para páginas que dependen del valor del param en cliente
+// /dashboard/business/products/[businessProductId]/edit/page.tsx
+const { businessProductId } = useParams(); // "__dynamic__" en producción
+
+// ✅ Usar este patrón
+// /dashboard/business/products/edit/page.tsx (segmento estático)
+const searchParams = useSearchParams();
+const businessProductId = searchParams.get("id") ?? "";
+// URL: /dashboard/business/products/edit/?id=abc123
+```
+
+Y los links que apuntaban a las URLs viejas:
+
+```ts
+// Antes
+<Link href={`/dashboard/business/products/${id}/edit`}>
+
+// Después
+<Link href={`/dashboard/business/products/edit?id=${id}`}>
+```
+
+#### Esto **no** elimina la necesidad del patrón `__dynamic__`
+
+Las páginas con segmento dinámico siguen existiendo en el repo (ahora como redirects) y siguen necesitando `generateStaticParams()` y las reglas del `.htaccess`. Sin eso, el build falla. Por eso este patrón no reemplaza al `__dynamic__`, lo complementa: el `__dynamic__` mantiene compatibilidad de URLs viejas y satisface el build; el query string es por dónde fluye realmente la app.
+
+### 6.6. Implicación práctica al añadir nuevas rutas dinámicas
 
 Cualquier ruta nueva con un segmento `[param]` que se añada a `develop` (o `main`) **romperá el build o el despliegue** si no se sigue este patrón. La regla a recordar:
 
-1. Si la página puede ser un server component, exportar `generateStaticParams()` con `[{ param: "__dynamic__" }]` directamente en `page.tsx`.
-2. Si la página necesita ser cliente (hooks, estado, etc.), partirla en dos: `page.tsx` server con `generateStaticParams()` que renderiza `<Algo />`, y `algo-client.tsx` con `"use client"` que lee el parámetro vía `useParams()`.
+1. **Antes de añadir un `[param]`, pregúntate si lo necesitas.** Si la página va a usar el id para fetch/render en cliente, mejor evita la ruta dinámica y usa `/.../edit/?id=...` (ver 6.5). Reserva los `[param]` para casos donde realmente quieres una URL bonita, sabiendo que el client component **no podrá leer el valor real** y tendrá que parsear `window.location` o limitarse a redirigir.
+2. Si igual añades el segmento dinámico, exportar `generateStaticParams()` con `[{ param: "__dynamic__" }]` en `page.tsx`. Si la página es cliente, partirla: `page.tsx` server con `generateStaticParams()` + `algo-client.tsx` con `"use client"`.
 3. Nunca confiar en `params: Promise<{...}>` por props si la página termina necesitando ser cliente: ese patrón sólo es válido en server components.
-4. Añadir la regla correspondiente en [public/.htaccess](../public/.htaccess).
+4. Añadir la regla correspondiente en [public/.htaccess](../public/.htaccess) (con o sin prefijo `/dev/` según la rama).
 
 ---
 
