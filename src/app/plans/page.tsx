@@ -12,39 +12,45 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Check, X, MessageCircle, Zap, Shield } from "lucide-react"
+
+type BillingPeriod = "monthly" | "yearly"
 
 const plans = [
     {
         name: "Basico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        price: 3,
-        period: "mes",
+        monthlyPrice: 5,
+        yearlyPrice: 3,
         badge: null,
         features: [
-            { text: "Registrar un negocio", included: true },
-            { text: "Registra hasta 100 productos", included: true },
-            { text: "Registro de ventas", included: true },
-            { text: "Registro de compras", included: true },
+            { text: "1 negocio", included: true },
+            { text: "Hasta 100 productos", included: true },
+            { text: "Registro de ventas y compras", included: true },
             { text: "Cierre contable diario", included: true },
-            { text: "Tipo de cambio manual", included: true },
-            { text: "Soporte por grupo de whatsapp o correo", included: true },
+            { text: "Tasas de cambio multi-moneda", included: true },
+            { text: "Soporte por WhatsApp o correo", included: true },
         ],
         highlighted: false,
     },
     {
         name: "Pro",
         description: "Para negocios en crecimiento que necesitan control total.",
-        price: 10,
-        period: "mes",
+        monthlyPrice: 15,
+        yearlyPrice: 12,
         badge: "Recomendado",
         features: [
-            { text: "Todo lo que incluye el plan básico más:", included: true },
-            { text: "Registrar hasta 3 negocios", included: true },
-            { text: "Registra hasta 500 productos", included: true },
+            { text: "Todo lo que incluye el plan basico mas:", included: true },
+            { text: "Hasta 3 negocios", included: true },
+            { text: "Hasta 500 productos", included: true },
             { text: "Cierre contable mensual", included: true },
+            { text: "Exportar Excel/PDF", included: true },
+            { text: "Alertas de stock bajo", included: true },
+            { text: "Rentabilidad por producto", included: true },
+            { text: "Comparativa de periodos", included: true },
+            { text: "Ventas por trabajador", included: true },
             { text: "Soporte prioritario 24/7", included: true },
-            { text: "Reportes avanzados y exportacion", included: true },
         ],
         highlighted: false,
     },
@@ -57,6 +63,7 @@ const WHATSAPP_MESSAGE = encodeURIComponent(
 
 export default function PlansPage() {
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+    const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
 
     function handleSelect(planName: string) {
         setSelectedPlan(planName)
@@ -75,8 +82,27 @@ export default function PlansPage() {
                         </p>
                     </div>
 
+                    <div className="flex justify-center">
+                        <Tabs
+                            value={billingPeriod}
+                            onValueChange={(value) => setBillingPeriod(value as BillingPeriod)}
+                        >
+                            <TabsList>
+                                <TabsTrigger value="monthly" className="px-6 cursor-pointer">
+                                    Mensual
+                                </TabsTrigger>
+                                <TabsTrigger value="yearly" className="px-6 cursor-pointer">
+                                    Anual
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </div>
+
                     <div className="grid gap-6 md:grid-cols-2">
-                        {plans.map((plan) => (
+                        {plans.map((plan) => {
+                            const displayPrice =
+                                billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice
+                            return (
                             <Card
                                 key={plan.name}
                                 className={`relative flex flex-col transition-all ${plan.highlighted
@@ -120,13 +146,23 @@ export default function PlansPage() {
                                 </CardHeader>
 
                                 <CardContent className="flex-1">
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-bold text-card-foreground">
-                                            ${plan.price}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">
-                                            USD o al cambio en moneda nacional / {plan.period}
-                                        </span>
+                                    <div className="mb-6">
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-4xl font-bold text-card-foreground">
+                                                ${displayPrice}
+                                            </span>
+                                            <span className="text-sm text-muted-foreground">
+                                                USD / mes
+                                            </span>
+                                        </div>
+                                        {billingPeriod === "yearly" && (
+                                            <p className="mt-1.5 text-xs text-muted-foreground">
+                                                Facturado anualmente (${displayPrice * 12} USD/año)
+                                            </p>
+                                        )}
+                                        <p className="mt-1.5 text-xs text-muted-foreground">
+                                            Si pagas en moneda nacional, el cambio aplicado es el que acepta la plataforma.
+                                        </p>
                                     </div>
 
                                     <Separator className="mb-4" />
@@ -171,7 +207,8 @@ export default function PlansPage() {
                                     </Button>
                                 </CardFooter>
                             </Card>
-                        ))}
+                            )
+                        })}
                     </div>
 
                     <Separator />
