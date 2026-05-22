@@ -1,0 +1,329 @@
+# Configuración del build: por qué se genera (o no) la carpeta `out/`
+
+Este documento explica en detalle por qué en algún momento `next build` dejó de generar la carpeta `out/` en la rama `develop`, qué significa cada modo de salida de Next.js, qué decisión se tomó y — muy importante — **qué se pierde** al elegir el modo de exportación estática. Léelo completo antes de volver a tocar la configuración de salida del build.
+
+---
+
+## 1. El síntoma
+
+- En la rama `main`, al ejecutar `next build`, se generaba en la raíz del proyecto una carpeta llamada `out/` con todos los archivos HTML, CSS y JS estáticos listos para subir al hosting (cPanel).
+- En la rama `develop`, al ejecutar el mismo `next build`, la carpeta `out/` **no aparecía**. En su lugar aparecía contenido dentro de `.next/standalone/`.
+
+No era un bug del proceso de build ni un fallo de instalación: el comando estaba haciendo exactamente lo que se le pedía. La diferencia estaba en el archivo `next.config.ts`, que en cada rama pedía un **tipo de artefacto de salida distinto**.
+
+---
+
+## 2. La causa raíz: el campo `output` de Next.js
+
+Next.js admite varios modos de "salida" del build, controlados por la propiedad `output` en `next.config.ts`. Cada modo produce **un artefacto diferente** y está pensado para **un tipo de despliegue diferente**.
+
+### 2.1. `output: "export"` (modo estático) — el que usa `main`
+
+- Activa el **Static HTML Export** de Next.js.
+- Al correr `next build`, Next pre-renderiza todas las rutas a HTML plano y vuelca el resultado en la carpeta `out/`.
+- El resultado son archivos puramente estáticos: HTML, CSS, JS, imágenes. **No hay servidor Node ejecutándose en producción**.
+- Se sube directamente a cualquier hosting estático: cPanel, S3 + CloudFront, GitHub Pages, Netlify estático, etc.
+- Es el modo que estaba configurado originalmente en este proyecto y el que el hosting actual (cPanel) espera.
+
+### 2.2. `output: "standalone"` (modo servidor autocontenido) — el que estaba en `develop`
+
+- Genera una carpeta `.next/standalone/` con un **servidor Node.js mínimo y autocontenido**, incluyendo solo las dependencias estrictamente necesarias para correr la app.
+- El despliegue consiste en copiar esa carpeta a un servidor que ejecute `node server.js`.
+- Está pensado para entornos donde **sí hay un proceso Node corriendo** en producción: contenedores Docker, VPS, plataformas tipo Railway/Render/Fly.io, etc.
+- **Nunca produce la carpeta `out/`**, porque no es su objetivo. Si esperabas `out/` y configuraste `standalone`, no vas a encontrarla por mucho que repitas el build.
+
+### 2.3. `output` ausente o `undefined` (modo por defecto)
+
+- Build clásico de Next.js, con la carpeta `.next/` lista para que `next start` la sirva.
+- Tampoco genera `out/`.
+
+---
+
+## 3. Qué tenía cada rama antes del cambio
+
+### `main` (lo que funcionaba para cPanel)
+
+```ts
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+```
+
+- `output: "export"` → genera `out/`.
+- `trailingSlash: true` → cada ruta queda como `/dashboard/` en vez de `/dashboard`. Esto es importante en hostings estáticos tipo cPanel/Apache, porque sirven `dashboard/index.html` de forma natural cuando la URL termina en `/`. Sin trailing slash, suele requerir reglas de rewrite que en cPanel son tediosas de mantener.
+- `images: { unoptimized: true }` → desactiva el optimizador de imágenes de Next. Esto es **obligatorio** en `output: "export"`, porque el optimizador necesita un proceso de servidor que en estático no existe. Si lo dejas activado, el build falla.
+
+### `develop` (lo que rompía la generación de `out/`)
+
+```ts
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  output: "standalone",
+  trailingSlash: false,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "bucket.dveloxsoft.com" },
+    ],
+  },
+};
+```
+
+- `output: "standalone"` → no genera `out/`, sino `.next/standalone/`.
+- `trailingSlash: false` → URLs sin barra final. Razonable cuando hay un servidor Node detrás, problemático en cPanel estático.
+- `images.remotePatterns` → habilita el optimizador de Next para imágenes alojadas en `bucket.dveloxsoft.com`. Solo tiene sentido si hay servidor Node corriendo, porque el optimizador necesita transformar imágenes al vuelo. En modo `export` esta propiedad no aplica.
+
+---
+
+## 4. Decisión tomada
+
+Se replica la configuración de `main` en `develop`. El archivo [next.config.ts](../next.config.ts) queda así:
+
+```ts
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+```
+
+Razón: el destino de despliegue sigue siendo el mismo hosting estático (cPanel), por lo que necesitamos la carpeta `out/`. Mantener `develop` y `main` con configs de salida distintas era una fuente de confusión y de builds que "no producían nada" desde el punto de vista del desplegador.
+
+---
+
+## 5. ⚠️ Ojo: qué se pierde al usar `output: "export"`
+
+Esta es la sección más importante del documento. **El modo de exportación estática es estricto: no hay servidor Node en producción, así que cualquier funcionalidad de Next.js que dependa de un servidor en runtime queda desactivada.** Si en algún momento se introduce una de estas funcionalidades, el build fallará o, peor, compilará pero la funcionalidad no existirá en producción.
+
+Lo que **no funciona** con `output: "export"`:
+
+1. **API Routes / Route Handlers dinámicos.**
+   Cualquier `app/api/.../route.ts` que dependa de ejecutar código en runtime (recibir requests, consultar bases de datos, manejar webhooks) **no se exporta**. Necesitan un proceso Node. Si la app tiene endpoints internos servidos por Next, hay que migrarlos a un backend separado (el `BASIC_ROUTE` que ya usa este proyecto, por ejemplo) o reintroducir `output: "standalone"`.
+
+2. **Server-Side Rendering (SSR) por request.**
+   No existe `getServerSideProps` ni equivalentes en App Router que rendericen por request. Todo se pre-renderiza una sola vez en build-time. Si necesitas datos frescos por usuario o por request, tiene que pasar por el cliente (fetch desde el navegador).
+
+3. **Incremental Static Regeneration (ISR).**
+   No hay `revalidate` en runtime. Lo que se exporta se queda fijo hasta el siguiente build.
+
+4. **Middleware (`middleware.ts`).**
+   El middleware se ejecuta en el edge/servidor por cada request entrante. En modo `export` no hay servidor que lo ejecute, así que **no se aplica**. Cualquier lógica de autenticación, redirecciones por cookie, A/B testing, etc., implementada en middleware **deja de existir en producción**.
+
+5. **`next/image` con optimización.**
+   El componente `<Image />` sigue funcionando, pero solo en modo "imagen no optimizada" (`images.unoptimized: true`). Pierdes el redimensionado on-demand, los formatos modernos servidos automáticamente (AVIF/WebP), y el lazy loading optimizado del servidor. Las imágenes se sirven tal cual están en el bucket o en `public/`.
+
+6. **`rewrites`, `redirects` y `headers` dinámicos en `next.config.ts`.**
+   Estos los aplica el servidor de Next en runtime. En estático no se aplican. Si necesitas redirecciones, hay que hacerlas con `.htaccess` (en cPanel/Apache) o con el componente cliente.
+
+7. **Rutas dinámicas sin `generateStaticParams`.**
+   En App Router, cualquier `app/foo/[id]/page.tsx` necesita declarar de antemano (`generateStaticParams`) **todos** los `id` posibles, porque cada uno se convierte en un HTML pre-generado en build-time. Si los `id` se conocen solo en runtime (p. ej., productos creados por usuarios), esa ruta no puede ser estática y romperá el build.
+
+8. **`cookies()`, `headers()`, `draftMode()` y otras APIs server-only de Next.**
+   Estas funciones requieren servidor. En `output: "export"` su uso lanza error en build.
+
+9. **`fetch` con `cache: 'no-store'` en Server Components.**
+   La idea de "no cachear" implica volver a pedir el dato en cada request. En estático, el `fetch` se ejecuta **una sola vez en build-time** y el resultado se congela en el HTML. La directiva `no-store` no cambia eso.
+
+### Cómo detectar que algo se rompió por esto
+
+- Síntoma típico: `next build` falla con mensajes como *"export encountered errors on following paths"* o *"Page X is missing exported function generateStaticParams"*.
+- Otro síntoma: el build compila, pero en producción una funcionalidad simplemente no responde (típicamente middleware o una API route silenciosamente ausente).
+- Cuando aparezca cualquiera de estos casos, antes de cambiar la config a `standalone`, revisar si la funcionalidad puede vivir en el backend externo (`BASIC_ROUTE`) o moverse al cliente.
+
+---
+
+## 6. Ajustes adicionales que hubo que hacer en `develop`
+
+Cambiar `next.config.ts` no fue suficiente. Al ejecutar `next build` con `output: "export"`, el build falló con:
+
+```
+Error: Page "/reset-password/[token]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+```
+
+Esto pasa porque, como se explicó en la sección 5, **toda ruta dinámica `[param]` debe declarar en build-time qué valores del parámetro existen**, vía `generateStaticParams()`. Sin servidor Node en producción, Next no puede inventarse las rutas al vuelo: necesita pre-generar HTML para cada combinación posible.
+
+En `develop` había varias rutas dinámicas sin esa función:
+
+- `src/app/(auth)/reset-password/[token]/page.tsx`
+- `src/app/dashboard/business/expenses/[expenseId]/edit/page.tsx`
+- `src/app/dashboard/business/products/[businessProductId]/edit/page.tsx`
+- `src/app/dashboard/business/products/catalog/[productId]/edit/page.tsx`
+- `src/app/dashboard/business/workers/[workerId]/page.tsx`
+- `src/app/dashboard/business/workers/[workerId]/edit/page.tsx`
+
+### 6.1. El truco: el placeholder `__dynamic__`
+
+`main` resuelve esto con un patrón muy sencillo: cada ruta dinámica exporta `generateStaticParams()` devolviendo **un único valor "ficticio"** llamado `__dynamic__`.
+
+```ts
+export function generateStaticParams() {
+  return [{ token: "__dynamic__" }];
+}
+```
+
+Qué consigue esto:
+
+- Next pre-genera **un solo HTML shell** para esa ruta (en `out/reset-password/__dynamic__/index.html`).
+- Ese mismo HTML lo sirve cPanel (con la regla adecuada en `.htaccess`) para *cualquier* valor real de `[token]` que entre por URL.
+- El componente cliente lee el valor real con `useParams()` en el navegador y hace el `fetch` correspondiente al backend externo (`BASIC_ROUTE`).
+
+Es decir: la "dinamicidad" deja de vivir en el servidor de Next y se mueve al cliente. El parámetro real **no existe en build-time**, sólo en runtime, en el navegador del usuario.
+
+### 6.2. Restricción técnica: `generateStaticParams()` sólo va en server components
+
+Una sutileza importante de App Router: **no puedes exportar `generateStaticParams()` desde un archivo con `"use client"`** en la cabecera. Es una función que Next ejecuta en el build, no en el navegador.
+
+Por eso, en las páginas que ya eran client components (las que usaban `"use client"` y leían `params: Promise<{...}>` con `use(params)`), no bastaba con añadir la función. Hubo que partirlas en dos:
+
+- `page.tsx` → server component, **sólo** exporta `generateStaticParams()` y renderiza el cliente.
+- `<algo>-client.tsx` → archivo nuevo con `"use client"` y toda la UI. Lee el parámetro con `useParams()` en lugar de recibirlo por props.
+
+### 6.3. Qué se hizo en cada archivo
+
+| Ruta dinámica | Estado previo en develop | Cambio aplicado |
+| --- | --- | --- |
+| `(auth)/reset-password/[token]/page.tsx` | Client component con toda la UI | **Split**: `page.tsx` server + `reset-password-client.tsx` nuevo |
+| `dashboard/business/expenses/[expenseId]/edit/page.tsx` | Client component leyendo `params` por prop | **Split**: `page.tsx` server + `expense-edit-client.tsx` nuevo (usa `useParams()`) |
+| `dashboard/business/workers/[workerId]/edit/page.tsx` | Client component leyendo `params` por prop | **Split**: `page.tsx` server + `worker-edit-client.tsx` nuevo (usa `useParams()`) |
+| `dashboard/business/workers/[workerId]/page.tsx` | Server component con `redirect()` | Sólo se añadió `generateStaticParams()` |
+| `dashboard/business/products/[businessProductId]/edit/page.tsx` | Server component (la UI vive en `EditProductForm`, que ya usa `useParams()`) | Sólo se añadió `generateStaticParams()` |
+| `dashboard/business/products/catalog/[productId]/edit/page.tsx` | Server component (la UI vive en `EditCatalogProductForm`, que ya usa `useParams()`) | Sólo se añadió `generateStaticParams()` |
+
+Tras estos cambios, `next build` termina limpio y genera la carpeta `out/` con sus 41 páginas estáticas, incluidas las rutas dinámicas en su versión `__dynamic__`.
+
+### 6.4. Implicación práctica al añadir nuevas rutas dinámicas
+
+Cualquier ruta nueva con un segmento `[param]` que se añada a `develop` (o `main`) **romperá el build** si no se sigue este patrón. La regla a recordar:
+
+1. Si la página puede ser un server component, exportar `generateStaticParams()` con `[{ param: "__dynamic__" }]` directamente en `page.tsx`.
+2. Si la página necesita ser cliente (hooks, estado, etc.), partirla en dos: `page.tsx` server con `generateStaticParams()` que renderiza `<Algo />`, y `algo-client.tsx` con `"use client"` que lee el parámetro vía `useParams()`.
+3. Nunca confiar en `params: Promise<{...}>` por props si la página termina necesitando ser cliente: ese patrón sólo es válido en server components.
+
+---
+
+## 7. Cuándo sí cambiar de vuelta a `standalone` (o a otro modo)
+
+Replicamos `main` en `develop` porque hoy el despliegue es estático. Pero si en el futuro el proyecto necesita **cualquiera** de las funcionalidades de la sección 5 — middleware real en runtime, API routes propias, ISR, optimización de imágenes en runtime, redirects/headers dinámicos, etc. — la única salida es migrar a `output: "standalone"` (o al modo por defecto). Esta sección detalla cómo hacerlo paso a paso.
+
+### 7.1. Antes de migrar: ¿de verdad lo necesitas?
+
+`standalone` es un cambio grande. Antes de tomarlo, verifica que la funcionalidad nueva no se puede resolver con alguna de estas alternativas, que mantienen el modo estático:
+
+- **¿Es un endpoint?** Muévelo al backend externo (`BASIC_ROUTE`). Hoy toda la API del proyecto vive allí y eso es lo que permite ser estático.
+- **¿Es lógica de autenticación o redirección por cookie?** En lugar de `middleware.ts`, puedes resolverlo en el cliente con un *guard* en el layout (`useEffect` + `router.replace`). Menos elegante, pero compatible con estático.
+- **¿Necesitas que `<Image />` optimice imágenes externas?** Considera servir las imágenes ya optimizadas desde el bucket (varios tamaños pre-generados), o usar un servicio externo (Cloudflare Images, Imgix, etc.).
+- **¿Necesitas datos frescos en cada visita?** Hazlo desde el cliente con `useQuery` (ya usas TanStack Query). El HTML estático es sólo el "cascarón"; los datos los pide el navegador.
+
+Si después de revisar lo anterior sigues necesitando una funcionalidad de servidor, entonces sí, toca migrar.
+
+### 7.2. Migración paso a paso
+
+#### Paso 1 — Cambiar la config
+
+Editar [next.config.ts](../next.config.ts):
+
+```ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  output: "standalone",
+  trailingSlash: false,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "bucket.dveloxsoft.com" },
+      // añadir aquí cualquier otro host de imágenes externo que uses
+    ],
+  },
+};
+
+export default nextConfig;
+```
+
+#### Paso 2 — Limpiar el "placeholder dance" de las rutas dinámicas
+
+Con `standalone` ya no hace falta el truco del `__dynamic__`. Puedes:
+
+- Quitar todos los `export function generateStaticParams() { return [{ ... }]; }` que se añadieron en la sección 6.
+- Eliminar los archivos `*-client.tsx` creados sólo para sortear la restricción de client components, **siempre que** prefieras volver al patrón original con `params: Promise<{...}>` por props. No es obligatorio: si quieres, puedes dejar el split como está; funciona igual.
+- Quitar también las comprobaciones `if (token === "__dynamic__")` que se añadieron como guarda en los clientes.
+
+#### Paso 3 — Reactivar (o construir) lo que estaba apagado
+
+Aquí es donde recuperas las funcionalidades por las que migraste. Según lo que necesites:
+
+- **Middleware**: crear `src/middleware.ts` con la lógica de auth/redirects/etc. Definir `matcher` para limitar qué rutas lo ejecutan.
+- **API routes**: crear `src/app/api/<recurso>/route.ts`. Cuidado: si decides duplicar lógica que hoy vive en el backend externo, define bien dónde queda la fuente de verdad.
+- **`next/image` optimizado**: ya queda activo al quitar `unoptimized: true`. Verificar que todos los hosts de imágenes externos estén listados en `remotePatterns`.
+- **ISR**: añadir `export const revalidate = N` (segundos) en las páginas que lo necesiten.
+
+#### Paso 4 — Probar el build
+
+```bash
+npx next build
+```
+
+El resultado deja de ser `out/` y pasa a ser `.next/standalone/` con un `server.js`, más una carpeta `.next/static/` y `public/` que hay que copiar al lado.
+
+Para arrancarlo en local y comprobar:
+
+```bash
+node .next/standalone/server.js
+```
+
+(Por defecto escucha en el puerto 3000.)
+
+#### Paso 5 — Cambiar la infraestructura de despliegue
+
+**Este es el paso que más impacto tiene y el más fácil de subestimar.** cPanel sirviendo HTML estático **no puede correr `standalone`**. Necesitas un entorno que ejecute Node 20+. Opciones típicas, ordenadas de menos a más fricción:
+
+1. **VPS propio (DigitalOcean, Hetzner, Linode, etc.)**. Instalar Node, un gestor de procesos (`pm2` o `systemd`) y un reverse proxy (Nginx o Caddy) que termine HTTPS y reenvíe al puerto del `server.js`. Es lo más parecido a "mover el sitio de cPanel a un servidor de verdad".
+2. **Plataforma PaaS (Railway, Render, Fly.io)**. Conectas el repo, defines el comando de build (`next build`) y el de arranque (`node .next/standalone/server.js`), y la plataforma se encarga del resto. Más caro que un VPS, pero cero mantenimiento.
+3. **Contenedor Docker en cualquier host**. Imagen base `node:20-alpine`, copiar `.next/standalone/`, `.next/static/` y `public/`, exponer el puerto. Es el camino más portable.
+4. **Vercel**. Es el "modo nativo" de Next.js y no requiere ni siquiera `output: "standalone"`: Vercel detecta el proyecto y despliega con todas las funcionalidades. Es la opción más sencilla, pero ata el proyecto a su plataforma y su modelo de precios.
+
+#### Paso 6 — Migrar el dominio y el SSL
+
+Apuntar el DNS al nuevo host, configurar el certificado HTTPS (Let's Encrypt vía Caddy/Nginx, o el que provea la plataforma elegida), y dar de baja el despliegue antiguo de cPanel cuando se haya verificado que todo funciona.
+
+#### Paso 7 — Variables de entorno
+
+Replicar en el nuevo entorno **todas** las variables de entorno que hoy se inyectan en el build estático. Ojo: en `standalone` muchas variables se leen en runtime, no en build-time, así que algunas que antes se "horneaban" en el HTML ahora viven sólo en el servidor — esto puede cambiar el comportamiento de la app si confiabas en que `process.env.X` estuviera disponible en cliente.
+
+### 7.3. Resumen del esfuerzo
+
+| Categoría | Trabajo estimado |
+| --- | --- |
+| Editar `next.config.ts` | 1 minuto |
+| Limpiar `__dynamic__` y reestructurar páginas (opcional) | 1–2 horas |
+| Implementar la nueva funcionalidad que motivó la migración | variable |
+| Provisionar nuevo hosting + DNS + SSL | medio día a 2 días según opción |
+| Pruebas en staging + cutover | medio día |
+
+No es un cambio reversible "de mentira": **una vez en `standalone`, perder el hosting Node significa volver a redibujar la arquitectura**. Tomar la decisión con el equipo y dejarla registrada (con fecha y razón) en este mismo documento.
+
+---
+
+## 8. Resumen rápido
+
+| Aspecto                             | `output: "export"` (actual)        | `output: "standalone"`           |
+| ----------------------------------- | ---------------------------------- | -------------------------------- |
+| Carpeta generada                    | `out/`                             | `.next/standalone/`              |
+| Necesita servidor Node en prod      | No                                 | Sí                               |
+| Compatible con cPanel estático      | Sí                                 | No                               |
+| API routes en runtime               | No                                 | Sí                               |
+| Middleware                          | No                                 | Sí                               |
+| Optimización de imágenes en runtime | No                                 | Sí                               |
+| ISR / SSR por request               | No                                 | Sí                               |
+| Trailing slash recomendado          | `true`                             | `false`                          |
+| `images`                            | `{ unoptimized: true }` (obligado) | `remotePatterns` libre           |
+| Rutas dinámicas `[param]`           | Requieren `generateStaticParams()` | Funcionan directamente           |
+
+---
+
+## 9. Archivo de referencia
+
+La configuración vigente está en [next.config.ts](../next.config.ts). Si la modificas, vuelve a este documento y actualízalo en consecuencia.

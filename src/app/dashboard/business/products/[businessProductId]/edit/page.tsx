@@ -2,6 +2,10 @@ import { EditProductForm } from "@/components/products/edit-product-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PackagePlus } from "lucide-react";
 
+export function generateStaticParams() {
+  return [{ businessProductId: "__dynamic__" }];
+}
+
 export default function EditProductPage() {
   return (
     <section className="flex flex-col gap-6">
