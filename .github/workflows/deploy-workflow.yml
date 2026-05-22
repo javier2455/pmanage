@@ -94,6 +94,8 @@ jobs:
 
       - name: Build Next.js project
         run: pnpm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /dev
 
       - name: Clean ONLY the /dev folder (safe)
         uses: appleboy/ssh-action@v1.0.0

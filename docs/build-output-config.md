@@ -256,11 +256,100 @@ Cualquier ruta nueva con un segmento `[param]` que se añada a `develop` (o `mai
 
 ---
 
-## 7. Cuándo sí cambiar de vuelta a `standalone` (o a otro modo)
+## 7. Despliegue en subdirectorio: `basePath` y `assetPrefix`
+
+Este proyecto despliega **las dos ramas al mismo dominio**, pero en paths distintos (ver [.github/workflows/deploy-workflow.yml](../.github/workflows/deploy-workflow.yml)):
+
+| Rama | URL pública | Carpeta en cPanel |
+| --- | --- | --- |
+| `main` | `https://psearch.dveloxsoft.com/` | `~/psearch.dveloxsoft.com/` (raíz) |
+| `develop` | `https://psearch.dveloxsoft.com/dev/` | `~/psearch.dveloxsoft.com/dev/` |
+
+Esto es importante porque **un build estático de Next.js genera URLs absolutas para sus assets**: los HTMLs piden `/_next/static/chunks/X.js`. Si la app vive en la raíz del dominio, esa URL resuelve correctamente. Si vive en `/dev/`, la URL pedida es `https://midominio.com/_next/static/chunks/X.js`, que **no existe** (está en `/dev/_next/...`), y termina cayendo en el fallback SPA del `.htaccess`. El navegador recibe HTML donde esperaba JS y aparece el clásico `Uncaught SyntaxError: Unexpected token '<'`.
+
+### 7.1. La solución: `basePath` + `assetPrefix`
+
+Next.js soporta esto nativamente con dos opciones en `next.config.ts`:
+
+- **`basePath`**: prefijo que Next antepone a todas las rutas internas (links, navegación, fetches).
+- **`assetPrefix`**: prefijo que Next antepone a las URLs de assets (`_next/static/...`, imágenes en `public/`, etc.).
+
+Cuando una app va a un subdirectorio, hay que activar ambos.
+
+Ahora bien — `main` se despliega en la raíz y no necesita `basePath`. Si añadiéramos `basePath: "/dev"` siempre, romperíamos main. Y si lo añadiéramos sólo en develop, el `pnpm dev` local de develop correría en `localhost:3000/dev/` en vez de `localhost:3000/`, lo cual es una molestia para desarrollo.
+
+La solución limpia: leer el prefijo de una **variable de entorno**, que el workflow inyecta sólo en el job de develop. Local y main quedan sin prefijo; develop deploy lo recibe.
+
+```ts
+// next.config.ts
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  output: "export",
+  trailingSlash: true,
+  basePath: basePath || undefined,
+  assetPrefix: basePath || undefined,
+  images: { unoptimized: true },
+};
+```
+
+Y en [.github/workflows/deploy-workflow.yml](../.github/workflows/deploy-workflow.yml), sólo en el job `deploy-dev`:
+
+```yaml
+- name: Build Next.js project
+  run: pnpm run build
+  env:
+    NEXT_PUBLIC_BASE_PATH: /dev
+```
+
+### 7.2. Ajuste correspondiente en `public/.htaccess`
+
+`basePath` se ocupa del lado del cliente (HTMLs con URLs prefijadas). Pero las reescrituras de rutas dinámicas viven en Apache, y por defecto sus substituciones (`RewriteRule ... /dashboard/...`) son **absolutas**, lo que significa que apuntan a la raíz del dominio.
+
+Si el `.htaccess` está en `~/psearch.dveloxsoft.com/dev/` y una regla dice:
+
+```apache
+RewriteRule ^reset-password/([^/]+)/?$ /reset-password/__dynamic__/ [L]
+```
+
+El target `/reset-password/__dynamic__/` apunta a `https://psearch.dveloxsoft.com/reset-password/__dynamic__/` — la raíz, no `/dev/`. Apache sirve lo que haya en main (o un 404). El resultado: las rutas dinámicas de develop no resuelven al HTML correcto.
+
+Para corregirlo, en el `.htaccess` de develop **todas las substituciones llevan el prefijo `/dev/`** (incluido el fallback SPA final):
+
+```apache
+RewriteRule ^reset-password/([^/]+)/?$ /dev/reset-password/__dynamic__/ [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /dev/index.html [L]
+```
+
+Esto significa que [public/.htaccess](../public/.htaccess) en `develop` es **distinto** del de `main`. Cuando se merge develop → main, hay que recordar quitar los prefijos `/dev/`. Si esto se vuelve molesto, en una iteración futura conviene generar el `.htaccess` desde una plantilla en el workflow, con `sed` substituyendo el prefijo. Por ahora es un trade-off aceptado: dos `.htaccess` distintos, una vez por rama.
+
+### 7.3. Validación rápida del despliegue
+
+Tras un `pnpm build` con `NEXT_PUBLIC_BASE_PATH=/dev`, inspeccionar `out/index.html` y confirmar que las `<script>` y `<link>` referencian `/dev/_next/static/...` (no `/_next/static/...`). Si siguen sin prefijo, el env var no se aplicó al build.
+
+En producción, abrir DevTools → Network y confirmar que los chunks devuelven `200 OK` con `Content-Type: application/javascript`, no `text/html`.
+
+### 7.4. Resumen de los tres archivos que coordinan el subpath
+
+| Archivo | Rol | Estado en main | Estado en develop |
+| --- | --- | --- | --- |
+| [next.config.ts](../next.config.ts) | Inyecta `basePath`/`assetPrefix` en HTMLs | Sin env var → builds para raíz | Con env var en CI → builds para `/dev` |
+| [.github/workflows/deploy-workflow.yml](../.github/workflows/deploy-workflow.yml) | Pone `NEXT_PUBLIC_BASE_PATH` sólo en el job de develop | No aplica | Inyecta `/dev` en el build step |
+| [public/.htaccess](../public/.htaccess) | Resuelve rutas dinámicas y SPA fallback en Apache | Substituciones a `/...` | Substituciones a `/dev/...` |
+
+Si una sola de estas tres piezas está desalineada, develop se rompe. Si añades una nueva ruta dinámica, tienes que tocar la 1 (o la página) y la 3 — y replicar el cambio en ambas ramas con el prefijo que corresponda.
+
+---
+
+## 8. Cuándo sí cambiar de vuelta a `standalone` (o a otro modo)
 
 Replicamos `main` en `develop` porque hoy el despliegue es estático. Pero si en el futuro el proyecto necesita **cualquiera** de las funcionalidades de la sección 5 — middleware real en runtime, API routes propias, ISR, optimización de imágenes en runtime, redirects/headers dinámicos, etc. — la única salida es migrar a `output: "standalone"` (o al modo por defecto). Esta sección detalla cómo hacerlo paso a paso.
 
-### 7.1. Antes de migrar: ¿de verdad lo necesitas?
+### 8.1. Antes de migrar: ¿de verdad lo necesitas?
 
 `standalone` es un cambio grande. Antes de tomarlo, verifica que la funcionalidad nueva no se puede resolver con alguna de estas alternativas, que mantienen el modo estático:
 
@@ -271,7 +360,7 @@ Replicamos `main` en `develop` porque hoy el despliegue es estático. Pero si en
 
 Si después de revisar lo anterior sigues necesitando una funcionalidad de servidor, entonces sí, toca migrar.
 
-### 7.2. Migración paso a paso
+### 8.2. Migración paso a paso
 
 #### Paso 1 — Cambiar la config
 
@@ -345,7 +434,7 @@ Apuntar el DNS al nuevo host, configurar el certificado HTTPS (Let's Encrypt ví
 
 Replicar en el nuevo entorno **todas** las variables de entorno que hoy se inyectan en el build estático. Ojo: en `standalone` muchas variables se leen en runtime, no en build-time, así que algunas que antes se "horneaban" en el HTML ahora viven sólo en el servidor — esto puede cambiar el comportamiento de la app si confiabas en que `process.env.X` estuviera disponible en cliente.
 
-### 7.3. Resumen del esfuerzo
+### 8.3. Resumen del esfuerzo
 
 | Categoría | Trabajo estimado |
 | --- | --- |
@@ -359,7 +448,7 @@ No es un cambio reversible "de mentira": **una vez en `standalone`, perder el ho
 
 ---
 
-## 8. Resumen rápido
+## 9. Resumen rápido
 
 | Aspecto                             | `output: "export"` (actual)        | `output: "standalone"`           |
 | ----------------------------------- | ---------------------------------- | -------------------------------- |
@@ -376,6 +465,12 @@ No es un cambio reversible "de mentira": **una vez en `standalone`, perder el ho
 
 ---
 
-## 9. Archivo de referencia
+## 10. Archivos de referencia
 
-La configuración vigente está en [next.config.ts](../next.config.ts). Si la modificas, vuelve a este documento y actualízalo en consecuencia.
+La configuración vigente está distribuida entre:
+
+- [next.config.ts](../next.config.ts)
+- [public/.htaccess](../public/.htaccess)
+- [.github/workflows/deploy-workflow.yml](../.github/workflows/deploy-workflow.yml)
+
+Si modificas cualquiera de los tres, vuelve a este documento y actualízalo en consecuencia.
