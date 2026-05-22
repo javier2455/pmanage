@@ -194,13 +194,65 @@ Por eso, en las páginas que ya eran client components (las que usaban `"use cli
 
 Tras estos cambios, `next build` termina limpio y genera la carpeta `out/` con sus 41 páginas estáticas, incluidas las rutas dinámicas en su versión `__dynamic__`.
 
-### 6.4. Implicación práctica al añadir nuevas rutas dinámicas
+### 6.4. La otra mitad del mecanismo: `public/.htaccess`
 
-Cualquier ruta nueva con un segmento `[param]` que se añada a `develop` (o `main`) **romperá el build** si no se sigue este patrón. La regla a recordar:
+El truco del `__dynamic__` deja en `out/` una carpeta por cada ruta dinámica con ese nombre literal (`out/reset-password/__dynamic__/index.html`, etc.). **Pero el usuario nunca visita esa URL.** El usuario entra a `/reset-password/abc123/`, y Apache, al no encontrar la carpeta `abc123/`, devolvería 404.
+
+Para que esto funcione hace falta una **regla de reescritura en Apache** que, cuando llegue `/reset-password/{cualquierToken}/`, sirva internamente el HTML que vive en `/reset-password/__dynamic__/index.html`. Esa regla vive en [public/.htaccess](../public/.htaccess).
+
+Como Next.js copia automáticamente todo lo de `public/` a la raíz de `out/` durante el build, el archivo termina solo en el destino correcto sin pasos manuales.
+
+El contenido (replicado idénticamente de `main`):
+
+```apache
+Options -MultiViews
+RewriteEngine On
+
+# Nunca reescribir rutas que ya contengan el placeholder
+RewriteRule __dynamic__ - [L]
+
+# Por cada ruta dinámica, un par de condiciones + una regla.
+# !-f y !-d garantizan que archivos reales (como /_next/static/chunks/*.js)
+# NUNCA se reescriben. Esto es lo que evita el "Unexpected token '<'":
+# si esta condición no estuviera, un .js que no exista devolvería el index.html.
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^dashboard/business/workers/([^/]+)/edit/?$ /dashboard/business/workers/__dynamic__/edit/ [L]
+
+# ...una regla análoga por cada ruta dinámica...
+
+# Fallback SPA al final: cualquier ruta no resuelta sirve /index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]
+```
+
+#### Por qué este archivo es crítico
+
+Sin `public/.htaccess`:
+
+- Las rutas dinámicas (`/reset-password/{token}/`, `/dashboard/business/workers/{id}/edit/`, etc.) devuelven **404** en cPanel.
+- Cualquier ruta limpia sin trailing slash que Apache no resuelva puede caer en un 404 o en un HTML del propio Next, dependiendo de la configuración por defecto del hosting.
+- Y, sobre todo, **sin el `!-f / !-d`** en las reglas, cualquier petición a `_next/static/chunks/algo.js` que llegue antes de que esos archivos estén subidos (o con un nombre que ya no existe) se redirige al `index.html`, el navegador la cachea como JS y aparece el clásico `Uncaught SyntaxError: Unexpected token '<'`. **Esa es la causa real del problema que se vio en la primera ronda de despliegue de develop**: faltaba este archivo.
+
+#### Implicación al añadir nuevas rutas dinámicas
+
+Cada vez que se añada una ruta dinámica nueva al proyecto, hay que actualizar **dos** sitios:
+
+1. La página: `generateStaticParams()` (y eventualmente el split server/client de la sección 6.3).
+2. [public/.htaccess](../public/.htaccess): añadir el par `RewriteCond !-f / !-d` + `RewriteRule` que mapee `/.../{id}/...` a `/.../__dynamic__/...`.
+
+Si añades el primero pero olvidas el segundo, el build pasa limpio pero la ruta dará 404 en producción.
+
+### 6.5. Implicación práctica al añadir nuevas rutas dinámicas
+
+Cualquier ruta nueva con un segmento `[param]` que se añada a `develop` (o `main`) **romperá el build o el despliegue** si no se sigue este patrón. La regla a recordar:
 
 1. Si la página puede ser un server component, exportar `generateStaticParams()` con `[{ param: "__dynamic__" }]` directamente en `page.tsx`.
 2. Si la página necesita ser cliente (hooks, estado, etc.), partirla en dos: `page.tsx` server con `generateStaticParams()` que renderiza `<Algo />`, y `algo-client.tsx` con `"use client"` que lee el parámetro vía `useParams()`.
 3. Nunca confiar en `params: Promise<{...}>` por props si la página termina necesitando ser cliente: ese patrón sólo es válido en server components.
+4. Añadir la regla correspondiente en [public/.htaccess](../public/.htaccess).
 
 ---
 
