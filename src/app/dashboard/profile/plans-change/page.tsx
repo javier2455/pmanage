@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     Check,
     X,
@@ -35,68 +36,77 @@ function normalizePlanKey(raw: string | undefined | null) {
         .replace(/[\u0300-\u036f]/g, "")
 }
 
+type BillingPeriod = "monthly" | "yearly"
+
 const plans = [
     {
         name: "Gratuito",
-        description: "Perfecto para probar la plataforma sin compromiso.",
-        price: 0,
-        period: "mes",
+        description: "Prueba todas las funcionalidades del plan Básico sin compromiso.",
+        monthlyPrice: 0,
+        yearlyPrice: 0,
         icon: Shield,
         features: [
-            { text: "Hasta 50 productos", included: true },
-            { text: "100 ventas por mes", included: true },
-            { text: "1 usuario", included: true },
-            { text: "Cierre diario basico", included: true },
-            { text: "Soporte por correo", included: true },
-            { text: "Registro de ingresos", included: false },
-            { text: "Tipo de cambio automatico", included: false },
-            { text: "Reportes avanzados", included: false },
-            { text: "Cierre mensual", included: false },
-            { text: "Integracion facturacion", included: false },
+            { text: "1 negocio", included: true },
+            { text: "Hasta 100 productos", included: true },
+            { text: "Registro de ventas y compras", included: true },
+            { text: "Cierre contable diario", included: true },
+            { text: "Tasas de cambio multi-moneda", included: true },
+            { text: "Soporte por WhatsApp o correo", included: true },
+            { text: "Cierre contable mensual", included: false },
+            { text: "Exportar Excel/PDF", included: false },
+            { text: "Alertas de stock bajo", included: false },
+            { text: "Rentabilidad por producto", included: false },
+            { text: "Comparativa de periodos", included: false },
+            { text: "Ventas por trabajador", included: false },
         ],
     },
     {
         name: "Básico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        price: 100,
-        period: "mes",
+        monthlyPrice: 5,
+        yearlyPrice: 3,
         icon: Sparkles,
         features: [
-            { text: "Hasta 500 productos", included: true },
-            { text: "Ventas ilimitadas", included: true },
-            { text: "3 usuarios", included: true },
-            { text: "Cierre diario completo", included: true },
-            { text: "Soporte prioritario", included: true },
-            { text: "Registro de ingresos", included: true },
-            { text: "Tipo de cambio automatico", included: true },
-            { text: "Reportes basicos", included: true },
-            { text: "Cierre mensual", included: false },
-            { text: "Integracion facturacion", included: false },
+            { text: "1 negocio", included: true },
+            { text: "Hasta 100 productos", included: true },
+            { text: "Registro de ventas y compras", included: true },
+            { text: "Cierre contable diario", included: true },
+            { text: "Tasas de cambio multi-moneda", included: true },
+            { text: "Soporte por WhatsApp o correo", included: true },
+            { text: "Cierre contable mensual", included: false },
+            { text: "Exportar Excel/PDF", included: false },
+            { text: "Alertas de stock bajo", included: false },
+            { text: "Rentabilidad por producto", included: false },
+            { text: "Comparativa de periodos", included: false },
+            { text: "Ventas por trabajador", included: false },
         ],
     },
     {
         name: "Pro",
         description: "Para negocios en crecimiento que necesitan control total.",
-        price: 200,
-        period: "mes",
+        monthlyPrice: 15,
+        yearlyPrice: 12,
         icon: Crown,
         features: [
-            { text: "Productos ilimitados", included: true },
-            { text: "Ventas ilimitadas", included: true },
-            { text: "Usuarios ilimitados", included: true },
-            { text: "Cierre diario avanzado", included: true },
-            { text: "Soporte 24/7", included: true },
-            { text: "Registro de ingresos", included: true },
-            { text: "Tipo de cambio automatico", included: true },
-            { text: "Reportes avanzados y exportacion", included: true },
-            { text: "Cierre mensual y anual", included: true },
-            { text: "Integracion facturacion", included: true },
+            { text: "Hasta 3 negocios", included: true },
+            { text: "Hasta 500 productos", included: true },
+            { text: "Registro de ventas y compras", included: true },
+            { text: "Cierre contable diario", included: true },
+            { text: "Tasas de cambio multi-moneda", included: true },
+            { text: "Cierre contable mensual", included: true },
+            { text: "Exportar Excel/PDF", included: true },
+            { text: "Alertas de stock bajo", included: true },
+            { text: "Rentabilidad por producto", included: true },
+            { text: "Comparativa de periodos", included: true },
+            { text: "Ventas por trabajador", included: true },
+            { text: "Soporte prioritario 24/7", included: true },
         ],
     },
 ] as const
 
 export default function ChangePlanPage() {
     const [storedPlan, setStoredPlan] = useState<StoredPlan | null>(null)
+    const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
 
     useEffect(() => {
         const stored = sessionStorage.getItem("user")
@@ -148,9 +158,27 @@ export default function ChangePlanPage() {
                 </div>
             </div>
 
+            <div className="flex justify-center">
+                <Tabs
+                    value={billingPeriod}
+                    onValueChange={(value) => setBillingPeriod(value as BillingPeriod)}
+                >
+                    <TabsList>
+                        <TabsTrigger value="monthly" className="px-6 cursor-pointer">
+                            Mensual
+                        </TabsTrigger>
+                        <TabsTrigger value="yearly" className="px-6 cursor-pointer">
+                            Anual
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
+
             <div className="grid gap-6 lg:grid-cols-3">
                 {plansWithCurrent.map((plan) => {
                     const Icon = plan.icon
+                    const displayPrice =
+                        billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice
                     return (
                         <Card
                             key={plan.name}
@@ -185,19 +213,37 @@ export default function ChangePlanPage() {
                             </CardHeader>
 
                             <CardContent className="flex-1">
-                                <div className="flex items-baseline gap-1 mb-6">
-                                    {plan.price === 0 ? (
-                                        <span className="text-4xl font-bold text-card-foreground">
-                                            Gratis
-                                        </span>
+                                <div className="mb-6">
+                                    <div className="flex items-baseline gap-1">
+                                        {displayPrice === 0 ? (
+                                            <span className="text-4xl font-bold text-card-foreground">
+                                                Gratis
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <span className="text-4xl font-bold text-card-foreground">
+                                                    ${displayPrice}
+                                                </span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    USD / mes
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {displayPrice === 0 ? (
+                                        <p className="mt-1.5 text-xs text-muted-foreground">
+                                            Disponible por única vez durante un período de prueba de 15 días hábiles.
+                                        </p>
                                     ) : (
                                         <>
-                                            <span className="text-4xl font-bold text-card-foreground">
-                                                ${plan.price}
-                                            </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                CUP / {plan.period}
-                                            </span>
+                                            {billingPeriod === "yearly" && (
+                                                <p className="mt-1.5 text-xs text-muted-foreground">
+                                                    Facturado anualmente (${displayPrice * 12} USD/año)
+                                                </p>
+                                            )}
+                                            <p className="mt-1.5 text-xs text-muted-foreground">
+                                                Si pagas en moneda nacional, el cambio aplicado es el que acepta la plataforma.
+                                            </p>
                                         </>
                                     )}
                                 </div>
