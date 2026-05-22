@@ -13,11 +13,11 @@ import {
 import type {
   PriceHistoryMeta,
 } from "@/lib/types/price-history";
-import type { Product } from "@/lib/types/product";
+import type { ProductToShowInTable } from "@/lib/types/product";
 import PriceHistoryTimeline from "./price-history-timeline";
 
 interface PriceHistoryViewProps {
-  product: Product;
+  businessProduct: ProductToShowInTable;
 }
 
 const DEFAULT_LIMIT = 5;
@@ -40,7 +40,12 @@ function toIsoEnd(date: Date): string {
   return d.toISOString();
 }
 
-export default function PriceHistoryView({ product }: PriceHistoryViewProps) {
+export default function PriceHistoryView({
+  businessProduct,
+}: PriceHistoryViewProps) {
+  const businessProductId = businessProduct.id;
+  const product = businessProduct.product;
+
   const [page, setPage] = React.useState(1);
   const [limit, setLimit] = React.useState<number>(DEFAULT_LIMIT);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -60,12 +65,12 @@ export default function PriceHistoryView({ product }: PriceHistoryViewProps) {
   }, [hasFullRange, startDate, endDate, page, limit]);
 
   const fullQuery = useProductPriceHistory(
-    product.id,
+    businessProductId,
     { page, limit },
     !hasFullRange,
   );
   const rangeQuery = useProductPriceHistoryByRange(
-    product.id,
+    businessProductId,
     rangeParams,
     hasFullRange,
   );

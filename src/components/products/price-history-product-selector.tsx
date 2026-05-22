@@ -11,12 +11,16 @@ import {
 } from "@/components/ui/select";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
-import { useGetAllProductsQuery } from "@/hooks/use-product";
-import type { Product } from "@/lib/types/product";
+import { useBusiness } from "@/context/business-context";
+import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
+import type { ProductToShowInTable } from "@/lib/types/product";
 
 interface PriceHistoryProductSelectorProps {
   value: string | null;
-  onChange: (productId: string | null, product: Product | null) => void;
+  onChange: (
+    businessProductId: string | null,
+    businessProduct: ProductToShowInTable | null,
+  ) => void;
 }
 
 const DEFAULT_LIMIT = 5;
@@ -25,25 +29,24 @@ export default function PriceHistoryProductSelector({
   value,
   onChange,
 }: PriceHistoryProductSelectorProps) {
+  const { activeBusinessId } = useBusiness();
   const [page, setPage] = React.useState(1);
   const [limit, setLimit] = React.useState<number>(DEFAULT_LIMIT);
 
-  const { data, isLoading, isFetching } = useGetAllProductsQuery({
-    page,
-    limit,
-  });
+  const { data, isLoading, isFetching } = useAllProductOfMyBusinesses(
+    activeBusinessId ?? "",
+  );
 
-  const products = data?.data ?? [];
-  const meta = data?.meta ?? {
-    total: 0,
-    page,
-    limit,
-    totalPages: 0,
-  };
+  const allItems: ProductToShowInTable[] = data?.data ?? [];
+  const total = allItems.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * limit;
+  const pageItems = allItems.slice(start, start + limit);
 
-  function handleSelect(productId: string) {
-    const product = products.find((p) => p.id === productId) ?? null;
-    onChange(productId, product);
+  function handleSelect(businessProductId: string) {
+    const item = allItems.find((p) => p.id === businessProductId) ?? null;
+    onChange(businessProductId, item);
   }
 
   function handleLimitChange(next: number) {
@@ -51,10 +54,21 @@ export default function PriceHistoryProductSelector({
     setPage(1);
   }
 
+  if (!activeBusinessId) {
+    return (
+      <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-amber-600 dark:text-amber-400">
+        <p className="text-sm font-medium">Selecciona un negocio</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Debes tener un negocio activo para consultar el historial de precios.
+        </p>
+      </div>
+    );
+  }
+
   const placeholder = isLoading
     ? "Cargando productos…"
-    : products.length === 0
-      ? "No hay productos disponibles"
+    : total === 0
+      ? "No hay productos en este negocio"
       : "Selecciona un producto…";
 
   return (
@@ -66,15 +80,15 @@ export default function PriceHistoryProductSelector({
         <Select
           value={value ?? undefined}
           onValueChange={handleSelect}
-          disabled={isLoading || products.length === 0}
+          disabled={isLoading || total === 0}
         >
           <SelectTrigger id="price-history-product" className="w-full">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
-            {products.map((product) => (
-              <SelectItem key={product.id} value={product.id}>
-                {product.name}
+            {pageItems.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {item.product.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -83,24 +97,24 @@ export default function PriceHistoryProductSelector({
 
       <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          {meta.total > 0 ? (
+          {total > 0 ? (
             <>
               Mostrando{" "}
               <span className="font-medium text-foreground">
-                {products.length}
+                {pageItems.length}
               </span>{" "}
               de{" "}
-              <span className="font-medium text-foreground">{meta.total}</span>{" "}
-              producto{meta.total === 1 ? "" : "s"}
-              {meta.totalPages > 1 ? (
+              <span className="font-medium text-foreground">{total}</span>{" "}
+              producto{total === 1 ? "" : "s"}
+              {totalPages > 1 ? (
                 <>
                   {" "}— Página{" "}
                   <span className="font-medium text-foreground">
-                    {meta.page}
+                    {safePage}
                   </span>{" "}
                   de{" "}
                   <span className="font-medium text-foreground">
-                    {meta.totalPages}
+                    {totalPages}
                   </span>
                 </>
               ) : null}
@@ -115,10 +129,10 @@ export default function PriceHistoryProductSelector({
             onChange={handleLimitChange}
             disabled={isFetching}
           />
-          {meta.totalPages > 1 ? (
+          {totalPages > 1 ? (
             <DataTablePaginationNav
-              pageIndex={meta.page - 1}
-              pageCount={meta.totalPages}
+              pageIndex={safePage - 1}
+              pageCount={totalPages}
               onPageIndexChange={(nextIndex) => setPage(nextIndex + 1)}
               navLabel="Paginación de productos"
               disabled={isFetching}

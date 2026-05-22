@@ -79,9 +79,6 @@ extra; cada query es independiente y cacheable.
 
 ## Pendientes para arrancar la Fase 2
 
-- [ ] Confirmar el response real del backend (los hooks aún usan el mock con
-  flag `USE_MOCK_PRICE_HISTORY = true` en
-  [src/lib/api/product-price-history.ts](../src/lib/api/product-price-history.ts)).
 - [ ] Decidir si se expone un endpoint batch en el backend.
 - [ ] Definir UX del multi-select en la tabla (checkbox column + barra de
   acciones flotante).

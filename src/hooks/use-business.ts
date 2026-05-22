@@ -8,6 +8,7 @@ export function useAllProductOfMyBusinesses(businessId: string) {
     return useQuery({
         queryKey: ["all-product-of-my-businesses", businessId],
         queryFn: () => getAllProductOfMyBusinesses({ businessId }),
+        enabled: !!businessId,
     });
 }
 
