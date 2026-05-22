@@ -1,28 +1,23 @@
 "use client";
 
 import * as React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { DateRangePicker } from "@/components/analytics/date-range-picker";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
+import { Card, CardContent } from "@/components/ui/card";
+import { ProductImage } from "@/components/products/product-image";
 import {
   useProductPriceHistory,
   useProductPriceHistoryByRange,
 } from "@/hooks/use-product-price-history";
-import type { PriceHistoryMeta } from "@/lib/types/price-history";
+import type {
+  PriceHistoryMeta,
+} from "@/lib/types/price-history";
+import type { Product } from "@/lib/types/product";
 import PriceHistoryTimeline from "./price-history-timeline";
 
-interface PriceHistoryDialogProps {
-  productId: string;
-  productName?: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface PriceHistoryViewProps {
+  product: Product;
 }
 
 const DEFAULT_LIMIT = 5;
@@ -45,12 +40,7 @@ function toIsoEnd(date: Date): string {
   return d.toISOString();
 }
 
-export default function PriceHistoryDialog({
-  productId,
-  productName,
-  open,
-  onOpenChange,
-}: PriceHistoryDialogProps) {
+export default function PriceHistoryView({ product }: PriceHistoryViewProps) {
   const [page, setPage] = React.useState(1);
   const [limit, setLimit] = React.useState<number>(DEFAULT_LIMIT);
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -70,14 +60,14 @@ export default function PriceHistoryDialog({
   }, [hasFullRange, startDate, endDate, page, limit]);
 
   const fullQuery = useProductPriceHistory(
-    productId,
+    product.id,
     { page, limit },
-    open && !hasFullRange,
+    !hasFullRange,
   );
   const rangeQuery = useProductPriceHistoryByRange(
-    productId,
+    product.id,
     rangeParams,
-    open && hasFullRange,
+    hasFullRange,
   );
 
   const activeQuery = hasFullRange ? rangeQuery : fullQuery;
@@ -100,32 +90,40 @@ export default function PriceHistoryDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-160 md:max-w-3xl lg:max-w-4xl">
-        <DialogHeader className="border-b border-border px-6 py-4">
-          <DialogTitle className="text-card-foreground">
-            Historial de precios
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            {productName
-              ? `Cambios de precio para ${productName}`
-              : "Cambios de precio del producto"}
-          </DialogDescription>
-        </DialogHeader>
+    <Card>
+      <CardContent className="flex flex-col gap-5 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <ProductImage
+              src={product.imageUrl}
+              alt={product.name}
+              size="md"
+            />
+            <div className="flex flex-col">
+              <h2 className="text-lg font-semibold text-foreground">
+                {product.name}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {product.category}
+                {product.unit ? ` · ${product.unit}` : null}
+              </p>
+            </div>
+          </div>
 
-        <div className="flex flex-col items-end gap-1.5 px-6 pt-4 pb-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Filtrar por rango
-          </span>
-          <DateRangePicker
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={handleStartChange}
-            onEndDateChange={handleEndChange}
-          />
+          <div className="flex flex-col items-start gap-1.5 sm:items-end">
+            <span className="text-xs font-medium text-muted-foreground">
+              Filtrar por rango
+            </span>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={handleStartChange}
+              onEndDateChange={handleEndChange}
+            />
+          </div>
         </div>
 
-        <div className="max-h-[55vh] overflow-y-auto px-6 pb-4 pt-2">
+        <div className="border-t border-border pt-4">
           {isPartialRange ? (
             <p className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
               Selecciona una fecha de inicio y fin para filtrar el historial.
@@ -139,7 +137,7 @@ export default function PriceHistoryDialog({
           )}
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
             Mostrando{" "}
             <span className="font-medium text-foreground">
@@ -176,7 +174,7 @@ export default function PriceHistoryDialog({
             ) : null}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 }

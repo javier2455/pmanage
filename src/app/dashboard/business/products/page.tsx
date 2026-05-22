@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
+import PriceHistoryButton from "@/components/products/price-history-button";
 
 const DEFAULT_CATALOG_LIMIT = 5;
 
@@ -94,7 +95,8 @@ export default function ProductsPage() {
             <p className="text-muted-foreground">
               Consulta, actualiza, añade y elimina productos de tu negocio
             </p>
-            <div className="mb-4 flex items-center justify-end">
+            <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+              <PriceHistoryButton />
               <Button asChild>
                 <Link href="/dashboard/business/products/asign-to-business">
                   <Plus data-icon="inline-start" />

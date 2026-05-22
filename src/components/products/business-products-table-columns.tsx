@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ProductToShowInTable } from "@/lib/types/product";
 import ProductDetailsDialog from "@/components/products/details-dialog";
-import PriceHistoryTrigger from "@/components/products/price-history-trigger";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
 
@@ -170,10 +169,6 @@ export function createBusinessProductsColumns(
                 <Pencil className="size-4 text-primary" />
                 Editar
               </Link>
-              <PriceHistoryTrigger
-                productId={row.original.product.id}
-                productName={row.original.product.name}
-              />
               <DeleteDialog
                 deleteType="Producto"
                 name={row.original.product.name}
