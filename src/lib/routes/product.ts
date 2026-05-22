@@ -1,7 +1,6 @@
 import { BASIC_ROUTE } from ".";
 
 export const productRoutes = {
-
   getAllProducts: `${BASIC_ROUTE}/product`,
   getProductById: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
   createProduct: `${BASIC_ROUTE}/product`,
@@ -11,4 +10,12 @@ export const productRoutes = {
   deleteProduct: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
   updateBusinessProductPrice: (businessProductId: string) =>
     `${BASIC_ROUTE}/product/business-product/${businessProductId}/price`,
+
+  // Product Price History
+  getPriceHistory: (productId: string) =>
+    `${BASIC_ROUTE}/product-price-history/product/${productId}`,
+  getLatestPriceHistory: (productId: string) =>
+    `${BASIC_ROUTE}/product-price-history/product/${productId}/latest`,
+  getPriceHistoryByRange: (productId: string) =>
+    `${BASIC_ROUTE}/product-price-history/product/${productId}/range`,
 };
