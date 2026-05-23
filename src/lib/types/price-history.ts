@@ -8,10 +8,11 @@ export type PriceHistoryMeta = {
 export type PriceHistoryEntry = {
   id: string;
   businessProductId: string;
-  price: number;
-  stock: number;
+  price: string;
+  stock: number | null;
   userId: string | null;
-  previousPrice: number | null;
+  username: string | null;
+  previousPrice: string | null;
   previousStock: number | null;
   createdAt: string;
 };

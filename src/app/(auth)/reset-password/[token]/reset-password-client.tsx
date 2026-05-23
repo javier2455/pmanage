@@ -74,7 +74,7 @@ export default function ResetPasswordClient() {
         }
     };
 
-    if (!token || token === "__dynamic__") {
+    if (!token) {
         return (
             <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
                 <Card className="w-full max-w-md">

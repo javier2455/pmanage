@@ -1,10 +1,13 @@
 "use client";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, User2 } from "lucide-react";
+import * as React from "react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import type { PriceHistoryEntry } from "@/lib/types/price-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useInView } from "@/hooks/use-in-view";
+
+const DASH = "—";
 
 function formatTimeOnly(dateStr: string) {
   try {
@@ -14,12 +17,12 @@ function formatTimeOnly(dateStr: string) {
       minute: "2-digit",
     }).format(date);
   } catch {
-    return dateStr;
+    return DASH;
   }
 }
 
 function formatCurrency(value: number) {
-  if (Number.isNaN(value)) return "--";
+  if (!Number.isFinite(value)) return DASH;
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
     currency: "COP",
@@ -27,25 +30,28 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function formatUserId(userId: string): string {
-  const looksLikeUuid = /^[0-9a-f-]{20,}$/i.test(userId);
-  return looksLikeUuid ? `Usuario ${userId.slice(0, 8)}` : userId;
+function parseNumber(v: string | null): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 type DeltaInfo = {
   direction: "up" | "down" | "flat";
-  absolute: number;
   percent: number | null;
 };
 
-function computeDelta(price: number, previous: number | null): DeltaInfo {
-  if (previous == null) {
-    return { direction: "flat", absolute: 0, percent: null };
+function computeDelta(
+  price: number | null,
+  previous: number | null,
+): DeltaInfo {
+  if (price === null || previous === null) {
+    return { direction: "flat", percent: null };
   }
-  const absolute = price - previous;
-  const percent = previous !== 0 ? (absolute / previous) * 100 : null;
-  const direction = absolute > 0 ? "up" : absolute < 0 ? "down" : "flat";
-  return { direction, absolute, percent };
+  const diff = price - previous;
+  const percent = previous !== 0 ? (diff / previous) * 100 : null;
+  const direction = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+  return { direction, percent };
 }
 
 const DELTA_STYLES = {
@@ -66,17 +72,35 @@ const DELTA_STYLES = {
   },
 } as const;
 
+function Row({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-b-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground tabular-nums">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default function PriceHistoryItem({
   entry,
 }: {
   entry: PriceHistoryEntry;
 }) {
   const { ref, inView } = useInView<HTMLLIElement>();
-  const priceDelta = computeDelta(entry.price, entry.previousPrice);
-  const deltaStyle = DELTA_STYLES[priceDelta.direction];
+  const price = parseNumber(entry.price);
+  const previousPrice = parseNumber(entry.previousPrice);
+  const delta = computeDelta(price, previousPrice);
+  const deltaStyle = DELTA_STYLES[delta.direction];
   const DeltaIcon = deltaStyle.icon;
-  const hasStockChange =
-    entry.previousStock != null && entry.previousStock !== entry.stock;
+  const isInitial = previousPrice === null;
 
   return (
     <li
@@ -101,15 +125,13 @@ export default function PriceHistoryItem({
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">
-                {entry.previousPrice == null
-                  ? "Precio inicial"
-                  : "Precio actualizado"}
+                {isInitial ? "Precio inicial" : "Precio actualizado"}
               </span>
               <span className="text-xl font-semibold text-foreground tabular-nums">
-                {formatCurrency(entry.price)}
+                {price !== null ? formatCurrency(price) : DASH}
               </span>
             </div>
-            {priceDelta.percent !== null ? (
+            {delta.percent !== null ? (
               <div
                 className={cn(
                   "flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium tabular-nums",
@@ -118,57 +140,39 @@ export default function PriceHistoryItem({
               >
                 <DeltaIcon className="size-4" aria-hidden="true" />
                 <span>
-                  {priceDelta.percent > 0 ? "+" : ""}
-                  {priceDelta.percent.toFixed(1)}%
+                  {delta.percent > 0 ? "+" : ""}
+                  {delta.percent.toFixed(1)}%
                 </span>
               </div>
             ) : null}
           </div>
 
-          {entry.previousPrice != null ? (
-            <p className="text-xs text-muted-foreground">
-              Desde{" "}
-              <span className="text-foreground tabular-nums">
-                {formatCurrency(entry.previousPrice)}
-              </span>
-              {priceDelta.absolute !== 0 ? (
-                <>
-                  {" · "}
-                  <span
-                    className={cn("tabular-nums", deltaStyle.textClassName)}
-                  >
-                    {priceDelta.absolute > 0 ? "+" : ""}
-                    {formatCurrency(priceDelta.absolute)}
-                  </span>
-                </>
-              ) : null}
-            </p>
-          ) : null}
-
-          {hasStockChange ? (
-            <p className="text-xs text-muted-foreground">
-              Stock:{" "}
-              <span className="text-foreground tabular-nums">
-                {entry.previousStock} → {entry.stock}
-              </span>
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <time
-              dateTime={entry.createdAt}
-              className="text-foreground tabular-nums"
-            >
-              {formatTimeOnly(entry.createdAt)}
-            </time>
-            {entry.userId ? (
-              <span className="inline-flex items-center gap-1">
-                <User2 className="size-3.5" aria-hidden="true" />
-                <span className="text-foreground">
-                  {formatUserId(entry.userId)}
-                </span>
-              </span>
-            ) : null}
+          <div className="flex flex-col">
+            <Row
+              label="Precio anterior"
+              value={
+                previousPrice !== null ? formatCurrency(previousPrice) : DASH
+              }
+            />
+            <Row
+              label="Stock"
+              value={entry.stock !== null ? entry.stock : DASH}
+            />
+            <Row
+              label="Stock anterior"
+              value={
+                entry.previousStock !== null ? entry.previousStock : DASH
+              }
+            />
+            <Row label="Usuario" value={entry.username ?? DASH} />
+            <Row
+              label="Horario"
+              value={
+                <time dateTime={entry.createdAt}>
+                  {formatTimeOnly(entry.createdAt)}
+                </time>
+              }
+            />
           </div>
         </CardContent>
       </Card>

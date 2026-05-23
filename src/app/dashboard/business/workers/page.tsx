@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useBusiness } from "@/context/business-context";
 import { useAllWorkersByBusinessId } from "@/hooks/use-workers";
 import {
@@ -23,17 +22,13 @@ const DEFAULT_LIMIT = 5;
 const VALID_TABS = ["workers", "invitations"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
-function isTabValue(value: string | null): value is TabValue {
-  return value !== null && (VALID_TABS as readonly string[]).includes(value);
+function isTabValue(value: string): value is TabValue {
+  return (VALID_TABS as readonly string[]).includes(value);
 }
 
 export default function WorkersPage() {
   const { activeBusinessId } = useBusiness();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const activeTab: TabValue = isTabValue(tabParam) ? tabParam : "workers";
-
+  const [activeTab, setActiveTab] = useState<TabValue>("workers");
   const [workersPage, setWorkersPage] = useState(1);
   const [workersLimit, setWorkersLimit] = useState(DEFAULT_LIMIT);
   const [invitationsPage, setInvitationsPage] = useState(1);
@@ -63,19 +58,9 @@ export default function WorkersPage() {
 
   const { data: invitationsCount } = useInvitationsCount(businessId);
 
-  const handleTabChange = useCallback(
-    (next: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (next === "workers") {
-        params.delete("tab");
-      } else {
-        params.set("tab", next);
-      }
-      const query = params.toString();
-      router.replace(query ? `?${query}` : "?", { scroll: false });
-    },
-    [router, searchParams],
-  );
+  const handleTabChange = useCallback((next: string) => {
+    if (isTabValue(next)) setActiveTab(next);
+  }, []);
 
   const handleWorkersLimitChange = useCallback((nextLimit: number) => {
     setWorkersLimit(nextLimit);
