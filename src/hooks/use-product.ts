@@ -62,11 +62,10 @@ export function useEditProductMutation() {
 export function useUpdateBusinessProductPriceMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ businessProductId, price }: { businessProductId: string; price: number }) =>
+        mutationFn: ({ businessProductId, price }: { businessProductId: string; price: number; businessId: string }) =>
             updateBusinessProductPrice(businessProductId, price),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
-            queryClient.invalidateQueries({ queryKey: ["all-products"] });
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
         },
     });
 }
