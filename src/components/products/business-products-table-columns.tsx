@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ProductToShowInTable } from "@/lib/types/product";
 import ProductDetailsDialog from "@/components/products/details-dialog";
-import PriceHistoryTrigger from "@/components/products/price-history-trigger";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
+import { EditPriceDialog } from "@/components/products/edit-price-dialog";
 
 export type BusinessProductsColumnMeta = {
   headerClassName?: string;
@@ -138,60 +138,78 @@ export function createBusinessProductsColumns(
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Abrir acciones"
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-52 p-1">
-              <ProductDetailsDialog
-                productId={row.original.product.id}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                  >
-                    <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                    Ver detalles
-                  </button>
-                }
-              />
-              <Link
-                href={`/dashboard/business/products/edit?id=${row.original.id}`}
-                className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                <Pencil className="size-4 text-primary" />
-                Editar
-              </Link>
-              <PriceHistoryTrigger
-                productId={row.original.product.id}
-                productName={row.original.product.name}
-              />
-              <DeleteDialog
-                deleteType="Producto"
-                name={row.original.product.name}
-                onConfirm={() => onDeleteProduct(row.original.product.id)}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-muted"
-                  >
-                    <Trash2 className="size-4 shrink-0 text-destructive" />
-                    Eliminar del negocio
-                  </button>
-                }
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <BusinessProductActionsCell row={row.original} onDelete={onDeleteProduct} />
       ),
     },
   ];
+}
+
+function BusinessProductActionsCell({
+  row,
+  onDelete,
+}: {
+  row: ProductToShowInTable;
+  onDelete: (productId: string) => void | Promise<void>;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+
+  return (
+    <div className="flex justify-end">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Abrir acciones"
+          >
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-52 p-1">
+          <ProductDetailsDialog
+            productId={row.product.id}
+            trigger={
+              <button
+                type="button"
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+              >
+                <Eye className="size-4 text-blue-500 dark:text-blue-400" />
+                Ver detalles
+              </button>
+            }
+          />
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+          >
+            <Pencil className="size-4 text-primary" />
+            Editar precio
+          </button>
+          <DeleteDialog
+            deleteType="Producto"
+            name={row.product.name}
+            onConfirm={() => onDelete(row.product.id)}
+            trigger={
+              <button
+                type="button"
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-muted"
+              >
+                <Trash2 className="size-4 shrink-0 text-destructive" />
+                Eliminar del negocio
+              </button>
+            }
+          />
+        </PopoverContent>
+      </Popover>
+      <EditPriceDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        businessProductId={row.id}
+        productName={row.product.name}
+        currentPrice={Number(row.price)}
+      />
+    </div>
+  );
 }

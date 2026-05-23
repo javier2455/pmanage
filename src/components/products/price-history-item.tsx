@@ -158,12 +158,6 @@ export default function PriceHistoryItem({
               label="Stock"
               value={entry.stock !== null ? entry.stock : DASH}
             />
-            <Row
-              label="Stock anterior"
-              value={
-                entry.previousStock !== null ? entry.previousStock : DASH
-              }
-            />
             <Row label="Usuario" value={entry.username ?? DASH} />
             <Row
               label="Horario"
