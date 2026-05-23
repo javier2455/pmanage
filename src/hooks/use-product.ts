@@ -42,7 +42,6 @@ export function useCreateProductInBusinessMutation() {
         mutationFn: (credentials: CreateProductInBusinessProps) => createInBusiness(credentials),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
-            queryClient.invalidateQueries({ queryKey: ["all-products"] });
         },
     });
 }
@@ -62,11 +61,10 @@ export function useEditProductMutation() {
 export function useUpdateBusinessProductPriceMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ businessProductId, price }: { businessProductId: string; price: number }) =>
+        mutationFn: ({ businessProductId, price }: { businessProductId: string; price: number; businessId: string }) =>
             updateBusinessProductPrice(businessProductId, price),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
-            queryClient.invalidateQueries({ queryKey: ["all-products"] });
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
         },
     });
 }
@@ -86,9 +84,8 @@ export function useDeleteProductInBusinessMutation() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ businessId, productId }: { businessId: string; productId: string }) => deleteProductInBusiness(businessId, productId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
-            queryClient.invalidateQueries({ queryKey: ["all-products"] });
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", variables.businessId] });
         },
     });
 }

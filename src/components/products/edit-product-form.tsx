@@ -70,6 +70,7 @@ export function EditProductForm() {
             await updateBusinessProductPriceMutation.mutateAsync({
                 businessProductId: businessProductId,
                 price: formData.price,
+                businessId: activeBusinessId ?? "",
             })
             sileo.success({
                 title: "Precio actualizado correctamente",

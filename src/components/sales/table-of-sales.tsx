@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useCancelSaleMutation } from "@/hooks/use-sales";
+import { useBusiness } from "@/context/business-context";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 import {
@@ -65,12 +66,13 @@ export default function TableOfSales({
   onPageChange,
   onLimitChange,
 }: TableOfSalesProps) {
+  const { activeBusinessId } = useBusiness();
   const cancelSaleMutation = useCancelSaleMutation();
 
   const handleCancelSale = React.useCallback(
     async (saleId: string, cancellationReason: string) => {
       try {
-        await cancelSaleMutation.mutateAsync({ saleId, cancellationReason });
+        await cancelSaleMutation.mutateAsync({ saleId, cancellationReason, businessId: activeBusinessId ?? "" });
         sileo.success({
           title: "Venta cancelada correctamente",
           fill: "",
@@ -100,7 +102,7 @@ export default function TableOfSales({
         }
       }
     },
-    [cancelSaleMutation],
+    [cancelSaleMutation, activeBusinessId],
   );
 
   const columns = React.useMemo(
