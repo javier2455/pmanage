@@ -6,6 +6,7 @@ export const createExpenseSchema = z.object({
     .number({ error: "Ingresa un monto válido" })
     .positive("El monto debe ser mayor a 0"),
   description: z.string().min(1, "La descripción es requerida"),
+  expenseCategoryId: z.string().optional().nullable(),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();

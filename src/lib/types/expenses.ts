@@ -3,6 +3,7 @@ export interface Expense {
   title: string;
   amount: number;
   description: string;
+  expenseCategoryId?: string | null;
   createdBy: string;
   userName: string;
   createdAt: string;
@@ -24,10 +25,12 @@ export interface CreateExpenseProps {
   title: string;
   amount: number;
   description: string;
+  expenseCategoryId?: string | null;
 }
 
 export type UpdateExpenseProps = Partial<{
   title: string;
   amount: number;
   description: string;
+  expenseCategoryId: string | null;
 }>;

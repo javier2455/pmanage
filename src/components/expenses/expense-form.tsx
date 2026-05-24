@@ -13,6 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   CreateExpenseFormData,
@@ -22,7 +29,10 @@ import {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
 } from "@/hooks/use-expenses";
+import { useGetAllExpenseCategoriesQuery } from "@/hooks/use-expense-categories";
 import { useBusiness } from "@/context/business-context";
+
+const NO_CATEGORY_VALUE = "__none__";
 
 interface ExpenseFormProps {
   mode: "create" | "edit";
@@ -48,10 +58,21 @@ export function ExpenseForm({
   const isEdit = mode === "edit";
   const mutation = isEdit ? updateMutation : createMutation;
 
+  const { data: categoriesData, isLoading: isLoadingCategories } =
+    useGetAllExpenseCategoriesQuery({
+      page: 1,
+      limit: 1000,
+      businessId: activeBusinessId ?? undefined,
+      enabled: !!activeBusinessId,
+    });
+  const categories = categoriesData?.data ?? [];
+
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateExpenseFormData>({
     resolver: zodResolver(createExpenseSchema),
@@ -59,16 +80,27 @@ export function ExpenseForm({
       title: defaultValues?.title ?? "",
       amount: defaultValues?.amount ?? (undefined as unknown as number),
       description: defaultValues?.description ?? "",
+      expenseCategoryId: defaultValues?.expenseCategoryId ?? null,
     },
   });
 
+  const selectedCategoryId = watch("expenseCategoryId");
+
   async function onSubmit(formData: CreateExpenseFormData) {
+    const normalizedCategoryId =
+      formData.expenseCategoryId && formData.expenseCategoryId.length > 0
+        ? formData.expenseCategoryId
+        : null;
+    const payload = {
+      ...formData,
+      expenseCategoryId: normalizedCategoryId,
+    };
     try {
       if (isEdit) {
         if (!expenseId) return;
         await updateMutation.mutateAsync({
           expenseId,
-          credentials: formData,
+          credentials: payload,
         });
         sileo.success({
           title: "Gasto actualizado correctamente",
@@ -85,7 +117,7 @@ export function ExpenseForm({
         }
         await createMutation.mutateAsync({
           idbusiness: activeBusinessId,
-          ...formData,
+          ...payload,
         });
         sileo.success({
           title: "Gasto registrado correctamente",
@@ -173,6 +205,53 @@ export function ExpenseForm({
             {errors.description.message}
           </p>
         )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="expense-category" className="text-card-foreground">
+          Categoría
+        </Label>
+        <Select
+          value={selectedCategoryId ?? NO_CATEGORY_VALUE}
+          onValueChange={(val) =>
+            setValue(
+              "expenseCategoryId",
+              val === NO_CATEGORY_VALUE ? null : val,
+              { shouldDirty: true },
+            )
+          }
+          disabled={isLoadingCategories || categories.length === 0}
+        >
+          <SelectTrigger id="expense-category" className="w-full">
+            <SelectValue
+              placeholder={
+                isLoadingCategories
+                  ? "Cargando categorías..."
+                  : categories.length === 0
+                    ? "Aún no hay categorías"
+                    : "Sin categoría"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_CATEGORY_VALUE}>Sin categoría</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Opcional — administra tus categorías en la sección de{" "}
+          <Link
+            href="/dashboard/business/categories/expenses"
+            className="underline-offset-2 hover:underline"
+          >
+            Categorías
+          </Link>
+          .
+        </p>
       </div>
 
       {errors.root && (
