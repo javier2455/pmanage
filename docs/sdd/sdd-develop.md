@@ -24,7 +24,7 @@ Cambios respecto a `main` agrupados por estado:
 | 2 | Refactor de rutas dinámicas con query params | ✅ Mergeada | (`a18f6c7`) | Sí |
 | 3 | Despliegue en subdirectorio (`basePath` + `.htaccess`) | ✅ Mergeada | (`8051f30`, `964c4c7`) | Sí — requiere validar `NEXT_PUBLIC_BASE_PATH` en el deploy real |
 | 4 | Limpieza del workflow de cPanel viejo | ✅ Mergeada | (`efdf04e`) | Sí |
-| 5 | Endpoints de **categorías de gasto** (`expense-categories`) | 🟡 Sin commit (working tree) | — | **No** — falta integración UI y backend confirmado |
+| 5 | Sección **Categorías** + endpoints `expense-categories` | ✅ Mergeada en develop | — | Sí — pendiente que backend incluya el menu item dinámico |
 | 6 | Spec backend de **Proveedores** | 🟡 Untracked, documento listo | — | **No** — solo documentación, requiere backend + UI |
 | 7 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
 | 8 | Fix CORS / limpieza API interna | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
@@ -86,7 +86,48 @@ Cambios respecto a `main` agrupados por estado:
 
 ---
 
-### 2.4. Otros mergeados menores
+### 2.4. Sección **Categorías** (nomenclador propio del negocio)
+
+**Qué hace.** Nueva sección bajo `/dashboard/business/categories` que permite al dueño del negocio (o trabajador autorizado) crear, listar, editar y eliminar **categorías propias** para clasificar registros. Por ahora cubre **categorías de gastos** (endpoints `expense-categories` listos en backend); el diseño escala a futuras familias (productos, etc.) agregando entradas al record `KIND_META` y al `generateStaticParams()` del detalle dinámico.
+
+- Hub `/dashboard/business/categories`: grid de cards (1 por familia) con preview de las primeras 5 categorías, contador total, botón "Ver todas" y botón "Nueva categoría" (modal).
+- Detalle `/dashboard/business/categories/[kind]`: tabla paginada (TanStack Table) con acciones Ver detalles / Editar / Eliminar.
+- Crear y editar son **modales** (`CategoryFormDialog`); eliminar reusa `DeleteDialog`.
+
+**Archivos clave.**
+- [src/lib/types/expense-category.ts](../../src/lib/types/expense-category.ts)
+- [src/lib/validations/expense-category.ts](../../src/lib/validations/expense-category.ts)
+- [src/lib/api/expense-category.ts](../../src/lib/api/expense-category.ts)
+- [src/hooks/use-expense-categories.ts](../../src/hooks/use-expense-categories.ts)
+- [src/components/categories/](../../src/components/categories/)
+- [src/app/dashboard/business/categories/](../../src/app/dashboard/business/categories/)
+
+**Sidebar.** El menú se construye desde `GET /menu/`. Mientras backend no incluye la entrada, se inyecta vía [src/lib/menu/static-fallback.ts](../../src/lib/menu/static-fallback.ts) y un merge en [src/components/sidebar/sidebar.tsx](../../src/components/sidebar/sidebar.tsx). Cuando backend agregue el item con el siguiente payload, borrar el archivo de fallback y el `useMemo` del merge:
+
+```json
+{
+  "icon": "Tags",
+  "name": "Categorías",
+  "badge": null,
+  "url": "/dashboard/business/categories",
+  "active": true,
+  "roles": null,
+  "plans": null,
+  "submenus": []
+}
+```
+
+**Criterios de aceptación.**
+- El hub muestra el icono `Tags` en sidebar y `HandCoins` en la card de Gastos.
+- El modal de crear pre-selecciona el negocio activo; el modal de editar deshabilita el cambio de negocio.
+- Las query keys siguen el patrón `["expense-categories", businessId, ...]` para evitar cache leaks entre negocios.
+- La ruta dinámica `[kind]` está pre-renderizada en build para `kind=expenses`.
+
+**Riesgos.** Si el backend agrega la entrada con un `url` distinto al esperado (`/dashboard/business/categories`), el merge duplicará el item. Coordinar el slug con backend antes del merge final.
+
+---
+
+### 2.5. Otros mergeados menores
 
 - **Workflow de cPanel viejo eliminado** (`efdf04e`) — limpia el `.github/workflows/deploy.yml` legacy en favor de `deploy-workflow.yml`.
 - **Configuración inicial de basePath** (`8051f30`) y **.htaccess para SPA fallback** (`964c4c7`).
@@ -96,27 +137,14 @@ Cambios respecto a `main` agrupados por estado:
 
 ## 3. Trabajo en curso (working tree y ramas)
 
-### 3.1. Categorías de gasto — backend listo, frontend pendiente
+### 3.1. Selector de categoría en formulario de gasto
 
-**Estado.** Archivo modificado sin commit: [src/lib/routes/expenses.ts](../../src/lib/routes/expenses.ts).
+**Estado.** Pendiente. La sección de Categorías ya está implementada (ver §2.4), pero el formulario de gasto ([src/components/expenses/expense-form.tsx](../../src/components/expenses/expense-form.tsx)) todavía no expone un selector de categoría — el campo `category` del modelo `Expense` sigue siendo string libre.
 
-**Diff vs `main`.** Se agregaron 5 endpoints:
-```
-GET    /expense-categories
-GET    /expense-categories/:id
-POST   /expense-categories
-PUT    /expense-categories/:id
-DELETE /expense-categories/:id
-```
-
-**Qué falta para entregarla.**
-- Hook `use-expense-categories.ts` (no existe aún).
-- Tipos en `src/lib/types/`.
-- Schemas Zod de validación.
-- Componentes UI: selector de categoría en formulario de gasto, gestor de categorías en alguna ruta de settings.
-- Tests manuales contra el backend.
-
-**Razón.** Forma parte de la **Variante B** del roadmap (gestión integral) — ver §4.
+**Qué falta.**
+- Agregar un `Select` (o combobox con búsqueda) al `expense-form.tsx` que liste las categorías del negocio activo.
+- Persistir `expenseCategoryId` en el payload de crear/editar gasto (requiere endpoint backend que acepte el campo).
+- Mostrar la categoría en la tabla y en el detalle de gasto.
 
 ---
 
@@ -173,7 +201,7 @@ Introduce nuevas entidades de dominio.
 | Feature | Estado de preparación |
 |---|---|
 | Módulo de Proveedores | Spec backend listo §3.2 |
-| Categorías de gasto | Endpoints listos §3.1, UI pendiente |
+| Categorías de gasto | ✅ Implementada §2.4 — falta integrarla al formulario de gasto §3.1 |
 | Presupuestos mensuales | Solo idea |
 | Historial de precios — fase 2 (forecasts, gráficos) | Ver [docs/extra/price-history-fase-2.md](../extra/price-history-fase-2.md) |
 

@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   ShoppingCart,
   Store,
+  Tags,
   Users,
   Warehouse,
   type LucideIcon,
@@ -34,6 +35,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ShoppingBag,
   ShoppingCart,
   Store,
+  Tags,
   Users,
   Warehouse,
 };

@@ -12,6 +12,7 @@ import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
 import { isProRoute } from "@/lib/pro-gates"
 import { resolveIcon } from "@/lib/icon-map"
+import { STATIC_CATEGORIES_MENU_ITEM } from "@/lib/menu/static-fallback"
 import {
   Sidebar,
   SidebarContent,
@@ -54,9 +55,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     enabled: !isLoadingBusinesses,
   })
 
+  // TODO: remove once the backend GET /menu/ includes the "Categorías" entry
+  const mergedMenu = React.useMemo(() => {
+    if (!menu) return menu
+    const alreadyHas = menu.some(
+      (m) => m.url === STATIC_CATEGORIES_MENU_ITEM.url,
+    )
+    return alreadyHas ? menu : [...menu, STATIC_CATEGORIES_MENU_ITEM]
+  }, [menu])
+
   const navMain = React.useMemo<NavItem[]>(() => {
-    if (!menu) return []
-    return menu
+    if (!mergedMenu) return []
+    return mergedMenu
       .filter((item) => item.active)
       .filter((item) => !item.roles || item.roles.includes(roleId))
       .map<NavItem>((item) => {
@@ -85,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
       })
       .filter((item) => !item.items || item.items.length > 0)
-  }, [menu, roleId, isProPlan, hasNoBusinesses])
+  }, [mergedMenu, roleId, isProPlan, hasNoBusinesses])
 
   return (
     <Sidebar className="" collapsible="icon" {...props}>
