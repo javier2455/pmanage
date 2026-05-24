@@ -70,7 +70,7 @@ export async function updateExpenseCategory(
   categoryId: string,
   credentials: UpdateExpenseCategoryProps,
 ): Promise<ExpenseCategory> {
-  const { data } = await apiClient.patch<SingleResponse<ExpenseCategory>>(
+  const { data } = await apiClient.put<SingleResponse<ExpenseCategory>>(
     expensesRoutes.updateExpenseCategory(categoryId),
     credentials,
   );
