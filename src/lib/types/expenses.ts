@@ -4,6 +4,10 @@ export interface Expense {
   amount: number;
   description: string;
   expenseCategoryId?: string | null;
+  expenseCategory?: {
+    id: string;
+    name: string;
+  } | null;
   createdBy: string;
   userName: string;
   createdAt: string;

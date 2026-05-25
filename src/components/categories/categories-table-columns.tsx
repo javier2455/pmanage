@@ -12,6 +12,7 @@ import {
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { ExpenseCategory } from "@/lib/types/expense-category";
 import { CategoryDetailsDialog } from "./category-details-dialog";
+import type { CategoryKind } from "./kind-config";
 
 export type CategoriesColumnMeta = {
   headerClassName?: string;
@@ -51,11 +52,13 @@ function CategoriesSortableHeader({
 }
 
 interface CreateColumnsParams {
+  kind: CategoryKind;
   onEditCategory: (category: ExpenseCategory) => void;
   onDeleteCategory: (categoryId: string) => void | Promise<void>;
 }
 
 export function createCategoriesColumns({
+  kind,
   onEditCategory,
   onDeleteCategory,
 }: CreateColumnsParams): ColumnDef<ExpenseCategory>[] {
@@ -133,6 +136,7 @@ export function createCategoriesColumns({
             </PopoverTrigger>
             <PopoverContent align="end" className="w-52 p-1">
               <CategoryDetailsDialog
+                kind={kind}
                 categoryId={row.original.id}
                 trigger={
                   <button

@@ -20,12 +20,12 @@ export const productRoutes = {
     `${BASIC_ROUTE}/product-price-history/product/${productId}/range`,
 
   /* Categories */
-  getAllProductCategory: `${BASIC_ROUTE}/category`,
+  getAllProductCategory: `${BASIC_ROUTE}/category/`,
   getProductCategoryById: (categoryId: string) =>
-    `${BASIC_ROUTE}/category/${categoryId}`,
-  createProductCategory: `${BASIC_ROUTE}/category`,
+    `${BASIC_ROUTE}/category/${categoryId}/`,
+  createProductCategory: `${BASIC_ROUTE}/category/`,
   updateProductCategory: (categoryId: string) =>
-    `${BASIC_ROUTE}/category/${categoryId}`,
+    `${BASIC_ROUTE}/category/${categoryId}/`,
   deleteProductCategory: (categoryId: string) =>
-    `${BASIC_ROUTE}/category/${categoryId}`,
+    `${BASIC_ROUTE}/category/${categoryId}/`,
 };

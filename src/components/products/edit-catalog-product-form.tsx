@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEditProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
+import {
+    useGetAllProductCategoriesQuery,
+    useGetProductCategoryByIdQuery,
+} from "@/hooks/use-product-categories"
+import { useBusiness } from "@/context/business-context"
 import { ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +24,7 @@ import {
     ComboboxList,
 } from "@/components/ui/combobox"
 import { X, RefreshCw, ImagePlus, Upload } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EditProductFormData, editProductSchema } from "@/lib/validations/products"
 import axios from "axios"
@@ -29,21 +34,66 @@ import Link from "next/link"
 const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
 
+type CategoryOption = { id: string; name: string }
+
 export function EditCatalogProductForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const productId = searchParams.get("id") ?? ""
 
-    const { data, isLoading, isError } = useGetProductByIdQuery(productId)
+    // Force refetch on every mount: the global staleTime for ["product"] is 10 min,
+    // so without this, navigating from the products list serves stale cache that
+    // predates the categoryId/categoryRef fields and the Select stays empty.
+    const { data, isLoading, isError } = useGetProductByIdQuery(productId, {
+        refetchOnMount: "always",
+    })
     const editProductMutation = useEditProductMutation()
+    const { activeBusinessId } = useBusiness()
+    const { data: categoriesData, isLoading: isLoadingCategories } =
+        useGetAllProductCategoriesQuery({
+            page: 1,
+            limit: 1000,
+            businessId: activeBusinessId ?? undefined,
+            enabled: !!activeBusinessId,
+        })
+    const productCategories = categoriesData?.data ?? []
+
+    const currentCategoryId: string | null = data?.data?.categoryId ?? null
+    const inlineCategoryRef = data?.data?.categoryRef ?? null
+
+    // Fallback: if the by-id endpoint doesn't include `categoryRef` but we have the id,
+    // resolve the category through its own endpoint so the Select can show the name.
+    const shouldFetchCategoryById =
+        !!currentCategoryId && !inlineCategoryRef
+    const { data: fetchedCategory } = useGetProductCategoryByIdQuery(
+        shouldFetchCategoryById ? currentCategoryId : "",
+    )
+    const resolvedCategoryRef = inlineCategoryRef ?? fetchedCategory ?? null
+
+    const selectItems = (() => {
+        const items = productCategories.map((c) => ({ id: c.id, name: c.name }))
+        if (resolvedCategoryRef && !items.find((i) => i.id === resolvedCategoryRef.id)) {
+            items.unshift({
+                id: resolvedCategoryRef.id,
+                name: resolvedCategoryRef.name,
+            })
+        }
+        return items
+    })()
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
+    // Gates the Select render until reset() has populated form state with the
+    // product's categoryId. Without this, Radix Select mounts with value=null,
+    // its internal matcher locks in "no selection", and later value updates
+    // don't always re-evaluate the trigger text.
+    const [formReady, setFormReady] = useState(false)
 
     const {
         register,
         handleSubmit,
+        control,
         watch,
         setValue,
         setError,
@@ -54,7 +104,7 @@ export function EditCatalogProductForm() {
         defaultValues: {
             name: "",
             description: "",
-            category: "",
+            category: null,
             unit: "kg",
             imageUrl: "",
         },
@@ -69,10 +119,11 @@ export function EditCatalogProductForm() {
         reset({
             name: productData.name,
             description: productData.description ?? "",
-            category: productData.category,
+            category: productData.categoryId ?? null,
             unit: productData.unit,
             imageUrl: productData.imageUrl ?? "",
         })
+        setFormReady(true)
     }, [data, reset])
 
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -98,13 +149,15 @@ export function EditCatalogProductForm() {
     }
 
     async function onSubmit(data: EditProductFormData) {
+        const normalizedCategoryId =
+            data.category && data.category.length > 0 ? data.category : null
         try {
             await editProductMutation.mutateAsync({
                 productId: productId,
                 credentials: {
                     name: data.name,
                     description: data.description ?? null,
-                    category: data.category ?? null,
+                    categoryId: normalizedCategoryId,
                     unit: data.unit,
                     imageUrl: imageFile ?? data.imageUrl ?? null,
                 },
@@ -196,14 +249,78 @@ export function EditCatalogProductForm() {
                     <div className="grid gap-4 sm:grid-cols-2 mb-6">
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="product-category" className="text-card-foreground">
-                                Categoria <span className="text-destructive">*</span>
+                                Categoria
                             </Label>
-                            <Input
-                                id="product-category"
-                                placeholder="Ej: Electrónica, Ropa..."
-                                {...register("category")}
-                                aria-invalid={errors.category ? "true" : "false"}
-                            />
+                            {formReady ? (
+                                <Controller
+                                    control={control}
+                                    name="category"
+                                    render={({ field }) => {
+                                        const selectedOption: CategoryOption | null =
+                                            selectItems.find((i) => i.id === field.value) ?? null
+                                        return (
+                                            <Combobox<CategoryOption | null>
+                                                value={selectedOption}
+                                                onValueChange={(opt) =>
+                                                    field.onChange(opt?.id ?? null)
+                                                }
+                                                items={selectItems}
+                                                itemToStringLabel={(opt) => opt?.name ?? ""}
+                                                isItemEqualToValue={(a, b) =>
+                                                    (a?.id ?? null) === (b?.id ?? null)
+                                                }
+                                            >
+                                                <ComboboxInput
+                                                    placeholder={
+                                                        isLoadingCategories
+                                                            ? "Cargando categorías..."
+                                                            : selectItems.length === 0
+                                                                ? "Aún no hay categorías"
+                                                                : "Buscar categoría..."
+                                                    }
+                                                    className="w-full"
+                                                    showClear={!!selectedOption}
+                                                    disabled={
+                                                        isLoadingCategories || selectItems.length === 0
+                                                    }
+                                                />
+                                                <ComboboxContent>
+                                                    <ComboboxList className="max-h-64">
+                                                        {selectItems.map((opt) => (
+                                                            <ComboboxItem key={opt.id} value={opt}>
+                                                                {opt.name}
+                                                            </ComboboxItem>
+                                                        ))}
+                                                        <ComboboxEmpty>
+                                                            No se encontró ninguna categoría.
+                                                        </ComboboxEmpty>
+                                                    </ComboboxList>
+                                                </ComboboxContent>
+                                            </Combobox>
+                                        )
+                                    }}
+                                />
+                            ) : (
+                                <div
+                                    id="product-category"
+                                    className="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3"
+                                    aria-busy="true"
+                                >
+                                    <span className="text-sm text-muted-foreground">
+                                        Cargando categoría...
+                                    </span>
+                                </div>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                                Opcional — administra tus categorías en{" "}
+                                <Link
+                                    href="/dashboard/business/categories/products"
+                                    className="underline-offset-2 hover:underline"
+                                >
+                                    Categorías
+                                </Link>
+                                .
+                            </p>
                             {errors.category && (
                                 <p className="text-xs text-destructive">{errors.category.message}</p>
                             )}

@@ -33,11 +33,10 @@ import {
   CreateExpenseCategoryFormData,
   createExpenseCategorySchema,
 } from "@/lib/validations/expense-category";
-import {
-  useCreateExpenseCategoryMutation,
-  useUpdateExpenseCategoryMutation,
-} from "@/hooks/use-expense-categories";
 import { useBusiness } from "@/context/business-context";
+import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
+
+type CategoryFormData = CreateExpenseCategoryFormData;
 
 const SUCCESS_TOAST_STYLES = {
   title: "text-white! text-[16px]! font-bold!",
@@ -45,15 +44,17 @@ const SUCCESS_TOAST_STYLES = {
 };
 
 interface CategoryFormDialogProps {
+  kind: CategoryKind;
   mode: "create" | "edit";
   categoryId?: string;
-  defaultValues?: Partial<CreateExpenseCategoryFormData>;
+  defaultValues?: Partial<CategoryFormData>;
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
 export function CategoryFormDialog({
+  kind,
   mode,
   categoryId,
   defaultValues,
@@ -61,6 +62,7 @@ export function CategoryFormDialog({
   open: openProp,
   onOpenChange: onOpenChangeProp,
 }: CategoryFormDialogProps) {
+  const config = CATEGORY_KINDS[kind];
   const isControlled = openProp !== undefined;
   const [internalOpen, setInternalOpen] = React.useState(false);
   const open = isControlled ? openProp : internalOpen;
@@ -73,8 +75,8 @@ export function CategoryFormDialog({
   );
 
   const { activeBusinessId, businesses } = useBusiness();
-  const createMutation = useCreateExpenseCategoryMutation();
-  const updateMutation = useUpdateExpenseCategoryMutation();
+  const createMutation = config.useCreate();
+  const updateMutation = config.useUpdate();
 
   const isEdit = mode === "edit";
   const mutation = isEdit ? updateMutation : createMutation;
@@ -87,7 +89,7 @@ export function CategoryFormDialog({
     setError,
     watch,
     formState: { errors },
-  } = useForm<CreateExpenseCategoryFormData>({
+  } = useForm<CategoryFormData>({
     resolver: zodResolver(createExpenseCategorySchema),
     defaultValues: {
       name: defaultValues?.name ?? "",
@@ -111,7 +113,7 @@ export function CategoryFormDialog({
 
   const selectedBusinessId = watch("businessId");
 
-  async function onSubmit(formData: CreateExpenseCategoryFormData) {
+  async function onSubmit(formData: CategoryFormData) {
     try {
       if (isEdit) {
         if (!categoryId) return;

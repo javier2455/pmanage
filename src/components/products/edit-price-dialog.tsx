@@ -30,6 +30,7 @@ interface EditPriceDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     businessProductId: string
+    productId: string
     productName: string
     currentPrice: number
 }
@@ -45,6 +46,7 @@ export function EditPriceDialog({
     open,
     onOpenChange,
     businessProductId,
+    productId,
     productName,
     currentPrice,
 }: EditPriceDialogProps) {
@@ -85,6 +87,7 @@ export function EditPriceDialog({
                 businessProductId,
                 price: formData.price,
                 businessId: activeBusinessId ?? "",
+                productId,
             })
             sileo.success({
                 title: "Precio actualizado correctamente",

@@ -72,7 +72,7 @@ export function AssignProductToBusinessForm() {
         productId: product.id,
         name: product.name,
         description: product.description,
-        category: product.category,
+        categoryId: product.categoryId ?? null,
         unit: product.unit,
         imageUrl: product.imageUrl ?? undefined,
         price: data.price,

@@ -12,6 +12,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useGetProductByIdQuery } from "@/hooks/use-product"
+import { useGetProductCategoryByIdQuery } from "@/hooks/use-product-categories"
 import { Badge } from "@/components/ui/badge"
 import { ProductImage } from "@/components/products/product-image"
 
@@ -22,10 +23,21 @@ interface ProductDetailsDialogProps {
 }
 
 export default function ProductDetailsDialog({ productId, tooltip, trigger }: ProductDetailsDialogProps) {
-    const { data, isLoading } = useGetProductByIdQuery(productId)
+    const { data, isLoading } = useGetProductByIdQuery(productId, {
+        refetchOnMount: "always",
+    })
 
     const product = data?.data
     const business = product?.businesses?.[0]
+
+    const inlineCategoryName = product?.categoryRef?.name ?? null
+    const productCategoryId: string | null = product?.categoryId ?? null
+    const shouldFetchCategoryById =
+        !!productCategoryId && !inlineCategoryName
+    const { data: fetchedCategory } = useGetProductCategoryByIdQuery(
+        shouldFetchCategoryById ? productCategoryId : "",
+    )
+    const categoryName = inlineCategoryName ?? fetchedCategory?.name ?? null
 
     const triggerContent = trigger ?? <Button variant="outline">Ver detalles</Button>
 
@@ -77,7 +89,9 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger }: Pr
                         <div className="flex items-center justify-between border-b border-border py-4">
                             <span className="text-sm text-muted-foreground">Categoría</span>
                             <span className="text-sm font-medium text-card-foreground">
-                                {product?.category ?? "--"}
+                                {categoryName ?? (
+                                    <span className="text-muted-foreground italic">Sin categoría</span>
+                                )}
                             </span>
                         </div>
                         <div className="flex items-center justify-between border-b border-border py-4">

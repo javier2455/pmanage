@@ -207,6 +207,7 @@ function BusinessProductActionsCell({
         open={editOpen}
         onOpenChange={setEditOpen}
         businessProductId={row.id}
+        productId={row.product.id}
         productName={row.product.name}
         currentPrice={Number(row.price)}
       />

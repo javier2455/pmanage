@@ -33,13 +33,13 @@ export async function getProductById(productId: string) {
 export async function create(
   credentials: CreateProductProps,
 ): Promise<CreateProductResponse> {
-  const { category, description, name, unit, imageUrl } = credentials;
+  const { categoryId, description, name, unit, imageUrl } = credentials;
 
   if (imageUrl instanceof File) {
     const formData = new FormData();
     formData.append("name", name);
     if (description) formData.append("description", description);
-    if (category) formData.append("category", category);
+    if (categoryId) formData.append("categoryId", categoryId);
     formData.append("unit", unit);
     formData.append("imageUrl", imageUrl);
 
@@ -54,7 +54,7 @@ export async function create(
   }
 
   const { data } = await apiClient.post(productRoutes.createProduct, {
-    category,
+    categoryId,
     description,
     name,
     unit,
@@ -82,8 +82,8 @@ export async function edit(productId: string, credentials: EditProductProps) {
     formData.append("name", credentials.name);
     if (credentials.description !== null)
       formData.append("description", credentials.description);
-    if (credentials.category !== null)
-      formData.append("category", credentials.category);
+    if (credentials.categoryId !== null)
+      formData.append("categoryId", credentials.categoryId);
     formData.append("unit", credentials.unit);
     if (credentials.active !== undefined && credentials.active !== null)
       formData.append("active", String(credentials.active));

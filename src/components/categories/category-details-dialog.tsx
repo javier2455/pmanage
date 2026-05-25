@@ -14,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useGetExpenseCategoryByIdQuery } from "@/hooks/use-expense-categories";
+import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
 
 function formatDate(date?: string) {
   if (!date) return "—";
@@ -28,6 +28,7 @@ function formatDate(date?: string) {
 }
 
 interface CategoryDetailsDialogProps {
+  kind: CategoryKind;
   categoryId: string;
   tooltip?: string;
   trigger: React.ReactNode;
@@ -36,13 +37,15 @@ interface CategoryDetailsDialogProps {
 }
 
 export function CategoryDetailsDialog({
+  kind,
   categoryId,
   tooltip,
   trigger,
   open,
   onOpenChange,
 }: CategoryDetailsDialogProps) {
-  const { data, isLoading } = useGetExpenseCategoryByIdQuery(
+  const config = CATEGORY_KINDS[kind];
+  const { data, isLoading } = config.useById(
     open === false ? "" : categoryId,
   );
 

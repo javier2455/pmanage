@@ -7,6 +7,13 @@ export type Product = {
     name: string;
     description: string | null;
     category: string;
+    categoryId?: string | null;
+    categoryRef?: {
+        id: string;
+        name: string;
+        description: string | null;
+        businessId: string;
+    } | null;
     unit: ProductUnit;
     imageUrl: string | null;
     active: boolean;
@@ -38,7 +45,7 @@ export type CreateProductProps = {
     // businessId: string;
     name: string;
     description: string | null;
-    category: string | null;
+    categoryId: string | null;
     unit: ProductUnit;
     imageUrl?: string | File | null | undefined;
 };
@@ -48,7 +55,7 @@ export type CreateProductInBusinessProps = {
     productId: string;
     name: string;
     description: string | null;
-    category: string | null;
+    categoryId: string | null;
     unit: ProductUnit;
     imageUrl?: string | null | undefined;
     price: number;
@@ -59,7 +66,7 @@ export type CreateProductInBusinessProps = {
 export type EditProductProps = {
     name: string;
     description: string | null;
-    category: string | null;
+    categoryId: string | null;
     unit: ProductUnit;
     imageUrl: string | File | null;
     active?: boolean | null;

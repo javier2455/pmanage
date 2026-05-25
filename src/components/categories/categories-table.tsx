@@ -34,7 +34,6 @@ import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 
-import { useDeleteExpenseCategoryMutation } from "@/hooks/use-expense-categories";
 import type {
   ExpenseCategory,
   GetAllExpenseCategoriesResponse,
@@ -44,6 +43,7 @@ import {
   type CategoriesColumnMeta,
 } from "./categories-table-columns";
 import { CategoryFormDialog } from "./category-form-dialog";
+import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
 
 function columnMeta(column: {
   columnDef: { meta?: unknown };
@@ -56,6 +56,7 @@ function columnMeta(column: {
 }
 
 interface CategoriesTableProps {
+  kind: CategoryKind;
   categories: ExpenseCategory[];
   meta: GetAllExpenseCategoriesResponse["meta"];
   isFetching?: boolean;
@@ -64,13 +65,15 @@ interface CategoriesTableProps {
 }
 
 export function CategoriesTable({
+  kind,
   categories,
   meta,
   isFetching = false,
   onPageChange,
   onLimitChange,
 }: CategoriesTableProps) {
-  const deleteCategoryMutation = useDeleteExpenseCategoryMutation();
+  const config = CATEGORY_KINDS[kind];
+  const deleteCategoryMutation = config.useDelete();
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editingCategory, setEditingCategory] =
     React.useState<ExpenseCategory | null>(null);
@@ -114,10 +117,11 @@ export function CategoriesTable({
   const columns = React.useMemo(
     () =>
       createCategoriesColumns({
+        kind,
         onEditCategory: (category) => setEditingCategory(category),
         onDeleteCategory: handleDelete,
       }),
-    [handleDelete],
+    [kind, handleDelete],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -164,10 +168,9 @@ export function CategoriesTable({
                   <EmptyMedia variant="icon">
                     <Tags />
                   </EmptyMedia>
-                  <EmptyTitle>Sin categorías registradas</EmptyTitle>
+                  <EmptyTitle>{config.emptyStateTitle}</EmptyTitle>
                   <EmptyDescription>
-                    Aún no hay categorías. Crea una para comenzar a clasificar
-                    los registros de este nomenclador.
+                    {config.emptyStateDescription}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -285,12 +288,14 @@ export function CategoriesTable({
       </Card>
 
       <CategoryFormDialog
+        kind={kind}
         mode="create"
         open={createOpen}
         onOpenChange={setCreateOpen}
       />
 
       <CategoryFormDialog
+        kind={kind}
         mode="edit"
         open={!!editingCategory}
         onOpenChange={(next) => {

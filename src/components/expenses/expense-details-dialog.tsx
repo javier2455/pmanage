@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetExpenseByIdQuery } from "@/hooks/use-expenses";
+import { useGetExpenseCategoryByIdQuery } from "@/hooks/use-expense-categories";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-CO", {
@@ -52,6 +53,16 @@ export default function ExpenseDetailsDialog({
   const { data, isLoading } = useGetExpenseByIdQuery(
     open === false ? "" : expenseId,
   );
+
+  const nestedCategoryName = data?.expenseCategory?.name ?? null;
+  const shouldFetchCategory =
+    !nestedCategoryName && !!data?.expenseCategoryId && open !== false;
+  const { data: fetchedCategory, isLoading: isLoadingCategory } =
+    useGetExpenseCategoryByIdQuery(
+      shouldFetchCategory ? (data?.expenseCategoryId ?? "") : "",
+    );
+  const categoryName = nestedCategoryName ?? fetchedCategory?.name ?? null;
+  const hasCategoryId = !!data?.expenseCategoryId;
 
   const triggerContent = trigger ?? (
     <Button variant="outline">Ver detalles</Button>
@@ -104,6 +115,23 @@ export default function ExpenseDetailsDialog({
               <span className="text-sm font-medium text-card-foreground">Descripción</span>
               <span className="text-sm font-medium text-card-foreground text-right max-w-[60%] wrap-break-word">
                 {data.description || "--"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between border-b border-border py-4">
+              <span className="text-sm font-medium text-card-foreground">
+                Categoría
+              </span>
+              <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
+                {hasCategoryId && isLoadingCategory && !categoryName ? (
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                ) : (
+                  categoryName ?? (
+                    <span className="text-muted-foreground italic">
+                      Sin categoría
+                    </span>
+                  )
+                )}
               </span>
             </div>
 
