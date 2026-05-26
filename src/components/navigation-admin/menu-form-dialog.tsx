@@ -104,6 +104,7 @@ export function MenuFormDialog({
             url: data.url,
             active: data.active,
             roles: data.roles,
+            order: data.order,
           },
         });
         toastSuccess({
@@ -222,9 +223,31 @@ export function MenuFormDialog({
             </div>
           </div>
 
+          {isEdit && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="menu-order">
+                Orden <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="menu-order"
+                type="number"
+                min={1}
+                {...register("order", { valueAsNumber: true })}
+                aria-invalid={errors.order ? "true" : "false"}
+              />
+              <p className="text-xs text-muted-foreground">
+                Define la posición del menú dentro de la sección.
+              </p>
+              {errors.order && (
+                <p className="text-xs text-destructive">{errors.order.message}</p>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col gap-2">
             <Label>
-              Roles con acceso <span className="text-destructive">*</span>
+              Roles con acceso{" "}
+              <span className="text-xs text-muted-foreground">(opcional)</span>
             </Label>
             <RoleMultiSelect
               value={roles ?? []}

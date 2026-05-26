@@ -261,6 +261,7 @@ export function MenusClient() {
             url: dialog.node.url,
             active: dialog.node.active,
             roles: dialog.node.roles,
+            order: dialog.node.order ?? 1,
           }}
         />
       )}
@@ -298,6 +299,7 @@ export function MenusClient() {
             url: dialog.node.url,
             active: dialog.node.active,
             roles: dialog.node.roles,
+            order: dialog.node.order ?? 1,
           }}
         />
       )}

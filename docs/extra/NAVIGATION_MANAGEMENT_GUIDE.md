@@ -26,9 +26,10 @@ La jerarquía es **Section → Menu → Submenu** (tres niveles fijos).
 - `name: string` — etiqueta visible.
 - `icon: string` — nombre del icono (clave de `ICON_MAP` en
   [src/lib/icon-map.ts](../src/lib/icon-map.ts)).
-- `roles: string[]` — IDs de roles que tienen acceso.
-  - En **sección** puede ir vacío (visible a todos los roles).
-  - En **menú** y **submenú** se exige al menos uno.
+- `roles: string[]` — IDs de roles que tienen acceso. Puede ir vacío en las
+  tres entidades (sección, menú, submenú): un array vacío significa
+  "accesible para todos los roles". Solo se setean roles cuando hace falta
+  restringir el acceso (p. ej. `["5"]` para solo administradores).
 - `plans: string[] | null` — planes que tienen acceso. `null` = todos los
   planes. Hoy se envía `null` desde el form (no hay UI de selección).
 - `active: boolean` — si está activo se renderiza en el sidebar.

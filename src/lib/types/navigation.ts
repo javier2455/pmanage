@@ -153,6 +153,8 @@ export type UpdateSectionProps = Partial<CreateSectionProps>;
  *   { icon, name, badge, url, active, roles }
  * Por decisión del equipo enviamos `sectionId` también en el body para
  * indicar el padre (el endpoint no lo lleva en path ni query).
+ *
+ * `order` solo se envía en PATCH (el create lo asigna el backend).
  */
 export interface CreateAdminMenuProps {
   sectionId: string;
@@ -162,6 +164,7 @@ export interface CreateAdminMenuProps {
   url: string;
   active: boolean;
   roles: string[];
+  order?: number;
 }
 export type UpdateAdminMenuProps = Partial<
   Omit<CreateAdminMenuProps, "sectionId">
@@ -170,6 +173,8 @@ export type UpdateAdminMenuProps = Partial<
 /**
  * Body de POST /api/v2/submenu:
  *   { icon, name, badge, url, menuId, active, roles }
+ *
+ * `order` solo se envía en PATCH (el create lo asigna el backend).
  */
 export interface CreateSubmenuProps {
   menuId: string;
@@ -179,6 +184,7 @@ export interface CreateSubmenuProps {
   url: string;
   active: boolean;
   roles: string[];
+  order?: number;
 }
 /**
  * PATCH /api/v2/submenu/{id} acepta `menuId` (permite mover el submenú a
