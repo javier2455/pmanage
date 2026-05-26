@@ -1,6 +1,6 @@
-import { TEMPORAL_ROUTE } from ".";
+import { TEMPORAL_ROUTE, BASIC_ROUTE } from ".";
 
 export const searchRoutes = {
-    getAllProvinces: `${TEMPORAL_ROUTE}/provinces`,
-    getAllMunicipalitiesByProvinceId: (provinceId: string) => `${TEMPORAL_ROUTE}/municipalities?province=${provinceId}`,
+    getAllProvinces: `${BASIC_ROUTE}/search/provinces`,
+    getAllMunicipalitiesByProvinceId: (provinceId: string) => `${BASIC_ROUTE}/search/municipalities?province=${provinceId}`,
 }
