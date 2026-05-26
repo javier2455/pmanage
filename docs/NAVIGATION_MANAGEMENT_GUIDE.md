@@ -16,7 +16,7 @@ La jerarquía es **Section → Menu → Submenu** (tres niveles fijos).
 
 | Entidad   | Padre        | Hijos directos | Puede no tener hijos | Tiene URL |
 | --------- | ------------ | -------------- | -------------------- | --------- |
-| `Section` | (raíz)       | `Menu[]`       | ❌ (mínimo 1 menú)   | ❌         |
+| `Section` | (raíz)       | `Menu[]`       | ✅                   | ❌         |
 | `Menu`    | `Section`    | `Submenu[]`    | ✅                   | ✅         |
 | `Submenu` | `Menu`       | —              | —                    | ✅         |
 
@@ -26,10 +26,11 @@ La jerarquía es **Section → Menu → Submenu** (tres niveles fijos).
 - `name: string` — etiqueta visible.
 - `icon: string` — nombre del icono (clave de `ICON_MAP` en
   [src/lib/icon-map.ts](../src/lib/icon-map.ts)).
-- `roles: string[]` — IDs de roles que tienen acceso. Si está vacío, no se
-  muestra en el sidebar a ningún rol.
-- `plans: string[] | null` — planes que tienen acceso (sólo `Menu` y
-  `Submenu`). `null` = todos los planes.
+- `roles: string[]` — IDs de roles que tienen acceso.
+  - En **sección** puede ir vacío (visible a todos los roles).
+  - En **menú** y **submenú** se exige al menos uno.
+- `plans: string[] | null` — planes que tienen acceso. `null` = todos los
+  planes. Hoy se envía `null` desde el form (no hay UI de selección).
 - `active: boolean` — si está activo se renderiza en el sidebar.
 - `order?: number` — orden de aparición (lo dictamina el backend).
 
@@ -130,7 +131,10 @@ hace por la posición en el árbol (no por un campo `kind`).
 3. **Roles asignables por nodo.** Cada sección/menú/submenú declara qué
    roles tienen acceso. El sidebar runtime filtra por `roleId` en
    [src/components/sidebar/sidebar.tsx](../src/components/sidebar/sidebar.tsx).
-   - Roles soportados actualmente: `admin`, `business-owner` (placeholder).
+   - IDs reales hoy en `ROLE_IDS` ([role-multiselect.tsx](../src/components/navigation-admin/role-multiselect.tsx)):
+     `4` = "Dueño de negocio", `5` = "Administrador".
+   - Cuando un nodo solo es accesible para admin (`roles === ["5"]`), el
+     árbol pinta el chip especial `<AdminBadge>` con gradiente morado.
 4. **Iconos curados.** El picker sólo deja elegir entre las claves de
    `ICON_MAP`. Si el backend devuelve un icono no incluido en el mapa,
    `resolveIcon()` cae al icono `Circle` por defecto.
@@ -146,26 +150,31 @@ Una sola convención: un módulo por capa, llamado `navigation.ts`, cubre las
 tres entidades (Section + Menu + Submenu).
 
 ```
-src/lib/routes/navigation.ts              # 15 rutas
-src/lib/types/navigation.ts               # tipos de 3 entidades
+src/lib/routes/navigation.ts              # 16 rutas (CRUD x 3 entidades + getSubmenusByMenu)
+src/lib/types/navigation.ts               # tipos de 3 entidades + shape API
 src/lib/validations/navigation.ts         # 6 esquemas Zod
-src/lib/api/navigation.ts                 # 15 funciones API
-src/hooks/use-navigation.ts               # 16 hooks (queries + mutations)
+src/lib/api/navigation.ts                 # 16 funciones API
+src/hooks/use-navigation.ts               # hooks (queries + mutations) + invalidación
+
+src/lib/toast.ts                          # helpers toastSuccess/toastError compartidos
+
+src/components/ui/admin-badge.tsx         # badge morado con gradiente (reutilizable)
 
 src/components/navigation-admin/
   ├── icon-picker.tsx          → selector visual sobre ICON_MAP
-  ├── role-multiselect.tsx     → selector de roles (stub ROLE_OPTIONS)
+  ├── role-multiselect.tsx     → selector de roles + ROLE_IDS (4/5)
+  ├── role-badges.tsx          → RoleBadges (admin → AdminBadge; resto → chips neutros)
   ├── node-config.ts           → labels/iconos por NavigationNodeKind
-  ├── navigation-tree.tsx      → render recursivo sección → menú → submenú
+  ├── navigation-tree.tsx      → render explícito section.menus[].submenus[]
   ├── navigation-node.tsx      → tarjeta de nodo con expand/collapse + acciones
-  ├── section-form-dialog.tsx  → crear (con tab "Menú inicial") y editar
+  ├── section-form-dialog.tsx  → crear y editar sección (form único)
   ├── menu-form-dialog.tsx     → CRUD de menú
   ├── submenu-form-dialog.tsx  → CRUD de submenú
   └── delete-node-dialog.tsx   → confirmación con advertencia de cascada
 
 src/app/dashboard/admin/menus/
   ├── page.tsx                 → server shell
-  └── menus-client.tsx         → coordinador de diálogos + árbol
+  └── menus-client.tsx         → coordinador de diálogos + árbol + nextOrder
 ```
 
 Notas:
@@ -184,29 +193,82 @@ Cada mutación administrativa (create/update/delete de section/menu/submenu)
 invoca `useInvalidateNavigation()` en
 [src/hooks/use-navigation.ts](../src/hooks/use-navigation.ts), que invalida:
 
-- `["navigation"]` — refresca el árbol completo de `/dashboard/admin/menus`.
-- `["all-menu-items"]` — refresca el menú que consume el sidebar runtime.
-- `["menu-list-flat"]` — refresca la lista plana de menús (permisos).
+- `["navigation"]` — refresca el árbol completo de `/dashboard/admin/menus`
+  **y también el sidebar runtime** (que consume `useGetAllSectionsQuery`
+  con queryKey `["navigation", "sections", businessId]`).
+- `["all-menu-items"]` y `["menu-list-flat"]` — invalidaciones legacy del
+  endpoint anterior `/menu/`, mantenidas por si alguna pantalla aún lo usa.
 
 Así, al editar la navegación desde admin, el sidebar se actualiza sin
 recargar la página.
 
+### Sidebar runtime
+
+A partir de esta iteración el sidebar se alimenta del endpoint
+**`GET /api/v2/section`** ([sidebar.tsx](../src/components/sidebar/sidebar.tsx)),
+no de `/menu/`. Esto trae varias ventajas:
+
+- El nombre de cada `<SidebarGroupLabel>` viene de `section.name`
+  (antes "Navegación" estaba hardcoded). Crear una sección nueva en
+  `/dashboard/admin/menus` la hace aparecer en el sidebar al instante.
+- Permite **múltiples grupos** en el sidebar (uno por sección), en lugar
+  de un único grupo.
+- El fallback estático [src/lib/menu/static-fallback.ts](../src/lib/menu/static-fallback.ts)
+  quedó **deprecado** — ya no se importa desde el sidebar.
+
 ---
 
-## 6. TODOs pendientes
+## 6. Estado actual
 
-- **Fuente real de roles.** Hoy `ROLE_OPTIONS` en
-  [src/components/navigation-admin/role-multiselect.tsx](../src/components/navigation-admin/role-multiselect.tsx)
-  es un stub con dos opciones. Reemplazar por una consulta al endpoint de
-  roles cuando el backend lo confirme.
-- **Asignación de planes.** El campo `plans` de `Menu`/`Submenu` se envía
-  como `null` por defecto desde el formulario. Cuando se decida el flujo,
-  agregar un selector de planes análogo al de roles.
-- **Ordenamiento.** Si se decide soportar drag-and-drop para reordenar
-  nodos, habría que añadir un `order` editable + endpoint de reordenar.
-- **Edición avanzada de la sección.** Hoy el modo edición sólo deja cambiar
-  `name`, `icon` y `roles`. Si la sección llegara a tener más atributos
-  (descripción, etc.), extender `updateSectionSchema`.
-- **Visibilidad del item en el sidebar.** El item "Gestionar Menús" en el
-  sidebar lo debe entregar el backend con `roles=[<admin>]`. Hasta entonces,
-  se accede directamente a la URL `/dashboard/admin/menus`.
+### ✅ Listo
+
+- **CRUD completo de las 3 entidades** (section / menu / submenu): GET, POST,
+  PATCH, DELETE conectados con backend y cableados al árbol.
+- **Validación por entidad**: schemas Zod alineados a los bodies reales
+  (sección con `order`, menú/submenu con `badge` + `active`, etc.).
+- **Roles**: IDs reales (`4` = dueño, `5` = admin) + `<AdminBadge>` morado
+  para nodos solo-admin. En sección, `roles` puede ir vacío.
+- **Auto-orden**: el form de sección sugiere `max(existingOrders) + 1`,
+  editable a mano.
+- **Cascada al eliminar**: el diálogo de borrado muestra cuántos hijos se
+  arrastran (menús + submenús).
+- **Refresco del sidebar**: las mutaciones invalidan `["all-menu-items"]`
+  además del árbol admin, así el sidebar se actualiza en caliente.
+- **Toasts unificados**: [src/lib/toast.ts](../src/lib/toast.ts) con
+  `toastSuccess`/`toastError` aplicados a los 4 diálogos.
+- **UI del árbol**: cards transparentes para menús/submenús, hover con borde
+  primario + shadow + transición suave.
+
+---
+
+## 7. TODOs pendientes
+
+- **Detalles del 80% backend.** Pendientes los ajustes finos que mencionó
+  el usuario al probar PATCH (sin detalle aún — anotar conforme aparezcan).
+- **Fuente dinámica de roles.** Hoy `ROLE_IDS` está hardcoded a `4`/`5`.
+  Si el backend agrega roles o queremos evitar valores mágicos, integrar un
+  `useRolesQuery` y poblar `ROLE_OPTIONS` desde ahí.
+- **Asignación de planes.** El backend acepta `plans: string[]` en
+  section/menu/submenu, pero el form envía `null`. Falta:
+  - Endpoint o constante con planes disponibles.
+  - Selector tipo `RoleMultiSelect` (probablemente reusable como
+    `MultiSelectBadges<T>`).
+  - Renderizar `requiresPlan` en el árbol (chip "Premium", "Pro", etc.).
+- **Mover submenú entre menús.** `PATCH /submenu/:id` acepta `menuId` para
+  cambiar de padre, pero la UI no lo expone. Hoy enviamos el mismo `menuId`
+  del nodo para consistencia.
+- **Reordenamiento drag-and-drop.** Hoy `order` solo se edita en el form de
+  sección. Para menús/submenús habría que decidir si se reordena con D&D y
+  exponer un endpoint de reorder.
+- **Permisos por nodo.** El GET devuelve `permissions: { read, write,
+  update, delete, ... }` por nodo pero no se renderizan ni editan. Pendiente
+  decidir si entran en el alcance de este módulo o en uno aparte.
+- **Modo `isList` sin consumir.** `useGetSectionListQuery` está hecho pero
+  ninguna página lo usa todavía. Sirve para validaciones de permisos en
+  páginas específicas (mismo patrón que `getMenuList()`).
+- **Entrada "Gestionar Menús" en sidebar.** Sigue dependiendo de que el
+  backend devuelva el item con `roles=[5]`. Mientras tanto, el admin debe
+  navegar directo a `/dashboard/admin/menus`.
+- **Eliminar `static-fallback.ts`.** El archivo ya está deprecado y sin
+  importadores; se puede borrar cuando se confirme que ningún flujo
+  legacy lo necesita.
