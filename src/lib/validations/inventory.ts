@@ -8,6 +8,7 @@ export const inventoryUpdateStockSchema = z.object({
   entryPrice: z.number().min(1, "El precio de entrada es requerido").max(100000, "El precio de entrada máximo es de 100,000"),
   productId: z.string().min(1, "El producto es requerido"),
   description: z.string().min(1, "La descripción es requerida"),
+  providerId: z.string().uuid().nullable().optional(),
 });
 
 
