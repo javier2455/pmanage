@@ -10,19 +10,19 @@ function normalizePlan(s: string): string {
   return s
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
+    .toLowerCase();
 }
 
 /** Determina si un tipo de plan es Pro. Usada por middleware y hooks. */
 export function isProPlan(planType: string | undefined): boolean {
-  if (!planType) return false
-  const n = normalizePlan(planType)
+  if (!planType) return false;
+  const n = normalizePlan(planType);
   return (
     n.includes("pro") ||
     n.includes("profesional") ||
     n.includes("premium") ||
     n.includes("plus")
-  )
+  );
 }
 
 /**
@@ -36,6 +36,10 @@ export function isProPlan(planType: string | undefined): boolean {
  */
 export const PRO_ROUTES = [
   {
+    path: "/dashboard/business/providers",
+    redirect: "/dashboard",
+  },
+  {
     path: "/dashboard/accounting-close/monthly",
     redirect: "/dashboard",
   },
@@ -43,15 +47,15 @@ export const PRO_ROUTES = [
     path: "/dashboard/analytics",
     redirect: "/dashboard",
   },
-] as const
+] as const;
 
 /** ¿Esta ruta está detrás del gate Pro? */
 export function isProRoute(pathname: string): boolean {
-  return PRO_ROUTES.some((r) => pathname.startsWith(r.path))
+  return PRO_ROUTES.some((r) => pathname.startsWith(r.path));
 }
 
 /** Obtiene la URL de redirección para una ruta Pro, o null si no está gateada. */
 export function getProRedirect(pathname: string): string | null {
-  const match = PRO_ROUTES.find((r) => pathname.startsWith(r.path))
-  return match?.redirect ?? null
+  const match = PRO_ROUTES.find((r) => pathname.startsWith(r.path));
+  return match?.redirect ?? null;
 }

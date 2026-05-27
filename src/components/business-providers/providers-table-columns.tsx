@@ -1,33 +1,36 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { Product } from "@/lib/types/product";
-import ProductDetailsDialog from "@/components/products/details-dialog";
-import { DeleteDialog } from "@/components/delete-dialog";
-import { ProductImage } from "@/components/products/product-image";
+import Link from "next/link"
+import type { Column, ColumnDef } from "@tanstack/react-table"
+import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { DeleteDialog } from "@/components/delete-dialog"
+import type { ProviderWithRelations } from "@/lib/types/provider"
+import { ProviderDetailsDialog } from "./provider-details-dialog"
 
-export type CatalogProductsColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+export type ProvidersColumnMeta = {
+  headerClassName?: string
+  cellClassName?: string
+}
 
-const compactColumnMeta = {
+const compactMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies CatalogProductsColumnMeta;
+} satisfies ProvidersColumnMeta
 
-function CatalogProductsSortableHeader({
+function ProvidersSortableHeader({
   column,
   label,
   className,
 }: {
-  column: Column<Product, unknown>;
-  label: string;
-  className?: string;
+  column: Column<ProviderWithRelations, unknown>
+  label: string
+  className?: string
 }) {
   return (
     <Button
@@ -39,72 +42,77 @@ function CatalogProductsSortableHeader({
       {label}
       <ArrowUpDown data-icon="inline-end" />
     </Button>
-  );
+  )
 }
 
-export function createCatalogProductsColumns(
-  onDeleteProduct: (productId: string) => void | Promise<void>,
-): ColumnDef<Product>[] {
+export function createProvidersColumns(
+  onDelete: (providerId: string) => void | Promise<void>,
+): ColumnDef<ProviderWithRelations>[] {
   return [
     {
       id: "name",
       accessorFn: (row) => row.name,
-      enableColumnFilter: true,
-      filterFn: (row, _columnId, filterValue) => {
-        const q = String(filterValue ?? "").toLowerCase().trim();
-        if (!q) return true;
-        return row.original.name.toLowerCase().includes(q);
-      },
       meta: {
-        headerClassName:
-          "min-w-[240px] max-w-none whitespace-normal align-top sm:max-w-[min(16rem,40vw)]",
-        cellClassName:
-          "min-w-[240px] max-w-none whitespace-normal break-words align-top sm:max-w-[min(16rem,40vw)]",
-      } satisfies CatalogProductsColumnMeta,
+        headerClassName: "min-w-[220px] align-top",
+        cellClassName: "min-w-[220px] align-top",
+      } satisfies ProvidersColumnMeta,
       header: ({ column }) => (
-        <CatalogProductsSortableHeader
-          column={column}
-          label="Nombre"
-          className="-ml-2 h-auto min-h-8 flex-wrap justify-start gap-1 whitespace-normal px-2 py-2 text-left lg:-ml-4"
-        />
+        <ProvidersSortableHeader column={column} label="Proveedor" />
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <ProductImage
-            src={row.original.imageUrl}
-            alt={row.original.name}
-            size="sm"
-          />
-          <span className="block font-medium text-foreground">
+        <div className="flex flex-col">
+          <span className="font-medium text-foreground">
             {row.original.name}
           </span>
+          {row.original.description && (
+            <span className="text-xs text-muted-foreground line-clamp-1">
+              {row.original.description}
+            </span>
+          )}
         </div>
       ),
     },
     {
-      id: "category",
-      accessorFn: (row) => row.category?.name ?? "",
-      meta: compactColumnMeta,
+      id: "contactName",
+      accessorFn: (row) => row.contactName ?? "",
+      meta: compactMeta,
       header: ({ column }) => (
-        <CatalogProductsSortableHeader column={column} label="Categoría" />
+        <ProvidersSortableHeader column={column} label="Contacto" />
       ),
       cell: ({ row }) => (
         <span className="text-foreground">
-          {row.original.category?.name ?? (
-            <span className="italic text-muted-foreground">Sin categoría</span>
-          )}
+          {row.original.contactName ?? "—"}
         </span>
       ),
     },
     {
-      id: "unit",
-      accessorFn: (row) => row.unit,
-      meta: compactColumnMeta,
+      id: "email",
+      accessorFn: (row) => row.email ?? "",
+      meta: compactMeta,
       header: ({ column }) => (
-        <CatalogProductsSortableHeader column={column} label="Unidad" />
+        <ProvidersSortableHeader column={column} label="Email" />
+      ),
+      cell: ({ row }) =>
+        row.original.email ? (
+          <a
+            href={`mailto:${row.original.email}`}
+            className="text-primary underline-offset-2 hover:underline"
+          >
+            {row.original.email}
+          </a>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
+      id: "phone",
+      accessorFn: (row) => row.phone ?? "",
+      meta: compactMeta,
+      header: ({ column }) => (
+        <ProvidersSortableHeader column={column} label="Teléfono" />
       ),
       cell: ({ row }) => (
-        <span className="text-foreground">{row.original.unit}</span>
+        <span className="text-foreground">{row.original.phone ?? "—"}</span>
       ),
     },
     {
@@ -113,7 +121,7 @@ export function createCatalogProductsColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies CatalogProductsColumnMeta,
+      } satisfies ProvidersColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
@@ -131,8 +139,8 @@ export function createCatalogProductsColumns(
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-48 p-1">
-              <ProductDetailsDialog
-                productId={row.original.id}
+              <ProviderDetailsDialog
+                providerId={row.original.id}
                 trigger={
                   <button
                     type="button"
@@ -144,16 +152,16 @@ export function createCatalogProductsColumns(
                 }
               />
               <Link
-                href={`/dashboard/business/products/catalog/edit?id=${row.original.id}`}
+                href={`/dashboard/business/providers/edit?id=${row.original.id}`}
                 className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
               >
                 <Pencil className="size-4 text-primary" />
                 Editar
               </Link>
               <DeleteDialog
-                deleteType="Producto"
+                deleteType="Proveedor"
                 name={row.original.name}
-                onConfirm={() => onDeleteProduct(row.original.id)}
+                onConfirm={() => onDelete(row.original.id)}
                 trigger={
                   <button
                     type="button"
@@ -169,5 +177,5 @@ export function createCatalogProductsColumns(
         </div>
       ),
     },
-  ];
+  ]
 }

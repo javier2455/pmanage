@@ -20,7 +20,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-type DeleteDialogType = 'Producto' | 'Venta' | 'Entrada' | 'Negocio' | 'Trabajador' | 'Gasto' | 'Invitación' | 'Categoría'
+type DeleteDialogType = 'Producto' | 'Venta' | 'Entrada' | 'Negocio' | 'Trabajador' | 'Gasto' | 'Invitación' | 'Categoría' | 'Proveedor'
 
 interface DeleteDialogProps {
     deleteType: DeleteDialogType

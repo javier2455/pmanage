@@ -109,7 +109,7 @@ export default function PriceHistoryView({
                 {product.name}
               </h2>
               <p className="text-xs text-muted-foreground">
-                {product.category}
+                {product.category?.name ?? "Sin categoría"}
                 {product.unit ? ` · ${product.unit}` : null}
               </p>
             </div>

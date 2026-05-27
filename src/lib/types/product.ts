@@ -2,18 +2,20 @@ import { BusinessProduct, BusinessType } from "./business";
 
 export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL" | "ud";
 
+export type ProductCategoryEmbed = {
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+};
+
 export type Product = {
     id: string;
     name: string;
     description: string | null;
-    category: string;
+    category: ProductCategoryEmbed | null;
     categoryId?: string | null;
-    categoryRef?: {
-        id: string;
-        name: string;
-        description: string | null;
-        businessId: string;
-    } | null;
     unit: ProductUnit;
     imageUrl: string | null;
     active: boolean;
@@ -89,10 +91,11 @@ export type GetProductByIdResponse = {
         id: string;
         name: string;
         description: string | null;
-        category: string;
+        category: ProductCategoryEmbed | null;
+        categoryId?: string | null;
         unit: ProductUnit;
         imageUrl: string | null;
-        businesses: BusinessResponseForGetProductById[];
+        businesses?: BusinessResponseForGetProductById[];
     };
 }
 

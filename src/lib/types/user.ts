@@ -38,7 +38,7 @@ export interface UserDataResponse {
   active: number;
   twoFactorEnabled: boolean;
   plan: Plan | null
-  providers: Provider[];
+  providers: OAuthProvider[];
   hasPassword: boolean;
   name: string;
   _source?: string;
@@ -76,7 +76,7 @@ export interface UpdateUserFormPayload {
   avatar?: File | null;
 }
 
-type Provider = {
+type OAuthProvider = {
   id: number;
   provider: string;
   externalId: string;
