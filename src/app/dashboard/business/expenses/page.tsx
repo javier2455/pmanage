@@ -16,6 +16,7 @@ export default function ExpensesPage() {
     limit,
   });
 
+
   if (isError) return <div>Error al cargar los gastos</div>;
 
   const showInitialSkeleton = isLoading && !data;

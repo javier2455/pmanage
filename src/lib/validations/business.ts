@@ -1,25 +1,11 @@
 import { z } from "zod";
+import {
+  isDialCodeOnly,
+  optionalPhoneSchema,
+  requiredPhoneSchema,
+} from "@/lib/validations/phone";
 
-export function isDialCodeOnly(value: string | null | undefined): boolean {
-  if (!value) return false;
-  return /^\+\d{1,4}$/.test(value.trim());
-}
-
-const requiredPhoneSchema = z
-  .string()
-  .refine((val) => !!val && !isDialCodeOnly(val), {
-    message: "El número de teléfono es requerido",
-  })
-  .refine((val) => !val || isDialCodeOnly(val) || /^\+[1-9]\d{6,14}$/.test(val), {
-    message: "El número de teléfono no es válido",
-  });
-
-const optionalPhoneSchema = z
-  .string()
-  .refine(
-    (val) => !val || isDialCodeOnly(val) || /^\+[1-9]\d{6,14}$/.test(val),
-    { message: "El número de teléfono no es válido" }
-  );
+export { isDialCodeOnly };
 
 export const addToCartSchema = z.object({
   stock: z

@@ -1,15 +1,12 @@
 export interface Expense {
   id: string;
   title: string;
-  amount: number;
+  amount: string | number;
   description: string;
   expenseCategoryId?: string | null;
-  expenseCategory?: {
-    id: string;
-    name: string;
-  } | null;
+  expenseCategoryName?: string | null;
   createdBy: string;
-  userName: string;
+  userName: string | null;
   createdAt: string;
   updatedAt: string;
 }

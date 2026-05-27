@@ -62,7 +62,7 @@ export default function RecentExpensesTable({ expenses }: RecentExpensesTablePro
                                 </div>
                                 <div className="flex flex-col items-end">
                                     <span className="text-sm font-semibold text-red-600 dark:text-red-500">
-                                        -{formatCurrency(expense.amount)}
+                                        -{formatCurrency(Number(expense.amount))}
                                     </span>
                                 </div>
                             </div>

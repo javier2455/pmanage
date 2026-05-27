@@ -77,6 +77,7 @@ export default function ExpenseEditClient() {
                 title: data.title,
                 amount: Number(data.amount),
                 description: data.description,
+                expenseCategoryId: data.expenseCategoryId ?? null,
               }}
             />
           )}

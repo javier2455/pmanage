@@ -97,6 +97,19 @@ export function createExpensesColumns(
       ),
     },
     {
+      id: "expenseCategory",
+      accessorFn: (row) => row.expenseCategoryName ?? "Sin categoría",
+      meta: compactColumnMeta,
+      header: ({ column }) => (
+        <ExpensesSortableHeader column={column} label="Categoría" />
+      ),
+      cell: ({ row }) => (
+        <span className="tabular-nums font-medium text-foreground">
+          {row.original.expenseCategoryName ?? "Sin categoría"}
+        </span>
+      ),
+    },
+    {
       id: "fecha",
       accessorFn: (row) => new Date(row.createdAt).getTime(),
       meta: {

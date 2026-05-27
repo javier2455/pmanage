@@ -108,7 +108,7 @@ export type DashboardSummarySale = {
 export type DashboardSummaryExpense = {
   id: string;
   title: string;
-  amount: number;
+  amount: string | number;
   description: string;
   createdAt: string;
 };
