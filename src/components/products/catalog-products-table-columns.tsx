@@ -83,13 +83,17 @@ export function createCatalogProductsColumns(
     },
     {
       id: "category",
-      accessorFn: (row) => row.category,
+      accessorFn: (row) => row.category?.name ?? "",
       meta: compactColumnMeta,
       header: ({ column }) => (
         <CatalogProductsSortableHeader column={column} label="Categoría" />
       ),
       cell: ({ row }) => (
-        <span className="text-foreground">{row.original.category}</span>
+        <span className="text-foreground">
+          {row.original.category?.name ?? (
+            <span className="italic text-muted-foreground">Sin categoría</span>
+          )}
+        </span>
       ),
     },
     {

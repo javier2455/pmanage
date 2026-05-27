@@ -118,13 +118,17 @@ export function createBusinessProductsColumns(
     },
     {
       id: "category",
-      accessorFn: (row) => row.product.category,
+      accessorFn: (row) => row.product.category?.name ?? "",
       meta: compactColumnMeta,
       header: ({ column }) => (
         <BusinessProductsSortableHeader column={column} label="Categoría" />
       ),
       cell: ({ row }) => (
-        <span className="text-foreground">{row.original.product.category}</span>
+        <span className="text-foreground">
+          {row.original.product.category?.name ?? (
+            <span className="italic text-muted-foreground">Sin categoría</span>
+          )}
+        </span>
       ),
     },
     {

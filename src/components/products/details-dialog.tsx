@@ -30,8 +30,9 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger }: Pr
     const product = data?.data
     const business = product?.businesses?.[0]
 
-    const inlineCategoryName = product?.categoryRef?.name ?? null
-    const productCategoryId: string | null = product?.categoryId ?? null
+    const inlineCategoryName = product?.category?.name ?? null
+    const productCategoryId: string | null =
+        product?.categoryId ?? product?.category?.id ?? null
     const shouldFetchCategoryById =
         !!productCategoryId && !inlineCategoryName
     const { data: fetchedCategory } = useGetProductCategoryByIdQuery(
