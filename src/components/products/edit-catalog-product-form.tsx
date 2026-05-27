@@ -43,7 +43,7 @@ export function EditCatalogProductForm() {
 
     // Force refetch on every mount: the global staleTime for ["product"] is 10 min,
     // so without this, navigating from the products list serves stale cache that
-    // predates the categoryId/categoryRef fields and the Select stays empty.
+    // predates the categoryId/category fields and the Select stays empty.
     const { data, isLoading, isError } = useGetProductByIdQuery(productId, {
         refetchOnMount: "always",
     })
@@ -58,17 +58,19 @@ export function EditCatalogProductForm() {
         })
     const productCategories = categoriesData?.data ?? []
 
-    const currentCategoryId: string | null = data?.data?.categoryId ?? null
-    const inlineCategoryRef = data?.data?.categoryRef ?? null
+    const inlineCategory = data?.data?.category ?? null
+    const currentCategoryId: string | null =
+        data?.data?.categoryId ?? inlineCategory?.id ?? null
 
-    // Fallback: if the by-id endpoint doesn't include `categoryRef` but we have the id,
-    // resolve the category through its own endpoint so the Select can show the name.
+    // Fallback: if the by-id endpoint doesn't include the nested `category` object
+    // but we have the id, resolve it through its own endpoint so the Combobox can
+    // show the name.
     const shouldFetchCategoryById =
-        !!currentCategoryId && !inlineCategoryRef
+        !!currentCategoryId && !inlineCategory
     const { data: fetchedCategory } = useGetProductCategoryByIdQuery(
         shouldFetchCategoryById ? currentCategoryId : "",
     )
-    const resolvedCategoryRef = inlineCategoryRef ?? fetchedCategory ?? null
+    const resolvedCategoryRef = inlineCategory ?? fetchedCategory ?? null
 
     const selectItems = (() => {
         const items = productCategories.map((c) => ({ id: c.id, name: c.name }))
@@ -119,7 +121,8 @@ export function EditCatalogProductForm() {
         reset({
             name: productData.name,
             description: productData.description ?? "",
-            category: productData.categoryId ?? null,
+            category:
+                productData.categoryId ?? productData.category?.id ?? null,
             unit: productData.unit,
             imageUrl: productData.imageUrl ?? "",
         })

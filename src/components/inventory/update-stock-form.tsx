@@ -27,11 +27,15 @@ import {
   X,
   RefreshCw,
   ArrowUp,
+  Truck,
 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { InventoryUpdateStockFormData, inventoryUpdateStockSchema } from "@/lib/validations/inventory"
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
+import { useGetAllProvidersQuery } from "@/hooks/use-provider"
+import type { ProviderWithRelations } from "@/lib/types/provider"
+import Link from "next/link"
 import { sileo } from "sileo"
 import axios from "axios"
 
@@ -42,6 +46,15 @@ export function UpdateStockForm() {
   const addStockToProductMutation = useAddStockToProductMutation()
 
   const [selectedProduct, setSelectedProduct] = useState<BusinessWithProducts | null>(null)
+  const [selectedProvider, setSelectedProvider] = useState<ProviderWithRelations | null>(null)
+
+  const { data: providersData, isLoading: isLoadingProviders } =
+    useGetAllProvidersQuery({
+      page: 1,
+      limit: 1000,
+      businessId: activeBusinessId ?? undefined,
+    })
+  const providers: ProviderWithRelations[] = providersData?.data ?? []
 
   const {
     register,
@@ -58,6 +71,7 @@ export function UpdateStockForm() {
       entryPrice: 0,
       productId: "",
       description: "",
+      providerId: null,
     },
   })
 
@@ -75,6 +89,7 @@ export function UpdateStockForm() {
         quantity: newStockNum,
         entryPrice: data.entryPrice,
         description: data.description,
+        providerId: data.providerId ?? null,
       })
       if (response) {
         sileo.success({
@@ -86,6 +101,7 @@ export function UpdateStockForm() {
       }
       reset()
       setSelectedProduct(null)
+      setSelectedProvider(null)
       router.push("/dashboard/business/inventory")
       // handleCancel()
     } catch (error) {
@@ -177,6 +193,62 @@ export function UpdateStockForm() {
                     CUP
                   </span>
                 </div>
+              </div>
+
+              {/* Provider selector */}
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <Label className="text-card-foreground">
+                  Proveedor <span className="text-xs text-muted-foreground">(opcional)</span>
+                </Label>
+                <Combobox<ProviderWithRelations | null>
+                  value={selectedProvider}
+                  onValueChange={(item) => {
+                    setSelectedProvider(item)
+                    setValue("providerId", item?.id ?? null)
+                  }}
+                  items={providers}
+                  itemToStringLabel={(p) => (p ? p.name : "")}
+                  isItemEqualToValue={(a, b) => a?.id === b?.id}
+                >
+                  <ComboboxInput
+                    placeholder={
+                      isLoadingProviders
+                        ? "Cargando proveedores..."
+                        : providers.length === 0
+                          ? "Aún no hay proveedores"
+                          : "Seleccionar proveedor..."
+                    }
+                    className="w-full"
+                    showClear={!!selectedProvider}
+                    disabled={isLoadingProviders || providers.length === 0}
+                  />
+                  <ComboboxContent>
+                    <ComboboxList className="max-h-64">
+                      {providers.map((p) => (
+                        <ComboboxItem key={p.id} value={p}>
+                          {p.name}
+                        </ComboboxItem>
+                      ))}
+                      <ComboboxEmpty>
+                        No se encontró ningún proveedor.
+                      </ComboboxEmpty>
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+                {providers.length === 0 && !isLoadingProviders && (
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Truck className="h-3 w-3" />
+                    <span>
+                      No tienes proveedores aún.{" "}
+                      <Link
+                        href="/dashboard/business/providers/create"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        Crear proveedor →
+                      </Link>
+                    </span>
+                  </p>
+                )}
               </div>
 
               {/* Entry price input */}

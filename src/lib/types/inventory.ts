@@ -7,6 +7,7 @@ export type AddStockToProductProps = {
     quantity: number;
     entryPrice: number;
     description: string;
+    providerId?: string | null;
 }
 
 export interface InventoryMeta {

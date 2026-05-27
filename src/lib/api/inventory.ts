@@ -37,10 +37,15 @@ export async function getInventoryHistoryByBusinessId({
 }
 
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
-    const { quantity, entryPrice, description } = credentials;
+    const { quantity, entryPrice, description, providerId } = credentials;
     const { data } = await apiClient.post(
         inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId),
-        { quantity, entryPrice, description },
+        {
+            quantity,
+            entryPrice,
+            description,
+            ...(providerId ? { providerId } : {}),
+        },
     );
     return data;
 }

@@ -39,7 +39,7 @@ import { sileo } from "sileo"
 interface CartItem {
   productId: string;
   productName: string;
-  category: string;
+  category: string | null;
   unit: string;
   imageUrl: string | null;
   cantidad: number;
@@ -134,7 +134,7 @@ export default function CreateSalesPage() {
       setCartItems(prev => [...prev, {
         productId: data.productId,
         productName: selectedProduct.product.name,
-        category: selectedProduct.product.category,
+        category: selectedProduct.product.category?.name ?? null,
         unit: selectedProduct.product.unit,
         imageUrl: selectedProduct.product.imageUrl,
         cantidad: data.stock,
@@ -404,7 +404,7 @@ export default function CreateSalesPage() {
                             {item.productName}
                           </span>
                           <span className="text-xs text-muted-foreground truncate">
-                            {item.category} · {item.unit}
+                            {item.category ?? "Sin categoría"} · {item.unit}
                           </span>
                         </div>
                       </div>
