@@ -118,10 +118,6 @@ export default function ExpenseDetailsDialog({
                   <span className="text-muted-foreground italic">
                     Sin categoría
                   </span>
-                {categoryName ?? (
-                  <span className="text-muted-foreground italic">
-                    Sin categoría
-                  </span>
                 )}
               </span>
             </div>
