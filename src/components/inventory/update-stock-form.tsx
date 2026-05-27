@@ -205,6 +205,14 @@ export function UpdateStockForm() {
                   onValueChange={(item) => {
                     setSelectedProvider(item)
                     setValue("providerId", item?.id ?? null)
+                    if (item && selectedProduct) {
+                      const providerProduct = item.providerProducts?.find(
+                        (pp) => pp.product.id === selectedProduct.product.id,
+                      )
+                      if (providerProduct) {
+                        setValue("entryPrice", Number(providerProduct.price))
+                      }
+                    }
                   }}
                   items={providers}
                   itemToStringLabel={(p) => (p ? p.name : "")}
