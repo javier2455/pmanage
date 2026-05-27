@@ -1,14 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ArrowLeft, ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList, Loader2 } from "lucide-react";
 import type {
   InventoryEntry,
   InventoryMeta,
 } from "@/lib/types/inventory";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -83,16 +81,7 @@ export default function InventoryHistoryTimeline({
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4 p-0">
-        <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <Button asChild variant="ghost" className="w-full sm:w-auto">
-            <Link href="/dashboard/business/inventory">
-              <ArrowLeft data-icon="inline-start" />
-              Volver a stock actual
-            </Link>
-          </Button>
-        </div>
-
+      <CardContent className="flex flex-col gap-4 p-0 pt-4">
         {isEmpty ? (
           <div className="px-4 pb-6">
             <Empty className="border-border border bg-card">
