@@ -54,6 +54,8 @@ export function ProviderDetailsView() {
     refetchOnMount: "always",
   })
 
+  console.log("ProviderDetailsView - data:", data)
+
   useEffect(() => {
     if (!providerId) {
       router.replace("/dashboard/business/providers")
@@ -70,8 +72,6 @@ export function ProviderDetailsView() {
       <p className="text-destructive">No se pudo cargar el proveedor.</p>
     )
   }
-
-  const products = provider.providerProducts ?? []
 
   return (
     <div className="flex flex-col gap-6">
@@ -146,7 +146,7 @@ export function ProviderDetailsView() {
         </CardContent>
       </Card>
 
-      <ProviderProductsTable products={products} />
+      <ProviderProductsTable providerId={provider.id} />
     </div>
   )
 }

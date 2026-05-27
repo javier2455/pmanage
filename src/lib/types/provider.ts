@@ -1,4 +1,4 @@
-import { Product } from "./product";
+import { Product, ProductUnit } from "./product";
 
 export type Provider = {
   id: string;
@@ -76,3 +76,28 @@ export type CreateProviderResponse = {
 };
 
 export type UpdateProviderResponse = CreateProviderResponse;
+
+export type ProviderProductItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  unit: ProductUnit;
+  imageUrl: string | null;
+  price: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetProviderProductsParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+export type GetProviderProductsResponse = {
+  message: string;
+  data: ProviderProductItem[];
+  total: number;
+  page: number;
+  limit: number;
+};

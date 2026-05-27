@@ -9,11 +9,13 @@ import {
   deleteProvider,
   getAllProviders,
   getProviderById,
+  getProviderProducts,
   updateProvider,
 } from "@/lib/api/provider";
 import {
   CreateProviderProps,
   GetAllProvidersParams,
+  GetProviderProductsParams,
   UpdateProviderProps,
 } from "@/lib/types/provider";
 
@@ -42,6 +44,18 @@ export function useGetProviderByIdQuery(
   });
 }
 
+export function useGetProviderProductsQuery(
+  providerId: string,
+  params: GetProviderProductsParams = {},
+) {
+  return useQuery({
+    queryKey: ["provider-products", providerId, params],
+    queryFn: () => getProviderProducts(providerId, params),
+    enabled: !!providerId,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useCreateProviderMutation() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -65,6 +79,9 @@ export function useUpdateProviderMutation() {
     onSuccess: (_, { providerId }) => {
       queryClient.invalidateQueries({ queryKey: ["all-providers"] });
       queryClient.invalidateQueries({ queryKey: ["provider", providerId] });
+      queryClient.invalidateQueries({
+        queryKey: ["provider-products", providerId],
+      });
     },
   });
 }

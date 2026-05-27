@@ -6,6 +6,8 @@ import {
   GetAllProvidersParams,
   GetAllProvidersResponse,
   GetProviderByIdResponse,
+  GetProviderProductsParams,
+  GetProviderProductsResponse,
   UpdateProviderProps,
   UpdateProviderResponse,
 } from "../types/provider";
@@ -48,6 +50,17 @@ export async function updateProvider(
   const { data } = await apiClient.put<UpdateProviderResponse>(
     providerRoutes.updateProvider(providerId),
     payload,
+  );
+  return data;
+}
+
+export async function getProviderProducts(
+  providerId: string,
+  { page, limit, search }: GetProviderProductsParams = {},
+): Promise<GetProviderProductsResponse> {
+  const { data } = await apiClient.get<GetProviderProductsResponse>(
+    providerRoutes.getProviderProducts(providerId),
+    { params: { page, limit, search: search || undefined } },
   );
   return data;
 }

@@ -9,4 +9,6 @@ export const providerRoutes = {
     `${BASIC_ROUTE}/providers/${providerId}`,
   deleteProvider: (providerId: string) =>
     `${BASIC_ROUTE}/providers/${providerId}`,
+  getProviderProducts: (providerId: string) =>
+    `${BASIC_ROUTE}/providers/${providerId}/products`,
 };
