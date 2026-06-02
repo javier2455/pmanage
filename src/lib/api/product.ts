@@ -65,10 +65,18 @@ export async function create(
 export async function createInBusiness(
   credentials: CreateProductInBusinessProps,
 ): Promise<CreateProductResponse> {
-  const { productId, price, entryPrice, stock } = credentials;
+  const { productId, price, entryPrice, stock, stockAlertThreshold } =
+    credentials;
   const { data } = await apiClient.post(
     productRoutes.createProductInBusiness(credentials.businessId),
-    { productId, price, entryPrice, stock },
+    {
+      productId,
+      price,
+      entryPrice,
+      stock,
+      // Solo se envía si el usuario (Pro) definió un umbral.
+      ...(stockAlertThreshold != null ? { stockAlertThreshold } : {}),
+    },
   );
 
   return data;

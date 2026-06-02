@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useBusiness } from "@/context/business-context";
 import { useCurrentInventoryByBusinessId } from "@/hooks/use-inventory";
+import { useStockAlerts } from "@/hooks/use-stock-alerts";
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import TableOfCurrentInventory from "@/components/inventory/table-of-current-inventory";
+import { LowStockAlertBanner } from "@/components/inventory/low-stock-alert-banner";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 
 const DEFAULT_LIMIT = 10;
 
 export default function InventoryPage() {
   const { activeBusinessId } = useBusiness();
+  const { isProPlan } = useUserRoleAndPlan();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
 
@@ -17,6 +21,12 @@ export default function InventoryPage() {
     activeBusinessId ?? "",
     { page, limit },
   );
+
+  // Alertas de stock — feature Pro. El endpoint solo se consulta para usuarios Pro.
+  const { data: stockAlertsData } = useStockAlerts(
+    isProPlan ? (activeBusinessId ?? "") : "",
+  );
+  const alerts = stockAlertsData?.alerts ?? [];
 
   if (isError) return <div>Error al cargar el stock del negocio</div>;
 
@@ -37,6 +47,7 @@ export default function InventoryPage() {
           Consulta el stock disponible por producto en tu negocio.
         </p>
       </div>
+      {isProPlan && <LowStockAlertBanner alerts={alerts} />}
       {showInitialSkeleton ? (
         <SimpleTableSkeleton />
       ) : (
@@ -53,6 +64,9 @@ export default function InventoryPage() {
           isFetching={isFetching}
           onPageChange={setPage}
           onLimitChange={handleLimitChange}
+          alerts={alerts}
+          canManageAlerts={isProPlan}
+          businessId={activeBusinessId ?? ""}
         />
       )}
     </section>

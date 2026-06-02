@@ -4,15 +4,17 @@ import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import axios from "axios"
 import { sileo } from "sileo"
-import { X, Link2 } from "lucide-react"
+import { X, Link2, BellRing } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useBusiness } from "@/context/business-context"
 import { useCreateProductInBusinessMutation } from "@/hooks/use-product"
 import { useGetAllProductsQuery } from "@/hooks/use-product"
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { ProBadge } from "@/components/ui/pro-badge"
 import { Separator } from "@/components/ui/separator"
 import {
   Select,
@@ -28,6 +30,7 @@ export function AssignProductToBusinessForm() {
   const router = useRouter()
   const pathname = usePathname()
   const { activeBusinessId } = useBusiness()
+  const { isProPlan } = useUserRoleAndPlan()
   const createProductInBusinessMutation = useCreateProductInBusinessMutation()
   const { data: productsData, isLoading: isLoadingProducts } = useGetAllProductsQuery()
 
@@ -46,6 +49,7 @@ export function AssignProductToBusinessForm() {
       entryPrice: 0,
       price: 0,
       stock: 0,
+      stockAlertThreshold: null,
     },
   })
 
@@ -78,6 +82,8 @@ export function AssignProductToBusinessForm() {
         price: data.price,
         entryPrice: data.entryPrice,
         stock: data.stock,
+        // Solo aplica para usuarios Pro; el campo está oculto para el resto.
+        stockAlertThreshold: isProPlan ? (data.stockAlertThreshold ?? null) : null,
       })
 
       sileo.success({
@@ -217,6 +223,45 @@ export function AssignProductToBusinessForm() {
             )}
           </div>
         </div>
+
+        {/* Stock alert threshold — feature Pro, opcional */}
+        {isProPlan && (
+          <div className="mb-6 flex flex-col gap-2">
+            <Label
+              htmlFor="stock-alert-threshold"
+              className="flex items-center gap-2 text-card-foreground"
+            >
+              <BellRing className="h-3.5 w-3.5 text-primary" />
+              Umbral de alerta de stock{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (opcional)
+              </span>
+              <ProBadge className="ml-0" />
+            </Label>
+            <Input
+              id="stock-alert-threshold"
+              type="number"
+              min={1}
+              step={1}
+              placeholder="Ej: 5"
+              {...register("stockAlertThreshold", {
+                setValueAs: (v) =>
+                  v === "" || v === null || v === undefined ? null : Number(v),
+              })}
+              aria-invalid={errors.stockAlertThreshold ? "true" : "false"}
+            />
+            {errors.stockAlertThreshold ? (
+              <p className="text-xs text-destructive">
+                {errors.stockAlertThreshold.message}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Te avisaremos cuando el stock baje de este valor. Puedes
+                ajustarlo o desactivarlo luego desde el inventario.
+              </p>
+            )}
+          </div>
+        )}
 
         <Separator />
 

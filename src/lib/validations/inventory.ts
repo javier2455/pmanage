@@ -14,3 +14,14 @@ export const inventoryUpdateStockSchema = z.object({
 
 
 export type InventoryUpdateStockFormData = z.infer<typeof inventoryUpdateStockSchema>;
+
+/** Configuración del umbral de alerta de stock bajo de un producto (Pro). */
+export const stockAlertSchema = z.object({
+  threshold: z
+    .number({ message: "El umbral debe ser un número" })
+    .int("El umbral debe ser un número entero")
+    .min(1, "El umbral debe ser al menos 1")
+    .max(100000, "El umbral máximo es de 100,000"),
+});
+
+export type StockAlertFormData = z.infer<typeof stockAlertSchema>;

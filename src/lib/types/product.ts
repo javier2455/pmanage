@@ -63,6 +63,11 @@ export type CreateProductInBusinessProps = {
     price: number;
     entryPrice: number;
     stock: number;
+    /**
+     * Umbral de alerta de stock bajo (feature Pro). Opcional.
+     * `null`/ausente = sin alerta. Editable luego desde el inventario.
+     */
+    stockAlertThreshold?: number | null;
 };
 
 export type EditProductProps = {

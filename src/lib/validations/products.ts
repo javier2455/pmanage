@@ -7,6 +7,18 @@ export const createProductSchema = z.object({
   unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
 });
 
+/**
+ * Umbral de alerta de stock bajo (feature Pro). Opcional al asignar un producto:
+ * `null`/ausente = sin alerta. Se puede ajustar luego desde el inventario.
+ */
+const stockAlertThresholdField = z
+  .number({ message: "El umbral debe ser un número" })
+  .int("El umbral debe ser un número entero")
+  .min(1, "El umbral debe ser al menos 1")
+  .max(100000, "El umbral máximo es de 100,000")
+  .nullable()
+  .optional();
+
 export const createProductInBusinessSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
@@ -18,10 +30,11 @@ export const createProductInBusinessSchema = z.object({
     .number()
     .min(1, "El monto es requerido")
     .max(100000, "El monto máximo es de 100,000"),
+  stockAlertThreshold: stockAlertThresholdField,
 });
 
 export const assignProductToBusinessSchema = createProductInBusinessSchema
-  .pick({ price: true, entryPrice: true, stock: true })
+  .pick({ price: true, entryPrice: true, stock: true, stockAlertThreshold: true })
   .extend({
     productId: z.string().min(1, "Selecciona un producto"),
   });

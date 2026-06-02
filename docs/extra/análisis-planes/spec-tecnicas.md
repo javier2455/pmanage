@@ -29,6 +29,24 @@ Este documento describe con detalle los cambios necesarios en backend y frontend
 stockAlertThreshold: number | null   (default: null = sin alerta configurada)
 ```
 
+> **Dónde se define el umbral (decisión 2026-06-02).** Al ser un campo del `BusinessProduct`,
+> se puede establecer en **dos momentos** (no excluyentes):
+> 1. **Al asignar el producto al negocio** — campo opcional Pro en el `POST .../products`
+>    (junto a `price`, `entryPrice`, `stock`). Ver "Endpoint 0".
+> 2. **Más tarde**, desde el inventario, vía el `PATCH .../stock-alert` (Endpoint 1).
+>
+> El frontend implementa ambos: el campo opcional en el formulario de asignación (gateado a Pro)
+> y el diálogo de edición en la tabla de inventario. Contrato completo para backend en
+> [docs/backend-alertas-stock.md](../../backend-alertas-stock.md).
+
+---
+
+### Endpoint 0: Aceptar el umbral al asignar un producto
+
+**`POST /businesses/{businessId}/products`** — añadir campo **opcional** `stockAlertThreshold`
+(`number | null`) al body existente. Mismas validaciones que el Endpoint 1. Solo lo envía el
+frontend para usuarios Pro; ausente/`null` = se crea sin alerta.
+
 ---
 
 ### Endpoint 1: Configurar alerta de stock bajo
@@ -351,7 +369,7 @@ export const ANALYTICS_ROUTES = {
 
 **Ampliar `src/lib/routes/inventory.ts` (o business.ts):**
 ```typescript
-export const STOCK_ALERT_ROUTES = {
+export const stockAlertRoutes = {
   setAlert: (businessId: string, businessProductId: string) =>
     `${BASIC_ROUTE}/businesses/${businessId}/products/${businessProductId}/stock-alert`,
   getAlerts: (businessId: string) =>

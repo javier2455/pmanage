@@ -39,6 +39,7 @@ Cambios respecto a `main` agrupados por estado:
 | 15 | Comparador multi-producto en historial de precios | ✅ Mergeada | `485ae8b` | Sí — feature Pro gateada |
 | 16 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
 | 17 | Fix CORS / limpieza `src/app/api/` | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
+| 18 | **Alertas de stock bajo/agotado** (feature Pro) | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.2) |
 
 ---
 
@@ -194,6 +195,27 @@ Cambios respecto a `main` agrupados por estado:
 
 > La rama local `cooing-weather` (`v0.16.1-beta`) y `feature-providers` (placeholder) siguen presentes. Validar si tienen cambios relevantes o deben borrarse antes del PR de promoción.
 
+### 3.2. Alertas de stock bajo / agotado (frontend listo, backend pendiente)
+
+**Qué hace.** Avisa cuando el stock de un producto cae por debajo de un umbral configurable
+(**stock bajo**) o llega a 0 (**agotado**). Feature **Pro**.
+
+- Campo `stockAlertThreshold` en `BusinessProduct` (null = sin alerta).
+- El umbral se define en **dos lugares** (complementarios): opcional al **asignar** un producto al
+  negocio ([assign-product-to-business-form.tsx](../../src/components/products/assign-product-to-business-form.tsx), gateado a Pro)
+  y editable luego desde el **diálogo en la tabla de inventario**.
+- Badge visual por fila ("Sin stock" / "Stock bajo") + banner-resumen en la página de inventario.
+
+**Archivos clave (frontend).**
+- [src/lib/types/inventory.ts](../../src/lib/types/inventory.ts) — `StockAlert`, `StockAlertsResponse`, `SetStockAlert*`, `stockAlertThreshold` en `CurrentInventoryEntry`.
+- [src/lib/routes/inventory.ts](../../src/lib/routes/inventory.ts) — `stockAlertRoutes`.
+- [src/lib/api/stock-alerts.ts](../../src/lib/api/stock-alerts.ts), [src/hooks/use-stock-alerts.ts](../../src/hooks/use-stock-alerts.ts), [src/lib/stock-alert.ts](../../src/lib/stock-alert.ts).
+- [src/components/inventory/](../../src/components/inventory/) — `stock-alert-badge.tsx`, `set-stock-alert-dialog.tsx`, `low-stock-alert-banner.tsx`.
+
+**Bloqueador.** Endpoints backend pendientes. Contrato completo en
+[docs/backend-alertas-stock.md](../backend-alertas-stock.md). Las llamadas (`apiClient`) ya apuntan
+a las rutas definidas; fallan hasta que backend las implemente.
+
 ---
 
 ## 4. Roadmap (no implementado)
@@ -206,7 +228,7 @@ Reportes sobre la información que ya capturamos. **Sin nuevas entidades**, solo
 
 | Feature | Descripción | Endpoint backend necesario |
 |---|---|---|
-| Alertas de stock bajo | Marca productos por debajo de un umbral configurable | `GET /products/low-stock?threshold=...` |
+| Alertas de stock bajo | Marca productos por debajo de un umbral configurable. **Frontend ya implementado** (ver §3.2). | `GET /businesses/:id/stock-alerts` + `PATCH .../stock-alert` (ver [docs/backend-alertas-stock.md](../backend-alertas-stock.md)) |
 | Rentabilidad por producto | Margen = venta − costo entrada × cantidad vendida | `GET /products/profitability?from=&to=` |
 | Comparativas de periodos | Ventas/gastos de este mes vs. el anterior | `GET /analytics/period-compare?range=` |
 | Métricas por trabajador | Ventas atribuibles a cada worker | `GET /sales/by-worker` |
