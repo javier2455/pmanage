@@ -52,6 +52,7 @@ import axios from "axios";
 import { BusinessType } from "@/lib/types/business";
 import { LocationMap } from "@/components/business/location-map";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
+import { NotificationSettingsCard } from "@/components/business/notification-settings-card";
 
 const HAVANA_LAT = 23.1444;
 const HAVANA_LNG = -82.3855;
@@ -649,6 +650,8 @@ export function BusinessDetailsForm() {
           )}
         </CardContent>
       </Card>
+
+      <NotificationSettingsCard business={activeBusiness} />
 
       {/* Danger zone */}
       <Card className="border-destructive/40">

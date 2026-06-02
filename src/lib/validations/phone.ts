@@ -10,6 +10,16 @@ export function isDialCodeOnly(value: string | null | undefined): boolean {
 }
 
 /**
+ * Returns true if `value` is a full, valid E.164-style phone number
+ * (not empty, not just a dial code). Shared rule for any feature that
+ * needs to know whether a usable phone number is present.
+ */
+export function isValidPhone(value: string | null | undefined): boolean {
+  if (!value) return false;
+  return !isDialCodeOnly(value) && /^\+[1-9]\d{6,14}$/.test(value);
+}
+
+/**
  * Accepts an empty string or a full E.164-style number.
  * Rejects dial-code-only values (e.g. "+53") as invalid.
  * Use for optional phone fields.

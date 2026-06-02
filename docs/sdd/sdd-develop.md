@@ -6,11 +6,13 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.0.7-alpha` |
-| **Commits por delante de `main`** | 27 (al 2026-05-23) |
+| **Versión en `package.json`** | `1.3.1-alpha` |
+| **Commits por delante de `main`** | 47 (al 2026-05-28) |
+| **Último commit** | `3138a7e` |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
+| **Última actualización del documento** | 2026-05-28 |
 
 ---
 
@@ -18,18 +20,25 @@
 
 Cambios respecto a `main` agrupados por estado:
 
-| # | Feature / cambio | Estado | PR | ¿Lista para promover? |
+| # | Feature / cambio | Estado | PR / commit | ¿Lista para promover? |
 |---|---|---|---|---|
-| 1 | Historial de precios — iteración final con `EditPriceDialog` | ✅ Mergeada en develop | #8 | Sí — pendiente PR `develop → main` |
-| 2 | Refactor de rutas dinámicas con query params | ✅ Mergeada | (`a18f6c7`) | Sí |
-| 3 | Despliegue en subdirectorio (`basePath` + `.htaccess`) | ✅ Mergeada | (`8051f30`, `964c4c7`) | Sí — requiere validar `NEXT_PUBLIC_BASE_PATH` en el deploy real |
-| 4 | Limpieza del workflow de cPanel viejo | ✅ Mergeada | (`efdf04e`) | Sí |
-| 5 | Sección **Categorías** + endpoints `expense-categories` | ✅ Mergeada en develop | — | Sí — pendiente que backend incluya el menu item dinámico |
-| 6 | Spec backend de **Proveedores** | 🟡 Untracked, documento listo | — | **No** — solo documentación, requiere backend + UI |
-| 7 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
-| 8 | Fix CORS / limpieza API interna | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
-
-> **Atención.** Las features merged en develop incluyen una **segunda iteración de historial de precios** (PR #8) y un **refactor de la sección de detalles del negocio** que ya están parcialmente reflejados en `main` por commits de cherry-pick directo, pero el estado canónico de la feature vive en `develop`. Verificar antes de promover.
+| 1 | Historial de precios — iteración final con `EditPriceDialog` | ✅ Mergeada en develop | #8 | Sí |
+| 2 | Refactor de rutas dinámicas con query params | ✅ Mergeada | `a18f6c7` | Sí |
+| 3 | Despliegue en subdirectorio (`basePath` + `.htaccess`) | ✅ Mergeada | `8051f30`, `964c4c7` | Sí — requiere validar `NEXT_PUBLIC_BASE_PATH` en deploy |
+| 4 | Limpieza del workflow de cPanel viejo | ✅ Mergeada | `efdf04e` | Sí |
+| 5 | Sección **Categorías** + endpoints `expense-categories` | ✅ Mergeada | — | Sí — pendiente que backend incluya el menu item dinámico |
+| 6 | Selector de categoría en formulario de gasto | ✅ Mergeada | `0dad138`, `fbfff42` | Sí |
+| 7 | **Módulo de Proveedores** completo (CRUD, detalle, productos) | ✅ Mergeada | #9, `50a959d` | Sí |
+| 8 | Tabla de productos por proveedor (`ProviderProductsTable`) | ✅ Mergeada | `8ef2b3d` | Sí |
+| 9 | Auto-completar precio de entrada desde proveedor | ✅ Mergeada | `25e2b6a` | Sí |
+| 10 | Refactor sidebar con secciones y visibilidad por rol | ✅ Mergeada | `a5a2a03` | Sí |
+| 11 | Gestión de submenús (admin navigation) | ✅ Mergeada | `4c579ce` | Sí |
+| 12 | Historial de inventario con timeline + back navigation | ✅ Mergeada | `3138a7e` | Sí |
+| 13 | Página de edición catálogo con back navigation | ✅ Mergeada | `3138a7e` | Sí |
+| 14 | Validación y estilado de `phone-input` | ✅ Mergeada | `636a506` | Sí |
+| 15 | Comparador multi-producto en historial de precios | ✅ Mergeada | `485ae8b` | Sí — feature Pro gateada |
+| 16 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
+| 17 | Fix CORS / limpieza `src/app/api/` | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
 
 ---
 
@@ -41,74 +50,61 @@ Cambios respecto a `main` agrupados por estado:
 
 - Editar el precio inline desde la fila del producto vía `EditPriceDialog` (reemplaza el viejo `EditProductForm` + `PriceHistoryTrigger`).
 - Ver el historial completo en una **página dedicada** (antes era un modal popover desde la fila).
+- Comparar el historial de múltiples productos en paralelo (feature Pro, `485ae8b`).
 
 **Archivos clave.**
 - [src/hooks/use-product-price-history.ts](../../src/hooks/use-product-price-history.ts)
-- [src/components/products/](../../src/components/products/) — `EditPriceDialog`, `price-history-item.tsx`
+- [src/components/products/](../../src/components/products/) — `EditPriceDialog`, `price-history-item.tsx`, `price-history-product-selector.tsx`
 - Tipo `PriceHistoryEntry` con `price` y `previousPrice` como **string** (para precisión decimal).
 
 **Criterios de aceptación.**
-- Cambiar el precio de un producto crea un nuevo registro de historial visible al instante.
+- Cambiar el precio de un producto crea un nuevo registro visible al instante.
 - El historial muestra delta, moneda formateada, usuario que realizó el cambio.
-- El historial mock data fue eliminado (commit `d5350f8`); todo viene del backend.
+- El historial mock data fue eliminado (`d5350f8`); todo viene del backend.
 
-**Riesgos.** Verificar que la migración no rompa instancias donde el campo `price` venía como `number` en el frontend.
+**Riesgos.** Verificar que la migración no rompa instancias donde `price` venía como `number` en el frontend.
 
 ---
 
-### 2.2. Rutas de edición con query params (commit `a18f6c7`, `3ba032e`)
+### 2.2. Rutas de edición con query params (`a18f6c7`, `3ba032e`)
 
-**Qué hace.** Las páginas de edición (`products/[id]/edit`, `sales/[id]/edit`, etc.) dejaron de depender exclusivamente del `[id]` dinámico de Next.js. Ahora:
+**Qué hace.** Las páginas de edición usan `useSearchParams()` para leer el id en lugar de depender del segmento dinámico de Next.js. Se mantiene `generateStaticParams()` con el placeholder `__dynamic__`. Los links se construyen con `?id=...` donde aplica.
 
-- Las páginas son client components con `useSearchParams()` para leer el id.
-- Se mantiene `generateStaticParams()` con el placeholder `__dynamic__`.
-- Los links se construyen con `?id=...` cuando aplica.
-
-**Por qué.** Mejor compatibilidad con el export estático, soporte de back-button y URLs compartibles.
-
-**Riesgos.** Si algún link interno aún apunta al patrón `/products/${id}/edit` sin query param, puede romper en producción. Hacer grep antes de promover.
+**Riesgos.** Si algún link interno aún apunta al patrón `/products/${id}/edit` sin query param puede romper en producción. Hacer grep antes de promover.
 
 ---
 
 ### 2.3. Despliegue en subdirectorio (SPA `basePath`)
 
-**Qué cambia.**
 - [next.config.ts](../../next.config.ts) lee `NEXT_PUBLIC_BASE_PATH` y aplica `basePath` + `assetPrefix`.
 - [public/.htaccess](../../public/.htaccess) maneja rewrites tanto en raíz como en subdirectorio.
-- Permite hospedar la app en `example.com/pmanage/` sin cambios de código.
 
 **Criterios de aceptación.**
 - Build con `NEXT_PUBLIC_BASE_PATH=/pmanage` produce assets prefijados correctamente.
-- Navegación interna no rompe ni en raíz ni en subdir.
 - Refresh de cualquier ruta dinámica resuelve gracias al `.htaccess`.
 
-**Riesgos.** El env var debe inyectarse en build, no en runtime (Next export es estático). Documentar en el workflow de deploy.
+**Riesgos.** El env var debe inyectarse en build, no en runtime (export es estático).
 
 ---
 
 ### 2.4. Sección **Categorías** (nomenclador propio del negocio)
 
-**Qué hace.** Nueva sección bajo `/dashboard/business/categories` que permite al dueño del negocio (o trabajador autorizado) crear, listar, editar y eliminar **categorías propias** para clasificar registros. Por ahora cubre **categorías de gastos** (endpoints `expense-categories` listos en backend); el diseño escala a futuras familias (productos, etc.) agregando entradas al record `KIND_META` y al `generateStaticParams()` del detalle dinámico.
+**Qué hace.** Nueva sección bajo `/dashboard/business/categories` con CRUD de categorías propias. Cubre **categorías de gastos** (endpoints backend listos); el diseño escala a futuras familias agregando entradas al record `KIND_META`.
 
-- Hub `/dashboard/business/categories`: grid de cards (1 por familia) con preview de las primeras 5 categorías, contador total, botón "Ver todas" y botón "Nueva categoría" (modal).
-- Detalle `/dashboard/business/categories/[kind]`: tabla paginada (TanStack Table) con acciones Ver detalles / Editar / Eliminar.
-- Crear y editar son **modales** (`CategoryFormDialog`); eliminar reusa `DeleteDialog`.
+- Hub `/dashboard/business/categories`: grid de cards con preview, contador, botón "Ver todas" y modal de alta.
+- Detalle `/dashboard/business/categories/[kind]`: tabla paginada con acciones Ver / Editar / Eliminar.
 
 **Archivos clave.**
-- [src/lib/types/expense-category.ts](../../src/lib/types/expense-category.ts)
-- [src/lib/validations/expense-category.ts](../../src/lib/validations/expense-category.ts)
-- [src/lib/api/expense-category.ts](../../src/lib/api/expense-category.ts)
-- [src/hooks/use-expense-categories.ts](../../src/hooks/use-expense-categories.ts)
 - [src/components/categories/](../../src/components/categories/)
+- [src/hooks/use-expense-categories.ts](../../src/hooks/use-expense-categories.ts)
 - [src/app/dashboard/business/categories/](../../src/app/dashboard/business/categories/)
 
-**Sidebar.** El menú se construye desde `GET /menu/`. Mientras backend no incluye la entrada, se inyecta vía [src/lib/menu/static-fallback.ts](../../src/lib/menu/static-fallback.ts) y un merge en [src/components/sidebar/sidebar.tsx](../../src/components/sidebar/sidebar.tsx). Cuando backend agregue el item con el siguiente payload, borrar el archivo de fallback y el `useMemo` del merge:
+**Sidebar.** Mientras backend no incluye la entrada en `GET /menu/`, se inyecta vía [src/lib/menu/static-fallback.ts](../../src/lib/menu/static-fallback.ts). Cuando backend agregue el item con el payload siguiente, borrar el fallback:
 
 ```json
 {
   "icon": "Tags",
   "name": "Categorías",
-  "badge": null,
   "url": "/dashboard/business/categories",
   "active": true,
   "roles": null,
@@ -117,63 +113,86 @@ Cambios respecto a `main` agrupados por estado:
 }
 ```
 
+---
+
+### 2.5. Selector de categoría en formulario de gasto (`0dad138`, `fbfff42`)
+
+**Qué hace.** El formulario de gasto ([src/components/expenses/expense-form.tsx](../../src/components/expenses/expense-form.tsx)) ahora expone un `Select` que lista las categorías del negocio activo. El campo `expenseCategoryId` se persiste al crear/editar un gasto, y la categoría se muestra en la tabla y en el detalle de gasto.
+
+**Estado.** Implementado y mergeado. Depende de que el backend acepte `expenseCategoryId` en el payload de gasto.
+
+---
+
+### 2.6. Módulo de Proveedores (PR #9, `50a959d` → `25e2b6a`)
+
+**Qué hace.** Módulo completo de gestión de proveedores/suppliers:
+
+- **Listado** (`/dashboard/business/providers`): tabla paginada con todos los proveedores del negocio.
+- **Alta** (`/dashboard/business/providers/create`): formulario con nombre, teléfono (con validación de formato), y datos de contacto.
+- **Edición** (`/dashboard/business/providers/[providerId]/edit`): edita todos los campos.
+- **Detalle** (`/dashboard/business/providers/details`): vista completa del proveedor.
+- **Productos del proveedor** (`ProviderProductsTable`): tabla de productos que ofrece el proveedor con precios. Implementada en `8ef2b3d`.
+- **Auto-completar precio de entrada**: al seleccionar un proveedor en `UpdateStockForm`, el campo de precio de entrada se pre-rellena con el precio del producto en ese proveedor (`25e2b6a`).
+
+**Archivos clave.**
+- [src/components/business-providers/](../../src/components/business-providers/)
+- [src/hooks/use-provider.ts](../../src/hooks/use-provider.ts)
+- [src/lib/api/provider.ts](../../src/lib/api/provider.ts)
+- [src/lib/routes/provider.ts](../../src/lib/routes/provider.ts)
+- [src/lib/types/provider.ts](../../src/lib/types/provider.ts)
+- [src/lib/validations/providers.ts](../../src/lib/validations/providers.ts)
+
 **Criterios de aceptación.**
-- El hub muestra el icono `Tags` en sidebar y `HandCoins` en la card de Gastos.
-- El modal de crear pre-selecciona el negocio activo; el modal de editar deshabilita el cambio de negocio.
-- Las query keys siguen el patrón `["expense-categories", businessId, ...]` para evitar cache leaks entre negocios.
-- La ruta dinámica `[kind]` está pre-renderizada en build para `kind=expenses`.
-
-**Riesgos.** Si el backend agrega la entrada con un `url` distinto al esperado (`/dashboard/business/categories`), el merge duplicará el item. Coordinar el slug con backend antes del merge final.
+- CRUD completo de proveedores funcional contra el backend.
+- La tabla de productos del proveedor muestra precios actualizados.
+- Al crear una entrada de inventario y seleccionar un proveedor, el precio de entrada se auto-completa.
+- Validación de formato de teléfono activa en el formulario.
 
 ---
 
-### 2.5. Otros mergeados menores
+### 2.7. Refactor del sidebar con secciones y visibilidad por rol (`a5a2a03`)
 
-- **Workflow de cPanel viejo eliminado** (`efdf04e`) — limpia el `.github/workflows/deploy.yml` legacy en favor de `deploy-workflow.yml`.
-- **Configuración inicial de basePath** (`8051f30`) y **.htaccess para SPA fallback** (`964c4c7`).
-- Bump de versión a `1.0.7-alpha`.
+**Qué hace.** El sidebar ahora organiza los items en secciones (ej. "Negocio", "Admin") y filtra la visibilidad de cada item según el rol del usuario, consumiendo la respuesta de `GET /menu/` con mayor granularidad.
 
 ---
 
-## 3. Trabajo en curso (working tree y ramas)
+### 2.8. Gestión de submenús — admin navigation (`4c579ce`)
 
-### 3.1. Selector de categoría en formulario de gasto
+**Qué hace.** Los administradores pueden crear, editar y eliminar submenús desde `/dashboard/admin/menus`. Nuevos diálogos `SubmenuFormDialog` integrados en el árbol de navegación de admin.
 
-**Estado.** Pendiente. La sección de Categorías ya está implementada (ver §2.4), pero el formulario de gasto ([src/components/expenses/expense-form.tsx](../../src/components/expenses/expense-form.tsx)) todavía no expone un selector de categoría — el campo `category` del modelo `Expense` sigue siendo string libre.
-
-**Qué falta.**
-- Agregar un `Select` (o combobox con búsqueda) al `expense-form.tsx` que liste las categorías del negocio activo.
-- Persistir `expenseCategoryId` en el payload de crear/editar gasto (requiere endpoint backend que acepte el campo).
-- Mostrar la categoría en la tabla y en el detalle de gasto.
+**Archivos clave.**
+- [src/components/navigation-admin/submenu-form-dialog.tsx](../../src/components/navigation-admin/submenu-form-dialog.tsx)
 
 ---
 
-### 3.2. Módulo de Proveedores — spec backend lista
+### 2.9. Historial de inventario + back navigation (`3138a7e`)
 
-**Estado.** Documento untracked: [docs/extra/análisis-planes/spec-suppliers-backend.md](../extra/análisis-planes/spec-suppliers-backend.md) (~569 líneas).
-
-**Cubre.**
-- Tablas: `suppliers` (soft delete), `supplier_products`, FK a `inventory_entries`.
-- Endpoints CRUD para `suppliers` + ofertas de productos + bulk import.
-- Endpoint agregador de historial de compras (total gastado, n° de transacciones).
-- Pro-gating: 403 para planes no-Pro.
-- Sistema de permisos para workers: nuevo `menuId = "suppliers"` con read/write/update/delete.
-
-**Qué falta.**
-- Implementación backend.
-- Hook `use-suppliers.ts` y archivo `src/lib/routes/suppliers.ts` en frontend.
-- UI: listado, alta, ofertas por proveedor, historial.
+**Qué hace.**
+- La página `/dashboard/business/inventory/history` muestra un timeline completo de movimientos de inventario (compras, cancelaciones, stock inicial) con estilos por tipo de acción.
+- Ambas páginas (historial de inventario y edición de catálogo) incluyen ahora links de navegación "Volver" para mejorar el flujo.
+- Mejoras de estilo en `phone-input` para mayor consistencia visual.
 
 ---
 
-### 3.3. Ramas en flight
+### 2.10. Otros mergeados menores
+
+- **ICON_MAP expandido** (`7a55b56`) — nuevos iconos para mayor consistencia en UI.
+- **Rutas de búsqueda** actualizadas con prefijo `/search` (`ffeb665`).
+- **Guías de uso** para Navigation Management y Providers en `docs/` (`0bb7b64`).
+- **Bump de versión** a `1.1.0-alpha` (`c3937f2`), `1.3.1-alpha` (`3138a7e`).
+
+---
+
+## 3. Trabajo en curso (ramas en flight)
+
+### 3.1. Ramas pendientes de merge
 
 | Rama | Último commit | Estado | Notas |
 |---|---|---|---|
 | `feature/auth-google` (remota) | `35eee53` | En revisión | Popup OAuth con Google. Requiere endpoint backend `/auth/google`. |
 | `fix/cors-error` (remota) | `b71a03a` | En revisión | Limpia carpeta `src/app/api/` no usada que causaba CORS al deployar. |
-| `cooing-weather` (local, `6210db9`) | v0.16.1-beta | Estancada | Refactor de botones y página de asignación de productos. Validar si aún relevante. |
-| `feature-providers` (local) | igual a `main` | Placeholder | No tiene cambios reales — borrar o reusar para el módulo de proveedores. |
+
+> La rama local `cooing-weather` (`v0.16.1-beta`) y `feature-providers` (placeholder) siguen presentes. Validar si tienen cambios relevantes o deben borrarse antes del PR de promoción.
 
 ---
 
@@ -181,31 +200,27 @@ Cambios respecto a `main` agrupados por estado:
 
 Tomado de [docs/extra/análisis-planes/analisis-planes.md](../extra/análisis-planes/analisis-planes.md) y [docs/extra/CONTABILIDAD_NUCLEO.md](../extra/CONTABILIDAD_NUCLEO.md).
 
-### 4.1. Variante A — "Más datos, mismas operaciones" (2–3 semanas)
+### 4.1. Variante A — "Más datos, mismas operaciones" (est. 2–3 semanas)
 
 Reportes sobre la información que ya capturamos. **Sin nuevas entidades**, solo agregaciones y filtros nuevos.
 
-| Feature | Idea | Hooks/rutas backend nuevos |
+| Feature | Descripción | Endpoint backend necesario |
 |---|---|---|
 | Alertas de stock bajo | Marca productos por debajo de un umbral configurable | `GET /products/low-stock?threshold=...` |
-| Rentabilidad por producto | Margen = venta − costo de entrada × cantidad vendida | `GET /products/profitability?from=&to=` |
-| Comparativas de periodos | Ventas/gastos de este mes vs el anterior | `GET /analytics/period-compare?range=` |
+| Rentabilidad por producto | Margen = venta − costo entrada × cantidad vendida | `GET /products/profitability?from=&to=` |
+| Comparativas de periodos | Ventas/gastos de este mes vs. el anterior | `GET /analytics/period-compare?range=` |
 | Métricas por trabajador | Ventas atribuibles a cada worker | `GET /sales/by-worker` |
 
 Spec técnica: [docs/extra/análisis-planes/spec-tecnicas.md](../extra/análisis-planes/spec-tecnicas.md).
 
-### 4.2. Variante B — "Gestión integral" (6–8 semanas)
-
-Introduce nuevas entidades de dominio.
+### 4.2. Variante B — "Gestión integral" (est. 6–8 semanas)
 
 | Feature | Estado de preparación |
 |---|---|
-| Módulo de Proveedores | Spec backend listo §3.2 |
-| Categorías de gasto | ✅ Implementada §2.4 — falta integrarla al formulario de gasto §3.1 |
-| Presupuestos mensuales | Solo idea |
-| Historial de precios — fase 2 (forecasts, gráficos) | Ver [docs/extra/price-history-fase-2.md](../extra/price-history-fase-2.md) |
+| Presupuestos mensuales | Solo idea, sin spec |
+| Historial de precios — fase 2 (forecasts, gráficos comparativos) | Ver [docs/extra/price-history-fase-2.md](../extra/price-history-fase-2.md) |
 
-### 4.3. Núcleo contable (largo plazo, ~55 días estimados)
+### 4.3. Núcleo contable (largo plazo, est. ~55 días)
 
 Resumen de [docs/extra/CONTABILIDAD_NUCLEO.md](../extra/CONTABILIDAD_NUCLEO.md), 4 fases:
 
@@ -218,8 +233,8 @@ Este bloque cambia significativamente la arquitectura: requiere modelar `Journal
 
 ### 4.4. Otros candidatos
 
-- OAuth Google (rama existe, falta merge).
-- Exportaciones a Excel/PDF (mencionado como feature Pro pero no implementado).
+- OAuth Google (rama existe, falta merge — ver §3.1).
+- Exportaciones a Excel/PDF (feature Pro, no implementada).
 - Notificaciones push o email para alertas de stock.
 
 ---
@@ -262,7 +277,7 @@ Este bloque cambia significativamente la arquitectura: requiere modelar `Journal
 
 ### 6.2. Convenciones
 
-- **Query keys de React Query**: usar arrays `[entity, businessId, ...args]` — nunca strings sueltos. (Pendiente de centralización formal — ver deuda técnica en [sdd-main.md](./sdd-main.md#11-deuda-técnica-conocida)).
+- **Query keys de React Query**: usar arrays `[entity, businessId, ...args]` — nunca strings sueltos.
 - **Schemas Zod**: viven en `src/lib/validations/`, no inline.
 - **Forms**: React Hook Form + zodResolver, siempre.
 - **Currency display**: formatear con `Intl.NumberFormat` por código de moneda; nunca concatenar `"$"` manualmente.

@@ -25,6 +25,13 @@ export function isProPlan(planType: string | undefined): boolean {
   );
 }
 
+/** Determina si un tipo de plan es el gratuito (free). */
+export function isFreePlan(planType: string | undefined): boolean {
+  if (!planType) return false;
+  const n = normalizePlan(planType);
+  return n.includes("free") || n.includes("gratis") || n.includes("gratuito");
+}
+
 /**
  * Rutas protegidas por plan Pro.
  *
