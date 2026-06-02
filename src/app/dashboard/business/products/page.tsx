@@ -33,9 +33,6 @@ export default function ProductsPage() {
   const businessProducts = data?.data;
   const catalogProducts = allProductsData?.data ?? [];
 
-  console.log('businessProducts data', businessProducts)
-  console.log('catalogProducts data', catalogProducts)
-
   const businessTableLoading = isLoading || isFetching;
   const showCatalogInitialSkeleton = allProductsLoading && !allProductsData;
 

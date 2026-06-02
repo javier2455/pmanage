@@ -118,7 +118,6 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
     const payload: NotificationSettings = { notifications };
     // TODO(backend): reemplazar por la mutación cuando el endpoint esté disponible.
     // PUT /business/:id/notification-settings con el payload de abajo.
-    console.log("[notification-settings] payload", business?.id, payload);
     sileo.success({ title: "Preferencias de notificaciones guardadas" });
   }
 

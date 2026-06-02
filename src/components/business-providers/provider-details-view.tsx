@@ -54,8 +54,6 @@ export function ProviderDetailsView() {
     refetchOnMount: "always",
   })
 
-  console.log("ProviderDetailsView - data:", data)
-
   useEffect(() => {
     if (!providerId) {
       router.replace("/dashboard/business/providers")

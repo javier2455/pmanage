@@ -6,13 +6,13 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.3.1-alpha` |
-| **Commits por delante de `main`** | 47 (al 2026-05-28) |
-| **Último commit** | `3138a7e` |
+| **Versión en `package.json`** | `1.3.2-alpha` |
+| **Commits por delante de `main`** | 49 (al 2026-06-02) |
+| **Último commit** | `3eaf9c3` |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-05-28 |
+| **Última actualización del documento** | 2026-06-02 |
 
 ---
 
@@ -37,9 +37,10 @@ Cambios respecto a `main` agrupados por estado:
 | 13 | Página de edición catálogo con back navigation | ✅ Mergeada | `3138a7e` | Sí |
 | 14 | Validación y estilado de `phone-input` | ✅ Mergeada | `636a506` | Sí |
 | 15 | Comparador multi-producto en historial de precios | ✅ Mergeada | `485ae8b` | Sí — feature Pro gateada |
-| 16 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
-| 17 | Fix CORS / limpieza `src/app/api/` | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
-| 18 | **Alertas de stock bajo/agotado** (feature Pro) | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.2) |
+| 16 | **Exportación a PDF y Excel** en cierre diario y mensual | ✅ Mergeada | — | Sí — feature Pro gateada |
+| 17 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
+| 18 | Fix CORS / limpieza `src/app/api/` | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
+| 19 | **Alertas de stock bajo/agotado** (feature Pro) | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.2) |
 
 ---
 
@@ -175,12 +176,27 @@ Cambios respecto a `main` agrupados por estado:
 
 ---
 
-### 2.10. Otros mergeados menores
+### 2.10. Exportación a PDF y Excel en cierres contables
+
+**Qué hace.** Los usuarios Pro pueden descargar el cierre contable (diario o mensual) como archivo PDF o Excel directamente desde la página de cierre. El backend devuelve un `Blob` que el cliente convierte en descarga nativa del navegador.
+
+**Archivos clave.**
+- [src/hooks/use-accounting-close.ts](../../src/hooks/use-accounting-close.ts) — `useExportToPdf`, `useExportToExcel`
+- [src/lib/api/accounting-close.ts](../../src/lib/api/accounting-close.ts) — `exportToPdf`, `exportToExcel` (axios con `responseType: "blob"`)
+- [src/app/dashboard/accounting-close/daily/page.tsx](../../src/app/dashboard/accounting-close/daily/page.tsx) — botones "Exportar a PDF" / "Exportar a Excel"
+- [src/app/dashboard/accounting-close/monthly/page.tsx](../../src/app/dashboard/accounting-close/monthly/page.tsx) — ídem
+
+**Pro-gating.** Botones deshabilitados con tooltip "Requiere plan Pro para exportar" cuando `!isProPlan`.
+
+---
+
+### 2.11. Otros mergeados menores
 
 - **ICON_MAP expandido** (`7a55b56`) — nuevos iconos para mayor consistencia en UI.
 - **Rutas de búsqueda** actualizadas con prefijo `/search` (`ffeb665`).
 - **Guías de uso** para Navigation Management y Providers en `docs/` (`0bb7b64`).
-- **Bump de versión** a `1.1.0-alpha` (`c3937f2`), `1.3.1-alpha` (`3138a7e`).
+- **Bump de versión** a `1.1.0-alpha` (`c3937f2`), `1.3.1-alpha` (`3138a7e`), `1.3.2-alpha` (`ef36fac`).
+- **Upgrade lucide-react** a `1.17.0` (`ef36fac`).
 
 ---
 

@@ -234,16 +234,20 @@ NEXT_PUBLIC_BASE_PATH=/pmanage   # si se hospeda en subdirectorio; vacío si en 
 
 ---
 
-## 11. Deuda técnica conocida
+## 11. Deuda técnica
 
-Extracto resumido de [docs/extra/AUDIT.md](../extra/AUDIT.md):
+### Resuelta (en `develop`, pendiente de promover a `main`)
 
-- Query keys dispersos: definidos como strings sueltos en 12+ archivos. Riesgo: invalidaciones cruzadas entre negocios.
-- `console.log` aún presentes en código de producción (~12 ocurrencias detectadas).
+- **`console.log` en producción** — eliminados; cero ocurrencias en `src/`.
+- **Tipos duplicados** — las interfaces inline son props de componentes (estándar React); tipos de dominio están centralizados en `src/lib/types/`. No es deuda real.
+- **JWT en sessionStorage** — trade-off intencional y documentado. Cookies sirven solo al middleware de Next.js; la sesión expira al cerrar la pestaña.
+- **Query keys con riesgo de cache leak** — todos los hooks incluyen `businessId` en la key; la invalidación cruzada entre negocios está controlada.
+
+### Pendiente
+
 - Sin tests automatizados (ni unitarios ni e2e).
 - Sin Prettier configurado.
-- Token en sessionStorage en lugar de httpOnly cookie.
-- Tipos duplicados entre `lib/types/` y declaraciones inline en componentes.
+- Query keys no centralizados en un archivo de constantes (el patrón es correcto, falta solo la centralización).
 
 ---
 
