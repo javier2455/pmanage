@@ -8,6 +8,7 @@ import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import DetailsDialog from "./details-dialog";
 import { CancelSaleDialog } from "./cancel-sale-dialog";
 import { StatusBadge } from "../generic/status-badge";
+import { Money } from "@/components/ui/currency/money";
 
 export type SalesColumnMeta = {
   headerClassName?: string;
@@ -18,13 +19,6 @@ const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
 } satisfies SalesColumnMeta;
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
 
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString("es-CO", {
@@ -107,9 +101,10 @@ export function createSalesColumns(
         <SalesSortableHeader column={column} label="Total" />
       ),
       cell: ({ row }) => (
-        <span className="tabular-nums font-medium text-foreground">
-          {formatCurrency(Number(row.original.total))}
-        </span>
+        <Money
+          valueCUP={Number(row.original.total)}
+          className="font-medium text-foreground"
+        />
       ),
     },
     {

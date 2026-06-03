@@ -14,13 +14,8 @@ import {
 import { useGetSaleById } from "@/hooks/use-sales";
 import { Loader2 } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
+import { Money } from "@/components/ui/currency/money";
+import { CurrencyEquivalences } from "@/components/ui/currency/currency-equivalences";
 
 interface DetailsDialogProps {
   saleId: string;
@@ -93,16 +88,15 @@ export default function DetailsDialog({
                           </span>
                           <span className="truncate text-xs text-muted-foreground">
                             {Number(item.cantidad)} x{" "}
-                            {formatCurrency(Number(item.precio))}
+                            <Money valueCUP={Number(item.precio)} className="text-xs" />
                           </span>
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-0.5">
-                        <span className="text-sm font-medium tabular-nums text-card-foreground">
-                          {formatCurrency(
-                            Number(item.cantidad) * Number(item.precio),
-                          )}
-                        </span>
+                        <Money
+                          valueCUP={Number(item.cantidad) * Number(item.precio)}
+                          className="text-sm font-medium text-card-foreground"
+                        />
                         {item.isCancelled && (
                           <span className="text-xs text-destructive">
                             Cancelado
@@ -125,8 +119,12 @@ export default function DetailsDialog({
               <span className="text-sm font-medium text-card-foreground">
                 Total
               </span>
-              <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                {formatCurrency(total)}
+              <span className="flex flex-col items-end gap-0.5">
+                <Money
+                  valueCUP={total}
+                  className="text-sm font-semibold text-card-foreground"
+                />
+                <CurrencyEquivalences valueCUP={total} />
               </span>
             </div>
 

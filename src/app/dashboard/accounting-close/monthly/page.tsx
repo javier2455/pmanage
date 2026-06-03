@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { MonthFilter, type SelectedMonth } from "@/components/accounting-close/month-filter"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
-import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
+import { useCurrency } from "@/context/currency-context"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
 import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-close-expense-table"
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
@@ -120,6 +120,8 @@ export default function MonthlyPage() {
   const totalSales = data?.totalIncome ?? 0
   const totalExpenses = data?.totalExpense ?? 0
   const balance = data?.total ?? totalSales - totalExpenses
+
+  const { format: formatCurrencyCtx } = useCurrency()
 
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
@@ -303,7 +305,7 @@ export default function MonthlyPage() {
                 </span>
               </div>
               <span className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                +${formatCurrency(totalSales)}
+                +{formatCurrencyCtx(totalSales)}
               </span>
             </div>
 
@@ -315,7 +317,7 @@ export default function MonthlyPage() {
                 </span>
               </div>
               <span className="text-sm font-semibold tabular-nums text-destructive">
-                -${formatCurrency(totalExpenses)}
+                -{formatCurrencyCtx(totalExpenses)}
               </span>
             </div>
 
@@ -341,7 +343,7 @@ export default function MonthlyPage() {
                     : "text-destructive"
                 )}
               >
-                {balance >= 0 ? "+" : "-"}${formatCurrency(Math.abs(balance))}
+                {balance >= 0 ? "+" : "-"}{formatCurrencyCtx(Math.abs(balance))}
               </span>
             </div>
 

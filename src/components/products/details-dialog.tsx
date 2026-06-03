@@ -15,6 +15,8 @@ import { useGetProductByIdQuery } from "@/hooks/use-product"
 import { useGetProductCategoryByIdQuery } from "@/hooks/use-product-categories"
 import { Badge } from "@/components/ui/badge"
 import { ProductImage } from "@/components/products/product-image"
+import { Money } from "@/components/ui/currency/money"
+import { CurrencyEquivalences } from "@/components/ui/currency/currency-equivalences"
 
 interface ProductDetailsDialogProps {
     productId: string
@@ -105,11 +107,12 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger }: Pr
                             <>
                                 <div className="flex items-center justify-between border-b border-border py-4">
                                     <span className="text-sm text-muted-foreground">Precio</span>
-                                    <span className="text-sm font-medium text-card-foreground tabular-nums">
-                                        {new Intl.NumberFormat("es-CO", {
-                                            style: "currency",
-                                            currency: "COP",
-                                        }).format(business.price)}
+                                    <span className="flex flex-col items-end gap-0.5">
+                                        <Money
+                                            valueCUP={Number(business.price)}
+                                            className="text-sm font-medium text-card-foreground"
+                                        />
+                                        <CurrencyEquivalences valueCUP={Number(business.price)} />
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between border-b border-border py-4">

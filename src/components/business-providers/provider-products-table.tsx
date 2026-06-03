@@ -24,22 +24,13 @@ import { DataTablePaginationNav } from "@/components/data-table/data-table-pagin
 import { PageSizeSelect } from "@/components/data-table/page-size-select"
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 import { useGetProviderProductsQuery } from "@/hooks/use-provider"
+import { Money } from "@/components/ui/currency/money"
 
 interface ProviderProductsTableProps {
   providerId: string
 }
 
 const DEFAULT_LIMIT = 10
-
-function formatPrice(value: number | string): string {
-  const n = typeof value === "number" ? value : Number(value)
-  if (Number.isNaN(n)) return "--"
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 2,
-  }).format(n)
-}
 
 export function ProviderProductsTable({ providerId }: ProviderProductsTableProps) {
   const [search, setSearch] = React.useState("")
@@ -182,7 +173,7 @@ export function ProviderProductsTable({ providerId }: ProviderProductsTableProps
                           {pp.unit ?? "—"}
                         </TableCell>
                         <TableCell className="px-4 py-3 text-right font-semibold tabular-nums text-card-foreground">
-                          {formatPrice(pp.price)}
+                          <Money valueCUP={Number(pp.price)} />
                         </TableCell>
                       </TableRow>
                     ))

@@ -1,7 +1,10 @@
+'use client'
+
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { ArrowDownRight, ArrowUpRight, DollarSign, Minus, Receipt } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useCurrency } from '@/context/currency-context'
 
 type StatsCardVariant = 'sales' | 'expenses'
 
@@ -11,14 +14,6 @@ interface StatsCardProps {
   today: number
   yesterday: number
   percentageChange: number
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
 }
 
 function trendDirection(change: number, variant: StatsCardVariant) {
@@ -35,6 +30,9 @@ export default function StatsCard({
   yesterday,
   percentageChange,
 }: StatsCardProps) {
+  const { format } = useCurrency()
+  const formatCurrency = (value: number) => format(value, { maximumFractionDigits: 0, minimumFractionDigits: 0 })
+
   const direction = trendDirection(percentageChange, variant)
   const isGood = direction === 'up-good' || direction === 'down-good'
   const isFlat = direction === 'flat'

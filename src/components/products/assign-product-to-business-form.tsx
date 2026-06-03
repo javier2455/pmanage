@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import axios from "axios"
@@ -14,6 +15,7 @@ import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { MoneyAmountInput } from "@/components/ui/currency/money-amount-input"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -54,6 +56,7 @@ export function AssignProductToBusinessForm() {
   })
 
   const selectedProductId = watch("productId")
+  const [resetSignal, setResetSignal] = useState(0)
 
   async function onSubmit(data: AssignProductToBusinessFormData) {
     if (!activeBusinessId) {
@@ -96,6 +99,7 @@ export function AssignProductToBusinessForm() {
         description: "El producto se ha asignado a tu negocio correctamente",
       })
       reset()
+      setResetSignal((s) => s + 1)
       router.push("/dashboard/business/products")
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data?.message) {
@@ -175,14 +179,14 @@ export function AssignProductToBusinessForm() {
             <Label htmlFor="entry-price" className="text-card-foreground">
               Precio de entrada <span className="text-destructive">*</span>
             </Label>
-            <Input
+            <MoneyAmountInput
               id="entry-price"
-              type="number"
               min={1}
-              step="0.01"
-              placeholder="0.00"
-              {...register("entryPrice", { valueAsNumber: true })}
-              aria-invalid={errors.entryPrice ? "true" : "false"}
+              resetKey={resetSignal}
+              onChangeCUP={(cup) =>
+                setValue("entryPrice", cup, { shouldValidate: true })
+              }
+              hasError={!!errors.entryPrice}
             />
             {errors.entryPrice && (
               <p className="text-xs text-destructive">{errors.entryPrice.message}</p>
@@ -192,14 +196,12 @@ export function AssignProductToBusinessForm() {
             <Label htmlFor="price" className="text-card-foreground">
               Precio <span className="text-destructive">*</span>
             </Label>
-            <Input
+            <MoneyAmountInput
               id="price"
-              type="number"
               min={1}
-              step="0.01"
-              placeholder="0.00"
-              {...register("price", { valueAsNumber: true })}
-              aria-invalid={errors.price ? "true" : "false"}
+              resetKey={resetSignal}
+              onChangeCUP={(cup) => setValue("price", cup, { shouldValidate: true })}
+              hasError={!!errors.price}
             />
             {errors.price && (
               <p className="text-xs text-destructive">{errors.price.message}</p>

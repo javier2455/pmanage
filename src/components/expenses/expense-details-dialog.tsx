@@ -16,13 +16,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetExpenseByIdQuery } from "@/hooks/use-expenses";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
+import { Money } from "@/components/ui/currency/money";
+import { CurrencyEquivalences } from "@/components/ui/currency/currency-equivalences";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("es-CO", {
@@ -97,8 +92,12 @@ export default function ExpenseDetailsDialog({
               <span className="text-sm font-medium text-card-foreground">
                 Monto
               </span>
-              <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                {formatCurrency(Number(data.amount))}
+              <span className="flex flex-col items-end gap-0.5">
+                <Money
+                  valueCUP={Number(data.amount)}
+                  className="text-sm font-semibold text-card-foreground"
+                />
+                <CurrencyEquivalences valueCUP={Number(data.amount)} />
               </span>
             </div>
 
