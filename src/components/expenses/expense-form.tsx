@@ -11,6 +11,7 @@ import { HandCoins, RefreshCw, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { MoneyAmountInput } from "@/components/ui/currency/money-amount-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -174,14 +175,12 @@ export function ExpenseForm({
         <Label htmlFor="expense-amount" className="text-card-foreground">
           Monto <span className="text-destructive">*</span>
         </Label>
-        <Input
+        <MoneyAmountInput
           id="expense-amount"
-          type="number"
           min={1}
-          step="0.01"
-          placeholder="0.00"
-          {...register("amount", { valueAsNumber: true })}
-          aria-invalid={errors.amount ? "true" : "false"}
+          initialCUP={defaultValues?.amount}
+          onChangeCUP={(cup) => setValue("amount", cup, { shouldValidate: true })}
+          hasError={!!errors.amount}
         />
         {errors.amount && (
           <p className="text-xs text-destructive">{errors.amount.message}</p>

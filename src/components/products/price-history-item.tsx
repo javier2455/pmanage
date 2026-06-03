@@ -6,8 +6,10 @@ import type { PriceHistoryEntry } from "@/lib/types/price-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useInView } from "@/hooks/use-in-view";
+import { Money } from "@/components/ui/currency/money";
 
 const DASH = "—";
+const MONEY_OPTS = { minimumFractionDigits: 0, maximumFractionDigits: 0 } as const;
 
 function formatTimeOnly(dateStr: string) {
   try {
@@ -19,15 +21,6 @@ function formatTimeOnly(dateStr: string) {
   } catch {
     return DASH;
   }
-}
-
-function formatCurrency(value: number) {
-  if (!Number.isFinite(value)) return DASH;
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  }).format(value);
 }
 
 function parseNumber(v: string | null): number | null {
@@ -128,7 +121,11 @@ export default function PriceHistoryItem({
                 {isInitial ? "Precio inicial" : "Precio actualizado"}
               </span>
               <span className="text-xl font-semibold text-foreground tabular-nums">
-                {price !== null ? formatCurrency(price) : DASH}
+                {price !== null ? (
+                  <Money valueCUP={price} options={MONEY_OPTS} />
+                ) : (
+                  DASH
+                )}
               </span>
             </div>
             {delta.percent !== null ? (
@@ -151,7 +148,11 @@ export default function PriceHistoryItem({
             <Row
               label="Precio anterior"
               value={
-                previousPrice !== null ? formatCurrency(previousPrice) : DASH
+                previousPrice !== null ? (
+                  <Money valueCUP={previousPrice} options={MONEY_OPTS} />
+                ) : (
+                  DASH
+                )
               }
             />
             <Row

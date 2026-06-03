@@ -15,7 +15,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -25,6 +24,9 @@ import {
     UpdateBusinessProductPriceFormData,
     updateBusinessProductPriceSchema,
 } from "@/lib/validations/products"
+import { MoneyAmountInput } from "@/components/ui/currency/money-amount-input"
+import { Money } from "@/components/ui/currency/money"
+import { formatMoney } from "@/lib/utils/currency"
 
 interface EditPriceDialogProps {
     open: boolean
@@ -33,13 +35,6 @@ interface EditPriceDialogProps {
     productId: string
     productName: string
     currentPrice: number
-}
-
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-    }).format(value)
 }
 
 export function EditPriceDialog({
@@ -54,10 +49,10 @@ export function EditPriceDialog({
     const updateBusinessProductPriceMutation = useUpdateBusinessProductPriceMutation()
 
     const {
-        register,
         handleSubmit,
         setError,
         reset,
+        setValue,
         watch,
         formState: { errors },
     } = useForm<UpdateBusinessProductPriceFormData>({
@@ -130,24 +125,25 @@ export function EditPriceDialog({
                         <Label htmlFor="product-price" className="text-card-foreground">
                             Nuevo precio <span className="text-destructive">*</span>
                         </Label>
-                        <Input
+                        <MoneyAmountInput
                             id="product-price"
-                            type="number"
                             min={1}
-                            step="0.01"
-                            placeholder="0.00"
-                            autoFocus
-                            {...register("price", { valueAsNumber: true })}
-                            aria-invalid={errors.price ? "true" : "false"}
+                            initialCUP={currentPrice}
+                            resetKey={`${open}-${currentPrice}`}
+                            onChangeCUP={(cup) =>
+                                setValue("price", cup, { shouldValidate: true })
+                            }
+                            hasError={!!errors.price}
                         />
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                         <span className="text-muted-foreground">
                             Actual:{" "}
-                            <span className="font-medium text-foreground tabular-nums">
-                                {formatCurrency(currentPrice)}
-                            </span>
+                            <Money
+                                valueCUP={currentPrice}
+                                className="font-medium text-foreground"
+                            />
                         </span>
                         {delta !== 0 && newPrice !== undefined && (
                             <span
@@ -164,7 +160,7 @@ export function EditPriceDialog({
                                     <ArrowDown className="size-3" />
                                 )}
                                 {delta > 0 ? "+" : ""}
-                                {formatCurrency(delta)} ({deltaPct > 0 ? "+" : ""}
+                                {formatMoney(delta, "CUP")} ({deltaPct > 0 ? "+" : ""}
                                 {deltaPct.toFixed(1)}%)
                             </span>
                         )}

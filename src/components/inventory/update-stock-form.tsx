@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { MoneyAmountInput } from "@/components/ui/currency/money-amount-input"
+import { Money } from "@/components/ui/currency/money"
 import { Separator } from "@/components/ui/separator"
 import {
   Combobox,
@@ -47,6 +49,8 @@ export function UpdateStockForm() {
 
   const [selectedProduct, setSelectedProduct] = useState<BusinessWithProducts | null>(null)
   const [selectedProvider, setSelectedProvider] = useState<ProviderWithRelations | null>(null)
+  // Semilla para el input de precio de entrada (autocompletado por proveedor, en CUP)
+  const [entryPriceSeed, setEntryPriceSeed] = useState<{ cup: number; key: number }>({ cup: 0, key: 0 })
 
   const { data: providersData, isLoading: isLoadingProviders } =
     useGetAllProvidersQuery({
@@ -184,14 +188,10 @@ export function UpdateStockForm() {
                 </Label>
                 <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium tabular-nums text-card-foreground">
-                    $
-                    {Number(selectedProduct.price).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{" "}
-                    CUP
-                  </span>
+                  <Money
+                    valueCUP={Number(selectedProduct.price)}
+                    className="text-sm font-medium text-card-foreground"
+                  />
                 </div>
               </div>
 
@@ -210,7 +210,10 @@ export function UpdateStockForm() {
                         (pp) => pp.product.id === selectedProduct.product.id,
                       )
                       if (providerProduct) {
-                        setValue("entryPrice", Number(providerProduct.price))
+                        const cup = Number(providerProduct.price)
+                        setValue("entryPrice", cup)
+                        // El precio del proveedor está en CUP: re-sembrar el input en CUP.
+                        setEntryPriceSeed((s) => ({ cup, key: s.key + 1 }))
                       }
                     }
                   }}
@@ -264,15 +267,16 @@ export function UpdateStockForm() {
                 <Label htmlFor="entry-price" className="text-card-foreground">
                   Precio de entrada
                 </Label>
-                <Input
+                <MoneyAmountInput
                   id="entry-price"
-                  type="number"
                   min={1}
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("entryPrice", { valueAsNumber: true })}
+                  initialCUP={entryPriceSeed.cup}
+                  resetKey={entryPriceSeed.key}
+                  onChangeCUP={(cup) =>
+                    setValue("entryPrice", cup, { shouldValidate: true })
+                  }
                   disabled={!selectedProduct}
-                  aria-invalid={errors.entryPrice ? "true" : "false"}
+                  hasError={!!errors.entryPrice}
                 />
                 {errors.entryPrice && (
                   <p className="text-xs text-destructive">

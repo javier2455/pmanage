@@ -273,7 +273,6 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
 
       <ProviderProductsField
         control={control}
-        register={register}
         errors={errors}
       />
 

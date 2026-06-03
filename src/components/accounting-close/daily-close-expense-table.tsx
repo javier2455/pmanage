@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
-import { formatClosingCurrency } from "./format-closing-currency";
+import { Money } from "@/components/ui/currency/money";
 import {
   dailyCloseExpenseColumns,
   type DailyCloseExpenseColumnMeta,
@@ -268,7 +268,7 @@ export function DailyCloseExpenseTable({
           Total gastos
         </span>
         <span className="text-base font-bold tabular-nums text-destructive">
-          ${formatClosingCurrency(totalExpense)}
+          <Money valueCUP={totalExpense} options={{ withSuffix: false }} />
         </span>
       </div>
     </CardContent>
