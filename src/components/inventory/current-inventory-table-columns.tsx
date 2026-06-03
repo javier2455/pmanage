@@ -111,7 +111,11 @@ export function buildCurrentInventoryColumns({
     columns.push({
       id: "actions",
       meta: compactColumnMeta,
-      header: () => <span className="sr-only">Acciones</span>,
+      header: () => (
+        <span className="block text-center font-medium text-foreground">
+          Alerta de stock
+        </span>
+      ),
       cell: ({ row }) => {
         const threshold = getThreshold(row.original);
         const label =
@@ -119,26 +123,28 @@ export function buildCurrentInventoryColumns({
             ? `Editar alerta de stock (umbral: ${threshold})`
             : "Configurar alerta de stock";
         return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label={label}
-                onClick={() => onConfigureAlert(row.original)}
-              >
-                <BellRing
-                  className={
-                    threshold != null
-                      ? "h-4 w-4 text-primary"
-                      : "h-4 w-4 text-muted-foreground"
-                  }
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{label}</TooltipContent>
-          </Tooltip>
+          <div className="flex justify-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={label}
+                  onClick={() => onConfigureAlert(row.original)}
+                >
+                  <BellRing
+                    className={
+                      threshold != null
+                        ? "h-4 w-4 text-primary"
+                        : "h-4 w-4 text-muted-foreground"
+                    }
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{label}</TooltipContent>
+            </Tooltip>
+          </div>
         );
       },
     });

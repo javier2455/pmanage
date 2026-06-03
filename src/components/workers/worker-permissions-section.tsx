@@ -23,6 +23,25 @@ export function groupKey(item: MenuListItem): string {
   return item.idSubmenu ?? item.idMenu;
 }
 
+/**
+ * Módulos exclusivos de administradores del sistema que NO deben poder
+ * asignarse a un trabajador (ni a dueños de negocio, sea plan gratuito,
+ * básico o pro). Se identifican por su URL para ser estables ante cambios
+ * de nombre en el backend.
+ */
+const ADMIN_ONLY_URL_SEGMENTS = ["/admin/assign-plans", "/admin/menus"];
+
+export function filterAssignableMenuItems(
+  items: MenuListItem[],
+): MenuListItem[] {
+  return items.filter(
+    (item) =>
+      !ADMIN_ONLY_URL_SEGMENTS.some((segment) =>
+        item.url?.includes(segment),
+      ),
+  );
+}
+
 export function groupMenuItems(items: MenuListItem[]): MenuGroup[] {
   const groups = new Map<string, MenuGroup>();
 
@@ -49,7 +68,10 @@ export function WorkerPermissionsSection({
 }: WorkerPermissionsSectionProps) {
   const { data, isLoading, isError } = useGetMenuListQuery();
 
-  const groups = useMemo(() => groupMenuItems(data ?? []), [data]);
+  const groups = useMemo(
+    () => groupMenuItems(filterAssignableMenuItems(data ?? [])),
+    [data],
+  );
 
   if (isLoading) {
     return (

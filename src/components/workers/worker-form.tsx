@@ -38,6 +38,7 @@ import {
   type WorkerFormData,
 } from "@/lib/validations/workers";
 import {
+  filterAssignableMenuItems,
   groupKey,
   groupMenuItems,
   WorkerPermissionsSection,
@@ -75,7 +76,11 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
   const updateMutation = useUpdateWorkerMutation();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
 
-  const { data: menuList } = useGetMenuListQuery();
+  const { data: menuListRaw } = useGetMenuListQuery();
+  const menuList = useMemo(
+    () => (menuListRaw ? filterAssignableMenuItems(menuListRaw) : undefined),
+    [menuListRaw],
+  );
 
   const [selected, setSelected] = useState<Map<string, MenuListItem>>(
     new Map(),
