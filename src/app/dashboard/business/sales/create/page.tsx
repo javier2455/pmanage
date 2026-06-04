@@ -30,10 +30,6 @@ import {
 } from "@/components/ui/combobox"
 import { ShoppingCart, Package, Plus, X, DollarSign, ArrowLeft, Trash2, Box } from "lucide-react"
 import Link from "next/link"
-import { useCurrency } from "@/context/currency-context"
-import { CurrencySelect } from "@/components/ui/currency/currency-select"
-import { CurrencyEquivalences } from "@/components/ui/currency/currency-equivalences"
-import { DisplayCurrency, formatFromCUP } from "@/lib/utils/currency"
 import { AddToCartFormData, addToCartSchema } from "@/lib/validations/business"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -57,11 +53,6 @@ export default function CreateSalesPage() {
   const { activeBusinessId } = useBusiness()
   const { data } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const createSaleMutation = useCreateSaleMutation()
-
-  const { displayCurrency, rates } = useCurrency()
-  const [cardCurrency, setCardCurrency] = useState<DisplayCurrency>(displayCurrency)
-  // Formatea un valor en CUP a la moneda elegida en las cards de venta.
-  const fmt = (cup: number) => formatFromCUP(cup, rates, cardCurrency)
 
   const [selectedProduct, setSelectedProduct] = useState<BusinessWithProducts | null>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>([])
@@ -342,7 +333,9 @@ export default function CreateSalesPage() {
                   <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm tabular-nums text-card-foreground">
-                      {selectedProduct ? fmt(Number(unitPrice)) : "--"}
+                      {selectedProduct
+                        ? `${Number(unitPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN`
+                        : "--"}
                     </span>
                   </div>
                 </div>
@@ -365,16 +358,13 @@ export default function CreateSalesPage() {
           {cartItems.length > 0 && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between">
                   <CardTitle className="text-card-foreground text-base">
                     Artículos en la venta
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <CurrencySelect value={cardCurrency} onChange={setCardCurrency} />
-                    <Badge variant="secondary" className="text-xs">
-                      {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
-                    </Badge>
-                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="px-0">
@@ -426,12 +416,12 @@ export default function CreateSalesPage() {
 
                       {/* Unit price */}
                       <span className="w-20 text-right text-sm tabular-nums text-muted-foreground hidden sm:block">
-                        {fmt(item.precio)}
+                        ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
 
                       {/* Subtotal */}
                       <span className="w-24 text-right text-sm font-semibold tabular-nums text-card-foreground">
-                        {fmt(item.subtotal)}
+                        ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
 
                       {/* Delete */}
@@ -454,7 +444,7 @@ export default function CreateSalesPage() {
                     Total
                   </span>
                   <span className="text-base font-bold tabular-nums text-card-foreground">
-                    {fmt(grandTotal)}
+                    ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                   </span>
                 </div>
               </CardContent>
@@ -465,12 +455,9 @@ export default function CreateSalesPage() {
         {/* Summary - right side */}
         <Card className="lg:col-span-2 h-fit">
           <CardHeader>
-            <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-card-foreground">
-                Resumen de venta
-              </CardTitle>
-              <CurrencySelect value={cardCurrency} onChange={setCardCurrency} />
-            </div>
+            <CardTitle className="text-card-foreground">
+              Resumen de venta
+            </CardTitle>
             <CardDescription>
               Detalle de productos en el carrito
             </CardDescription>
@@ -499,11 +486,11 @@ export default function CreateSalesPage() {
                           {item.productName}
                         </span>
                         <span className="text-sm font-medium text-card-foreground tabular-nums shrink-0">
-                          {fmt(item.subtotal)}
+                          ${item.subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {item.cantidad} x {fmt(item.precio)}
+                        {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   ))}
@@ -518,11 +505,8 @@ export default function CreateSalesPage() {
                       {cartItems.length} {cartItems.length === 1 ? "producto" : "productos"}
                     </span>
                   </div>
-                  <span className="flex flex-col items-end gap-0.5 shrink-0">
-                    <span className="text-base font-bold tabular-nums text-card-foreground">
-                      {fmt(grandTotal)}
-                    </span>
-                    <CurrencyEquivalences valueCUP={grandTotal} exclude={cardCurrency} />
+                  <span className="text-base font-bold tabular-nums text-card-foreground shrink-0">
+                    ${grandTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MN
                   </span>
                 </div>
 

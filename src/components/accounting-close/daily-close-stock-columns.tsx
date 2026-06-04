@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { BusinessWithProducts } from "@/lib/types/business"
-import { Money } from "@/components/ui/currency/money"
+import { formatClosingCurrency } from "./format-closing-currency"
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header"
 import {
   dailyCloseLineTotalCol,
@@ -106,7 +106,7 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
       />
     ),
     cell: ({ row }) => (
-      <Money valueCUP={Number(row.original.price)} options={{ withSuffix: false }} />
+      <span>${formatClosingCurrency(Number(row.original.price))}</span>
     ),
   },
   {
@@ -124,10 +124,9 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
       />
     ),
     cell: ({ row }) => (
-      <Money
-        valueCUP={row.original.stock * Number(row.original.price)}
-        options={{ withSuffix: false }}
-      />
+      <span>
+        ${formatClosingCurrency(row.original.stock * Number(row.original.price))}
+      </span>
     ),
   },
 ]

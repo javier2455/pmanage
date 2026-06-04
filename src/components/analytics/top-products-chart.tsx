@@ -13,8 +13,6 @@ import type {
   TopProductsSortBy,
   TopProductValueResponse,
 } from "@/lib/types/analytics"
-import { useCurrency } from "@/context/currency-context"
-import { convertFromCUP, formatFromCUP, CURRENCY_SUFFIX } from "@/lib/utils/currency"
 
 interface TopProductsChartProps {
   data: TopProductValueResponse[]
@@ -32,6 +30,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+function formatCurrencyShort(value: number) {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`
+  return `$${value.toFixed(0)}`
+}
+
 function formatNumberShort(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
@@ -43,16 +47,6 @@ function truncate(label: string, max = 22) {
 }
 
 export function TopProductsChart({ data, sortBy }: TopProductsChartProps) {
-  const { displayCurrency, rates } = useCurrency()
-  const symbol = displayCurrency === "EUR" ? "€" : "$"
-
-  const formatCurrencyShort = (value: number) => {
-    const v = convertFromCUP(value, rates, displayCurrency) ?? value
-    if (v >= 1_000_000) return `${symbol}${(v / 1_000_000).toFixed(1)}M`
-    if (v >= 1_000) return `${symbol}${(v / 1_000).toFixed(1)}K`
-    return `${symbol}${v.toFixed(0)}`
-  }
-
   const hasData = data.length > 0
 
   const chartData = useMemo(
@@ -124,9 +118,10 @@ export function TopProductsChart({ data, sortBy }: TopProductsChartProps) {
               formatter={(value, name) => {
                 if (name === "revenue") {
                   return [
-                    `${formatFromCUP(Number(value), rates, displayCurrency, {
-                      withSuffix: false,
-                    })} ${CURRENCY_SUFFIX[displayCurrency]}`,
+                    `$${Number(value).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`,
                     chartConfig.revenue.label,
                   ]
                 }

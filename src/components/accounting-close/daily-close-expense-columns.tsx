@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ExpenseInAccountingClose } from "@/lib/types/accounting-close";
-import { Money } from "@/components/ui/currency/money";
+import { formatClosingCurrency } from "./format-closing-currency";
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header";
 
 export type DailyCloseExpenseColumnMeta = {
@@ -82,7 +82,7 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
       />
     ),
     cell: ({ row }) => (
-      <Money valueCUP={Number(row.original.amount)} options={{ withSuffix: false }} />
+      <span>${formatClosingCurrency(Number(row.original.amount))}</span>
     ),
   },
   {

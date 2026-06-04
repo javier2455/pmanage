@@ -13,7 +13,6 @@ import {
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { Expense } from "@/lib/types/expenses";
 import ExpenseDetailsDialog from "./expense-details-dialog";
-import { Money } from "@/components/ui/currency/money";
 
 export type ExpensesColumnMeta = {
   headerClassName?: string;
@@ -24,6 +23,13 @@ const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
 } satisfies ExpensesColumnMeta;
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+  }).format(value);
+}
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("es-CO", {
@@ -85,10 +91,9 @@ export function createExpensesColumns(
         <ExpensesSortableHeader column={column} label="Monto" />
       ),
       cell: ({ row }) => (
-        <Money
-          valueCUP={Number(row.original.amount)}
-          className="font-medium text-foreground"
-        />
+        <span className="tabular-nums font-medium text-foreground">
+          {formatCurrency(Number(row.original.amount))}
+        </span>
       ),
     },
     {

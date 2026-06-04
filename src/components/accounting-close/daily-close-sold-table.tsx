@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav"
-import { Money } from "@/components/ui/currency/money"
+import { formatClosingCurrency } from "./format-closing-currency"
 import {
   dailyCloseSoldColumns,
   type DailyCloseSoldColumnMeta,
@@ -272,7 +272,7 @@ export function DailyCloseSoldTable({
           Total ventas del día
         </span>
         <span className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-          <Money valueCUP={totalIncome} options={{ withSuffix: false }} />
+          ${formatClosingCurrency(totalIncome)}
         </span>
       </div>
     </CardContent>

@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useInView } from "@/hooks/use-in-view";
-import { Money } from "@/components/ui/currency/money";
 import { getInventoryActionTypeStyle } from "./inventory-action-type-style";
 
 function formatTimeOnly(dateStr: string) {
@@ -19,6 +18,15 @@ function formatTimeOnly(dateStr: string) {
   } catch {
     return dateStr;
   }
+}
+
+function formatCurrency(value: string | number) {
+  const num = Number(value);
+  if (Number.isNaN(num)) return String(value);
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+  }).format(num);
 }
 
 function productInitials(name: string | undefined) {
@@ -87,10 +95,9 @@ export default function InventoryHistoryItem({
               {entry.entryPrice ? (
                 <span>
                   Precio de adquisición:{" "}
-                  <Money
-                    valueCUP={Number(entry.entryPrice)}
-                    className="text-foreground"
-                  />
+                  <span className="text-foreground tabular-nums">
+                    {formatCurrency(entry.entryPrice)}
+                  </span>
                 </span>
               ) : null}
               {entry.supplier ? (

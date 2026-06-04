@@ -4,7 +4,14 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { DashboardSummaryExpense } from "@/lib/types/business";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Money } from "@/components/ui/currency/money";
+
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        maximumFractionDigits: 0,
+    }).format(value);
+}
 
 function formatRelativeTime(iso: string) {
     try {
@@ -54,12 +61,8 @@ export default function RecentExpensesTable({ expenses }: RecentExpensesTablePro
                                     </p>
                                 </div>
                                 <div className="flex flex-col items-end">
-                                    <span className="inline-flex items-center text-sm font-semibold text-red-600 dark:text-red-500">
-                                        -
-                                        <Money
-                                            valueCUP={Number(expense.amount)}
-                                            options={{ minimumFractionDigits: 0, maximumFractionDigits: 0 }}
-                                        />
+                                    <span className="text-sm font-semibold text-red-600 dark:text-red-500">
+                                        -{formatCurrency(Number(expense.amount))}
                                     </span>
                                 </div>
                             </div>

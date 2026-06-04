@@ -6,7 +6,13 @@ import type { DashboardSummarySale } from "@/lib/types/business";
 import { StatusBadge } from "@/components/generic/status-badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Money } from "@/components/ui/currency/money";
+
+function formatCurrency(value: number) {
+    return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+    }).format(value);
+}
 
 function formatRelativeTime(iso: string) {
     try {
@@ -64,13 +70,14 @@ export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
                                     ) : null}
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
-                                    <Money
-                                        valueCUP={sale.total}
+                                    <span
                                         className={cn(
                                             "text-sm font-semibold text-card-foreground",
                                             sale.isCancelled && "line-through text-muted-foreground",
                                         )}
-                                    />
+                                    >
+                                        {formatCurrency(sale.total)}
+                                    </span>
                                     {sale.isCancelled ? <StatusBadge text="Cancelada" /> : null}
                                 </div>
                             </div>

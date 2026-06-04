@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
 import type { SalesProductInfoResponse } from "@/lib/types/product"
-import { Money } from "@/components/ui/currency/money"
+import { formatClosingCurrency } from "./format-closing-currency"
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header"
 import {
   dailyCloseLineTotalCol,
@@ -75,7 +75,7 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
       />
     ),
     cell: ({ row }) => (
-      <Money valueCUP={Number(row.original.precio)} options={{ withSuffix: false }} />
+      <span>${formatClosingCurrency(Number(row.original.precio))}</span>
     ),
   },
   {
@@ -93,7 +93,7 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
       />
     ),
     cell: ({ getValue }) => (
-      <Money valueCUP={Number(getValue())} options={{ withSuffix: false }} />
+      <span>${formatClosingCurrency(Number(getValue()))}</span>
     ),
   },
 ]

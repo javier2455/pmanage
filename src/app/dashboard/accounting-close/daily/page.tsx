@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DateFilter } from "@/components/accounting-close/date-filter"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
-import { useCurrency } from "@/context/currency-context"
+import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
 import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-close-expense-table"
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
@@ -110,8 +110,6 @@ export default function DailyPage() {
   const totalSales = data?.totalIncome ?? 0
   const totalExpenses = data?.totalExpense ?? 0
   const balance = data?.total ?? totalSales - totalExpenses
-
-  const { format: formatCurrency } = useCurrency()
 
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
@@ -389,7 +387,7 @@ export default function DailyPage() {
                 </span>
               </div>
               <span className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                +{formatCurrency(totalSales)}
+                +${formatCurrency(totalSales)}
               </span>
             </div>
 
@@ -401,7 +399,7 @@ export default function DailyPage() {
                 </span>
               </div>
               <span className="text-sm font-semibold tabular-nums text-destructive">
-                -{formatCurrency(totalExpenses)}
+                -${formatCurrency(totalExpenses)}
               </span>
             </div>
 
@@ -427,7 +425,7 @@ export default function DailyPage() {
                     : "text-destructive"
                 )}
               >
-                {balance >= 0 ? "+" : "-"}{formatCurrency(Math.abs(balance))}
+                {balance >= 0 ? "+" : "-"}${formatCurrency(Math.abs(balance))}
               </span>
             </div>
 

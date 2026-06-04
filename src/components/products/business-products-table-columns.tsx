@@ -10,7 +10,6 @@ import ProductDetailsDialog from "@/components/products/details-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
 import { EditPriceDialog } from "@/components/products/edit-price-dialog";
-import { Money } from "@/components/ui/currency/money";
 
 export type BusinessProductsColumnMeta = {
   headerClassName?: string;
@@ -21,6 +20,13 @@ const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
 } satisfies BusinessProductsColumnMeta;
+
+function formatCurrency(value: string | number) {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+  }).format(Number(value));
+}
 
 function BusinessProductsSortableHeader({
   column,
@@ -92,10 +98,9 @@ export function createBusinessProductsColumns(
         <BusinessProductsSortableHeader column={column} label="Precio" />
       ),
       cell: ({ row }) => (
-        <Money
-          valueCUP={Number(row.original.price)}
-          className="text-foreground"
-        />
+        <span className="tabular-nums text-foreground">
+          {formatCurrency(row.original.price)}
+        </span>
       ),
     },
     {

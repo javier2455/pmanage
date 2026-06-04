@@ -15,8 +15,6 @@ import type {
   AnalyticsSalesTrendGroupBy,
   SalesTrendValuesResponse,
 } from "@/lib/types/analytics"
-import { useCurrency } from "@/context/currency-context"
-import { convertFromCUP, formatFromCUP, CURRENCY_SUFFIX } from "@/lib/utils/currency"
 
 interface SalesTrendChartProps {
   data: SalesTrendValuesResponse[]
@@ -56,18 +54,13 @@ function formatTooltipDate(date: string, groupBy: AnalyticsSalesTrendGroupBy) {
   return format(parsed, "dd 'de' MMMM, yyyy", { locale: es })
 }
 
+function formatCurrencyShort(value: number) {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`
+  return `$${value.toFixed(0)}`
+}
+
 export function SalesTrendChart({ data, groupBy }: SalesTrendChartProps) {
-  const { displayCurrency, rates } = useCurrency()
-  const symbol = displayCurrency === "EUR" ? "€" : "$"
-
-  // Convierte un valor en CUP a la moneda elegida para los ejes/tooltips.
-  const formatCurrencyShort = (value: number) => {
-    const v = convertFromCUP(value, rates, displayCurrency) ?? value
-    if (v >= 1_000_000) return `${symbol}${(v / 1_000_000).toFixed(1)}M`
-    if (v >= 1_000) return `${symbol}${(v / 1_000).toFixed(1)}K`
-    return `${symbol}${v.toFixed(0)}`
-  }
-
   const hasData = data.length > 0
 
   const chartData = useMemo(
@@ -132,9 +125,10 @@ export function SalesTrendChart({ data, groupBy }: SalesTrendChartProps) {
               formatter={(value, name) => {
                 if (name === "revenue") {
                   return [
-                    `${formatFromCUP(Number(value), rates, displayCurrency, {
-                      withSuffix: false,
-                    })} ${CURRENCY_SUFFIX[displayCurrency]}`,
+                    `$${Number(value).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`,
                     chartConfig.revenue.label,
                   ]
                 }

@@ -1,5 +1,3 @@
-"use client"
-
 import { ArrowDown, ArrowUp, Info, Minus, type LucideIcon } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +8,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { useCurrency } from "@/context/currency-context"
 
 type ChangeDirection = "up" | "down" | "neutral"
 
@@ -25,6 +22,21 @@ interface KpiCardProps {
   tooltip?: string
   format?: "currency" | "number" | "percent"
   variant?: KpiCardVariant
+}
+
+function formatValue(value: number, format: KpiCardProps["format"]) {
+  if (format === "currency") {
+    return `$${value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+  }
+
+  if (format === "percent") {
+    return `${value.toFixed(1)}%`
+  }
+
+  return value.toLocaleString("en-US")
 }
 
 function resolveDirection(change: number, variant: KpiCardVariant): ChangeDirection {
@@ -43,14 +55,6 @@ export function KpiCard({
   format = "number",
   variant = "default",
 }: KpiCardProps) {
-  const { format: formatMoneyCtx } = useCurrency()
-
-  const formatValue = (val: number) => {
-    if (format === "currency") return formatMoneyCtx(val)
-    if (format === "percent") return `${val.toFixed(1)}%`
-    return val.toLocaleString("en-US")
-  }
-
   const direction = resolveDirection(change, variant)
 
   const changeStyles = {
@@ -95,7 +99,7 @@ export function KpiCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold text-card-foreground">
-          {formatValue(value)}
+          {formatValue(value, format)}
         </div>
         <div className={cn("mt-1 flex items-center gap-1 text-xs", changeStyles)}>
           <ChangeIcon className="h-3 w-3" />

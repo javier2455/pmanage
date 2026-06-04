@@ -1,11 +1,11 @@
 "use client"
 
 import { Controller, useFieldArray, type Control } from "react-hook-form"
-import type { FieldErrors } from "react-hook-form"
+import type { FieldErrors, UseFormRegister } from "react-hook-form"
 import { Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MoneyAmountInput } from "@/components/ui/currency/money-amount-input"
 import {
   Combobox,
   ComboboxContent,
@@ -20,11 +20,13 @@ import type { ProviderFormData } from "@/lib/validations/providers"
 
 interface ProviderProductsFieldProps {
   control: Control<ProviderFormData>
+  register: UseFormRegister<ProviderFormData>
   errors: FieldErrors<ProviderFormData>
 }
 
 export function ProviderProductsField({
   control,
+  register,
   errors,
 }: ProviderProductsFieldProps) {
   const { fields, append, remove } = useFieldArray({
@@ -135,20 +137,19 @@ export function ProviderProductsField({
                   >
                     Precio de compra
                   </Label>
-                  <Controller
-                    control={control}
-                    name={`providerProducts.${index}.price`}
-                    render={({ field: ctl }) => (
-                      <MoneyAmountInput
-                        id={`provider-product-price-${index}`}
-                        min={0}
-                        initialCUP={
-                          typeof ctl.value === "number" ? ctl.value : undefined
-                        }
-                        onChangeCUP={(cup) => ctl.onChange(cup)}
-                        hasError={!!priceError}
-                      />
-                    )}
+                  <Input
+                    id={`provider-product-price-${index}`}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register(`providerProducts.${index}.price`, {
+                      setValueAs: (v) =>
+                        v === "" || v === null || v === undefined
+                          ? undefined
+                          : Number(v),
+                    })}
+                    aria-invalid={priceError ? "true" : "false"}
                   />
                   {priceError && (
                     <p className="text-xs text-destructive">
