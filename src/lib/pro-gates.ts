@@ -21,7 +21,8 @@ export function isProPlan(planType: string | undefined): boolean {
     n.includes("pro") ||
     n.includes("profesional") ||
     n.includes("premium") ||
-    n.includes("plus")
+    n.includes("plus") ||
+    n.includes("enterprise")
   );
 }
 

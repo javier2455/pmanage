@@ -13,4 +13,6 @@ export const businessRoutes = {
     `${BASIC_ROUTE}/businesses/${businessId}/products/${productId}`,
   getDashboardSummary: `${BASIC_ROUTE}/dashboard/`,
   reverseGeocode: `${BASIC_ROUTE}/reverse-geocode`,
+  settings: (businessId: string) =>
+    `${BASIC_ROUTE}/businesses/${businessId}/settings`,
 };

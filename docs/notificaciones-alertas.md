@@ -1,13 +1,34 @@
-# Sugerencias de notificaciones por WhatsApp
+# Notificaciones y alertas (email / SMS / WhatsApp)
 
-> Propuestas de notificaciones a emitir vía la API de WhatsApp, **ordenadas por prioridad** (de más a menos importante).
+> Propuestas de notificaciones a emitir vía la API de notificaciones multi-canal, **ordenadas por prioridad** (de más a menos importante).
 > Cada una indica qué la dispara, por qué importa y de qué dato del sistema se obtiene.
 
 | | |
 |---|---|
 | **Fecha** | 2026-06-01 |
-| **Contexto** | Backend ya trabaja en: (1) resultados del cierre diario y (2) alerta de stock bajo umbral configurable. |
+| **Última actualización** | 2026-06-04 — reconciliado con la entrega del backend ([API.md](./API.md)). |
+| **Contexto** | El backend ya entregó un sistema de **Business Settings** con 4 tipos de alerta configurables por canal. |
 | **Objetivo** | Identificar qué otras notificaciones aportarían valor al usuario con la información que ya manejamos. |
+
+---
+
+## Estado de implementación
+
+El backend entregó un endpoint de configuración por negocio (`/businesses/{businessId}/settings`) que cubre **4 tipos de alerta**, cada uno configurable de forma independiente por **canal** (`email`, `sms`, `whatsapp`). Los canales `sms` y `whatsapp` requieren **plan PRO** (Premium o Enterprise); `email` está disponible en todos los planes. Ver detalle en [API.md](./API.md).
+
+| Sugerencia | Tipo de alerta entregado | Estado |
+|---|---|---|
+| Cierre diario | `dailyClosingAlert` | ✅ Implementado |
+| Resumen / cierre mensual (#6) | `monthlyClosingAlert` | ✅ Implementado |
+| Stock bajo umbral | `lowStockAlert` | ✅ Implementado |
+| Producto agotado (#1) | `outOfStockAlert` | ✅ Implementado |
+| Resto de sugerencias (#2–#5, #7–#11) | — | 🔲 Pendiente / roadmap |
+
+> **Nota:** la implementación es multi-canal y gateada por plan, no exclusiva de WhatsApp. La comparativa con tendencia que proponíamos en #6 ("este mes vs. el anterior") debe confirmarse con backend: el `monthlyClosingAlert` puede que solo envíe el cierre del mes sin el delta. Si falta el `change`, el dato ya está disponible en `KPIsResponse`.
+
+---
+
+## Sugerencias pendientes
 
 ---
 
@@ -30,12 +51,12 @@ Las sugerencias se apoyan en entidades que el sistema ya captura:
 
 ## 🔴 Prioridad alta — dinero en riesgo / acción inmediata
 
-### 1. Producto agotado (stock = 0)
+### 1. Producto agotado (stock = 0) — ✅ Implementado (`outOfStockAlert`)
 Distinto del "stock bajo": aquí ya se están perdiendo ventas *ahora mismo*. El umbral avisa "se acaba"; este avisa "se acabó". Conviene tratarlo como notificación aparte y más urgente.
 
 - **Dispara:** `stock` llega a 0.
 - **Dato:** `stock` en `CurrentInventoryEntry`.
-- **Esfuerzo:** bajo — dato ya disponible.
+- **Estado:** entregado por backend como `outOfStockAlert` (ver [API.md](./API.md)).
 
 ### 2. Venta cancelada
 El evento que más necesita supervisión del dueño: posible error o fraude de un trabajador. La notificación puede incluir **quién** la canceló y el **motivo**.
@@ -69,12 +90,12 @@ Ya se registra `PriceHistoryEntry` (precio anterior, nuevo, usuario). Notificar 
 - **Dato:** historial de precios ya implementado.
 - **Esfuerzo:** bajo.
 
-### 6. Resumen semanal / mensual con comparativa
+### 6. Resumen semanal / mensual con comparativa — ✅ Implementado parcialmente (`monthlyClosingAlert`)
 El cierre *diario* ya existe; el salto de valor es el **agregado con tendencia**: "esta semana vendiste 12% más que la anterior, gastos −5%". Convierte datos en decisión.
 
-- **Dispara:** cierre de semana/mes (programado).
+- **Dispara:** cierre de mes (programado).
 - **Dato:** `KPIsResponse` ya trae `change` por KPI.
-- **Esfuerzo:** medio — agregación programada.
+- **Estado:** entregado como `monthlyClosingAlert`. **Pendiente confirmar** si incluye el delta vs. periodo anterior; el resumen *semanal* no está cubierto.
 
 ### 7. Producto estancado (capital inmovilizado)
 Producto con stock pero sin ventas en N días → dinero parado, riesgo de obsolescencia/vencimiento. Complementa al de stock bajo (el otro extremo del problema de inventario).
@@ -113,12 +134,15 @@ Notificación de seguridad de acceso: alguien nuevo entró al negocio.
 
 ## Recomendación de implementación
 
-Las **#1, #2 y #4** son las de mejor relación valor/esfuerzo: salen 100% de datos que ya existen, son eventos discretos (no requieren cálculos batch) y son justo las que un dueño quiere saber sin estar mirando la app.
+Con el cierre diario, el cierre mensual, el stock bajo y el producto agotado (#1) ya entregados, las siguientes en línea son **#2 (venta cancelada) y #4 (gasto elevado)**: mejor relación valor/esfuerzo, salen 100% de datos que ya existen, son eventos discretos (no requieren cálculos batch) y son justo lo que un dueño quiere saber sin estar mirando la app.
 
 La **#3 (margen negativo)** es la de mayor valor diferencial, pero necesita lógica nueva en el backend.
 
-### Orden sugerido de adopción
-1. Eventos discretos sobre datos existentes → #1, #2, #4, #5, #8.
+### Orden sugerido de adopción (pendientes)
+1. Eventos discretos sobre datos existentes → #2, #4, #5, #8.
 2. Lógica nueva de alto valor → #3.
-3. Agregaciones programadas → #6, #7.
+3. Agregaciones programadas → #7 (y resumen *semanal* como extensión de #6).
 4. Engagement / extras → #9, #10, #11.
+
+### Próximo paso en frontend
+El backend expone `/businesses/{businessId}/settings` (GET/POST/PATCH) con `dailyClosingAlert`, `monthlyClosingAlert`, `lowStockAlert` y `outOfStockAlert`, cada uno como `('email' | 'sms' | 'whatsapp')[] | null`, con `sms`/`whatsapp` gateados a plan PRO. Falta crear en el frontend: tipo `BusinessSettings`, ruta en `src/lib/routes/`, validación Zod, hook `use-business-settings.ts` y la UI de configuración (gateando los canales PRO con `pro-gates`).

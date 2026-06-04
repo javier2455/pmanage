@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -12,12 +11,28 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ProBadge } from "@/components/ui/pro-badge";
-import { Bell, Lock, Mail, MessageCircle, Save, TriangleAlert } from "lucide-react";
+import {
+  Bell,
+  Loader2,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Save,
+  TriangleAlert,
+} from "lucide-react";
 import { sileo } from "sileo";
 import { isValidPhone } from "@/lib/validations/phone";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
-import { isFreePlan } from "@/lib/pro-gates";
+import {
+  useBusinessSettings,
+  useUpdateBusinessSettings,
+} from "@/hooks/use-business-settings";
 import { Business } from "@/lib/types/business";
+import type {
+  BusinessSettings,
+  NotificationChannel,
+  UpdateBusinessSettingsPayload,
+} from "@/lib/types/business-settings";
 
 export type NotificationKey =
   | "dailyClose"
@@ -25,25 +40,48 @@ export type NotificationKey =
   | "lowStock"
   | "outOfStock";
 
-export type NotificationChannelState = {
-  email: boolean;
-  whatsapp: boolean;
-};
-
-export type NotificationSettings = {
-  notifications: Record<NotificationKey, NotificationChannelState>;
-};
+type ChannelMatrix = Record<NotificationKey, Record<NotificationChannel, boolean>>;
 
 // En modo oscuro el fondo del checkbox iguala al del contenedor y el borde es
 // blanco, para que quede acorde al diseño (en claro se mantiene el estilo base).
 const CHECKBOX_DARK = "dark:bg-card dark:border-white";
 
-const DEFAULT_NOTIFICATIONS: Record<NotificationKey, NotificationChannelState> = {
-  dailyClose: { email: false, whatsapp: false },
-  monthlyClose: { email: false, whatsapp: false },
-  lowStock: { email: false, whatsapp: false },
-  outOfStock: { email: false, whatsapp: false },
+/** Mapea cada fila de la UI con su campo en el contrato del backend (docs/API.md). */
+const FIELD_BY_KEY: Record<NotificationKey, keyof UpdateBusinessSettingsPayload> = {
+  dailyClose: "dailyClosingAlert",
+  monthlyClose: "monthlyClosingAlert",
+  lowStock: "lowStockAlert",
+  outOfStock: "outOfStockAlert",
 };
+
+const EMPTY_MATRIX: ChannelMatrix = {
+  dailyClose: { email: false, sms: false, whatsapp: false },
+  monthlyClose: { email: false, sms: false, whatsapp: false },
+  lowStock: { email: false, sms: false, whatsapp: false },
+  outOfStock: { email: false, sms: false, whatsapp: false },
+};
+
+type ChannelConfig = {
+  key: NotificationChannel;
+  label: string;
+  icon: typeof Mail;
+  /** Requiere plan PRO (Premium/Enterprise). */
+  pro: boolean;
+  /** Requiere un teléfono válido asociado al negocio. */
+  requiresPhone: boolean;
+};
+
+const CHANNELS: ChannelConfig[] = [
+  { key: "email", label: "Correo", icon: Mail, pro: false, requiresPhone: false },
+  { key: "sms", label: "SMS", icon: MessageSquare, pro: true, requiresPhone: true },
+  {
+    key: "whatsapp",
+    label: "WhatsApp",
+    icon: MessageCircle,
+    pro: true,
+    requiresPhone: true,
+  },
+];
 
 type NotificationItem = {
   key: NotificationKey;
@@ -89,36 +127,81 @@ const CATEGORIES: NotificationCategory[] = [
   },
 ];
 
-export function NotificationSettingsCard({ business }: { business: Business | null }) {
-  const { planType, isProPlan } = useUserRoleAndPlan();
-  const [notifications, setNotifications] =
-    useState<Record<NotificationKey, NotificationChannelState>>(DEFAULT_NOTIFICATIONS);
+/** Convierte la respuesta del backend (arrays por alerta) a la matriz de la UI. */
+function settingsToMatrix(settings: BusinessSettings): ChannelMatrix {
+  const matrix: ChannelMatrix = structuredClone(EMPTY_MATRIX);
+  for (const key of Object.keys(FIELD_BY_KEY) as NotificationKey[]) {
+    const channels = settings[FIELD_BY_KEY[key] as keyof BusinessSettings] as
+      | NotificationChannel[]
+      | null;
+    if (Array.isArray(channels)) {
+      for (const ch of channels) {
+        if (ch in matrix[key]) matrix[key][ch] = true;
+      }
+    }
+  }
+  return matrix;
+}
 
-  // Gating por plan:
-  // - free   → sección bloqueada.
-  // - básico → solo correo (WhatsApp bloqueado, badge Pro).
-  // - pro    → ambas vías (WhatsApp sujeto a tener teléfono válido).
-  const locked = isFreePlan(planType);
+/**
+ * Convierte la matriz de la UI al payload del backend.
+ * Una alerta sin canales se envía como `null` (no `[]`), según docs/API.md.
+ */
+function matrixToPayload(matrix: ChannelMatrix): UpdateBusinessSettingsPayload {
+  const payload: UpdateBusinessSettingsPayload = {};
+  for (const key of Object.keys(FIELD_BY_KEY) as NotificationKey[]) {
+    const enabled = CHANNELS.filter((ch) => matrix[key][ch.key]).map(
+      (ch) => ch.key,
+    );
+    payload[FIELD_BY_KEY[key]] = enabled.length > 0 ? enabled : null;
+  }
+  return payload;
+}
+
+export function NotificationSettingsCard({ business }: { business: Business | null }) {
+  const { isProPlan } = useUserRoleAndPlan();
+  const businessId = business?.id;
+
+  const { data: settings, isLoading } = useBusinessSettings(businessId);
+  const { mutate: saveSettings, isPending } = useUpdateBusinessSettings();
+
+  const [matrix, setMatrix] = useState<ChannelMatrix>(EMPTY_MATRIX);
+
+  // Sincroniza la matriz con la config que llega del backend.
+  useEffect(() => {
+    if (settings) setMatrix(settingsToMatrix(settings));
+  }, [settings]);
+
+  // Gating por canal:
+  // - email    → disponible en todos los planes.
+  // - sms/whatsapp → requieren PRO (Premium/Enterprise) y un teléfono válido.
   const hasValidPhone = isValidPhone(business?.phone);
-  const whatsappLockedByPlan = !isProPlan;
-  const whatsappDisabled = whatsappLockedByPlan || !hasValidPhone;
   const showPhoneWarning = isProPlan && !hasValidPhone;
 
-  function toggleChannel(
-    key: NotificationKey,
-    channel: keyof NotificationChannelState,
-  ) {
-    setNotifications((prev) => ({
+  function isChannelDisabled(channel: ChannelConfig): boolean {
+    if (channel.pro && !isProPlan) return true;
+    if (channel.requiresPhone && !hasValidPhone) return true;
+    return false;
+  }
+
+  function toggleChannel(key: NotificationKey, channel: NotificationChannel) {
+    setMatrix((prev) => ({
       ...prev,
       [key]: { ...prev[key], [channel]: !prev[key][channel] },
     }));
   }
 
   function handleSave() {
-    const payload: NotificationSettings = { notifications };
-    // TODO(backend): reemplazar por la mutación cuando el endpoint esté disponible.
-    // PUT /business/:id/notification-settings con el payload de abajo.
-    sileo.success({ title: "Preferencias de notificaciones guardadas" });
+    if (!businessId) return;
+    saveSettings(
+      { businessId, payload: matrixToPayload(matrix) },
+      {
+        onSuccess: () =>
+          sileo.success({ title: "Preferencias de notificaciones guardadas" }),
+        onError: () =>
+          sileo.error({ title: "No se pudieron guardar las preferencias" }),
+      },
+    );
   }
 
   return (
@@ -137,24 +220,10 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        {locked ? (
-          // Plan free → sección bloqueada con CTA de mejora de plan.
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <Lock className="h-5 w-5" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium text-card-foreground">
-                Las notificaciones están disponibles desde el plan Básico
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Mejora tu plan para configurar avisos de cierres y stock por
-                correo (Básico) y WhatsApp (Pro).
-              </p>
-            </div>
-            <Button asChild size="sm">
-              <Link href="/dashboard/profile/plans-change">Mejorar plan</Link>
-            </Button>
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Cargando preferencias…
           </div>
         ) : (
           <>
@@ -162,9 +231,9 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Para recibir avisos por WhatsApp necesitas un número de teléfono
-                  válido asociado al negocio. Edita el negocio para añadirlo.
-                  Mientras tanto, la vía de WhatsApp permanece deshabilitada.
+                  Para recibir avisos por SMS o WhatsApp necesitas un número de
+                  teléfono válido asociado al negocio. Edita el negocio para
+                  añadirlo. Mientras tanto, esas vías permanecen deshabilitadas.
                 </p>
               </div>
             )}
@@ -183,19 +252,23 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                   {/* Column headers */}
                   <div className="flex items-center gap-3">
                     <div className="flex-1" />
-                    <span className="flex w-16 items-center justify-center gap-1 text-xs font-medium text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5" />
-                      Correo
-                    </span>
-                    <span
-                      className={`flex w-20 items-center justify-center gap-1 text-xs font-medium text-muted-foreground ${
-                        whatsappDisabled ? "opacity-50" : ""
-                      }`}
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      WhatsApp
-                      {whatsappLockedByPlan && <ProBadge className="ml-0" />}
-                    </span>
+                    {CHANNELS.map((channel) => {
+                      const Icon = channel.icon;
+                      return (
+                        <span
+                          key={channel.key}
+                          className={`flex w-20 items-center justify-center gap-1 text-xs font-medium text-muted-foreground ${
+                            isChannelDisabled(channel) ? "opacity-50" : ""
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                          {channel.label}
+                          {channel.pro && !isProPlan && (
+                            <ProBadge className="ml-0" />
+                          )}
+                        </span>
+                      );
+                    })}
                   </div>
 
                   <div className="flex flex-col gap-3">
@@ -210,35 +283,32 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                               {item.description}
                             </span>
                           </div>
-                          <div className="flex w-16 justify-center">
-                            <Checkbox
-                              className={CHECKBOX_DARK}
-                              aria-label={`${item.label} por correo`}
-                              checked={notifications[item.key].email}
-                              onCheckedChange={() =>
-                                toggleChannel(item.key, "email")
-                              }
-                            />
-                          </div>
-                          <div
-                            className={`flex w-20 justify-center ${
-                              whatsappDisabled ? "opacity-60" : ""
-                            }`}
-                          >
-                            <Checkbox
-                              className={CHECKBOX_DARK}
-                              aria-label={`${item.label} por WhatsApp`}
-                              checked={notifications[item.key].whatsapp}
-                              disabled={whatsappDisabled}
-                              onCheckedChange={() =>
-                                toggleChannel(item.key, "whatsapp")
-                              }
-                            />
-                          </div>
+                          {CHANNELS.map((channel) => {
+                            const disabled = isChannelDisabled(channel);
+                            return (
+                              <div
+                                key={channel.key}
+                                className={`flex w-20 justify-center ${
+                                  disabled ? "opacity-60" : ""
+                                }`}
+                              >
+                                <Checkbox
+                                  className={CHECKBOX_DARK}
+                                  aria-label={`${item.label} por ${channel.label}`}
+                                  checked={matrix[item.key][channel.key]}
+                                  disabled={disabled}
+                                  onCheckedChange={() =>
+                                    toggleChannel(item.key, channel.key)
+                                  }
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                         {item.key === "lowStock" &&
-                          (notifications.lowStock.email ||
-                            notifications.lowStock.whatsapp) && (
+                          CHANNELS.some(
+                            (ch) => matrix.lowStock[ch.key],
+                          ) && (
                             // TODO(backend): deshabilitar la fila cuando no haya productos
                             // con umbral definido (cuando el backend exponga ese conteo/flag).
                             <p className="text-xs text-muted-foreground">
@@ -254,8 +324,12 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4" />
+              <Button onClick={handleSave} disabled={isPending || !businessId}>
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 Guardar preferencias
               </Button>
             </div>
