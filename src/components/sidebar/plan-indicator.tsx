@@ -13,6 +13,7 @@ interface StoredPlan {
     name?: string
     type?: PlanType
     startDate?: string
+    startsAt?: string
     expireDate?: string
     expiresAt?: string
 }
@@ -37,7 +38,8 @@ export function PlanIndicator() {
     if (expiryDateStr) {
         const today = startOfDay(new Date())
         const expiry = startOfDay(parseISO(expiryDateStr))
-        const start = plan?.startDate ? startOfDay(parseISO(plan.startDate)) : today
+        const startDateStr = plan?.startDate ?? plan?.startsAt ?? null
+        const start = startDateStr ? startOfDay(parseISO(startDateStr)) : today
         daysRemaining = Math.max(differenceInDays(expiry, today), 0)
         totalDays = Math.max(differenceInDays(expiry, start), 1)
         progressPercent = Math.min(((totalDays - daysRemaining) / totalDays) * 100, 100)

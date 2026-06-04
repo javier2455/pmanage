@@ -6,13 +6,13 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.3.2-alpha` |
-| **Commits por delante de `main`** | 49 (al 2026-06-02) |
-| **Último commit** | `3eaf9c3` |
+| **Versión en `package.json`** | `1.4.0-alpha` |
+| **Commits por delante de `main`** | 53 (al 2026-06-03) |
+| **Último commit** | `e741fce` (merge PR #10) |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-06-02 |
+| **Última actualización del documento** | 2026-06-03 |
 
 ---
 
@@ -41,6 +41,7 @@ Cambios respecto a `main` agrupados por estado:
 | 17 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
 | 18 | Fix CORS / limpieza `src/app/api/` | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
 | 19 | **Alertas de stock bajo/agotado** (feature Pro) | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.2) |
+| 20 | **Sistema multi-moneda con conversión dinámica** (ingreso y visualización CUP/USD/EUR) | ✅ Mergeada | #10, `348fbaa` | Sí — no requiere backend (almacena en CUP) |
 
 ---
 
@@ -190,12 +191,52 @@ Cambios respecto a `main` agrupados por estado:
 
 ---
 
-### 2.11. Otros mergeados menores
+### 2.11. Sistema multi-moneda con conversión dinámica (PR #10, `348fbaa`)
+
+**Qué hace.** Las tasas definidas en *Tipo de cambio* (USD/EUR respecto a CUP) pasan
+de usarse solo en su pantalla a regir el **ingreso** y la **visualización** de precios
+en toda la app. El sistema **sigue almacenando todo en CUP** (moneda nacional), por lo
+que **no requiere cambios de backend**.
+
+- **Ingreso:** `MoneyAmountInput` (selector CUP/USD/EUR + preview de conversión en vivo)
+  en asignar producto, dar entrada de stock, gasto, precios de proveedor y editar precio.
+  El monto se convierte a CUP con la tasa vigente antes de enviarse.
+- **Visualización:** `CurrencySelect` global en la barra superior (preferencia persistida
+  en `localStorage`) que reformatea tablas, detalles, dashboard, analytics y cierres;
+  toggles locales en el punto de venta; equivalencias simultáneas en diálogos de detalle;
+  `ExchangeRateBadge` con las tasas vigentes.
+
+**Regla de disponibilidad.** CUP siempre disponible; USD/EUR solo si su tasa existe y es
+`> 0`. Usuarios sin tasas operan en CUP (selectores deshabilitados + hint a
+`/dashboard/exchange-rate`). Si se borra la tasa de la moneda activa, la preferencia cae
+a CUP automáticamente.
+
+**Convención de tasa.** Campos "USD a MN" / "EUR a MN" ⇒ el valor guardado es CUP por
+unidad: `monto × tasa` para ingresar, `valorCUP / tasa` para mostrar. Las tasas se leen
+como **string** del API y se coercionan con `Number()`.
+
+**Archivos clave.**
+- [src/lib/utils/currency.ts](../../src/lib/utils/currency.ts) — conversión, `formatMoney`, `availableCurrencies`.
+- [src/context/currency-context.tsx](../../src/context/currency-context.tsx) — `CurrencyProvider` / `useCurrency` (montado en [dashboard/layout.tsx](../../src/app/dashboard/layout.tsx)).
+- [src/hooks/use-exchange.ts](../../src/hooks/use-exchange.ts) — `useActiveExchangeRates` (caché React Query, sin peticiones extra).
+- [src/components/ui/currency/](../../src/components/ui/currency/) — `CurrencySelect`, `MoneyAmountInput`, `Money`, `CurrencyEquivalences`, `ExchangeRateBadge`.
+- ~30 componentes de tablas, detalles, dashboard, analytics y cierres migrados al formateador central (reemplaza copias locales de `formatCurrency`/`formatClosingCurrency`).
+
+**Criterios de aceptación.**
+- Ingresar un precio en USD guarda el equivalente en CUP (payload en CUP, verificable en Network).
+- Cambiar el selector global re-formatea toda la app; recargar conserva la preferencia.
+- Sin tasas (usuario nuevo) todo funciona en CUP sin bloqueos.
+
+**Pro-gating.** Ninguno — disponible desde plan Básico, consistente con la sección de tasas existente.
+
+---
+
+### 2.12. Otros mergeados menores
 
 - **ICON_MAP expandido** (`7a55b56`) — nuevos iconos para mayor consistencia en UI.
 - **Rutas de búsqueda** actualizadas con prefijo `/search` (`ffeb665`).
 - **Guías de uso** para Navigation Management y Providers en `docs/` (`0bb7b64`).
-- **Bump de versión** a `1.1.0-alpha` (`c3937f2`), `1.3.1-alpha` (`3138a7e`), `1.3.2-alpha` (`ef36fac`).
+- **Bump de versión** a `1.1.0-alpha` (`c3937f2`), `1.3.1-alpha` (`3138a7e`), `1.3.2-alpha` (`ef36fac`), `1.4.0-alpha` (`348fbaa`, PR #10 moneda).
 - **Upgrade lucide-react** a `1.17.0` (`ef36fac`).
 
 ---

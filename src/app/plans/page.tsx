@@ -13,54 +13,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Check, X, MessageCircle, Zap, Shield } from "lucide-react"
+import { Check, X, MessageCircle, Zap } from "lucide-react"
+import { PLAN_CATALOG } from "@/lib/plans-catalog"
 
 type BillingPeriod = "monthly" | "yearly"
-
-const plans = [
-    {
-        name: "Basico",
-        description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        monthlyPrice: 5,
-        yearlyPrice: 3,
-        badge: null,
-        features: [
-            { text: "1 negocio", included: true },
-            { text: "Hasta 100 productos", included: true },
-            { text: "Registro de ventas y compras", included: true },
-            { text: "Gestión de gastos con categorías", included: true },
-            { text: "Cierre contable diario", included: true },
-            { text: "Tasas de cambio multi-moneda", included: true },
-            { text: "Historial de precios de productos", included: true },
-            { text: "Historial de inventario", included: true },
-            { text: "Búsqueda global", included: true },
-            { text: "Panel de estadísticas", included: true },
-            { text: "Notificaciones por correo", included: true },
-            { text: "Soporte por WhatsApp o correo", included: true },
-        ],
-        highlighted: false,
-    },
-    {
-        name: "Pro",
-        description: "Para negocios en crecimiento que necesitan control total.",
-        monthlyPrice: 15,
-        yearlyPrice: 12,
-        badge: "Recomendado",
-        features: [
-            { text: "Todo lo que incluye el plan basico mas:", included: true },
-            { text: "Hasta 3 negocios", included: true },
-            { text: "Hasta 500 productos", included: true },
-            { text: "Cierre contable mensual", included: true },
-            { text: "Exportar cierres a Excel/PDF", included: true },
-            { text: "Gestión de proveedores", included: true },
-            { text: "Gestión de equipo y permisos", included: true },
-            { text: "Comparador de precios multi-producto", included: true },
-            { text: "Notificaciones por WhatsApp", included: true },
-            { text: "Soporte prioritario 24/7", included: true },
-        ],
-        highlighted: false,
-    },
-]
 
 const WHATSAPP_NUMBER = "5215512345678"
 const WHATSAPP_MESSAGE = encodeURIComponent(
@@ -104,14 +60,16 @@ export default function PlansPage() {
                         </Tabs>
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                        {plans.map((plan) => {
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {PLAN_CATALOG.map((plan) => {
+                            const Icon = plan.icon
+                            const highlighted = plan.key === "pro"
                             const displayPrice =
                                 billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice
                             return (
                             <Card
-                                key={plan.name}
-                                className={`relative flex flex-col transition-all ${plan.highlighted
+                                key={plan.key}
+                                className={`relative flex flex-col transition-all ${highlighted
                                     ? "border-primary shadow-lg shadow-primary/5 ring-1 ring-primary/20"
                                     : ""
                                     } ${selectedPlan === plan.name
@@ -119,11 +77,11 @@ export default function PlansPage() {
                                         : ""
                                     }`}
                             >
-                                {plan.badge && (
+                                {highlighted && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                                         <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold">
                                             <Zap className="mr-1 h-3 w-3" />
-                                            {plan.badge}
+                                            Recomendado
                                         </Badge>
                                     </div>
                                 )}
@@ -131,22 +89,18 @@ export default function PlansPage() {
                                 <CardHeader className="pb-4">
                                     <div className="flex items-center gap-2">
                                         <div
-                                            className={`flex h-9 w-9 items-center justify-center rounded-lg ${plan.highlighted
+                                            className={`flex h-9 w-9 items-center justify-center rounded-lg ${highlighted
                                                 ? "bg-primary text-primary-foreground"
                                                 : "bg-muted text-muted-foreground"
                                                 }`}
                                         >
-                                            {plan.highlighted ? (
-                                                <Zap className="h-4 w-4" />
-                                            ) : (
-                                                <Shield className="h-4 w-4" />
-                                            )}
+                                            <Icon className="h-4 w-4" />
                                         </div>
                                         <CardTitle className="text-lg text-card-foreground">
                                             {plan.name}
                                         </CardTitle>
                                     </div>
-                                    <CardDescription className="mt-2">
+                                    <CardDescription className="mt-2 min-h-10">
                                         {plan.description}
                                     </CardDescription>
                                 </CardHeader>
@@ -154,21 +108,37 @@ export default function PlansPage() {
                                 <CardContent className="flex-1">
                                     <div className="mb-6">
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl font-bold text-card-foreground">
-                                                ${displayPrice}
-                                            </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                USD / mes
-                                            </span>
+                                            {displayPrice === 0 ? (
+                                                <span className="text-4xl font-bold text-card-foreground">
+                                                    Gratis
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <span className="text-4xl font-bold text-card-foreground">
+                                                        ${displayPrice}
+                                                    </span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {plan.currency} / mes
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
-                                        {billingPeriod === "yearly" && (
-                                            <p className="mt-1.5 text-xs text-muted-foreground">
-                                                Facturado anualmente (${displayPrice * 12} USD/año)
+                                        {plan.note ? (
+                                            <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                                {plan.note}
                                             </p>
+                                        ) : (
+                                            <>
+                                                {billingPeriod === "yearly" && (
+                                                    <p className="mt-1.5 text-xs text-muted-foreground">
+                                                        Facturado anualmente (${displayPrice * 12} {plan.currency}/año)
+                                                    </p>
+                                                )}
+                                                <p className="mt-1.5 text-xs text-muted-foreground">
+                                                    Si pagas en moneda nacional, el cambio aplicado es el que acepta la plataforma.
+                                                </p>
+                                            </>
                                         )}
-                                        <p className="mt-1.5 text-xs text-muted-foreground">
-                                            Si pagas en moneda nacional, el cambio aplicado es el que acepta la plataforma.
-                                        </p>
                                     </div>
 
                                     <Separator className="mb-4" />
@@ -204,7 +174,7 @@ export default function PlansPage() {
                                 <CardFooter className="pt-4">
                                     <Button
                                         className="w-full"
-                                        variant={plan.highlighted ? "default" : "outline"}
+                                        variant={highlighted ? "default" : "outline"}
                                         onClick={() => handleSelect(plan.name)}
                                     >
                                         {selectedPlan === plan.name

@@ -9,6 +9,35 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+### Agregado
+
+#### Sistema multi-moneda con conversión dinámica (PR #10)
+- Las tasas definidas en **Tipo de cambio** (USD/EUR respecto a CUP) ahora rigen
+  toda la app, no solo esa pantalla. El sistema sigue **almacenando en CUP**
+  (moneda nacional); no requiere cambios de backend.
+- **Ingreso de precios en otra moneda:** nuevo `MoneyAmountInput` con selector
+  CUP/USD/EUR y preview de conversión en vivo, integrado en asignar producto,
+  dar entrada de stock, gasto, precios de proveedor y editar precio. El monto se
+  convierte a CUP con la tasa vigente antes de enviarse.
+- **Visualización configurable:** `CurrencySelect` global en la barra superior
+  (preferencia persistida en `localStorage`) que reformatea todas las tablas,
+  detalles, dashboard, analytics y cierres; toggles locales en el punto de venta;
+  equivalencias simultáneas en los diálogos de detalle.
+- **Badge de tasas** vigentes (USD/EUR) en la barra superior, con enlace a
+  `/dashboard/exchange-rate`.
+- **Regla de disponibilidad:** CUP siempre disponible; USD/EUR solo si su tasa
+  existe y es `> 0`. Los usuarios sin tasas operan normalmente en CUP, con un
+  hint para definirlas. Si se borra la tasa de la moneda activa, la preferencia
+  cae a CUP automáticamente.
+- **Convención de tasa** (campos "USD a MN" / "EUR a MN"): el valor guardado es
+  CUP por unidad → `monto × tasa` al ingresar, `valorCUP / tasa` al mostrar. Las
+  tasas se leen como string del API y se coercionan con `Number()`.
+- Núcleo nuevo: `src/lib/utils/currency.ts`, `src/context/currency-context.tsx`,
+  hook `useActiveExchangeRates`, y componentes en `src/components/ui/currency/`
+  (`CurrencySelect`, `MoneyAmountInput`, `Money`, `CurrencyEquivalences`,
+  `ExchangeRateBadge`). ~30 componentes migrados a un formateador central
+  (reemplaza las copias locales de `formatCurrency`/`formatClosingCurrency`).
+
 ### Cambiado
 
 #### Permisos de trabajadores

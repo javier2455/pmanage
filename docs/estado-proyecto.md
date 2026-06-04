@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-02** (revisión de exportaciones y deuda técnica).
+> Última actualización: **2026-06-03** (sistema multi-moneda con conversión dinámica, PR #10).
 
 ---
 
@@ -9,10 +9,10 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.3.2-alpha` (rama `develop`) |
+| **Versión actual** | `1.4.0-alpha` (rama `develop`) |
 | **Versión en producción** | `1.0.0` (rama `main`) |
-| **Commits por delante de `main`** | **49** |
-| **Último commit** | `3eaf9c3` — 2026-05-28 |
+| **Commits por delante de `main`** | **53** |
+| **Último commit** | `e741fce` — 2026-06-03 (merge PR #10, moneda) |
 | **PR `develop → main`** | **No creado** — deuda de promoción acumulada |
 | **Bloqueador para promover** | Backend debe agregar item de menú "Categorías" en `GET /menu/` y aceptar `expenseCategoryId` en el payload de gastos |
 
@@ -64,6 +64,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 14 | Validación y estilo de `phone-input` | `636a506`, `3138a7e` | — |
 | 15 | **Alertas de stock bajo / agotado** (frontend completo) | `3eaf9c3` | **Backend pendiente** (ver spec en `docs/backend-alertas-stock.md`) |
 | 16 | **Exportación a PDF y Excel** en cierre diario y mensual | — | — (Pro gateado) |
+| 17 | **Sistema multi-moneda con conversión dinámica** (ingreso y visualización en CUP/USD/EUR regidos por las tasas) | #10, `348fbaa` | — (no requiere backend; almacena en CUP) |
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`
 
@@ -74,6 +75,24 @@ Espera los siguientes endpoints del backend:
 - `PATCH /businesses/:businessId/products/:productId/stock-alert` — actualiza umbral
 
 Spec completa del contrato en [docs/backend-alertas-stock.md](backend-alertas-stock.md).
+
+### Detalle: Sistema multi-moneda con conversión dinámica — #10 (`348fbaa`)
+
+Hasta ahora las tasas de `/dashboard/exchange-rate` solo se usaban en esa pantalla.
+Esta feature las convierte en la fuente de verdad para **ingresar** y **visualizar**
+precios en CUP/USD/EUR en toda la app, **sin cambios de backend** (el sistema sigue
+almacenando todo en CUP).
+
+- **Ingreso:** `MoneyAmountInput` (selector + preview) en asignar producto, dar
+  entrada, gasto, precios de proveedor y editar precio; convierte a CUP antes de enviar.
+- **Visualización:** selector global en la barra superior (persistido en `localStorage`)
+  + toggles locales en el punto de venta + equivalencias en diálogos de detalle.
+  Cubre tablas, dashboard, analytics y cierres contables.
+- **Disponibilidad:** CUP siempre; USD/EUR solo con tasa válida (`> 0`). Sin tasas,
+  todo opera en CUP. Convención: valor guardado = CUP por unidad (`monto × tasa`).
+- **Núcleo:** `src/lib/utils/currency.ts`, `src/context/currency-context.tsx`,
+  `useActiveExchangeRates`, `src/components/ui/currency/*`. Ver §2.11 de
+  [sdd-develop.md](sdd/sdd-develop.md).
 
 ---
 
@@ -160,7 +179,7 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
 2. **Coordinar con backend** dos puntos antes del PR a main:
    - Item de menú "Categorías" en `GET /menu/` (para eliminar el `static-fallback.ts`)
    - Aceptar `expenseCategoryId` en payload de gasto
-3. **Crear PR `develop → main`** con los 49 commits acumulados. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
+3. **Crear PR `develop → main`** con los 53 commits acumulados. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
 4. **Implementar endpoints de alertas de stock** en backend — el frontend ya está listo y esperando.
 5. Continuar con Variante A del roadmap (rentabilidad, comparativas, métricas por worker).
 

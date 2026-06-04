@@ -12,115 +12,17 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-    Check,
-    X,
-    Sparkles,
-    Shield,
-    Crown,
-    ArrowLeft,
-} from "lucide-react"
+import { Check, X, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { PLAN_CATALOG, resolvePlanKey } from "@/lib/plans-catalog"
 
 type StoredPlan = {
     name?: string
     type?: string
 }
 
-function normalizePlanKey(raw: string | undefined | null) {
-    return String(raw ?? "")
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-}
-
 type BillingPeriod = "monthly" | "yearly"
-
-const plans = [
-    {
-        name: "Gratuito",
-        description: "Prueba todas las funcionalidades del plan Básico sin compromiso.",
-        monthlyPrice: 0,
-        yearlyPrice: 0,
-        icon: Shield,
-        features: [
-            { text: "1 negocio", included: true },
-            { text: "Hasta 100 productos", included: true },
-            { text: "Registro de ventas y compras", included: true },
-            { text: "Gestión de gastos con categorías", included: true },
-            { text: "Cierre contable diario", included: true },
-            { text: "Tasas de cambio multi-moneda", included: true },
-            { text: "Historial de precios de productos", included: true },
-            { text: "Historial de inventario", included: true },
-            { text: "Búsqueda global", included: true },
-            { text: "Panel de estadísticas", included: true },
-            { text: "Notificaciones por correo", included: false },
-            { text: "Cierre contable mensual", included: false },
-            { text: "Exportar cierres a Excel/PDF", included: false },
-            { text: "Gestión de proveedores", included: false },
-            { text: "Gestión de equipo y permisos", included: false },
-            { text: "Comparador de precios multi-producto", included: false },
-            { text: "Notificaciones por WhatsApp", included: false },
-            { text: "Soporte por WhatsApp o correo", included: true },
-        ],
-    },
-    {
-        name: "Básico",
-        description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        monthlyPrice: 5,
-        yearlyPrice: 3,
-        icon: Sparkles,
-        features: [
-            { text: "1 negocio", included: true },
-            { text: "Hasta 100 productos", included: true },
-            { text: "Registro de ventas y compras", included: true },
-            { text: "Gestión de gastos con categorías", included: true },
-            { text: "Cierre contable diario", included: true },
-            { text: "Tasas de cambio multi-moneda", included: true },
-            { text: "Historial de precios de productos", included: true },
-            { text: "Historial de inventario", included: true },
-            { text: "Búsqueda global", included: true },
-            { text: "Panel de estadísticas", included: true },
-            { text: "Notificaciones por correo", included: true },
-            { text: "Cierre contable mensual", included: false },
-            { text: "Exportar cierres a Excel/PDF", included: false },
-            { text: "Gestión de proveedores", included: false },
-            { text: "Gestión de equipo y permisos", included: false },
-            { text: "Comparador de precios multi-producto", included: false },
-            { text: "Notificaciones por WhatsApp", included: false },
-            { text: "Soporte por WhatsApp o correo", included: true },
-        ],
-    },
-    {
-        name: "Pro",
-        description: "Para negocios en crecimiento que necesitan control total.",
-        monthlyPrice: 15,
-        yearlyPrice: 12,
-        icon: Crown,
-        features: [
-            { text: "Hasta 3 negocios", included: true },
-            { text: "Hasta 500 productos", included: true },
-            { text: "Registro de ventas y compras", included: true },
-            { text: "Gestión de gastos con categorías", included: true },
-            { text: "Cierre contable diario", included: true },
-            { text: "Tasas de cambio multi-moneda", included: true },
-            { text: "Historial de precios de productos", included: true },
-            { text: "Historial de inventario", included: true },
-            { text: "Búsqueda global", included: true },
-            { text: "Panel de estadísticas", included: true },
-            { text: "Notificaciones por correo", included: true },
-            { text: "Cierre contable mensual", included: true },
-            { text: "Exportar cierres a Excel/PDF", included: true },
-            { text: "Gestión de proveedores", included: true },
-            { text: "Gestión de equipo y permisos", included: true },
-            { text: "Comparador de precios multi-producto", included: true },
-            { text: "Notificaciones por WhatsApp", included: true },
-            { text: "Soporte prioritario 24/7", included: true },
-        ],
-    },
-] as const
 
 export default function ChangePlanPage() {
     const [storedPlan, setStoredPlan] = useState<StoredPlan | null>(null)
@@ -137,24 +39,16 @@ export default function ChangePlanPage() {
         }
     }, [])
 
-    const currentPlanKey = useMemo(() => {
-        const byType = normalizePlanKey(storedPlan?.type)
-        const byName = normalizePlanKey(storedPlan?.name)
-        return byType || byName
-    }, [storedPlan?.name, storedPlan?.type])
+    const currentPlanKey = useMemo(
+        () => resolvePlanKey({ type: storedPlan?.type, name: storedPlan?.name }),
+        [storedPlan?.type, storedPlan?.name],
+    )
 
     const plansWithCurrent = useMemo(() => {
-        return plans.map((p) => {
-            const key = normalizePlanKey(p.name)
-            const current =
-                currentPlanKey.length > 0 &&
-                (currentPlanKey === key ||
-                    (currentPlanKey === "free" && key.includes("gratuito")) ||
-                    (currentPlanKey === "basic" && key.includes("basico")) ||
-                    ((currentPlanKey === "pro" || currentPlanKey === "premium") && key === "pro"))
-
-            return { ...p, current }
-        })
+        return PLAN_CATALOG.map((p) => ({
+            ...p,
+            current: currentPlanKey !== null && currentPlanKey === p.key,
+        }))
     }, [currentPlanKey])
 
     return (
@@ -248,9 +142,9 @@ export default function ChangePlanPage() {
                                             </>
                                         )}
                                     </div>
-                                    {displayPrice === 0 ? (
-                                        <p className="mt-1.5 text-xs text-muted-foreground">
-                                            Disponible por única vez durante un período de prueba de 15 días hábiles.
+                                    {plan.note ? (
+                                        <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                            {plan.note}
                                         </p>
                                     ) : (
                                         <>

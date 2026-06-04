@@ -96,8 +96,8 @@ interface Plan {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  startDate: string;
-  expireDate: string;
+  startsAt: string;
+  expiresAt: string;
 }
 
 

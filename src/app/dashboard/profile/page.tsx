@@ -22,12 +22,18 @@ import {
   Clock,
   History,
   RefreshCw,
+  Check,
+  Store,
+  ChevronDown,
+  ChevronUp,
   // Rocket,
 } from "lucide-react"
+import { useState } from "react"
 import Link from "next/link"
 import { useAuthUserData } from "@/hooks/use-auth"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getPlanLabel } from "@/components/assign-plans/utils"
+import { getPlanCatalogEntry } from "@/lib/plans-catalog"
 
 function formatDate(dateString?: string | null): string {
   if (!dateString) return "—"
@@ -38,8 +44,27 @@ function formatDate(dateString?: string | null): string {
   })
 }
 
+/** Funcionalidades visibles antes de expandir la lista. */
+const FEATURES_PREVIEW_COUNT = 6;
+
 export default function ProfilePage() {
   const { data: user, isLoading } = useAuthUserData();
+  const [featuresExpanded, setFeaturesExpanded] = useState(false);
+
+  // Catálogo del plan suscrito: fuente de verdad de lo que realmente oferta el plan.
+  const planEntry = getPlanCatalogEntry(user?.plan);
+  const includedFeatures = planEntry?.features.filter((f) => f.included) ?? [];
+  const visibleFeatures = featuresExpanded
+    ? includedFeatures
+    : includedFeatures.slice(0, FEATURES_PREVIEW_COUNT);
+  const hiddenFeaturesCount = includedFeatures.length - FEATURES_PREVIEW_COUNT;
+  const maxProducts = planEntry?.maxProducts ?? user?.plan?.maxProducts;
+  const maxBusinesses = planEntry?.maxBusinesses;
+  // El precio lo rige el catálogo (lo que realmente cuesta el plan); el backend es solo fallback.
+  const planPrice = planEntry?.monthlyPrice ?? user?.plan?.price;
+  const priceCurrency = planEntry?.currency ?? "USD";
+  // Nombre único para badge y "Tipo de plan" (mismo origen → siempre coinciden).
+  const planName = planEntry?.name ?? getPlanLabel(user?.plan);
 
   const initials = user?.name
     ?.split(" ")
@@ -177,7 +202,7 @@ export default function ProfilePage() {
                 <Skeleton className="h-5 w-16 rounded-full" />
               ) : (
                 <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-0">
-                  {getPlanLabel(user?.plan)}
+                  {planName}
                 </Badge>
               )}
             </div>
@@ -212,13 +237,17 @@ export default function ProfilePage() {
               <>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold text-card-foreground">
-                    ${user?.plan?.price}
+                    {planPrice === 0 ? "Gratis" : `$${planPrice}`}
                   </span>
-                  <span className="text-sm text-muted-foreground">CUP / mes</span>
+                  {planPrice !== 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {priceCurrency} / mes
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  {user?.plan?.description}
+                  {planEntry?.description ?? user?.plan?.description}
                 </p>
 
                 <Separator />
@@ -228,13 +257,27 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2.5">
                       <Package className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">
-                        Max. productos
+                        Máx. productos
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {user?.plan?.maxProducts}
+                      {maxProducts ?? "—"}
                     </span>
                   </div>
+
+                  {maxBusinesses != null && (
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-2.5">
+                        <Store className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Máx. negocios
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-card-foreground">
+                        {maxBusinesses}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-2.5">
@@ -244,7 +287,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {getPlanLabel(user?.plan)}
+                      {planName}
                     </span>
                   </div>
 
@@ -256,7 +299,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {formatDate(user?.plan?.startDate)}
+                      {formatDate(user?.plan?.startsAt)}
                     </span>
                   </div>
 
@@ -268,10 +311,56 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {formatDate(user?.plan?.expireDate)}
+                      {formatDate(user?.plan?.expiresAt)}
                     </span>
                   </div>
                 </div>
+
+                {includedFeatures.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="flex flex-col gap-3">
+                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Incluido en tu plan
+                      </span>
+                      <ul className="grid gap-2.5 sm:grid-cols-2">
+                        {visibleFeatures.map((feature) => (
+                          <li
+                            key={feature.text}
+                            className="flex items-start gap-2.5"
+                          >
+                            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                              <Check className="h-3 w-3 text-primary" />
+                            </div>
+                            <span className="text-sm text-card-foreground">
+                              {feature.text}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {hiddenFeaturesCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setFeaturesExpanded((v) => !v)}
+                          className="flex items-center gap-1 self-start text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                          aria-expanded={featuresExpanded}
+                        >
+                          {featuresExpanded ? (
+                            <>
+                              Ver menos
+                              <ChevronUp className="h-4 w-4" />
+                            </>
+                          ) : (
+                            <>
+                              Ver {hiddenFeaturesCount} más
+                              <ChevronDown className="h-4 w-4" />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 <Separator />
 

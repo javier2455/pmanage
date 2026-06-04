@@ -43,10 +43,18 @@ Marca cada ítem con `[x]` cuando esté completado.
 - [ ] Sección de preferencias: tema (claro/oscuro/sistema), moneda por defecto para visualización
 - [ ] Sección de notificaciones: preferencias de alertas
 
-### Tipo de cambio en creación de ventas
-- [ ] Descomentar y completar la constante `EXCHANGE_RATES` en `/business/sales/create/page.tsx`
-- [ ] Agregar selector de moneda en el formulario de venta (CUP / USD / EUR)
-- [ ] Calcular el equivalente automáticamente usando el tipo de cambio registrado en `/exchange-rate`
+### Tipo de cambio en creación de ventas — ✅ Completado (PR #10, `348fbaa`)
+- [x] ~~Descomentar y completar la constante `EXCHANGE_RATES`~~ → Reemplazado por un
+      sistema central (`src/lib/utils/currency.ts` + `CurrencyContext`) que lee las
+      tasas reales de `/exchange-rate` vía React Query.
+- [x] Selector de moneda (CUP / USD / EUR) en el punto de venta y en los formularios
+      de ingreso (asignar producto, dar entrada, gasto, proveedor, editar precio).
+- [x] Cálculo automático del equivalente usando la tasa registrada en `/exchange-rate`
+      (almacena en CUP; muestra con conversión dinámica y selector global).
+
+> Nota: la "moneda por defecto para visualización" de la futura página de
+> configuración (Fase 2 · Página de configuración) ya está implementada como un
+> selector global persistido en `localStorage`; resta solo moverla a `/settings`.
 
 ### Separador y pulido visual en resumen financiero
 - [ ] Descomentar `<Separator />` dentro del resumen financiero en `daily/page.tsx`
