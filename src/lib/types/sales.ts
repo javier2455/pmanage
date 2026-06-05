@@ -25,8 +25,8 @@ export interface SaleWithProductAndBusiness {
 
 export interface CreateSaleItemProps {
   idproducto: string;
-  cantidad: number;
-  precio: number;
+  quantity: number;
+  price: number;
 }
 
 export interface CreateSaleProps {

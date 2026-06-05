@@ -22,6 +22,12 @@ const compactColumnMeta = {
   cellClassName: "w-[1%] whitespace-nowrap",
 } satisfies CurrentInventoryColumnMeta;
 
+/** El stock se maneja como unidades enteras; el backend puede devolverlo con
+ *  decimales (p. ej. "10.00"), así que lo normalizamos para mostrarlo. */
+function formatStock(value: number | string) {
+  return Math.round(Number(value) || 0).toLocaleString("es-CO");
+}
+
 function formatDate(dateStr: string) {
   try {
     const date = new Date(dateStr);
@@ -81,7 +87,7 @@ export function buildCurrentInventoryColumns({
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="tabular-nums text-foreground">
-            {row.original.stock}
+            {formatStock(row.original.stock)}
           </span>
           <StockAlertBadge
             stock={row.original.stock}

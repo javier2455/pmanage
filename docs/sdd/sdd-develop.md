@@ -12,7 +12,7 @@
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-06-02 |
+| **Última actualización del documento** | 2026-06-04 |
 
 ---
 
@@ -41,6 +41,8 @@ Cambios respecto a `main` agrupados por estado:
 | 17 | OAuth con Google | 🔵 En rama remota `feature/auth-google` | — | **No** — no integrado en develop |
 | 18 | Fix CORS / limpieza `src/app/api/` | 🔵 En rama remota `fix/cors-error` | — | **No** — sin merge |
 | 19 | **Alertas de stock bajo/agotado** (feature Pro) | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.2) |
+| 20 | **Configuración de notificaciones externas** (correo/SMS/WhatsApp, multi-canal, plan-gated) | ✅ Frontend + backend (`/businesses/:id/settings`) | — | Sí — backend entregó endpoints (ver §2.12) |
+| 21 | **Notificaciones internas (in-app)** — campana + dropdown + página | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.3) |
 
 ---
 
@@ -190,6 +192,29 @@ Cambios respecto a `main` agrupados por estado:
 
 ---
 
+### 2.12. Configuración de notificaciones externas (`business-settings`)
+
+**Qué hace.** Permite configurar, por negocio, qué alertas se reciben y por qué **canal**
+(`email`, `sms`, `whatsapp`). Cubre 4 tipos: cierre diario, cierre mensual, stock bajo y producto agotado.
+Reutiliza y amplía la tarjeta `NotificationSettingsCard` dentro de los detalles del negocio.
+
+- **Multi-canal con gating por plan:** `email` disponible en todos los planes; `sms`/`whatsapp` requieren
+  plan PRO (Premium/Enterprise) y un teléfono válido asociado al negocio.
+- Carga la config con GET y persiste con PATCH (el backend crea la config al crear el negocio).
+
+**Archivos clave.**
+- [src/lib/types/business-settings.ts](../../src/lib/types/business-settings.ts), [src/lib/validations/business-settings.ts](../../src/lib/validations/business-settings.ts)
+- [src/lib/api/business-settings.ts](../../src/lib/api/business-settings.ts), [src/hooks/use-business-settings.ts](../../src/hooks/use-business-settings.ts)
+- [src/components/business/notification-settings-card.tsx](../../src/components/business/notification-settings-card.tsx)
+- [src/lib/routes/business.ts](../../src/lib/routes/business.ts) — ruta `settings(businessId)`.
+- Fix relacionado en [src/lib/pro-gates.ts](../../src/lib/pro-gates.ts): `isProPlan()` ahora reconoce `enterprise`.
+
+**Contrato backend.** [docs/API.md](../API.md) (GET/POST/PATCH `/businesses/{businessId}/settings`).
+
+**Estado.** Frontend implementado y backend con endpoints entregados. Listo para promover.
+
+---
+
 ### 2.11. Otros mergeados menores
 
 - **ICON_MAP expandido** (`7a55b56`) — nuevos iconos para mayor consistencia en UI.
@@ -231,6 +256,29 @@ Cambios respecto a `main` agrupados por estado:
 **Bloqueador.** Endpoints backend pendientes. Contrato completo en
 [docs/backend-alertas-stock.md](../backend-alertas-stock.md). Las llamadas (`apiClient`) ya apuntan
 a las rutas definidas; fallan hasta que backend las implemente.
+
+### 3.3. Notificaciones internas / in-app (frontend listo, backend pendiente)
+
+**Qué hace.** Muestra **dentro del sistema** las notificaciones que el backend ya genera (11 tipos:
+`out_of_stock`, `low_stock`, `sale_cancelled`, `negative_margin`, `expense_alert`, `price_changed`,
+`weekly_summary`, `monthly_summary`, `stale_product`, `exchange_rate_stale`, `new_worker`).
+
+- **Campana** en el topbar con badge de no leídos (polling 60s) + **dropdown** con feed reciente y
+  "marcar todas como leídas".
+- **Página** `/dashboard/notifications` con filtros por dominio (Inventario/Ventas/Finanzas/Equipo),
+  toggle "solo no leídas" y paginación.
+- Cada notificación lleva a su pantalla relevante (**deep-link** según `metadata`) y se marca leída al abrir.
+
+**Archivos clave (frontend).**
+- [src/lib/types/notification.ts](../../src/lib/types/notification.ts), [src/lib/routes/notification.ts](../../src/lib/routes/notification.ts)
+- [src/lib/api/notifications.ts](../../src/lib/api/notifications.ts), [src/hooks/use-notifications.ts](../../src/hooks/use-notifications.ts)
+- [src/components/notifications/](../../src/components/notifications/) — `notification-type-meta.ts` (icono/severidad/dominio/deep-link por tipo), `notification-bell.tsx`, `notification-item.tsx`.
+- [src/app/dashboard/notifications/page.tsx](../../src/app/dashboard/notifications/page.tsx); campana montada en [src/app/dashboard/layout.tsx](../../src/app/dashboard/layout.tsx).
+
+**Bloqueador.** Backend debe añadir un canal `in_app` y estado de leído (`readAt`) a la entidad
+`Notification`, y exponer 4 endpoints (listar paginado, conteo de no leídos, marcar una/todas leídas).
+Contrato completo en [docs/notificaciones-internas.md](../notificaciones-internas.md). Entrada de sidebar
+"Notificaciones" pendiente de agregarse a `GET /section` (payload en ese doc).
 
 ---
 

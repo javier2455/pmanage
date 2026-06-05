@@ -129,9 +129,17 @@ export function SetStockAlertDialog({
             <Input
               id="stock-alert-threshold"
               type="number"
+              inputMode="numeric"
               min={1}
               step={1}
               placeholder="Ej: 5"
+              onKeyDown={(e) => {
+                // El umbral es en unidades enteras: bloqueamos separadores
+                // decimales y notación científica.
+                if ([".", ",", "e", "E", "+", "-"].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
               {...register("threshold", { valueAsNumber: true })}
               aria-invalid={errors.threshold ? "true" : "false"}
             />
@@ -142,7 +150,7 @@ export function SetStockAlertDialog({
                 <Package className="h-3 w-3" />
                 Stock actual:{" "}
                 <span className="font-medium text-foreground">
-                  {currentStock}
+                  {Math.round(Number(currentStock) || 0).toLocaleString("es-CO")}
                 </span>{" "}
                 unidades
               </p>

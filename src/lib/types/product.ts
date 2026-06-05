@@ -125,8 +125,8 @@ export interface SalesProductInfoResponse {
     idsale?: string;
     idproducto: string;
     product?: Product;
-    cantidad: string | number;
-    precio: string | number;
+    quantity: string | number;
+    price: string | number;
     isCancelled: boolean;
     cancelledReason: string | null;
 }

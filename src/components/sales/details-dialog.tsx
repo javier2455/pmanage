@@ -92,15 +92,15 @@ export default function DetailsDialog({
                             {item.product?.name}
                           </span>
                           <span className="truncate text-xs text-muted-foreground">
-                            {Number(item.cantidad)} x{" "}
-                            {formatCurrency(Number(item.precio))}
+                            {Number(item.quantity)} x{" "}
+                            {formatCurrency(Number(item.price))}
                           </span>
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-0.5">
                         <span className="text-sm font-medium tabular-nums text-card-foreground">
                           {formatCurrency(
-                            Number(item.cantidad) * Number(item.precio),
+                            Number(item.quantity) * Number(item.price),
                           )}
                         </span>
                         {item.isCancelled && (

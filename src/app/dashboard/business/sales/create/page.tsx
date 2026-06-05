@@ -42,8 +42,8 @@ interface CartItem {
   category: string | null;
   unit: string;
   imageUrl: string | null;
-  cantidad: number;
-  precio: number;
+  quantity: number;
+  price: number;
   subtotal: number;
   stock: number;
 }
@@ -80,7 +80,7 @@ export default function CreateSalesPage() {
 
   const cartQuantityForSelected = useMemo(() => {
     if (!selectedProduct) return 0
-    return cartItems.find(i => i.productId === selectedProduct.product.id)?.cantidad ?? 0
+    return cartItems.find(i => i.productId === selectedProduct.product.id)?.quantity ?? 0
   }, [selectedProduct, cartItems])
 
   const effectiveStock = useMemo(() => {
@@ -113,21 +113,21 @@ export default function CreateSalesPage() {
   function addToCart(data: AddToCartFormData) {
     if (!selectedProduct) return
 
-    const precio = Number(unitPrice)
+    const price = Number(unitPrice)
     const existingIndex = cartItems.findIndex(i => i.productId === data.productId)
 
     if (existingIndex >= 0) {
       const updated = [...cartItems]
       const existing = updated[existingIndex]
-      const newCantidad = existing.cantidad + data.stock
+      const newCantidad = existing.quantity + data.stock
       if (newCantidad > selectedProduct.stock) {
         setError("stock", { message: `La cantidad total (${newCantidad}) excede el stock disponible (${selectedProduct.stock})` })
         return
       }
       updated[existingIndex] = {
         ...existing,
-        cantidad: newCantidad,
-        subtotal: newCantidad * precio,
+        quantity: newCantidad,
+        subtotal: newCantidad * price,
       }
       setCartItems(updated)
     } else {
@@ -137,9 +137,9 @@ export default function CreateSalesPage() {
         category: selectedProduct.product.category?.name ?? null,
         unit: selectedProduct.product.unit,
         imageUrl: selectedProduct.product.imageUrl,
-        cantidad: data.stock,
-        precio,
-        subtotal: data.stock * precio,
+        quantity: data.stock,
+        price: price,
+        subtotal: data.stock * price,
         stock: selectedProduct.stock,
       }])
     }
@@ -159,10 +159,10 @@ export default function CreateSalesPage() {
       const response = await createSaleMutation.mutateAsync({
         idbusiness: activeBusinessId ?? "",
         descripcion: "",
-        items: cartItems.map(({ productId, cantidad, precio }) => ({
+        items: cartItems.map(({ productId, quantity, price }) => ({
           idproducto: productId,
-          cantidad,
-          precio,
+          quantity,
+          price,
         })),
       })
 
@@ -411,12 +411,12 @@ export default function CreateSalesPage() {
 
                       {/* Quantity */}
                       <span className="w-12 text-center text-sm tabular-nums text-card-foreground">
-                        {item.cantidad}
+                        {item.quantity}
                       </span>
 
                       {/* Unit price */}
                       <span className="w-20 text-right text-sm tabular-nums text-muted-foreground hidden sm:block">
-                        ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${item.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
 
                       {/* Subtotal */}
@@ -490,7 +490,7 @@ export default function CreateSalesPage() {
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {item.cantidad} x ${item.precio.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {item.quantity} x ${item.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   ))}

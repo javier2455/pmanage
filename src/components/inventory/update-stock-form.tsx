@@ -161,7 +161,7 @@ export function UpdateStockForm() {
                 <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium tabular-nums text-card-foreground">
-                    {selectedProduct.stock} unidades
+                    {Math.round(Number(selectedProduct.stock) || 0).toLocaleString("es-CO")} unidades
                   </span>
                   <Badge
                     variant="secondary"
@@ -289,8 +289,16 @@ export function UpdateStockForm() {
                 <Input
                   id="new-stock"
                   type="number"
+                  inputMode="numeric"
                   min="1"
+                  step={1}
                   placeholder="Ej: 50"
+                  onKeyDown={(e) => {
+                    // El stock se maneja en unidades enteras.
+                    if ([".", ",", "e", "E", "+", "-"].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   {...register("quantity", { valueAsNumber: true })}
                   disabled={!selectedProduct}
                   aria-invalid={errors.quantity ? "true" : "false"}
@@ -306,7 +314,10 @@ export function UpdateStockForm() {
                     <span>
                       El nuevo stock total sera de{" "}
                       <span className="font-semibold text-card-foreground">
-                        {selectedProduct.stock + newStockNum}
+                        {(
+                          Math.round(Number(selectedProduct.stock) || 0) +
+                          Math.round(newStockNum)
+                        ).toLocaleString("es-CO")}
                       </span>{" "}
                       unidades
                     </span>
