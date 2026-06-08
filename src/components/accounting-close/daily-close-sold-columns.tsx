@@ -62,7 +62,7 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
   },
   {
     id: "precio",
-    accessorFn: (row) => Number(row.precio),
+    accessorFn: (row) => Number(row.price),
     meta: {
       headerClassName: dailyCloseUnitPriceCol.headerClassName,
       cellClassName: dailyCloseUnitPriceCol.cellClassName,
@@ -75,12 +75,12 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
       />
     ),
     cell: ({ row }) => (
-      <span>${formatClosingCurrency(Number(row.original.precio))}</span>
+      <span>${formatClosingCurrency(Number(row.original.price))}</span>
     ),
   },
   {
     id: "lineTotal",
-    accessorFn: (row) => Number(row.cantidad) * Number(row.precio),
+    accessorFn: (row) => Number(row.cantidad) * Number(row.price),
     meta: {
       headerClassName: dailyCloseLineTotalCol.headerClassName,
       cellClassName: `${dailyCloseLineTotalCol.cellClassName} font-semibold`,
