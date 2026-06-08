@@ -58,7 +58,7 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
         className="-mr-2 h-8 w-full justify-end px-2 lg:-mr-4 lg:pr-4"
       />
     ),
-    cell: ({ row }) => <span>{Number(row.original.cantidad)}</span>,
+    cell: ({ row }) => <span>{Number(row.original.quantity)}</span>,
   },
   {
     id: "precio",
