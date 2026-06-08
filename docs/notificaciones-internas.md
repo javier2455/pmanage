@@ -65,21 +65,26 @@ La entidad referencia solo `Business`, no `User`. Dos opciones:
   gatea email/SMS/WhatsApp y solo para 4 tipos; la bandeja in-app debe mostrar **los 11**.
 - Rellenar `content` (texto ya formateado) y `metadata` (datos estructurados para deep-link, ver §4).
 
-### 2.4 Endpoints requeridos
+### 2.4 Endpoints (implementados)
 
-Todos bajo el prefijo del negocio, con `Authorization: Bearer <jwt>`.
+Bajo `BASIC_ROUTE` = `https://psearch.dveloxsoft.com/api/v2`, con `Authorization: Bearer <jwt>`.
+El negocio se indica por **query param `?businessId=`** (no va en el path).
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/businesses/{businessId}/notifications` | Lista paginada de `channel='in_app'`, orden **desc** por `createdAt`. |
-| `GET` | `/businesses/{businessId}/notifications/unread-count` | Conteo liviano de no leídas (para el badge; se consulta por polling). |
-| `PATCH` | `/businesses/{businessId}/notifications/{id}/read` | Marca **una** como leída (`readAt = now`). |
-| `PATCH` | `/businesses/{businessId}/notifications/read-all` | Marca **todas** las del negocio como leídas. |
+| `GET` | `/notifications?businessId=` | Lista paginada de `channel='in_app'`, orden **desc** por `createdAt`. |
+| `GET` | `/notifications/unread-count?businessId=` | Conteo liviano de no leídas (para el badge; se consulta por polling). |
+| `PATCH` | `/notifications/{id}/read` | Marca **una** como leída (`readAt = now`). |
+| `PATCH` | `/notifications/read-all?businessId=` | Marca **todas** las del negocio como leídas. |
+
+> El backend también expone `POST /notifications/retry-failed`, `GET /notifications/unsent` y
+> `GET /notifications/summaries/monthly` (gestión de envíos externos); el frontend in-app no los consume.
 
 **`GET /notifications` — query params**
 
 | Param | Tipo | Default | Notas |
 |---|---|---|---|
+| `businessId` | string | — | **Requerido.** Negocio del que se listan las notificaciones. |
 | `page` | number | 1 | |
 | `limit` | number | 20 | |
 | `type` | string | — | Filtra por uno de los 11 tipos (opcional). |
