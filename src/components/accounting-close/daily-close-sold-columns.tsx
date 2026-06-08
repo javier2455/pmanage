@@ -46,7 +46,7 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
   },
   {
     id: "cantidad",
-    accessorFn: (row) => Number(row.cantidad),
+    accessorFn: (row) => Number(row.quantity),
     meta: {
       headerClassName: dailyCloseQtyCol.headerClassName,
       cellClassName: dailyCloseQtyCol.cellClassName,
