@@ -80,7 +80,7 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
   },
   {
     id: "lineTotal",
-    accessorFn: (row) => Number(row.cantidad) * Number(row.price),
+    accessorFn: (row) => Number(row.quantity) * Number(row.price),
     meta: {
       headerClassName: dailyCloseLineTotalCol.headerClassName,
       cellClassName: `${dailyCloseLineTotalCol.cellClassName} font-semibold`,
