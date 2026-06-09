@@ -1,4 +1,8 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   create,
@@ -25,6 +29,39 @@ export function useGetAllProductsQuery(params: UseGetAllProductsParams = {}) {
   return useQuery({
     queryKey: ["all-products", params],
     queryFn: () => getAllProducts(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+interface UseInfiniteProductsParams {
+  /** Término de búsqueda por nombre (ya debounced por el llamador). */
+  search?: string;
+  /** Tamaño de página. Por defecto 20. */
+  limit?: number;
+  /** Permite deshabilitar la query (ej. mientras el combobox está cerrado). */
+  enabled?: boolean;
+}
+
+/**
+ * Lista paginada de productos con scroll infinito + búsqueda en servidor.
+ * Pensado para comboboxes donde el catálogo puede ser grande: solo trae la
+ * página actual y va pidiendo más con `fetchNextPage`.
+ */
+export function useInfiniteProductsQuery({
+  search = "",
+  limit = 20,
+  enabled = true,
+}: UseInfiniteProductsParams = {}) {
+  return useInfiniteQuery({
+    queryKey: ["products-infinite", { search, limit }],
+    queryFn: ({ pageParam }) =>
+      getAllProducts({ page: pageParam, limit, search }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, totalPages } = lastPage.meta;
+      return page < totalPages ? page + 1 : undefined;
+    },
+    enabled,
     placeholderData: keepPreviousData,
   });
 }
@@ -65,6 +102,15 @@ export function useCreateProductInBusinessMutation() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["all-product-of-my-businesses", variables.businessId],
+      });
+      // El producto recién asignado puede traer umbral de alerta de stock; hay
+      // que refrescar el inventario y las alertas para que la campana/badge
+      // aparezcan activas sin esperar a un refetch manual.
+      queryClient.invalidateQueries({
+        queryKey: ["current-inventory-by-business-id", variables.businessId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["stock-alerts", variables.businessId],
       });
     },
   });

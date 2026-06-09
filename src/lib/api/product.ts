@@ -12,15 +12,19 @@ import { businessRoutes } from "../routes/business";
 interface GetAllProductsParams {
   page?: number;
   limit?: number;
+  /** Filtra por nombre (case-insensitive) en el backend. */
+  search?: string;
 }
 
 export async function getAllProducts({
   page,
   limit,
+  search,
 }: GetAllProductsParams = {}): Promise<GetAllProductsResponse> {
   const { data } = await apiClient.get<GetAllProductsResponse>(
     productRoutes.getAllProducts,
-    { params: { page, limit } },
+    // Omitimos `search` cuando está vacío para no ensuciar la URL ni la cache.
+    { params: { page, limit, search: search || undefined } },
   );
   return data;
 }

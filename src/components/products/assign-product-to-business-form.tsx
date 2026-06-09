@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import axios from "axios"
@@ -9,20 +10,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useBusiness } from "@/context/business-context"
 import { useCreateProductInBusinessMutation } from "@/hooks/use-product"
-import { useGetAllProductsQuery } from "@/hooks/use-product"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Separator } from "@/components/ui/separator"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { ProductCombobox } from "@/components/products/product-combobox"
 import { AssignProductToBusinessFormData, assignProductToBusinessSchema } from "@/lib/validations/products"
 import { Product } from "@/lib/types/product"
 
@@ -32,7 +26,9 @@ export function AssignProductToBusinessForm() {
   const { activeBusinessId } = useBusiness()
   const { isProPlan } = useUserRoleAndPlan()
   const createProductInBusinessMutation = useCreateProductInBusinessMutation()
-  const { data: productsData, isLoading: isLoadingProducts } = useGetAllProductsQuery()
+  // Producto elegido en el combobox; lo guardamos completo porque la lista ya
+  // no vive en memoria (se pagina/busca en servidor) y onSubmit lo necesita.
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   const {
     register,
@@ -64,7 +60,8 @@ export function AssignProductToBusinessForm() {
       return
     }
 
-    const product = productsData?.data?.find((p: Product) => p.id === data.productId)
+    const product =
+      selectedProduct?.id === data.productId ? selectedProduct : null
     if (!product) {
       setError("productId", { message: "Producto no encontrado" })
       return
@@ -96,6 +93,7 @@ export function AssignProductToBusinessForm() {
         description: "El producto se ha asignado a tu negocio correctamente",
       })
       reset()
+      setSelectedProduct(null)
       router.push("/dashboard/business/products")
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data?.message) {
@@ -135,37 +133,17 @@ export function AssignProductToBusinessForm() {
           <Label htmlFor="product-select" className="text-card-foreground">
             Producto <span className="text-destructive">*</span>
           </Label>
-          <Select
-            value={selectedProductId || undefined}
-            onValueChange={(value) => setValue("productId", value ?? "", { shouldValidate: true })}
-            disabled={isLoadingProducts}
-          >
-            <SelectTrigger
-              id="product-select"
-              className="w-full"
-              aria-invalid={errors.productId ? "true" : "false"}
-            >
-              <SelectValue
-                placeholder={
-                  isLoadingProducts ? "Cargando productos..." : "Selecciona un producto..."
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {productsData?.data?.map((product: Product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ProductCombobox
+            id="product-select"
+            value={selectedProductId}
+            invalid={!!errors.productId}
+            onChange={(product) => {
+              setSelectedProduct(product)
+              setValue("productId", product?.id ?? "", { shouldValidate: true })
+            }}
+          />
           {errors.productId && (
             <p className="text-xs text-destructive">{errors.productId.message}</p>
-          )}
-          {!isLoadingProducts && productsData?.data?.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              No hay productos disponibles. Crea uno primero en la pestaña &quot;Crear nuevo producto&quot;.
-            </p>
           )}
         </div>
 
@@ -257,7 +235,10 @@ export function AssignProductToBusinessForm() {
             ) : (
               <p className="text-xs text-muted-foreground">
                 Te avisaremos cuando el stock baje de este valor. Puedes
-                ajustarlo o desactivarlo luego desde el inventario.
+                ajustarlo o desactivarlo luego desde el inventario. Si lo dejas
+                vacío, el inventario marcará «Stock bajo» por defecto al quedar 5
+                unidades o menos (solo aviso visual; para recibir notificaciones
+                debes configurar un umbral).
               </p>
             )}
           </div>

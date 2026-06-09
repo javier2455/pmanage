@@ -3,7 +3,11 @@
 import { AlertTriangle, PackageX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { getStockAlertStatus, STOCK_ALERT_LABELS } from "@/lib/stock-alert";
+import {
+  DEFAULT_LOW_STOCK_THRESHOLD,
+  getStockAlertStatus,
+  STOCK_ALERT_LABELS,
+} from "@/lib/stock-alert";
 
 interface StockAlertBadgeProps {
   stock: number;
@@ -15,8 +19,12 @@ interface StockAlertBadgeProps {
 /**
  * Badge de estado de stock. Solo se muestra en estados de alerta:
  * - "out"  → rojo  "Sin stock"   (stock = 0, aunque no haya umbral)
- * - "low"  → ámbar "Stock bajo"  (stock <= umbral configurado)
+ * - "low"  → ámbar "Stock bajo"  (stock <= umbral configurado, o <= default)
  * - "ok"   → no renderiza nada
+ *
+ * Cuando el producto no tiene umbral configurado, el badge cae al umbral por
+ * defecto (`DEFAULT_LOW_STOCK_THRESHOLD`). Esto es **solo visual**: no marca la
+ * campana como activa ni dispara notificaciones.
  *
  * Spec: docs/extra/análisis-planes/spec-tecnicas.md.
  */
@@ -25,15 +33,22 @@ export function StockAlertBadge({
   threshold,
   className,
 }: StockAlertBadgeProps) {
-  const status = getStockAlertStatus(stock, threshold);
+  const status = getStockAlertStatus(stock, threshold, DEFAULT_LOW_STOCK_THRESHOLD);
 
   if (status === "ok") return null;
 
   const isOut = status === "out";
+  // El badge "low" se origina por el default cuando no hay umbral propio.
+  const isDefaultThreshold = status === "low" && threshold == null;
 
   return (
     <Badge
       variant="secondary"
+      title={
+        isDefaultThreshold
+          ? `Umbral por defecto (${DEFAULT_LOW_STOCK_THRESHOLD} unidades). Configura uno propio desde "Alerta de stock" para recibir avisos.`
+          : undefined
+      }
       className={cn(
         "text-xs",
         isOut
