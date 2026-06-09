@@ -6,7 +6,7 @@ import { BASIC_ROUTE } from ".";
  * Contrato backend: docs/notificaciones-internas.md.
  */
 export const notificationRoutes = {
-  list: `${BASIC_ROUTE}/notifications`,
+  list: `${BASIC_ROUTE}/notifications/`,
   unreadCount: `${BASIC_ROUTE}/notifications/unread-count`,
   markRead: (notificationId: string) =>
     `${BASIC_ROUTE}/notifications/${notificationId}/read`,

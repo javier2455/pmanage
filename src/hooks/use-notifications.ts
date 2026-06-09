@@ -19,8 +19,8 @@ import type { GetNotificationsParams } from "@/lib/types/notification";
  * Contrato backend: docs/notificaciones-internas.md.
  */
 
-const LIST_KEY = "notifications";
-const UNREAD_KEY = "notifications-unread";
+export const LIST_KEY = "notifications";
+export const UNREAD_KEY = "notifications-unread";
 
 export function useNotifications(
   businessId: string | undefined,

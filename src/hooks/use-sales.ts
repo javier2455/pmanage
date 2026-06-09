@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreateSaleProps } from "@/lib/types/sales";
 import { cancelSale, create, getAllSalesByBusinessId, getSaleById } from "@/lib/api/sale";
+import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
 
 interface UseAllSalesByBusinessIdParams {
     page?: number;
@@ -40,6 +41,10 @@ export function useCreateSaleMutation() {
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
+            // Una venta puede cruzar el umbral mínimo de stock y generar
+            // notificaciones en el backend; refrescamos lista y conteo del badge.
+            queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
+            queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
         },
     });
 }
@@ -59,6 +64,9 @@ export function useCancelSaleMutation() {
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
+            // Cancelar repone stock: puede resolver/generar avisos de umbral.
+            queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
+            queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
         },
     });
 }
