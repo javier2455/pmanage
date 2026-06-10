@@ -33,6 +33,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { InventoryUpdateStockFormData, inventoryUpdateStockSchema } from "@/lib/validations/inventory"
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
+import {
+  DEFAULT_LOW_STOCK_THRESHOLD,
+  getStockAlertStatus,
+  STOCK_ALERT_LABELS,
+} from "@/lib/stock-alert"
 import { useGetAllProvidersQuery } from "@/hooks/use-provider"
 import type { ProviderWithRelations } from "@/lib/types/provider"
 import Link from "next/link"
@@ -163,17 +168,26 @@ export function UpdateStockForm() {
                   <span className="text-sm font-medium tabular-nums text-card-foreground">
                     {Math.round(Number(selectedProduct.stock) || 0).toLocaleString("es-CO")} unidades
                   </span>
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      "ml-auto text-xs",
-                      selectedProduct.stock <= 10
-                        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                    )}
-                  >
-                    {selectedProduct.stock <= 10 ? "Stock bajo" : "Disponible"}
-                  </Badge>
+                  {(() => {
+                    const status = getStockAlertStatus(
+                      selectedProduct.stock,
+                      selectedProduct.product.stockAlertThreshold,
+                      DEFAULT_LOW_STOCK_THRESHOLD,
+                    )
+                    const statusStyles: Record<typeof status, string> = {
+                      out: "border-destructive/20 bg-destructive/10 text-destructive dark:text-red-400",
+                      low: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                      ok: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                    }
+                    return (
+                      <Badge
+                        variant="secondary"
+                        className={cn("ml-auto text-xs", statusStyles[status])}
+                      >
+                        {STOCK_ALERT_LABELS[status]}
+                      </Badge>
+                    )
+                  })()}
                 </div>
               </div>
 
