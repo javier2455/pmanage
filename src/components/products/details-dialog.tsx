@@ -20,9 +20,12 @@ interface ProductDetailsDialogProps {
     productId: string
     tooltip?: string
     trigger?: React.ReactNode
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
-export default function ProductDetailsDialog({ productId, tooltip, trigger }: ProductDetailsDialogProps) {
+export default function ProductDetailsDialog({ productId, tooltip, trigger, open, onOpenChange }: ProductDetailsDialogProps) {
+    const isControlled = open !== undefined
     const { data, isLoading } = useGetProductByIdQuery(productId, {
         refetchOnMount: "always",
     })
@@ -43,19 +46,21 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger }: Pr
     const triggerContent = trigger ?? <Button variant="outline">Ver detalles</Button>
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                {tooltip ? (
-                    <span className="inline-flex">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                {triggerContent}
-                            </TooltipTrigger>
-                            <TooltipContent>{tooltip}</TooltipContent>
-                        </Tooltip>
-                    </span>
-                ) : triggerContent}
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {isControlled ? null : (
+                <DialogTrigger asChild>
+                    {tooltip ? (
+                        <span className="inline-flex">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    {triggerContent}
+                                </TooltipTrigger>
+                                <TooltipContent>{tooltip}</TooltipContent>
+                            </Tooltip>
+                        </span>
+                    ) : triggerContent}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[425px] md:max-w-[520px] shadow-lg shadow-cyan-300/30">
                 <DialogHeader>
                     <DialogTitle className="text-card-foreground">

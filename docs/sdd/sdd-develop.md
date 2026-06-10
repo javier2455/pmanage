@@ -43,6 +43,7 @@ Cambios respecto a `main` agrupados por estado:
 | 19 | **Alertas de stock bajo/agotado** (feature Pro) | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.2) |
 | 20 | **Configuración de notificaciones externas** (correo/SMS/WhatsApp, multi-canal, plan-gated) | ✅ Frontend + backend (`/businesses/:id/settings`) | — | Sí — backend entregó endpoints (ver §2.12) |
 | 21 | **Notificaciones internas (in-app)** — campana + dropdown + página | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.3) |
+| 22 | **Fila de producto cliqueable** abre el detalle en las tablas de Catálogo y Productos a la venta (se elimina "Ver detalles" del menú de acciones) | ✅ Mergeada en develop | — | Sí |
 
 ---
 
@@ -212,6 +213,21 @@ Reutiliza y amplía la tarjeta `NotificationSettingsCard` dentro de los detalles
 **Contrato backend.** [docs/API.md](../API.md) (GET/POST/PATCH `/businesses/{businessId}/settings`).
 
 **Estado.** Frontend implementado y backend con endpoints entregados. Listo para promover.
+
+---
+
+### 2.13. Fila de producto cliqueable abre el detalle (tablas de Productos)
+
+**Qué hace.** En la vista de Productos (`/dashboard/business/products`), cada fila de las **dos** tablas — **Catálogo del almacén** y **Productos a la venta** — es cliqueable y abre el diálogo de detalle del producto (`ProductDetailsDialog`). Se **elimina** la opción "Ver detalles" del menú de acciones (`Popover`) de ambas tablas, ya que la fila la reemplaza. El resto de acciones (Editar, Editar precio, Eliminar) se conserva; al hacer click sobre la celda de acciones se detiene la propagación para no abrir el detalle.
+
+**Implementación.**
+- [src/components/products/details-dialog.tsx](../../src/components/products/details-dialog.tsx) — `ProductDetailsDialog` admite modo **controlado** opcional (`open` / `onOpenChange`); cuando se controla externamente no renderiza su propio `DialogTrigger`. El modo no controlado (con `trigger`) sigue funcionando para otros consumidores.
+- [src/components/products/table.tsx](../../src/components/products/table.tsx) (Productos a la venta) y [src/components/products/table-of-other-products.tsx](../../src/components/products/table-of-other-products.tsx) (Catálogo) — estado local del producto seleccionado, `onClick` por fila con `cursor-pointer`, `stopPropagation` en la celda `actions`, y un único `ProductDetailsDialog` controlado por tabla.
+- [src/components/products/business-products-table-columns.tsx](../../src/components/products/business-products-table-columns.tsx) y [src/components/products/catalog-products-table-columns.tsx](../../src/components/products/catalog-products-table-columns.tsx) — se quita el item "Ver detalles" del `Popover` y los imports asociados (`Eye`, `ProductDetailsDialog`).
+
+**Criterios de aceptación.**
+- Click en cualquier parte de una fila (salvo la celda de acciones) abre el detalle del producto correcto.
+- El menú de acciones ya no incluye "Ver detalles"; las demás acciones siguen operando sin abrir el detalle.
 
 ---
 

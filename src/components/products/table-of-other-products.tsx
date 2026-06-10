@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useDeleteProductMutation } from "@/hooks/use-product";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
+import ProductDetailsDialog from "@/components/products/details-dialog";
 import {
   createCatalogProductsColumns,
   type CatalogProductsColumnMeta,
@@ -109,6 +110,15 @@ export default function TableOfOtherProducts({
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [detailsProductId, setDetailsProductId] = React.useState<string | null>(
+    null,
+  );
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+
+  const handleRowClick = React.useCallback((productId: string) => {
+    setDetailsProductId(productId);
+    setDetailsOpen(true);
+  }, []);
 
   const table = useReactTable({
     data: products,
@@ -190,10 +200,19 @@ export default function TableOfOtherProducts({
                   </TableHeader>
                   <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow
+                        key={row.id}
+                        onClick={() => handleRowClick(row.original.id)}
+                        className="cursor-pointer"
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
+                            onClick={
+                              cell.column.id === "actions"
+                                ? (e) => e.stopPropagation()
+                                : undefined
+                            }
                             className={cn(
                               "px-4 py-3 text-foreground",
                               columnMeta(cell.column).cellClassName,
@@ -248,6 +267,13 @@ export default function TableOfOtherProducts({
           </div>
         </CardContent>
       </Card>
+      {detailsProductId ? (
+        <ProductDetailsDialog
+          productId={detailsProductId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }

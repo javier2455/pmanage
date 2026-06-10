@@ -69,6 +69,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 19 | Historial de inventario con filtrado por producto | `1f61ac2` | — |
 | 20 | Filtrado de módulos admin-only en permisos de trabajadores | `20f9cf9` | — |
 | 21 | Limpieza de `src/app/api/` (fix CORS al deployar) — **resuelto y mergeado** | `5aae8d7` (PR #2) | — |
+| 22 | Fila de producto cliqueable abre el detalle en ambas tablas de Productos (Catálogo y a la venta); se elimina "Ver detalles" del menú de acciones | — | — |
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 

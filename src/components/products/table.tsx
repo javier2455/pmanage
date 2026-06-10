@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { useBusiness } from "@/context/business-context";
 import { useDeleteProductInBusinessMutation } from "@/hooks/use-product";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
+import ProductDetailsDialog from "@/components/products/details-dialog";
 import {
   createBusinessProductsColumns,
   type BusinessProductsColumnMeta,
@@ -120,6 +121,15 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+  const [detailsProductId, setDetailsProductId] = React.useState<string | null>(
+    null,
+  );
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+
+  const handleRowClick = React.useCallback((productId: string) => {
+    setDetailsProductId(productId);
+    setDetailsOpen(true);
+  }, []);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
@@ -268,10 +278,19 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    onClick={() => handleRowClick(row.original.product.id)}
+                    className="cursor-pointer"
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
+                        onClick={
+                          cell.column.id === "actions"
+                            ? (e) => e.stopPropagation()
+                            : undefined
+                        }
                         className={cn(
                           "px-4 py-3 text-foreground",
                           columnMeta(cell.column).cellClassName,
@@ -325,6 +344,13 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
           </div>
         </CardContent>
       </Card>
+      {detailsProductId ? (
+        <ProductDetailsDialog
+          productId={detailsProductId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }
