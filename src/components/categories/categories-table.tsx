@@ -34,17 +34,16 @@ import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 
-import type { GetAllExpenseCategoriesResponse } from "@/lib/types/expense-category";
+import type {
+  ExpenseCategory,
+  GetAllExpenseCategoriesResponse,
+} from "@/lib/types/expense-category";
 import {
   createCategoriesColumns,
   type CategoriesColumnMeta,
 } from "./categories-table-columns";
 import { CategoryFormDialog } from "./category-form-dialog";
-import {
-  CATEGORY_KINDS,
-  type BaseCategory,
-  type CategoryKind,
-} from "./kind-config";
+import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
 
 function columnMeta(column: {
   columnDef: { meta?: unknown };
@@ -58,7 +57,7 @@ function columnMeta(column: {
 
 interface CategoriesTableProps {
   kind: CategoryKind;
-  categories: BaseCategory[];
+  categories: ExpenseCategory[];
   meta: GetAllExpenseCategoriesResponse["meta"];
   isFetching?: boolean;
   onPageChange: (page: number) => void;
@@ -77,7 +76,7 @@ export function CategoriesTable({
   const deleteCategoryMutation = config.useDelete();
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editingCategory, setEditingCategory] =
-    React.useState<BaseCategory | null>(null);
+    React.useState<ExpenseCategory | null>(null);
 
   const handleDelete = React.useCallback(
     async (categoryId: string) => {
@@ -308,10 +307,7 @@ export function CategoriesTable({
             ? {
                 name: editingCategory.name,
                 description: editingCategory.description,
-                // Solo las categorías de gasto traen businessId; en las de
-                // producto (globales) es undefined y el diálogo lo ignora.
-                businessId: (editingCategory as { businessId?: string })
-                  .businessId,
+                businessId: editingCategory.businessId,
               }
             : undefined
         }

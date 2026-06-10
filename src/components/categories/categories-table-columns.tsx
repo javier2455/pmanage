@@ -10,8 +10,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DeleteDialog } from "@/components/delete-dialog";
+import type { ExpenseCategory } from "@/lib/types/expense-category";
 import { CategoryDetailsDialog } from "./category-details-dialog";
-import type { BaseCategory, CategoryKind } from "./kind-config";
+import type { CategoryKind } from "./kind-config";
 
 export type CategoriesColumnMeta = {
   headerClassName?: string;
@@ -33,7 +34,7 @@ function CategoriesSortableHeader({
   label,
   className,
 }: {
-  column: Column<BaseCategory, unknown>;
+  column: Column<ExpenseCategory, unknown>;
   label: string;
   className?: string;
 }) {
@@ -52,7 +53,7 @@ function CategoriesSortableHeader({
 
 interface CreateColumnsParams {
   kind: CategoryKind;
-  onEditCategory: (category: BaseCategory) => void;
+  onEditCategory: (category: ExpenseCategory) => void;
   onDeleteCategory: (categoryId: string) => void | Promise<void>;
 }
 
@@ -60,7 +61,7 @@ export function createCategoriesColumns({
   kind,
   onEditCategory,
   onDeleteCategory,
-}: CreateColumnsParams): ColumnDef<BaseCategory>[] {
+}: CreateColumnsParams): ColumnDef<ExpenseCategory>[] {
   return [
     {
       id: "name",

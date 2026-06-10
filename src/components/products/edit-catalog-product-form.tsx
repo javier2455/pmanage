@@ -8,6 +8,7 @@ import {
     useGetAllProductCategoriesQuery,
     useGetProductCategoryByIdQuery,
 } from "@/hooks/use-product-categories"
+import { useBusiness } from "@/context/business-context"
 import { ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -47,11 +48,13 @@ export function EditCatalogProductForm() {
         refetchOnMount: "always",
     })
     const editProductMutation = useEditProductMutation()
-    // Las categorías de producto son globales por usuario; no se filtran por negocio.
+    const { activeBusinessId } = useBusiness()
     const { data: categoriesData, isLoading: isLoadingCategories } =
         useGetAllProductCategoriesQuery({
             page: 1,
             limit: 1000,
+            businessId: activeBusinessId ?? undefined,
+            enabled: !!activeBusinessId,
         })
     const productCategories = categoriesData?.data ?? []
 

@@ -33,18 +33,12 @@ function CategoriesKindContent({ kind }: { kind: CategoryKind }) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
 
-  // Las categorías de gasto se filtran por negocio activo; las de producto son
-  // globales y se cargan sin depender de un negocio seleccionado.
-  const { data, isLoading, isFetching, isError } = config.useList(
-    config.isBusinessScoped
-      ? {
-          page,
-          limit,
-          businessId: activeBusinessId ?? undefined,
-          enabled: !!activeBusinessId,
-        }
-      : { page, limit },
-  );
+  const { data, isLoading, isFetching, isError } = config.useList({
+    page,
+    limit,
+    businessId: activeBusinessId ?? undefined,
+    enabled: !!activeBusinessId,
+  });
 
   function handleLimitChange(nextLimit: number) {
     setLimit(nextLimit);

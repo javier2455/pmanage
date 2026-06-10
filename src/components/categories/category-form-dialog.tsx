@@ -29,19 +29,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { z } from "zod";
-import { createExpenseCategorySchema } from "@/lib/validations/expense-category";
+import {
+  CreateExpenseCategoryFormData,
+  createExpenseCategorySchema,
+} from "@/lib/validations/expense-category";
 import { useBusiness } from "@/context/business-context";
 import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
 
-// Schema común a ambos tipos: `businessId` es opcional aquí porque las
-// categorías de producto son globales (no llevan negocio). Para las de gasto
-// la obligatoriedad se valida manualmente en onSubmit según `isBusinessScoped`.
-const categoryFormSchema = createExpenseCategorySchema.extend({
-  businessId: z.string().optional(),
-});
-
-type CategoryFormData = z.infer<typeof categoryFormSchema>;
+type CategoryFormData = CreateExpenseCategoryFormData;
 
 const SUCCESS_TOAST_STYLES = {
   title: "text-white! text-[16px]! font-bold!",
@@ -95,13 +90,12 @@ export function CategoryFormDialog({
     watch,
     formState: { errors },
   } = useForm<CategoryFormData>({
-    resolver: zodResolver(categoryFormSchema),
+    resolver: zodResolver(createExpenseCategorySchema),
     defaultValues: {
       name: defaultValues?.name ?? "",
       description: defaultValues?.description ?? "",
-      businessId: config.isBusinessScoped
-        ? (defaultValues?.businessId ?? activeBusinessId ?? "")
-        : undefined,
+      businessId:
+        defaultValues?.businessId ?? activeBusinessId ?? "",
     },
   });
 
@@ -111,12 +105,11 @@ export function CategoryFormDialog({
       reset({
         name: defaultValues?.name ?? "",
         description: defaultValues?.description ?? "",
-        businessId: config.isBusinessScoped
-          ? (defaultValues?.businessId ?? activeBusinessId ?? "")
-          : undefined,
+        businessId:
+          defaultValues?.businessId ?? activeBusinessId ?? "",
       });
     }
-  }, [open, config.isBusinessScoped, defaultValues?.name, defaultValues?.description, defaultValues?.businessId, activeBusinessId, reset]);
+  }, [open, defaultValues?.name, defaultValues?.description, defaultValues?.businessId, activeBusinessId, reset]);
 
   const selectedBusinessId = watch("businessId");
 
@@ -138,29 +131,13 @@ export function CategoryFormDialog({
           description: "La categoría se ha actualizado correctamente",
         });
       } else {
-        if (config.isBusinessScoped && !formData.businessId) {
+        if (!formData.businessId) {
           setError("businessId", {
             message: "Selecciona un negocio antes de crear la categoría.",
           });
           return;
         }
-        // Las categorías de producto son globales: no se envía businessId. El
-        // cast acota la unión de tipos de las dos mutaciones a una forma común.
-        const payload: { name: string; description: string; businessId?: string } =
-          config.isBusinessScoped
-            ? {
-                name: formData.name,
-                description: formData.description,
-                businessId: formData.businessId,
-              }
-            : { name: formData.name, description: formData.description };
-        await (
-          createMutation.mutateAsync as (p: {
-            name: string;
-            description: string;
-            businessId?: string;
-          }) => Promise<unknown>
-        )(payload);
+        await createMutation.mutateAsync(formData);
         sileo.success({
           title: "Categoría creada correctamente",
           fill: "",
@@ -243,7 +220,6 @@ export function CategoryFormDialog({
             )}
           </div>
 
-          {config.isBusinessScoped && (
           <div className="flex flex-col gap-2">
             <Label htmlFor="category-business" className="text-card-foreground">
               Negocio <span className="text-destructive">*</span>
@@ -287,7 +263,6 @@ export function CategoryFormDialog({
               </p>
             )}
           </div>
-          )}
 
           {errors.root && (
             <p className="text-sm text-destructive">{errors.root.message}</p>

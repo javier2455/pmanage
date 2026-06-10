@@ -16,23 +16,8 @@ import {
 
 export type CategoryKind = "expenses" | "products";
 
-// Forma común a las categorías de gasto y de producto. Las de gasto añaden
-// `businessId`; las de producto son globales y no lo tienen. Los componentes
-// compartidos (tabla, diálogos) se tipan contra esta base.
-export interface BaseCategory {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
 export interface CategoryKindConfig {
   kind: CategoryKind;
-  // true → la categoría pertenece a un negocio (gastos). false → es global por
-  // usuario (productos). Controla si se filtra por negocio, si se pide el campo
-  // "Negocio" en el formulario y si se muestra en los detalles.
-  isBusinessScoped: boolean;
   cardTitle: string;
   cardDescription: string;
   detailTitle: string;
@@ -61,7 +46,6 @@ export interface CategoryKindConfig {
 export const CATEGORY_KINDS: Record<CategoryKind, CategoryKindConfig> = {
   expenses: {
     kind: "expenses",
-    isBusinessScoped: true,
     cardTitle: "Gastos",
     cardDescription: "Categorías para clasificar tus gastos",
     detailTitle: "Categorías de Gastos",
@@ -80,7 +64,6 @@ export const CATEGORY_KINDS: Record<CategoryKind, CategoryKindConfig> = {
   },
   products: {
     kind: "products",
-    isBusinessScoped: false,
     cardTitle: "Productos",
     cardDescription: "Categorías para clasificar tus productos",
     detailTitle: "Categorías de Productos",

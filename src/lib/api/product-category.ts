@@ -4,12 +4,14 @@ import {
   CreateProductCategoryProps,
   GetAllProductCategoriesResponse,
   ProductCategory,
+  ProductCategoryWithBusiness,
   UpdateProductCategoryProps,
 } from "../types/product-category";
 
 interface GetAllProductCategoriesParams {
   page?: number;
   limit?: number;
+  businessId?: string;
 }
 
 interface RawListResponse {
@@ -28,10 +30,11 @@ interface SingleResponse<T> {
 export async function getAllProductCategories({
   page,
   limit,
+  businessId,
 }: GetAllProductCategoriesParams = {}): Promise<GetAllProductCategoriesResponse> {
   const { data } = await apiClient.get<RawListResponse>(
     productRoutes.getAllProductCategory,
-    { params: { page, limit } },
+    { params: { page, limit, businessId } },
   );
   const items = data.data ?? [];
   const resolvedTotal = data.total ?? items.length;
@@ -51,8 +54,8 @@ export async function getAllProductCategories({
 
 export async function getProductCategoryById(
   categoryId: string,
-): Promise<ProductCategory> {
-  const { data } = await apiClient.get<SingleResponse<ProductCategory>>(
+): Promise<ProductCategoryWithBusiness> {
+  const { data } = await apiClient.get<SingleResponse<ProductCategoryWithBusiness>>(
     productRoutes.getProductCategoryById(categoryId),
   );
   return data.data;
