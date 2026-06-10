@@ -35,6 +35,12 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import { sileo } from "sileo"
+import {
+  DEFAULT_LOW_STOCK_THRESHOLD,
+  getStockAlertStatus,
+  STOCK_ALERT_LABELS,
+} from "@/lib/stock-alert"
+import { formatStockWithUnit } from "@/lib/units"
 
 interface CartItem {
   productId: string;
@@ -88,11 +94,17 @@ export default function CreateSalesPage() {
     return selectedProduct.stock - cartQuantityForSelected
   }, [selectedProduct, cartQuantityForSelected])
 
+  // Mismo criterio que el inventario: estado derivado vía `getStockAlertStatus`
+  // (consciente de la unidad: redondea `ud`, respeta decimales en peso/volumen).
   const stockStatus = useMemo(() => {
     if (!selectedProduct) return null
-    if (effectiveStock === 0) return { label: "Sin stock", variant: "destructive" as const }
-    if (effectiveStock <= 10) return { label: "Stock bajo", variant: "secondary" as const }
-    return { label: "Disponible", variant: "secondary" as const }
+    const status = getStockAlertStatus(
+      effectiveStock,
+      selectedProduct.stockAlertThreshold,
+      DEFAULT_LOW_STOCK_THRESHOLD,
+      selectedProduct.product.unit,
+    )
+    return { status, label: STOCK_ALERT_LABELS[status] }
   }, [selectedProduct, effectiveStock])
 
   const unitPrice = selectedProduct?.price ?? 0
@@ -276,16 +288,18 @@ export default function CreateSalesPage() {
                     <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
                       <Package className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm tabular-nums text-card-foreground">
-                        {selectedProduct ? effectiveStock : "--"}
+                        {selectedProduct
+                          ? formatStockWithUnit(effectiveStock, selectedProduct.product.unit)
+                          : "--"}
                       </span>
                       {stockStatus && (
                         <Badge
-                          variant={stockStatus.variant}
+                          variant="secondary"
                           className={cn(
                             "ml-auto text-xs",
-                            stockStatus.label === "Sin stock"
+                            stockStatus.status === "out"
                               ? "bg-destructive/10 text-destructive border-destructive/20"
-                              : stockStatus.label === "Stock bajo"
+                              : stockStatus.status === "low"
                                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                                 : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
                           )}
@@ -296,7 +310,7 @@ export default function CreateSalesPage() {
                     </div>
                     {cartQuantityForSelected > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        {cartQuantityForSelected} ya en el carrito
+                        {formatStockWithUnit(cartQuantityForSelected, selectedProduct?.product.unit)} ya en el carrito
                       </p>
                     )}
                   </div>
@@ -490,7 +504,7 @@ export default function CreateSalesPage() {
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {item.quantity} x ${item.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatStockWithUnit(item.quantity, item.unit)} x ${item.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                   ))}

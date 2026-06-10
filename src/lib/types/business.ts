@@ -32,6 +32,15 @@ export type BusinessWithProducts = {
   product: Product;
   stock: number;
   updatedAt: Date;
+  /**
+   * Umbral de alerta de stock bajo del BusinessProduct (`null` = sin alerta).
+   * Vive a nivel raíz porque es por negocio-producto, no global del `Product`
+   * (igual que `CurrentInventoryEntry.stockAlertThreshold`).
+   * TODO(backend): incluir este campo en `GET /businesses/:businessId/products`.
+   * Mientras no llegue, el form de entrada cae al umbral por defecto visual.
+   * Contrato: docs/backend-umbral-en-productos.md.
+   */
+  stockAlertThreshold?: number | null;
 };
 
 export type BusinessProduct = {

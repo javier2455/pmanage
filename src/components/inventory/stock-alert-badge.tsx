@@ -13,6 +13,8 @@ interface StockAlertBadgeProps {
   stock: number;
   /** Umbral configurado del producto. `null`/`undefined` = sin alerta. */
   threshold: number | null | undefined;
+  /** Unidad del producto (kg, L, ud, …). Decide si el stock se redondea. */
+  unit?: string | null;
   className?: string;
 }
 
@@ -31,9 +33,10 @@ interface StockAlertBadgeProps {
 export function StockAlertBadge({
   stock,
   threshold,
+  unit,
   className,
 }: StockAlertBadgeProps) {
-  const status = getStockAlertStatus(stock, threshold, DEFAULT_LOW_STOCK_THRESHOLD);
+  const status = getStockAlertStatus(stock, threshold, DEFAULT_LOW_STOCK_THRESHOLD, unit);
 
   if (status === "ok") return null;
 

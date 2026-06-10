@@ -38,6 +38,7 @@ import {
   getStockAlertStatus,
   STOCK_ALERT_LABELS,
 } from "@/lib/stock-alert"
+import { formatStockWithUnit } from "@/lib/units"
 import { useGetAllProvidersQuery } from "@/hooks/use-provider"
 import type { ProviderWithRelations } from "@/lib/types/provider"
 import Link from "next/link"
@@ -166,13 +167,17 @@ export function UpdateStockForm() {
                 <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium tabular-nums text-card-foreground">
-                    {Math.round(Number(selectedProduct.stock) || 0).toLocaleString("es-CO")} unidades
+                    {formatStockWithUnit(selectedProduct.stock, selectedProduct.product.unit)}
                   </span>
                   {(() => {
+                    // Umbral propio del negocio-producto si el backend lo manda;
+                    // si viene `null`/ausente, `getStockAlertStatus` cae al
+                    // default visual (`DEFAULT_LOW_STOCK_THRESHOLD`).
                     const status = getStockAlertStatus(
                       selectedProduct.stock,
-                      selectedProduct.product.stockAlertThreshold,
+                      selectedProduct.stockAlertThreshold,
                       DEFAULT_LOW_STOCK_THRESHOLD,
+                      selectedProduct.product.unit,
                     )
                     const statusStyles: Record<typeof status, string> = {
                       out: "border-destructive/20 bg-destructive/10 text-destructive dark:text-red-400",
@@ -328,12 +333,11 @@ export function UpdateStockForm() {
                     <span>
                       El nuevo stock total sera de{" "}
                       <span className="font-semibold text-card-foreground">
-                        {(
-                          Math.round(Number(selectedProduct.stock) || 0) +
-                          Math.round(newStockNum)
-                        ).toLocaleString("es-CO")}
-                      </span>{" "}
-                      unidades
+                        {formatStockWithUnit(
+                          (Number(selectedProduct.stock) || 0) + newStockNum,
+                          selectedProduct.product.unit,
+                        )}
+                      </span>
                     </span>
                   </p>
                 )}
