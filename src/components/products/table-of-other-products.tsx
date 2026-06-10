@@ -203,7 +203,7 @@ export default function TableOfOtherProducts({
                       <TableRow
                         key={row.id}
                         onClick={() => handleRowClick(row.original.id)}
-                        className="cursor-pointer"
+                        className="cursor-pointer transition-colors hover:bg-muted/60"
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
