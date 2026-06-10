@@ -25,7 +25,15 @@ interface InventoryHistoryTimelineProps {
   isFetching?: boolean;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  /** Título del estado vacío. Permite contextualizar negocio vs. producto. */
+  emptyTitle?: string;
+  /** Descripción del estado vacío. */
+  emptyDescription?: string;
 }
+
+const DEFAULT_EMPTY_TITLE = "Sin movimientos registrados";
+const DEFAULT_EMPTY_DESCRIPTION =
+  "Aún no hay entradas de inventario en este negocio.";
 
 function isSameDay(a: Date, b: Date) {
   return (
@@ -75,6 +83,8 @@ export default function InventoryHistoryTimeline({
   isFetching = false,
   onPageChange,
   onLimitChange,
+  emptyTitle = DEFAULT_EMPTY_TITLE,
+  emptyDescription = DEFAULT_EMPTY_DESCRIPTION,
 }: InventoryHistoryTimelineProps) {
   const isEmpty = meta.total === 0;
   const groups = React.useMemo(() => groupByDay(entries), [entries]);
@@ -89,10 +99,8 @@ export default function InventoryHistoryTimeline({
                 <EmptyMedia variant="icon">
                   <ClipboardList />
                 </EmptyMedia>
-                <EmptyTitle>Sin movimientos registrados</EmptyTitle>
-                <EmptyDescription>
-                  Aún no hay entradas de inventario en este negocio.
-                </EmptyDescription>
+                <EmptyTitle>{emptyTitle}</EmptyTitle>
+                <EmptyDescription>{emptyDescription}</EmptyDescription>
               </EmptyHeader>
             </Empty>
           </div>

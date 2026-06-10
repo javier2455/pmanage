@@ -9,6 +9,8 @@ export const inventoryRoutes = {
     `${BASIC_ROUTE}/inventory/business/${businessId}/current`,
   getInventoryByBusinessId: (businessId: string) =>
     `${BASIC_ROUTE}/inventory/business/${businessId}/history`,
+  getProductInventoryHistory: (businessId: string, productId: string) =>
+    `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/history`,
 };
 
 /**

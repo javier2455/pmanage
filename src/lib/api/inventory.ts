@@ -3,6 +3,7 @@ import { inventoryRoutes } from "../routes/inventory";
 import {
     AddStockToProductProps,
     CurrentInventoryResponse,
+    InventoryHistoryInclude,
     InventoryHistoryResponse,
 } from "../types/inventory";
 
@@ -10,6 +11,11 @@ interface PaginatedByBusiness {
     businessId: string;
     page?: number;
     limit?: number;
+}
+
+interface ProductInventoryHistoryParams extends PaginatedByBusiness {
+    productId: string;
+    include?: InventoryHistoryInclude;
 }
 
 export async function getCurrentInventoryByBusinessId({
@@ -32,6 +38,20 @@ export async function getInventoryHistoryByBusinessId({
     const { data } = await apiClient.get<InventoryHistoryResponse>(
         inventoryRoutes.getInventoryByBusinessId(businessId),
         { params: { page, limit, stockIncrease: true } },
+    );
+    return data;
+}
+
+export async function getProductInventoryHistory({
+    businessId,
+    productId,
+    page,
+    limit,
+    include,
+}: ProductInventoryHistoryParams): Promise<InventoryHistoryResponse> {
+    const { data } = await apiClient.get<InventoryHistoryResponse>(
+        inventoryRoutes.getProductInventoryHistory(businessId, productId),
+        { params: { page, limit, ...(include ? { include } : {}) } },
     );
     return data;
 }

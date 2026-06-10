@@ -74,6 +74,13 @@ export interface InventoryHistoryResponse {
     meta: InventoryMeta;
 }
 
+/**
+ * Tipo de registros a incluir en el historial por producto.
+ * - `increases`: solo entradas (previousStock < newStock). Es el valor por defecto del backend.
+ * - `all`: todos los movimientos (ventas, pérdidas, ajustes, etc.).
+ */
+export type InventoryHistoryInclude = "increases" | "all";
+
 export enum InventoryActionType {
     PURCHASE = "purchase",
     CANCEL_SALE = "cancel_sale",
