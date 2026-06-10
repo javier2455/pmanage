@@ -9,7 +9,6 @@ export const createProductCategorySchema = z.object({
     .string()
     .min(2, "La descripción debe tener al menos 2 caracteres")
     .max(500, "La descripción no debe exceder 500 caracteres"),
-  businessId: z.string().min(1, "Selecciona un negocio"),
 });
 
 export const updateProductCategorySchema = createProductCategorySchema

@@ -1,17 +1,13 @@
+// Las categorías de producto son globales por usuario (no pertenecen a un
+// negocio). Un producto es el mismo en todos los negocios del usuario, por lo
+// que su categoría también debe ser la misma en todos. Por eso aquí no hay
+// `businessId` (a diferencia de las categorías de gasto).
 export interface ProductCategory {
   id: string;
   name: string;
   description: string;
-  businessId: string;
   createdAt: string;
   updatedAt?: string;
-}
-
-export interface ProductCategoryWithBusiness extends ProductCategory {
-  business: {
-    id: string;
-    name: string;
-  };
 }
 
 export interface GetAllProductCategoriesResponse {
@@ -27,7 +23,6 @@ export interface GetAllProductCategoriesResponse {
 export interface CreateProductCategoryProps {
   name: string;
   description: string;
-  businessId: string;
 }
 
 export type UpdateProductCategoryProps = Partial<{

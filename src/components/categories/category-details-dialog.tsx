@@ -94,14 +94,17 @@ export function CategoryDetailsDialog({
               </span>
             </div>
 
-            <div className="flex items-center justify-between border-b border-border py-4">
-              <span className="text-sm font-medium text-card-foreground">
-                Negocio
-              </span>
-              <span className="text-sm font-medium text-card-foreground">
-                {data.business?.name ?? "—"}
-              </span>
-            </div>
+            {config.isBusinessScoped && (
+              <div className="flex items-center justify-between border-b border-border py-4">
+                <span className="text-sm font-medium text-card-foreground">
+                  Negocio
+                </span>
+                <span className="text-sm font-medium text-card-foreground">
+                  {(data as { business?: { name: string } }).business?.name ??
+                    "—"}
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center justify-between border-b border-border py-4">
               <span className="text-sm font-medium text-card-foreground">

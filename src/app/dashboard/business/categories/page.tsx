@@ -16,12 +16,17 @@ function CategoryKindCard({ kind }: { kind: CategoryKind }) {
   const { activeBusinessId } = useBusiness();
   const [createOpen, setCreateOpen] = React.useState(false);
 
-  const { data, isLoading } = config.useList({
-    page: 1,
-    limit: 5,
-    businessId: activeBusinessId ?? undefined,
-    enabled: !!activeBusinessId,
-  });
+  // Gastos: filtradas por negocio activo. Productos: globales por usuario.
+  const { data, isLoading } = config.useList(
+    config.isBusinessScoped
+      ? {
+          page: 1,
+          limit: 5,
+          businessId: activeBusinessId ?? undefined,
+          enabled: !!activeBusinessId,
+        }
+      : { page: 1, limit: 5 },
+  );
 
   const previewItems = (data?.data ?? []).map((c) => ({
     id: c.id,

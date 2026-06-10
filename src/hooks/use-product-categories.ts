@@ -19,19 +19,19 @@ import {
 interface UseGetAllProductCategoriesParams {
   page?: number;
   limit?: number;
-  businessId?: string;
   enabled?: boolean;
 }
 
+// Las categorías de producto son globales por usuario, así que no se filtran ni
+// se cachean por negocio (a diferencia de las de gasto).
 export function useGetAllProductCategoriesQuery({
   page,
   limit,
-  businessId,
   enabled = true,
 }: UseGetAllProductCategoriesParams = {}) {
   return useQuery({
-    queryKey: ["product-categories", businessId ?? null, page, limit],
-    queryFn: () => getAllProductCategories({ page, limit, businessId }),
+    queryKey: ["product-categories", page, limit],
+    queryFn: () => getAllProductCategories({ page, limit }),
     placeholderData: keepPreviousData,
     enabled,
   });
@@ -50,13 +50,8 @@ export function useCreateProductCategoryMutation() {
   return useMutation({
     mutationFn: (credentials: CreateProductCategoryProps) =>
       createProductCategory(credentials),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["product-categories", variables.businessId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["product-categories", null],
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-categories"] });
     },
   });
 }
