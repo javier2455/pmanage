@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { clearAuthCookies } from "@/lib/cookies";
+import { logout } from "@/lib/api/auth";
 import { PlanIndicator } from "@/components/sidebar/plan-indicator";
 
 interface StoredUser {
@@ -58,7 +59,19 @@ export function NavUser() {
   const userEmail = user.email ?? "";
   const userAvatar = user.avatar ?? "";
 
-  function handleLogout() {
+  async function handleLogout() {
+    // Invalidamos el access token en el backend antes de limpiar la sesión.
+    // El interceptor adjunta el access token; el refresh_token va en el body.
+    // Es best-effort: si falla (red/token expirado) igual cerramos la sesión.
+    const refreshToken = sessionStorage.getItem("refresh_token");
+    try {
+      if (refreshToken) {
+        await logout(refreshToken);
+      }
+    } catch {
+      // Ignorado a propósito: el cierre de sesión local debe ocurrir igual.
+    }
+
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("refresh_token");
     sessionStorage.removeItem("user");
