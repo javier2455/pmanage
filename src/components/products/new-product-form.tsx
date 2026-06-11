@@ -408,7 +408,7 @@ export function NewProductForm() {
 
                 {/* Buttons */}
                 <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <Button type="button" variant="default" asChild>
+                    <Button type="button" variant="outline" asChild>
                         <Link href={pathname === '/dashboard/business/inventory/create' ? '/dashboard/business/inventory' : '/dashboard/business/products'}>
                             <X className="mr-2 h-4 w-4" />
                             Cancelar

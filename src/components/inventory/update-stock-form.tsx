@@ -366,7 +366,6 @@ export function UpdateStockForm() {
           <Button
             type="button"
             variant="outline"
-            className="bg-transparent"
             onClick={() => {
               setSelectedProduct(null)
               reset()

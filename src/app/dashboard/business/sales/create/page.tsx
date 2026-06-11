@@ -536,7 +536,7 @@ export default function CreateSalesPage() {
                   <Button
                     variant="outline"
                     onClick={handleCancel}
-                    className="w-full bg-transparent"
+                    className="w-full"
                   >
                     <X className="mr-2 h-4 w-4" />
                     Cancelar
