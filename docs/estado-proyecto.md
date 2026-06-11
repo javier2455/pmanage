@@ -70,6 +70,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 20 | Filtrado de módulos admin-only en permisos de trabajadores | `20f9cf9` | — |
 | 21 | Limpieza de `src/app/api/` (fix CORS al deployar) — **resuelto y mergeado** | `5aae8d7` (PR #2) | — |
 | 22 | Fila de producto cliqueable abre el detalle en ambas tablas de Productos (Catálogo y a la venta); se elimina "Ver detalles" del menú de acciones | — | — |
+| 23 | **Gastos filtrados por negocio activo** + toggle "Todos los negocios" (reporte consolidado, gateado a Pro) | — | — |
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 
@@ -109,6 +110,15 @@ POST /api/v2/expenses → 500
 4. `GET /expenses` y `GET /expenses/:id`: **devolver** `expenseCategoryId` (idealmente con la categoría embebida) para que la edición precargue la selección.
 
 **Verificación:** crear un gasto con categoría y reabrirlo en edición; si la categoría aparece seleccionada, el punto queda resuelto.
+
+### Detalle: Gastos filtrados por negocio activo (feature 23)
+
+Antes, la página de Gastos llamaba a `getAllExpenses` **sin `businessId`**, mezclando los gastos de todos los negocios del usuario. Ahora filtra por el **negocio activo** por defecto, alineándose con Ventas y Categorías.
+
+- **API/hook:** `getAllExpenses` ([src/lib/api/expense.ts](../src/lib/api/expense.ts)) acepta `businessId` como query param opcional; `useGetAllExpensesQuery` ([src/hooks/use-expenses.ts](../src/hooks/use-expenses.ts)) lo incluye en el `queryKey` (sin riesgo de cache leak entre negocios). Backend ya soporta el query param — ver [spec-tecnicas.md](extra/análisis-planes/spec-tecnicas.md).
+- **Reporte consolidado (Pro):** un toggle "Todos los negocios" ([src/app/dashboard/business/expenses/page.tsx](../src/app/dashboard/business/expenses/page.tsx)) omite el `businessId` para ver los gastos de todos los negocios juntos. Gateado a plan Pro siguiendo [docs/extra/pro-gating.md](extra/pro-gating.md): el switch va deshabilitado con `<ProBadge />` + tooltip para usuarios free/básico. Nuevo componente `src/components/ui/switch.tsx` (shadcn).
+
+**Sin bloqueador de backend** — el contrato del query param ya está disponible.
 
 ---
 

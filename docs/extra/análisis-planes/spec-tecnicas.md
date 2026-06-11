@@ -887,6 +887,24 @@ Incluir `categoryId` y `category` (objeto con id, name, color) en la response de
 
 ---
 
+**`GET /expenses` — filtrado por negocio (query param `businessId`)**
+
+`GET /expenses` acepta `businessId` como **query param opcional** (además de `page` y `limit`):
+
+```
+GET /expenses?page=1&limit=5&businessId={businessId}
+```
+
+- **Con `businessId`** → devuelve solo los gastos de ese negocio. Es el modo por defecto del frontend (negocio activo).
+- **Sin `businessId`** → devuelve los gastos de **todos** los negocios del usuario (reporte consolidado). En el frontend este modo está **gateado a plan Pro** (los planes gratuito/básico solo tienen un negocio).
+
+Mismo patrón de query param que `GET /expense-categories` (ver más arriba). Implementado en el frontend:
+`getAllExpenses` ([src/lib/api/expense.ts](../../../src/lib/api/expense.ts)),
+hook `useGetAllExpensesQuery` ([src/hooks/use-expenses.ts](../../../src/hooks/use-expenses.ts)) y
+página de Gastos ([src/app/dashboard/business/expenses/page.tsx](../../../src/app/dashboard/business/expenses/page.tsx)).
+
+---
+
 ## Backend — Presupuesto Mensual
 
 ### Nueva entidad `MonthlyBudget`

@@ -19,13 +19,21 @@ import {
 interface UseGetAllExpensesParams {
   page?: number;
   limit?: number;
+  businessId?: string;
+  enabled?: boolean;
 }
 
-export function useGetAllExpensesQuery(params: UseGetAllExpensesParams = {}) {
+export function useGetAllExpensesQuery({
+  page,
+  limit,
+  businessId,
+  enabled = true,
+}: UseGetAllExpensesParams = {}) {
   return useQuery({
-    queryKey: ["all-expenses", params],
-    queryFn: () => getAllExpenses(params),
+    queryKey: ["all-expenses", businessId ?? null, page, limit],
+    queryFn: () => getAllExpenses({ page, limit, businessId }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 

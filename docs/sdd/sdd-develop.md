@@ -44,6 +44,7 @@ Cambios respecto a `main` agrupados por estado:
 | 20 | **Configuración de notificaciones externas** (correo/SMS/WhatsApp, multi-canal, plan-gated) | ✅ Frontend + backend (`/businesses/:id/settings`) | — | Sí — backend entregó endpoints (ver §2.12) |
 | 21 | **Notificaciones internas (in-app)** — campana + dropdown + página | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.3) |
 | 22 | **Fila de producto cliqueable** abre el detalle en las tablas de Catálogo y Productos a la venta (se elimina "Ver detalles" del menú de acciones) | ✅ Mergeada en develop | — | Sí |
+| 23 | **Gastos filtrados por negocio activo** + toggle "Todos los negocios" (reporte consolidado, gateado a Pro) | ✅ Mergeada en develop | — | Sí — backend ya soporta query param `businessId` |
 
 ---
 
