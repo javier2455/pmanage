@@ -1,11 +1,9 @@
 "use client";
 
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, MoreHorizontal, XCircle } from "lucide-react";
+import { ArrowUpDown, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
-import DetailsDialog from "./details-dialog";
 import { CancelSaleDialog } from "./cancel-sale-dialog";
 import { StatusBadge } from "../generic/status-badge";
 
@@ -144,51 +142,28 @@ export function createSalesColumns(
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Abrir acciones"
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-52 p-1">
-              <DetailsDialog
-                saleId={row.original.id}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                  >
-                    <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                    Ver detalles
-                  </button>
-                }
-              />
-              <CancelSaleDialog
-                onConfirm={(cancellationReason) =>
-                  onCancelSale(row.original.id, cancellationReason)
-                }
-                trigger={
-                  <button
-                    type="button"
-                    disabled={row.original.isCancelled}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm whitespace-nowrap transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
-                  >
-                    <XCircle className="size-4 shrink-0 text-destructive" />
-                    Cancelar venta
-                  </button>
-                }
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      ),
+      cell: ({ row }) =>
+        row.original.isCancelled ? null : (
+          <div className="flex justify-end">
+            <CancelSaleDialog
+              tooltip="Cancelar venta"
+              onConfirm={(cancellationReason) =>
+                onCancelSale(row.original.id, cancellationReason)
+              }
+              trigger={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Cancelar venta"
+                  className="text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <XCircle className="size-4" />
+                </Button>
+              }
+            />
+          </div>
+        ),
     },
   ];
 }

@@ -26,36 +26,43 @@ interface DetailsDialogProps {
   saleId: string;
   tooltip?: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function DetailsDialog({
   saleId,
   tooltip,
   trigger,
+  open,
+  onOpenChange,
 }: DetailsDialogProps) {
   const { data, isLoading } = useGetSaleById(saleId);
+  const isControlled = open !== undefined;
 
   const triggerContent = trigger ?? (
-    <Button variant="outline">Open Dialog</Button>
+    <Button variant="outline">Ver detalles</Button>
   );
 
   const total = Number(data?.total ?? 0);
   const items = data?.items ?? [];
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {tooltip ? (
-          <span className="inline-flex">
-            <Tooltip>
-              <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
-              <TooltipContent>{tooltip}</TooltipContent>
-            </Tooltip>
-          </span>
-        ) : (
-          triggerContent
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {isControlled ? null : (
+        <DialogTrigger asChild>
+          {tooltip ? (
+            <span className="inline-flex">
+              <Tooltip>
+                <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+              </Tooltip>
+            </span>
+          ) : (
+            triggerContent
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] md:max-w-[520px] overflow-hidden shadow-lg shadow-cyan-300/30">
         <DialogHeader>
           <DialogTitle className="text-card-foreground">

@@ -71,6 +71,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 21 | Limpieza de `src/app/api/` (fix CORS al deployar) — **resuelto y mergeado** | `5aae8d7` (PR #2) | — |
 | 22 | Fila de producto cliqueable abre el detalle en ambas tablas de Productos (Catálogo y a la venta); se elimina "Ver detalles" del menú de acciones | — | — |
 | 23 | **Gastos filtrados por negocio activo** + toggle "Todos los negocios" (reporte consolidado, gateado a Pro) | — | — |
+| 24 | Fila de venta cliqueable abre el detalle; se elimina el dropdown de acciones y se deja solo el icono de "Cancelar venta" en la fila | — | — |
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 

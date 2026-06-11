@@ -45,6 +45,7 @@ Cambios respecto a `main` agrupados por estado:
 | 21 | **Notificaciones internas (in-app)** — campana + dropdown + página | 🟡 Frontend implementado, backend pendiente | — | **No** — espera endpoints backend (ver §3.3) |
 | 22 | **Fila de producto cliqueable** abre el detalle en las tablas de Catálogo y Productos a la venta (se elimina "Ver detalles" del menú de acciones) | ✅ Mergeada en develop | — | Sí |
 | 23 | **Gastos filtrados por negocio activo** + toggle "Todos los negocios" (reporte consolidado, gateado a Pro) | ✅ Mergeada en develop | — | Sí — backend ya soporta query param `businessId` |
+| 24 | **Fila de venta cliqueable** abre el detalle; se elimina el dropdown de acciones y se deja solo un icono de "Cancelar venta" en la fila | ✅ Mergeada en develop | — | Sí |
 
 ---
 
@@ -229,6 +230,24 @@ Reutiliza y amplía la tarjeta `NotificationSettingsCard` dentro de los detalles
 **Criterios de aceptación.**
 - Click en cualquier parte de una fila (salvo la celda de acciones) abre el detalle del producto correcto.
 - El menú de acciones ya no incluye "Ver detalles"; las demás acciones siguen operando sin abrir el detalle.
+
+---
+
+### 2.14. Fila de venta cliqueable + acción de cancelar simplificada
+
+**Qué hace.** En la vista de Ventas (`/dashboard/business/sales`), cada fila de la tabla es cliqueable y abre el diálogo "Resumen de venta" (`DetailsDialog`). Se **elimina** el dropdown de acciones (`Popover` con "Ver detalles" + "Cancelar venta") y se deja **una sola acción directa en la fila**: un botón-icono fantasma (`XCircle`) que se tiñe de `destructive` al hover, con tooltip "Cancelar venta". En ventas ya canceladas el icono **no se renderiza** (el badge "Cancelada" de la columna Estado ya lo comunica). Al hacer click sobre la celda de acciones se detiene la propagación para no abrir el detalle.
+
+**Decisión de diseño.** Se evaluaron tres variantes (icono fantasma + tooltip, botón con texto, icono rojo siempre visible). Se eligió **icono fantasma + tooltip** por ser consistente con el patrón `Button variant="ghost" size="icon-sm"` ya usado en la app, mantener la columna estrecha y dar protagonismo a la fila como elemento interactivo principal.
+
+**Implementación.**
+- [src/components/sales/details-dialog.tsx](../../src/components/sales/details-dialog.tsx) — `DetailsDialog` admite modo **controlado** opcional (`open` / `onOpenChange`); sin trigger propio cuando se controla externamente. El modo no controlado (con `trigger`) se conserva.
+- [src/components/sales/table-of-sales.tsx](../../src/components/sales/table-of-sales.tsx) — estado de la venta seleccionada, `onClick` por fila con `cursor-pointer` + `hover:bg-muted/60`, `stopPropagation` en la celda `actions`, y un único `DetailsDialog` controlado.
+- [src/components/sales/sales-table-columns.tsx](../../src/components/sales/sales-table-columns.tsx) — la columna `actions` renderiza solo el `CancelSaleDialog` (con `tooltip`) sobre un botón-icono fantasma; se quita el `Popover` y el item "Ver detalles". `CancelSaleDialog` ya soportaba la prop `tooltip`.
+
+**Criterios de aceptación.**
+- Click en cualquier parte de una fila (salvo la celda de acciones) abre el resumen de la venta correcta.
+- La columna de acciones muestra solo "Cancelar venta" (icono + tooltip) en ventas activas; nada en las canceladas.
+- Cancelar desde el icono no abre el detalle y conserva el flujo de razón obligatoria.
 
 ---
 
