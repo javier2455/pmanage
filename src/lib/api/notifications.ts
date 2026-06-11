@@ -42,7 +42,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
 
 /** Marca todas las notificaciones del negocio como leídas. */
 export async function markAllAsRead(businessId: string): Promise<void> {
-  await apiClient.patch(notificationRoutes.markAllRead, null, {
+  await apiClient.patch(notificationRoutes.markAllRead, {}, {
     params: { businessId },
   });
 }
