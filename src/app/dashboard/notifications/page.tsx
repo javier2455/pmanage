@@ -12,7 +12,7 @@ import { isVisibleNotificationType } from "@/components/notifications/notificati
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const DEFAULT_LIMIT = 20;
+const DEFAULT_LIMIT = 10;
 
 export default function NotificationsPage() {
   const { activeBusinessId } = useBusiness();

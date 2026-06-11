@@ -19,7 +19,7 @@ import {
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { isVisibleNotificationType } from "@/components/notifications/notification-type-meta";
 
-const RECENT_LIMIT = 8;
+const RECENT_LIMIT = 5;
 
 export function NotificationBell() {
   const { activeBusinessId } = useBusiness();
