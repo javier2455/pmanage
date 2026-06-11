@@ -15,8 +15,12 @@ export async function getMyBusinessesList(): Promise<unknown[]> {
     return Array.isArray(data?.data) ? data.data : [];
 }
 
-export async function getAllProductOfMyBusinesses({ businessId }: GetAllProductOfMyBusinessesProps) {
-    const { data } = await apiClient.get(businessRoutes.getAllProductOfMyBusinesses(businessId));
+export async function getAllProductOfMyBusinesses({ businessId, search }: GetAllProductOfMyBusinessesProps) {
+    const { data } = await apiClient.get(
+        businessRoutes.getAllProductOfMyBusinesses(businessId),
+        // Omitimos `search` cuando está vacío para no ensuciar la URL ni la cache.
+        { params: { search: search || undefined } },
+    );
     return data;
 }
 

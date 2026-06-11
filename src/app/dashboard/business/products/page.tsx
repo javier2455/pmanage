@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TableOfProducts from "@/components/products/table";
 import TableOfOtherProducts from "@/components/products/table-of-other-products";
 import { useBusiness } from "@/context/business-context";
@@ -19,21 +19,53 @@ export default function ProductsPage() {
 
   const [catalogPage, setCatalogPage] = useState(1);
   const [catalogLimit, setCatalogLimit] = useState(DEFAULT_CATALOG_LIMIT);
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [debouncedCatalogSearch, setDebouncedCatalogSearch] = useState("");
+
+  const [businessSearch, setBusinessSearch] = useState("");
+  const [debouncedBusinessSearch, setDebouncedBusinessSearch] = useState("");
+
+  // Debounce del término de búsqueda para no disparar una request por tecla.
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setDebouncedCatalogSearch(catalogSearch.trim()),
+      300,
+    );
+    return () => clearTimeout(timer);
+  }, [catalogSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setDebouncedBusinessSearch(businessSearch.trim()),
+      300,
+    );
+    return () => clearTimeout(timer);
+  }, [businessSearch]);
+
+  // Al cambiar la búsqueda, volvemos a la primera página de resultados.
+  useEffect(() => {
+    setCatalogPage(1);
+  }, [debouncedCatalogSearch]);
 
   const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(
     activeBusinessId ?? "",
+    debouncedBusinessSearch,
   );
   const {
     data: allProductsData,
     isLoading: allProductsLoading,
     isFetching: allProductsFetching,
     isError: allProductsError,
-  } = useGetAllProductsQuery({ page: catalogPage, limit: catalogLimit });
+  } = useGetAllProductsQuery({
+    page: catalogPage,
+    limit: catalogLimit,
+    search: debouncedCatalogSearch,
+  });
 
   const businessProducts = data?.data;
   const catalogProducts = allProductsData?.data ?? [];
 
-  const businessTableLoading = isLoading || isFetching;
+  const showBusinessInitialSkeleton = isLoading && !data;
   const showCatalogInitialSkeleton = allProductsLoading && !allProductsData;
 
   function handleCatalogLimitChange(nextLimit: number) {
@@ -82,6 +114,8 @@ export default function ProductsPage() {
                   }
                 }
                 isFetching={allProductsFetching}
+                searchValue={catalogSearch}
+                onSearchChange={setCatalogSearch}
                 onPageChange={setCatalogPage}
                 onLimitChange={handleCatalogLimitChange}
               />
@@ -104,10 +138,15 @@ export default function ProductsPage() {
                 </Link>
               </Button>
             </div>
-            {businessTableLoading ? (
+            {showBusinessInitialSkeleton ? (
               <SimpleTableSkeleton />
             ) : (
-              <TableOfProducts products={businessProducts ?? []} />
+              <TableOfProducts
+                products={businessProducts ?? []}
+                isFetching={isFetching}
+                searchValue={businessSearch}
+                onSearchChange={setBusinessSearch}
+              />
             )}
           </div>
         </div>

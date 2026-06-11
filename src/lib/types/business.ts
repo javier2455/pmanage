@@ -54,6 +54,8 @@ export type BusinessProduct = {
 
 export interface GetAllProductOfMyBusinessesProps {
   businessId: string;
+  /** Filtra por nombre (case-insensitive) en el backend. */
+  search?: string;
 }
 
 export interface CreateBusinessPayload {

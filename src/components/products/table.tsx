@@ -4,17 +4,15 @@ import * as React from "react";
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  type ColumnFiltersState,
   type PaginationState,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
 import { sileo } from "sileo";
-import { Package, Search } from "lucide-react";
+import { Loader2, Package, Search } from "lucide-react";
 import type { ProductToShowInTable } from "@/lib/types/product";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,9 +56,17 @@ function columnMeta(column: {
 
 interface TableOfProductsProps {
   products: ProductToShowInTable[];
+  isFetching?: boolean;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
 }
 
-export default function TableOfProducts({ products }: TableOfProductsProps) {
+export default function TableOfProducts({
+  products,
+  isFetching = false,
+  searchValue,
+  onSearchChange,
+}: TableOfProductsProps) {
   const { activeBusinessId } = useBusiness();
   const deleteProductInBusinessMutation = useDeleteProductInBusinessMutation();
 
@@ -118,9 +124,6 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
   const [detailsProductId, setDetailsProductId] = React.useState<string | null>(
     null,
   );
@@ -135,28 +138,23 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
     pageSize: 5,
   });
 
+  // Al cambiar el conjunto de productos (nueva búsqueda en servidor), volvemos
+  // a la primera página para no quedar en una página que ya no existe.
   React.useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [products]);
-
-  React.useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [columnFilters]);
 
   const table = useReactTable({
     data: products,
     columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
     state: {
       sorting,
-      columnFilters,
       pagination,
     },
   });
@@ -169,36 +167,8 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
     }
   }, [maxPageIndex, pagination.pageIndex]);
 
-  const nameColumn = table.getColumn("name");
-  const nameFilterValue = String(nameColumn?.getFilterValue() ?? "");
-
-  const filteredTotal = table.getFilteredRowModel().rows.length;
-  const hasNameFilter = nameFilterValue.trim().length > 0;
-
-  function clearNameFilter() {
-    nameColumn?.setFilterValue(undefined);
-  }
-
-  if (products.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <Empty className="border-border border bg-card">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Package />
-              </EmptyMedia>
-              <EmptyTitle>Sin productos en este negocio</EmptyTitle>
-              <EmptyDescription>
-                Aún no has añadido productos a este negocio. Crea o asigna un
-                producto para verlo aquí.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </CardContent>
-      </Card>
-    );
-  }
+  const hasSearch = searchValue.trim().length > 0;
+  const isEmpty = products.length === 0;
 
   return (
     <TooltipProvider>
@@ -216,110 +186,137 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
                 id="business-products-name-filter"
                 type="search"
                 placeholder="Nombre del producto…"
-                value={nameFilterValue}
-                onChange={(e) =>
-                  nameColumn?.setFilterValue(
-                    e.target.value.length ? e.target.value : undefined,
-                  )
-                }
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
                 aria-controls="business-products-table"
               />
             </div>
           </div>
 
-          {filteredTotal === 0 ? (
+          {isEmpty ? (
             <div className="px-4 pb-6">
-              <Empty className="border-border border bg-muted/30">
+              <Empty
+                className={cn(
+                  "border-border border",
+                  hasSearch ? "bg-muted/30" : "bg-card",
+                )}
+              >
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <Search />
+                    {hasSearch ? <Search /> : <Package />}
                   </EmptyMedia>
-                  <EmptyTitle>Sin resultados</EmptyTitle>
+                  <EmptyTitle>
+                    {hasSearch
+                      ? "Sin resultados"
+                      : "Sin productos en este negocio"}
+                  </EmptyTitle>
                   <EmptyDescription>
-                    No hay productos que coincidan con «{nameFilterValue.trim()}».
-                    Prueba con otro término o limpia la búsqueda.
+                    {hasSearch
+                      ? `No hay productos que coincidan con «${searchValue.trim()}». Prueba con otro término o limpia la búsqueda.`
+                      : "Aún no has añadido productos a este negocio. Crea o asigna un producto para verlo aquí."}
                   </EmptyDescription>
                 </EmptyHeader>
-                <EmptyContent>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={clearNameFilter}
-                  >
-                    Limpiar búsqueda
-                  </Button>
-                </EmptyContent>
+                {hasSearch ? (
+                  <EmptyContent>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onSearchChange("")}
+                    >
+                      Limpiar búsqueda
+                    </Button>
+                  </EmptyContent>
+                ) : null}
               </Empty>
             </div>
           ) : (
-            <Table id="business-products-table" className="min-w-[700px]">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className={cn(
-                          "px-4 py-3 text-foreground",
-                          columnMeta(header.column).headerClassName,
-                        )}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
+            <div className="relative">
+              {isFetching ? (
+                <div
+                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Cargando…</span>
+                  </div>
+                </div>
+              ) : null}
+              <div
+                className={cn(
+                  "transition-opacity",
+                  isFetching && "pointer-events-none opacity-60 select-none",
+                )}
+                aria-busy={isFetching}
+              >
+                <Table id="business-products-table" className="min-w-[700px]">
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className={cn(
+                              "px-4 py-3 text-foreground",
+                              columnMeta(header.column).headerClassName,
                             )}
-                      </TableHead>
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    onClick={() => handleRowClick(row.original.product.id)}
-                    className="cursor-pointer transition-colors hover:bg-muted/60"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        onClick={
-                          cell.column.id === "actions"
-                            ? (e) => e.stopPropagation()
-                            : undefined
-                        }
-                        className={cn(
-                          "px-4 py-3 text-foreground",
-                          columnMeta(cell.column).cellClassName,
-                        )}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        onClick={() => handleRowClick(row.original.product.id)}
+                        className="cursor-pointer transition-colors hover:bg-muted/60"
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            onClick={
+                              cell.column.id === "actions"
+                                ? (e) => e.stopPropagation()
+                                : undefined
+                            }
+                            className={cn(
+                              "px-4 py-3 text-foreground",
+                              columnMeta(cell.column).cellClassName,
+                            )}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           )}
 
           <div className="flex flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              {hasNameFilter ? (
+              {hasSearch ? (
                 <>
-                  <span className="font-medium text-foreground">
-                    {filteredTotal}
-                  </span>{" "}
-                  coincidencia{filteredTotal === 1 ? "" : "s"} de{" "}
                   <span className="font-medium text-foreground">
                     {products.length}
                   </span>{" "}
-                  productos
+                  coincidencia{products.length === 1 ? "" : "s"} para «
+                  {searchValue.trim()}»
                 </>
               ) : (
                 <>
@@ -331,7 +328,7 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
                 </>
               )}
             </p>
-            {filteredTotal > 0 ? (
+            {!isEmpty && pageCount > 1 ? (
               <DataTablePaginationNav
                 pageIndex={pagination.pageIndex}
                 pageCount={pageCount}
@@ -339,6 +336,7 @@ export default function TableOfProducts({ products }: TableOfProductsProps) {
                   setPagination((p) => ({ ...p, pageIndex: nextIndex }))
                 }
                 navLabel="Paginación de productos del negocio"
+                disabled={isFetching}
               />
             ) : null}
           </div>

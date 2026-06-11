@@ -10,11 +10,14 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import { sileo } from "sileo";
-import { LayoutGrid, Loader2 } from "lucide-react";
+import { LayoutGrid, Loader2, Search } from "lucide-react";
 import type { GetAllProductsResponse, Product } from "@/lib/types/product";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -53,6 +56,8 @@ interface TableOfOtherProductsProps {
   products: Product[];
   meta: GetAllProductsResponse["meta"];
   isFetching?: boolean;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
 }
@@ -61,6 +66,8 @@ export default function TableOfOtherProducts({
   products,
   meta,
   isFetching = false,
+  searchValue,
+  onSearchChange,
   onPageChange,
   onLimitChange,
 }: TableOfOtherProductsProps) {
@@ -135,23 +142,61 @@ export default function TableOfOtherProducts({
   });
 
   const isEmpty = meta.total === 0;
+  const hasSearch = searchValue.trim().length > 0;
 
   return (
     <TooltipProvider>
       <Card>
         <CardContent className="flex flex-col gap-4 p-0">
+          <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex w-full max-w-md flex-col gap-1.5">
+              <label
+                className="text-sm font-medium text-foreground"
+                htmlFor="catalog-products-name-filter"
+              >
+                Buscar por nombre
+              </label>
+              <Input
+                id="catalog-products-name-filter"
+                type="search"
+                placeholder="Nombre del producto…"
+                value={searchValue}
+                onChange={(e) => onSearchChange(e.target.value)}
+                aria-controls="catalog-products-table"
+              />
+            </div>
+          </div>
+
           {isEmpty ? (
-            <div className="px-4 py-6">
+            <div className="px-4 pb-6">
               <Empty className="border-border border bg-card">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <LayoutGrid />
+                    {hasSearch ? <Search /> : <LayoutGrid />}
                   </EmptyMedia>
-                  <EmptyTitle>Sin productos en el catálogo</EmptyTitle>
+                  <EmptyTitle>
+                    {hasSearch
+                      ? "Sin resultados"
+                      : "Sin productos en el catálogo"}
+                  </EmptyTitle>
                   <EmptyDescription>
-                    Todavía no hay productos registrados en el catálogo.
+                    {hasSearch
+                      ? `No hay productos que coincidan con «${searchValue.trim()}». Prueba con otro término o limpia la búsqueda.`
+                      : "Todavía no hay productos registrados en el catálogo."}
                   </EmptyDescription>
                 </EmptyHeader>
+                {hasSearch ? (
+                  <EmptyContent>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onSearchChange("")}
+                    >
+                      Limpiar búsqueda
+                    </Button>
+                  </EmptyContent>
+                ) : null}
               </Empty>
             </div>
           ) : (

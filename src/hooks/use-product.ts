@@ -23,6 +23,8 @@ import {
 interface UseGetAllProductsParams {
   page?: number;
   limit?: number;
+  /** Filtra por nombre (case-insensitive) en el backend. */
+  search?: string;
 }
 
 export function useGetAllProductsQuery(params: UseGetAllProductsParams = {}) {

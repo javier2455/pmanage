@@ -1,14 +1,15 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllProductOfMyBusinesses, createBusiness, updateBusiness, deleteBusiness, getDashboardSummary } from "@/lib/api/business";
 import type { CreateBusinessPayload, UpdateBusinessPayload } from "@/lib/types/business";
 
-export function useAllProductOfMyBusinesses(businessId: string) {
+export function useAllProductOfMyBusinesses(businessId: string, search = "") {
     return useQuery({
-        queryKey: ["all-product-of-my-businesses", businessId],
-        queryFn: () => getAllProductOfMyBusinesses({ businessId }),
+        queryKey: ["all-product-of-my-businesses", businessId, search],
+        queryFn: () => getAllProductOfMyBusinesses({ businessId, search }),
         enabled: !!businessId,
+        placeholderData: keepPreviousData,
     });
 }
 
