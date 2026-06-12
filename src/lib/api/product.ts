@@ -37,13 +37,12 @@ export async function getProductById(productId: string) {
 export async function create(
   credentials: CreateProductProps,
 ): Promise<CreateProductResponse> {
-  const { categoryId, description, name, unit, imageUrl } = credentials;
+  const { description, name, unit, imageUrl } = credentials;
 
   if (imageUrl instanceof File) {
     const formData = new FormData();
     formData.append("name", name);
     if (description) formData.append("description", description);
-    if (categoryId) formData.append("categoryId", categoryId);
     formData.append("unit", unit);
     formData.append("imageUrl", imageUrl);
 
@@ -58,7 +57,6 @@ export async function create(
   }
 
   const { data } = await apiClient.post(productRoutes.createProduct, {
-    categoryId,
     description,
     name,
     unit,
@@ -69,7 +67,7 @@ export async function create(
 export async function createInBusiness(
   credentials: CreateProductInBusinessProps,
 ): Promise<CreateProductResponse> {
-  const { productId, price, entryPrice, stock, stockAlertThreshold } =
+  const { productId, categoryId, price, entryPrice, stock, stockAlertThreshold } =
     credentials;
   const { data } = await apiClient.post(
     productRoutes.createProductInBusiness(credentials.businessId),
@@ -78,6 +76,8 @@ export async function createInBusiness(
       price,
       entryPrice,
       stock,
+      // La categoría se asigna al BusinessProduct en esta llamada. Ver docs/category.md.
+      ...(categoryId ? { categoryId } : {}),
       // Solo se envía si el usuario (Pro) definió un umbral.
       ...(stockAlertThreshold != null ? { stockAlertThreshold } : {}),
     },
@@ -94,8 +94,6 @@ export async function edit(productId: string, credentials: EditProductProps) {
     formData.append("name", credentials.name);
     if (credentials.description !== null)
       formData.append("description", credentials.description);
-    if (credentials.categoryId !== null)
-      formData.append("categoryId", credentials.categoryId);
     formData.append("unit", credentials.unit);
     if (credentials.active !== undefined && credentials.active !== null)
       formData.append("active", String(credentials.active));

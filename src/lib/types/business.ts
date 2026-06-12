@@ -1,4 +1,4 @@
-import { Product } from "./product";
+import { Product, ProductCategoryEmbed } from "./product";
 
 export type BusinessType = "agromarket" | "mipyme" | "market";
 
@@ -33,6 +33,11 @@ export type BusinessWithProducts = {
   stock: number;
   updatedAt: Date;
   /**
+   * Categoría del `BusinessProduct` (por negocio). Reemplaza a `product.category`
+   * tras el cambio de relación del backend (docs/category.md). Puede ser `null`.
+   */
+  category?: ProductCategoryEmbed | null;
+  /**
    * Umbral de alerta de stock bajo del BusinessProduct (`null` = sin alerta).
    * Vive a nivel raíz porque es por negocio-producto, no global del `Product`
    * (igual que `CurrentInventoryEntry.stockAlertThreshold`).
@@ -50,6 +55,8 @@ export type BusinessProduct = {
   price: number;
   stock: number;
   updatedAt: Date;
+  /** Categoría asignada a este producto dentro del negocio (docs/category.md). */
+  category?: ProductCategoryEmbed | null;
 };
 
 export interface GetAllProductOfMyBusinessesProps {

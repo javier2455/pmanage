@@ -345,6 +345,13 @@ export default function TableOfProducts({
       {detailsProductId ? (
         <ProductDetailsDialog
           productId={detailsProductId}
+          // La categoría vive en el BusinessProduct; la pasamos desde la fila para
+          // mostrarla en los detalles (el catálogo ya no la trae). Ver docs/category.md.
+          categoryName={
+            (products.find((p) => p.product.id === detailsProductId)?.category ??
+              products.find((p) => p.product.id === detailsProductId)?.product
+                .category)?.name ?? null
+          }
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
         />

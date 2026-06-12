@@ -146,7 +146,12 @@ export default function CreateSalesPage() {
       setCartItems(prev => [...prev, {
         productId: data.productId,
         productName: selectedProduct.product.name,
-        category: selectedProduct.product.category?.name ?? null,
+        // La categoría vive en el BusinessProduct (raíz); fallback a product.category
+        // por compatibilidad durante la migración. Ver docs/category.md.
+        category:
+          selectedProduct.category?.name ??
+          selectedProduct.product.category?.name ??
+          null,
         unit: selectedProduct.product.unit,
         imageUrl: selectedProduct.product.imageUrl,
         quantity: data.stock,

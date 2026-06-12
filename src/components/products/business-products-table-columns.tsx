@@ -117,18 +117,25 @@ export function createBusinessProductsColumns(
     },
     {
       id: "category",
-      accessorFn: (row) => row.product.category?.name ?? "",
+      // La categoría vive en el BusinessProduct (raíz). Mantenemos el fallback a
+      // `product.category` por compatibilidad mientras el backend migra. Ver
+      // docs/category.md.
+      accessorFn: (row) => (row.category ?? row.product.category)?.name ?? "",
       meta: compactColumnMeta,
       header: ({ column }) => (
         <BusinessProductsSortableHeader column={column} label="Categoría" />
       ),
-      cell: ({ row }) => (
-        <span className="text-foreground">
-          {row.original.product.category?.name ?? (
-            <span className="italic text-muted-foreground">Sin categoría</span>
-          )}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const categoryName =
+          (row.original.category ?? row.original.product.category)?.name ?? null;
+        return (
+          <span className="text-foreground">
+            {categoryName ?? (
+              <span className="italic text-muted-foreground">Sin categoría</span>
+            )}
+          </span>
+        );
+      },
     },
     {
       id: "actions",

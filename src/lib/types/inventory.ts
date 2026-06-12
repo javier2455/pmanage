@@ -54,6 +54,12 @@ export type CurrentInventoryEntry = {
     updatedAt: string;
     product: CurrentInventoryProduct;
     /**
+     * Categoría del BusinessProduct (por negocio). Tras el cambio de relación
+     * del backend la categoría vive a este nivel, no en `product`. Ver
+     * docs/category.md. Puede ser `null`.
+     */
+    category?: { id: string; name: string } | string | null;
+    /**
      * Umbral de alerta de stock bajo del BusinessProduct (null = sin alerta).
      * TODO(backend): incluir este campo en `GET /inventory/business/:id/current`.
      * Mientras no llegue, el frontend resuelve el umbral vía `GET .../stock-alerts`

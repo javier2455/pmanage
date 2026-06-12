@@ -18,13 +18,20 @@ import { ProductImage } from "@/components/products/product-image"
 
 interface ProductDetailsDialogProps {
     productId: string
+    /**
+     * Nombre de la categoría del BusinessProduct (por negocio). Cuando se abre
+     * desde la lista de productos de un negocio, pásalo para mostrar la categoría
+     * correcta, ya que el catálogo (`Product`) ya no lleva categoría. Ver
+     * docs/category.md.
+     */
+    categoryName?: string | null
     tooltip?: string
     trigger?: React.ReactNode
     open?: boolean
     onOpenChange?: (open: boolean) => void
 }
 
-export default function ProductDetailsDialog({ productId, tooltip, trigger, open, onOpenChange }: ProductDetailsDialogProps) {
+export default function ProductDetailsDialog({ productId, categoryName: categoryNameProp, tooltip, trigger, open, onOpenChange }: ProductDetailsDialogProps) {
     const isControlled = open !== undefined
     const { data, isLoading } = useGetProductByIdQuery(productId, {
         refetchOnMount: "always",
@@ -36,12 +43,15 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger, open
     const inlineCategoryName = product?.category?.name ?? null
     const productCategoryId: string | null =
         product?.categoryId ?? product?.category?.id ?? null
+    // Solo resolvemos por id si no nos pasaron la categoría del BusinessProduct ni
+    // viene embebida en el producto (compatibilidad durante la migración).
     const shouldFetchCategoryById =
-        !!productCategoryId && !inlineCategoryName
+        !categoryNameProp && !!productCategoryId && !inlineCategoryName
     const { data: fetchedCategory } = useGetProductCategoryByIdQuery(
         shouldFetchCategoryById ? productCategoryId : "",
     )
-    const categoryName = inlineCategoryName ?? fetchedCategory?.name ?? null
+    const categoryName =
+        categoryNameProp ?? inlineCategoryName ?? fetchedCategory?.name ?? null
 
     const triggerContent = trigger ?? <Button variant="outline">Ver detalles</Button>
 

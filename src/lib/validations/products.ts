@@ -3,7 +3,8 @@ import { z } from "zod";
 export const createProductSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
-  category: z.string().nullable().optional(),
+  // El producto de catálogo ya no lleva categoría; se asigna al BusinessProduct
+  // al añadirlo a un negocio. Ver docs/category.md.
   unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
 });
 
@@ -37,12 +38,15 @@ export const assignProductToBusinessSchema = createProductInBusinessSchema
   .pick({ price: true, entryPrice: true, stock: true, stockAlertThreshold: true })
   .extend({
     productId: z.string().min(1, "Selecciona un producto"),
+    // La categoría se asigna al BusinessProduct al asignar el producto al
+    // negocio. Opcional. Ver docs/category.md.
+    categoryId: z.string().nullable().optional(),
   });
 
 export const editProductSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
-  category: z.string().nullable().optional(),
+  // El producto de catálogo ya no lleva categoría (vive en el BusinessProduct).
   unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
   imageUrl: z.string().nullable().optional(),
   active: z.boolean().nullable().optional(),

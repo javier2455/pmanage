@@ -47,7 +47,8 @@ export type CreateProductProps = {
     // businessId: string;
     name: string;
     description: string | null;
-    categoryId: string | null;
+    // La categoría ya no vive en el `Product` (catálogo) sino en el `BusinessProduct`.
+    // Se asigna al asignar el producto a un negocio. Ver docs/category.md.
     unit: ProductUnit;
     imageUrl?: string | File | null | undefined;
 };
@@ -73,7 +74,7 @@ export type CreateProductInBusinessProps = {
 export type EditProductProps = {
     name: string;
     description: string | null;
-    categoryId: string | null;
+    // La categoría se gestiona a nivel de `BusinessProduct`, no del catálogo.
     unit: ProductUnit;
     imageUrl: string | File | null;
     active?: boolean | null;
@@ -88,6 +89,11 @@ export type ProductToShowInTable = {
     stock: number;
     updatedAt: Date;
     product: Product;
+    /**
+     * Categoría del `BusinessProduct` (por negocio). Reemplaza a `product.category`
+     * tras el cambio de relación del backend (docs/category.md). Puede ser `null`.
+     */
+    category: ProductCategoryEmbed | null;
 }
 
 export type GetProductByIdResponse = {
