@@ -14,4 +14,6 @@ export const businessRoutes = {
   getDashboardSummary: `${BASIC_ROUTE}/dashboard/`,
   settings: (businessId: string) =>
     `${BASIC_ROUTE}/businesses/${businessId}/settings`,
+  schedule: (businessId: string) =>
+    `${BASIC_ROUTE}/businesses/${businessId}/schedule`,
 };

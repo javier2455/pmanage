@@ -53,6 +53,7 @@ import { BusinessType } from "@/lib/types/business";
 import { LocationMap } from "@/components/business/location-map";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
 import { NotificationSettingsCard } from "@/components/business/notification-settings-card";
+import { BusinessScheduleCard } from "@/components/business/business-schedule-card";
 
 const HAVANA_LAT = 23.1444;
 const HAVANA_LNG = -82.3855;
@@ -650,6 +651,8 @@ export function BusinessDetailsForm() {
           )}
         </CardContent>
       </Card>
+
+      <BusinessScheduleCard business={activeBusiness} />
 
       <NotificationSettingsCard business={activeBusiness} />
 
