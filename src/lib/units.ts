@@ -33,6 +33,22 @@ export function normalizeStock(
 }
 
 /**
+ * Parsea lo que el usuario teclea en un input de cantidad decimal, aceptando
+ * tanto coma como punto como separador (en es-CO se muestra "0,5" pero en
+ * teclado físico es común teclear "0.5"). Devuelve `NaN` si está vacío o no es
+ * parseable, igual que `valueAsNumber`, para que el schema marque el error.
+ *
+ * Pensado para usarse como `setValueAs` de react-hook-form en unidades de
+ * peso/volumen (ver [isIntegerUnit]).
+ */
+export function parseDecimalInput(value: unknown): number {
+  if (typeof value === "number") return value;
+  const s = String(value ?? "").trim().replace(",", ".");
+  if (s === "") return NaN;
+  return Number(s);
+}
+
+/**
  * Formatea una cantidad con su unidad para mostrar al usuario:
  * - `ud` → "1 unidad" / "12 unidades"
  * - peso/volumen → "0,4 kg", "2,5 L" (hasta 3 decimales, sin ceros sobrantes)

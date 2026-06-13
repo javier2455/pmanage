@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { BusinessWithProducts } from "@/lib/types/business"
 import { useBusiness } from "@/context/business-context"
@@ -31,14 +31,14 @@ import {
 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { InventoryUpdateStockFormData, inventoryUpdateStockSchema } from "@/lib/validations/inventory"
+import { InventoryUpdateStockFormData, makeInventoryUpdateStockSchema } from "@/lib/validations/inventory"
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
 import {
   DEFAULT_LOW_STOCK_THRESHOLD,
   getStockAlertStatus,
   STOCK_ALERT_LABELS,
 } from "@/lib/stock-alert"
-import { formatStockWithUnit } from "@/lib/units"
+import { formatStockWithUnit, isIntegerUnit, parseDecimalInput } from "@/lib/units"
 import { useGetAllProvidersQuery } from "@/hooks/use-provider"
 import type { ProviderWithRelations } from "@/lib/types/provider"
 import Link from "next/link"
@@ -62,6 +62,9 @@ export function UpdateStockForm() {
     })
   const providers: ProviderWithRelations[] = providersData?.data ?? []
 
+  // Las unidades de peso/volumen (kg, lb, g, L, mL) admiten decimales; `ud` no.
+  const allowDecimals = !isIntegerUnit(selectedProduct?.product.unit)
+
   const {
     register,
     handleSubmit,
@@ -71,7 +74,10 @@ export function UpdateStockForm() {
     reset,
     formState: { errors },
   } = useForm<InventoryUpdateStockFormData>({
-    resolver: zodResolver(inventoryUpdateStockSchema),
+    resolver: useMemo(
+      () => zodResolver(makeInventoryUpdateStockSchema(allowDecimals)),
+      [allowDecimals],
+    ),
     defaultValues: {
       quantity: 0,
       entryPrice: 0,
@@ -307,18 +313,27 @@ export function UpdateStockForm() {
                 </Label>
                 <Input
                   id="new-stock"
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  step={1}
-                  placeholder="Ej: 50"
+                  type={allowDecimals ? "text" : "number"}
+                  inputMode={allowDecimals ? "decimal" : "numeric"}
+                  min={allowDecimals ? undefined : "1"}
+                  step={allowDecimals ? undefined : 1}
+                  placeholder={allowDecimals ? "Ej: 0,5" : "Ej: 50"}
                   onKeyDown={(e) => {
-                    // El stock se maneja en unidades enteras.
-                    if ([".", ",", "e", "E", "+", "-"].includes(e.key)) {
+                    if (allowDecimals) {
+                      // Input de texto: dejar pasar dígitos, un separador decimal
+                      // (coma o punto) y teclas de control/navegación; bloquear
+                      // el resto de caracteres imprimibles.
+                      if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
+                      if (!/[0-9.,]/.test(e.key)) e.preventDefault();
+                    } else if ([".", ",", "e", "E", "+", "-"].includes(e.key)) {
+                      // El stock entero (`ud`) no admite fracciones.
                       e.preventDefault();
                     }
                   }}
-                  {...register("quantity", { valueAsNumber: true })}
+                  {...register("quantity", {
+                    setValueAs: (v) =>
+                      allowDecimals ? parseDecimalInput(v) : Math.trunc(Number(v)) || NaN,
+                  })}
                   disabled={!selectedProduct}
                   aria-invalid={errors.quantity ? "true" : "false"}
                 />
