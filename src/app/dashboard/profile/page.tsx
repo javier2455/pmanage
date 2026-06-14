@@ -27,7 +27,7 @@ import {
 import Link from "next/link"
 import { useAuthUserData } from "@/hooks/use-auth"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getPlanLabel } from "@/components/assign-plans/utils"
+import { getPlanLabel, getPlanPrice } from "@/components/assign-plans/utils"
 
 function formatDate(dateString?: string | null): string {
   if (!dateString) return "—"
@@ -212,9 +212,9 @@ export default function ProfilePage() {
               <>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold text-card-foreground">
-                    ${user?.plan?.price}
+                    ${getPlanPrice(user?.plan, Number(user?.plan?.price ?? 0)).toFixed(2)}
                   </span>
-                  <span className="text-sm text-muted-foreground">CUP / mes</span>
+                  <span className="text-sm text-muted-foreground">USD / mes</span>
                 </div>
 
                 <p className="text-sm text-muted-foreground">
