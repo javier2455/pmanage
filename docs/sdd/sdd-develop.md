@@ -6,13 +6,13 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.3.2-alpha` |
-| **Commits por delante de `main`** | 49 (al 2026-06-02) |
-| **Último commit** | `3eaf9c3` |
+| **Versión en `package.json`** | `1.8.1-alpha` |
+| **Commits por delante de `main`** | 86 (al 2026-06-12) |
+| **Último commit** | `c771e5e` |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-06-04 |
+| **Última actualización del documento** | 2026-06-12 |
 
 ---
 
@@ -46,6 +46,14 @@ Cambios respecto a `main` agrupados por estado:
 | 22 | **Fila de producto cliqueable** abre el detalle en las tablas de Catálogo y Productos a la venta (se elimina "Ver detalles" del menú de acciones) | ✅ Mergeada en develop | — | Sí |
 | 23 | **Gastos filtrados por negocio activo** + toggle "Todos los negocios" (reporte consolidado, gateado a Pro) | ✅ Mergeada en develop | — | Sí — backend ya soporta query param `businessId` |
 | 24 | **Fila de venta cliqueable** abre el detalle; se elimina el dropdown de acciones y se deja solo un icono de "Cancelar venta" en la fila | ✅ Mergeada en develop | — | Sí |
+| 25 | **Búsqueda de productos en servidor** + mejora de estados de carga | ✅ Mergeada | `02117cb` (1.4.3) | Sí |
+| 26 | **Logout funcional** — invalida el token (`POST /auth/logout`) y limpia la sesión | ✅ Mergeada | `101828a` (1.5.0) | Sí |
+| 27 | **Categoría a nivel de `BusinessProduct`** (por negocio) + paginación de categorías | ✅ Frontend mergeado | `2a13ebe` (1.6.0) | **No** — requiere migración de datos backend (ver §3) |
+| 28 | **Horario de atención del negocio** (config por día) | ✅ Frontend + backend (`GET`/`PUT /businesses/:id/schedule`) | `16d42a6` (1.7.0) | Sí |
+| 29 | **Refactor de permisos de trabajador a secciones** (payload de 3 capas con `sectionId`) | ✅ Mergeada | `de7e16a` (1.8.0) | Sí |
+| 30 | **Stock con cantidades decimales** (unidades de peso/volumen) | ✅ Frontend mergeado | `c771e5e` (1.8.1) | Sí — verificar persistencia decimal en backend |
+
+> Ajustes menores en el rango 1.3.8–1.8.1 (no itemizados): eliminación del menú estático de fallback, hover en filas de productos, fix `markAllAsRead`, afinado de límites de notificaciones, botones `outline`.
 
 ---
 

@@ -45,6 +45,29 @@ export type SalesTrendValuesResponse = {
 export type AnalyticsPeriod = "week" | "month" | "quarter";
 export type AnalyticsSalesTrendGroupBy = "day" | "week" | "month";
 
+// Ventas por trabajador
+export interface WorkerSalesItem {
+  workerId: string;
+  workerName: string;
+  workerEmail: string;
+  totalSales: number;
+  transactionCount: number;
+  avgTicket: number;
+  cancellationCount: number;
+  cancellationRate: number;
+}
+
+export interface SalesByWorkerResponse {
+  period: { startDate: string; endDate: string };
+  data: WorkerSalesItem[];
+}
+
+export type SalesByWorkerParameters = {
+  period?: AnalyticsPeriod;
+  startDate?: string; // ISO format date string
+  endDate?: string; // ISO format date string
+};
+
 export type PeriodParameters = {
   period: AnalyticsPeriod;
 };

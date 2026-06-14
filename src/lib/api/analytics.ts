@@ -3,6 +3,8 @@ import { AnalyticsRoutes } from "../routes/analytics";
 import {
   KPIsResponse,
   PeriodParameters,
+  SalesByWorkerParameters,
+  SalesByWorkerResponse,
   SalesTrendParameters,
   SalesTrendResponse,
   TopProductsParameters,
@@ -47,6 +49,21 @@ export async function getTopProducts(
   if (params?.period) url.searchParams.set("period", params.period);
   if (params?.limit) url.searchParams.set("limit", String(params.limit));
   if (params?.sortBy) url.searchParams.set("sortBy", params.sortBy);
+
+  const { data } = await apiClient.get(url.toString());
+  return data;
+}
+
+export async function getSalesByWorker(
+  businessId: string,
+  params?: SalesByWorkerParameters,
+): Promise<SalesByWorkerResponse> {
+  const baseUrl = AnalyticsRoutes.getSalesByWorker(businessId);
+
+  const url = new URL(baseUrl);
+  if (params?.period) url.searchParams.set("period", params.period);
+  if (params?.startDate) url.searchParams.set("startDate", params.startDate);
+  if (params?.endDate) url.searchParams.set("endDate", params.endDate);
 
   const { data } = await apiClient.get(url.toString());
   return data;

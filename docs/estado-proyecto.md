@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-10** (sistema de notificaciones in-app, combobox de productos con scroll infinito, y reversiones pendientes de backend).
+> Última actualización: **2026-06-12** (horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales, categoría a nivel de `BusinessProduct`, logout funcional y búsqueda de productos en servidor).
 
 ---
 
@@ -9,12 +9,12 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.3.7-alpha` (rama `develop`) |
+| **Versión actual** | `1.8.1-alpha` (rama `develop`) |
 | **Versión en producción** | `1.0.0` (rama `main`) |
-| **Commits por delante de `main`** | **71** |
-| **Último commit** | `b1e1a93` — 2026-06-10 |
+| **Commits por delante de `main`** | **86** |
+| **Último commit** | `c771e5e` — 2026-06-12 |
 | **PR `develop → main`** | **No creado** — deuda de promoción acumulada (sigue creciendo) |
-| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId` — ver Punto pendiente abajo); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md` |
+| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId` — ver Punto pendiente abajo); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27) |
 
 ---
 
@@ -72,6 +72,47 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 22 | Fila de producto cliqueable abre el detalle en ambas tablas de Productos (Catálogo y a la venta); se elimina "Ver detalles" del menú de acciones | — | — |
 | 23 | **Gastos filtrados por negocio activo** + toggle "Todos los negocios" (reporte consolidado, gateado a Pro) | — | — |
 | 24 | Fila de venta cliqueable abre el detalle; se elimina el dropdown de acciones y se deja solo el icono de "Cancelar venta" en la fila | — | — |
+| 25 | **Búsqueda de productos en servidor** + mejora de estados de carga (catálogo y productos del negocio) | `02117cb` (1.4.3) | — |
+| 26 | **Logout funcional** — invalida el token en backend (`POST /auth/logout`) y limpia la sesión desde el menú de usuario | `101828a` (1.5.0) | — |
+| 27 | **Categoría a nivel de `BusinessProduct`** (por negocio) en lugar de `Product` (catálogo); paginación del endpoint de categorías | `2a13ebe` (1.6.0) | **Migración de datos backend** + paginación (ver detalle) |
+| 28 | **Horario de atención del negocio** (config por día, abrir/cerrar, multi-día) | `16d42a6` (1.7.0) | — (backend GET/PUT entregado) |
+| 29 | **Refactor de permisos de trabajador a secciones** — payload de 3 capas (sección + menú + submenú) alineado con `GET /section` | `de7e16a` (1.8.0) | — |
+| 30 | **Stock con cantidades decimales** para unidades de peso/volumen (kg, lb, g, L, mL) | `c771e5e` (1.8.1) | Verificar que backend persista decimales en `add-stock` (ver detalle) |
+
+> **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
+
+### Detalle: Categoría a nivel de `BusinessProduct` (feature 27) — `2a13ebe`
+
+El backend movió la relación de categoría desde `Product` (catálogo global) a `BusinessProduct` (por negocio): un mismo producto puede tener categorías distintas en cada negocio. Spec completa en [docs/category.md](category.md).
+
+**Frontend adaptado:** la categoría se lee de `businessProduct.category` (antes `product.category`); los tipos `BusinessProduct`, `BusinessWithProducts` y `ProductToShowInTable` ([src/lib/types/business.ts](../src/lib/types/business.ts), [src/lib/types/product.ts](../src/lib/types/product.ts)) llevan `category?: ProductCategoryEmbed | null`; se eliminó `categoryId` de `CreateProductProps`/`EditProductProps` (la categoría se asigna al asignar el producto al negocio vía `POST /product/business/{businessId}`). Formularios de catálogo y de asignación actualizados.
+
+**Sigue pendiente (backend):**
+- **Migración de datos:** transferir la categoría actual de cada `Product` al `BusinessProduct` correspondiente; sin esto los productos existentes quedan sin categoría.
+- Confirmar que `GET /business/{id}/products`, `GET /business/{id}/stock-alerts` y `GET /inventory/business/{id}/current` ya devuelven la categoría a nivel de `BusinessProduct`.
+- Paginación del endpoint `GET /category?page=&limit=` (el doc la define; verificar que el listado del frontend la consuma).
+
+> **Relación con "categorías de producto globales" (reversión pendiente):** este cambio re-define dónde vive la categoría. Reconciliar con [docs/PENDIENTE-categorias-producto-globales.md](PENDIENTE-categorias-producto-globales.md) antes de re-aplicar aquella reversión.
+
+### Detalle: Horario de atención del negocio (feature 28) — `16d42a6`
+
+Permite configurar el horario de apertura/cierre del negocio por día de la semana (0–6), marcando días cerrados. Implementación frontend completa: tipos ([src/lib/types/business-schedule.ts](../src/lib/types/business-schedule.ts)), validación Zod ([src/lib/validations/business-schedule.ts](../src/lib/validations/business-schedule.ts)), ruta, API ([src/lib/api/business-schedule.ts](../src/lib/api/business-schedule.ts)), hook ([src/hooks/use-business-schedule.ts](../src/hooks/use-business-schedule.ts)) y `BusinessScheduleCard` integrada en el formulario de detalles del negocio. Al guardar envía siempre los 7 días (el `PUT` reemplaza el horario completo).
+
+**Backend entregado:** `GET /businesses/:id/schedule` y `PUT /businesses/:id/schedule` (upsert por día). Contrato completo en [docs/funcionalidad.md](funcionalidad.md).
+
+**Menor / opcional:** el `DELETE /businesses/:id/schedule` (resetear todo) aparece en el contrato pero el frontend no lo usa — el reset se hace con un `PUT` de 7 días. Sin plan-gating (disponible para todos los planes).
+
+### Detalle: Refactor de permisos de trabajador a secciones (feature 29) — `de7e16a`
+
+El asignador de permisos de trabajador dejó de basarse en `GET /menu/` y ahora consume el árbol de `GET /section` (`useGetAllSectionsQuery`). El payload de permisos pasa a tener **3 capas**: una entrada por cada menú/submenú seleccionado **más** una entrada por cada sección padre involucrada (deduplicada). Sin la entrada de sección el backend poda el árbol desde la raíz y devuelve navegación vacía. Se añadió `sectionId?` a `WorkerPermissoEntry` ([src/lib/types/worker.ts](../src/lib/types/worker.ts)) y nuevos helpers `buildPermSections`/`flattenPermItems` en [src/components/workers/worker-permissions-section.tsx](../src/components/workers/worker-permissions-section.tsx).
+
+**Sin bloqueador de backend** — el contrato de `GET /section` y el array de permisos con `sectionId` ya están disponibles. Verificar en QA que un trabajador recién creado vea la navegación esperada al iniciar sesión.
+
+### Detalle: Stock con cantidades decimales (feature 30) — `c771e5e`
+
+El formulario de ingreso de stock acepta decimales para unidades de peso/volumen (kg, lb, g, L, mL); las unidades enteras (`ud`) siguen exigiendo enteros. El schema de validación pasó a ser una fábrica `makeInventoryUpdateStockSchema(allowDecimals)` ([src/lib/validations/inventory.ts](../src/lib/validations/inventory.ts)) — la unidad sólo se conoce al elegir el producto en tiempo de render — y limita a 3 decimales. Nuevo helper `parseDecimalInput` ([src/lib/units.ts](../src/lib/units.ts)) que acepta coma o punto como separador.
+
+**Verificar en backend:** que `POST .../add-stock` acepte y persista cantidades decimales (no las redondee a entero) para que el stock mostrado coincida con lo ingresado.
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 
@@ -222,7 +263,9 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
    - **Corregir el bug SQL de `expenseCategoryId`** en `POST/PATCH /expenses` (parámetro `:categoryId` sin enlazar) — ver detalle arriba.
    - **Notificaciones in-app** — Parte 2 del contrato: canal `in_app`, `readAt`, y endpoints para listar/contar/marcar ([docs/notificaciones-internas.md](notificaciones-internas.md)).
    - Endpoints de alertas de stock: `GET /businesses/:id/stock-alerts` + `PATCH .../stock-alert` ([docs/backend-alertas-stock.md](backend-alertas-stock.md)).
-2. **Crear PR `develop → main`** con los **71 commits** acumulados — la deuda de promoción sigue creciendo. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
+   - **Migración de categorías** a nivel de `BusinessProduct` y paginación de `GET /category` ([docs/category.md](category.md), feature 27).
+   - **Decimales en `add-stock`**: confirmar que el backend persiste cantidades fraccionarias para unidades de peso/volumen (feature 30).
+2. **Crear PR `develop → main`** con los **86 commits** acumulados — la deuda de promoción sigue creciendo. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
 3. **Re-aplicar las reversiones** (categorías globales, divisas) cuando backend confirme el modelo — ambos diffs están conservados en el historial.
 4. Continuar con Variante A del roadmap (rentabilidad, comparativas, métricas por worker).
 
