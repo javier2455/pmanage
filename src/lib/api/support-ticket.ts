@@ -5,6 +5,7 @@ import {
   GetTicketsResponse,
   SupportTicket,
   SupportTicketStatus,
+  UpdateTicketStatusProps,
 } from "../types/support-ticket";
 
 interface GetTicketsParams {
@@ -37,7 +38,7 @@ export async function getMyTickets({
   return data;
 }
 
-/** Obtiene un ticket propio por id. */
+/** Obtiene un ticket propio por id, incluyendo el hilo `messages`. */
 export async function getMyTicketById(id: string): Promise<SupportTicket> {
   const { data } = await apiClient.get(supportTicketRoutes.myTicketById(id));
   return data;
@@ -57,13 +58,40 @@ export async function getAllTickets({
   return data;
 }
 
-/** (Admin) Cierra un ticket, con una respuesta opcional para el usuario. */
-export async function closeTicket(
+/** Respuesta del usuario (dueño del ticket). Reabre el ticket si estaba cerrado. */
+export async function addUserMessage(
   id: string,
-  response?: string,
+  message: string,
 ): Promise<SupportTicket> {
-  const { data } = await apiClient.patch(supportTicketRoutes.close(id), {
-    response,
+  const { data } = await apiClient.post(supportTicketRoutes.userReply(id), {
+    message,
   });
+  return data;
+}
+
+/** (Admin) Respuesta del equipo. Reabre el ticket si estaba cerrado. */
+export async function addAdminMessage(
+  id: string,
+  message: string,
+): Promise<SupportTicket> {
+  const { data } = await apiClient.post(supportTicketRoutes.adminReply(id), {
+    message,
+  });
+  return data;
+}
+
+/**
+ * Cierra o reabre un ticket (endpoint canónico). El usuario solo puede actuar
+ * sobre sus propios tickets; el admin sobre cualquiera. Si se envía `message`,
+ * se guarda como mensaje de la conversación.
+ */
+export async function updateTicketStatus(
+  id: string,
+  payload: UpdateTicketStatusProps,
+): Promise<SupportTicket> {
+  const { data } = await apiClient.patch(
+    supportTicketRoutes.updateStatus(id),
+    payload,
+  );
   return data;
 }

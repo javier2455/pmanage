@@ -1,22 +1,46 @@
 export type SupportTicketStatus = "open" | "in_progress" | "closed";
 
+/** Tipo de remitente de un mensaje de la conversación. */
+export type TicketSenderType = "user" | "admin";
+
+/**
+ * Mensaje de la conversación de un ticket (ver docs/funtion.md → Message fields).
+ */
+export interface SupportTicketMessage {
+  id: string;
+  ticketId: string;
+  senderType: TicketSenderType;
+  senderUserId: string | null;
+  senderName: string | null;
+  senderEmail: string | null;
+  message: string;
+  createdAt: string;
+}
+
 /**
  * Ticket de soporte. Los campos coinciden con el contrato del backend
- * (ver docs/funtion.md). El `userEmail` lo deduce el backend del JWT del
- * usuario autenticado; el cliente nunca lo envía.
+ * (ver docs/funtion.md). El `userEmail`/`userId` los deduce el backend del JWT
+ * del usuario autenticado; el cliente nunca los envía.
  */
 export interface SupportTicket {
   id: string;
   subject: string;
   message: string;
   userEmail: string;
+  userId: string | null;
   userName: string | null;
   status: SupportTicketStatus;
   response: string | null;
   closedAt: string | null;
   closedBy: string | null;
+  reopenedAt: string | null;
+  reopenedBy: string | null;
+  lastMessageAt: string | null;
+  lastMessageBy: TicketSenderType | null;
   createdAt: string;
   updatedAt: string;
+  /** Solo presente en el detalle (GET /:id); incluye el hilo de conversación. */
+  messages?: SupportTicketMessage[];
 }
 
 /**
@@ -41,7 +65,15 @@ export interface CreateTicketProps {
   userName?: string;
 }
 
-export interface CloseTicketProps {
-  /** Respuesta del equipo de soporte. Opcional (0–5000 chars). */
-  response?: string;
+/** Cuerpo para responder un ticket (usuario o admin). */
+export interface AddMessageProps {
+  message: string;
+}
+
+/** Cuerpo para cerrar/reabrir un ticket vía PATCH /:id/status. */
+export interface UpdateTicketStatusProps {
+  /** Solo se permite cerrar (`closed`) o reabrir (`open`). */
+  status: Extract<SupportTicketStatus, "open" | "closed">;
+  /** Mensaje opcional que se guarda como mensaje de la conversación. */
+  message?: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import {
@@ -16,15 +16,25 @@ import {
   useUnreadCount,
   useMarkAllNotificationsAsRead,
 } from "@/hooks/use-notifications";
+import {
+  useSupportNotifications,
+  useUnreadSupportCount,
+  useMarkAllSupportNotificationsAsRead,
+} from "@/hooks/use-support-notification";
 import { NotificationItem } from "@/components/notifications/notification-item";
+import { SupportNotificationItem } from "@/components/notifications/support-notification-item";
 import { isVisibleNotificationType } from "@/components/notifications/notification-type-meta";
 
 const RECENT_LIMIT = 5;
+
+/** Item normalizado para fusionar notificaciones generales y de soporte. */
+type MergedItem = { key: string; createdAt: string; node: ReactNode };
 
 export function NotificationBell() {
   const { activeBusinessId } = useBusiness();
   const [open, setOpen] = useState(false);
 
+  // Notificaciones generales (por negocio)
   const { data: unread } = useUnreadCount(activeBusinessId ?? undefined);
   const { data: list, isLoading } = useNotifications(
     activeBusinessId ?? undefined,
@@ -33,14 +43,54 @@ export function NotificationBell() {
   const { mutate: markAll, isPending: isMarkingAll } =
     useMarkAllNotificationsAsRead();
 
-  const unreadCount = unread?.unreadCount ?? 0;
-  const notifications = (list?.data ?? []).filter((n) =>
-    isVisibleNotificationType(n.type),
-  );
+  // Notificaciones de soporte (por usuario)
+  const { data: supportUnread } = useUnreadSupportCount();
+  const { data: supportList, isLoading: isLoadingSupport } =
+    useSupportNotifications({ page: 1, limit: RECENT_LIMIT });
+  const { mutate: markAllSupport, isPending: isMarkingAllSupport } =
+    useMarkAllSupportNotificationsAsRead();
+
+  const generalUnread = unread?.unreadCount ?? 0;
+  const supportUnreadCount = supportUnread?.unreadCount ?? 0;
+  const unreadCount = generalUnread + supportUnreadCount;
+
+  const merged: MergedItem[] = [
+    ...(list?.data ?? [])
+      .filter((n) => isVisibleNotificationType(n.type))
+      .map((n) => ({
+        key: `gen-${n.id}`,
+        createdAt: n.createdAt,
+        node: (
+          <NotificationItem
+            notification={n}
+            businessId={activeBusinessId!}
+            onAfterClick={() => setOpen(false)}
+          />
+        ),
+      })),
+    ...(supportList?.data ?? []).map((n) => ({
+      key: `sup-${n.id}`,
+      createdAt: n.createdAt,
+      node: (
+        <SupportNotificationItem
+          notification={n}
+          onAfterClick={() => setOpen(false)}
+        />
+      ),
+    })),
+  ]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, RECENT_LIMIT);
+
+  const isAnyLoading = isLoading || isLoadingSupport;
+  const isMarking = isMarkingAll || isMarkingAllSupport;
 
   function handleMarkAll() {
-    if (activeBusinessId && unreadCount > 0) {
+    if (activeBusinessId && generalUnread > 0) {
       markAll({ businessId: activeBusinessId });
+    }
+    if (supportUnreadCount > 0) {
+      markAllSupport();
     }
   }
 
@@ -74,9 +124,9 @@ export function NotificationBell() {
             size="sm"
             className="h-7 gap-1 px-2 text-xs"
             onClick={handleMarkAll}
-            disabled={unreadCount === 0 || isMarkingAll}
+            disabled={unreadCount === 0 || isMarking}
           >
-            {isMarkingAll ? (
+            {isMarking ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <CheckCheck className="h-3.5 w-3.5" />
@@ -86,12 +136,12 @@ export function NotificationBell() {
         </div>
 
         <div className="max-h-96 overflow-y-auto p-1">
-          {isLoading ? (
+          {isAnyLoading ? (
             <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Cargando…
             </div>
-          ) : notifications.length === 0 ? (
+          ) : merged.length === 0 ? (
             <div className="flex flex-col items-center gap-1 py-8 text-center">
               <Bell className="h-6 w-6 text-muted-foreground/60" />
               <p className="text-sm text-muted-foreground">
@@ -100,13 +150,8 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="flex flex-col gap-0.5">
-              {notifications.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  businessId={activeBusinessId!}
-                  onAfterClick={() => setOpen(false)}
-                />
+              {merged.map((m) => (
+                <div key={m.key}>{m.node}</div>
               ))}
             </div>
           )}

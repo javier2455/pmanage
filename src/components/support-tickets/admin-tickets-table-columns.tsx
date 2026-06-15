@@ -1,17 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MessageSquareReply } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import type { SupportTicket } from "@/lib/types/support-ticket";
 import { TicketStatusBadge } from "./ticket-status-badge";
-import { CloseTicketDialog } from "./close-ticket-dialog";
 import {
   formatTicketDate,
   type TicketsColumnMeta,
@@ -96,15 +90,15 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
       cell: ({ row }) => <TicketStatusBadge status={row.original.status} />,
     },
     {
-      id: "createdAt",
-      accessorFn: (row) => row.createdAt,
+      id: "lastMessage",
+      accessorFn: (row) => row.lastMessageAt ?? row.createdAt,
       meta: compactColumnMeta,
       header: ({ column }) => (
-        <TicketsSortableHeader column={column} label="Creado" />
+        <TicketsSortableHeader column={column} label="Últ. actividad" />
       ),
       cell: ({ row }) => (
         <span className="whitespace-nowrap text-sm text-muted-foreground">
-          {formatTicketDate(row.original.createdAt)}
+          {formatTicketDate(row.original.lastMessageAt ?? row.original.createdAt)}
         </span>
       ),
     },
@@ -118,46 +112,16 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
-      cell: ({ row }) => <AdminTicketActionsCell ticket={row.original} />,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <Button asChild variant="ghost" size="sm">
+            <Link href={`/dashboard/admin/support/details?id=${row.original.id}`}>
+              <MessageSquareReply className="size-4" />
+              Ver / responder
+            </Link>
+          </Button>
+        </div>
+      ),
     },
   ];
-}
-
-function AdminTicketActionsCell({ ticket }: { ticket: SupportTicket }) {
-  const [closeOpen, setCloseOpen] = useState(false);
-  const isClosed = ticket.status === "closed";
-
-  return (
-    <div className="flex justify-end">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Abrir acciones"
-          >
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-52 p-1">
-          <button
-            type="button"
-            disabled={isClosed}
-            onClick={() => setCloseOpen(true)}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <CheckCircle2 className="size-4 text-emerald-600" />
-            {isClosed ? "Ticket cerrado" : "Cerrar ticket"}
-          </button>
-        </PopoverContent>
-      </Popover>
-      <CloseTicketDialog
-        ticketId={ticket.id}
-        ticketSubject={ticket.subject}
-        open={closeOpen}
-        onOpenChange={setCloseOpen}
-      />
-    </div>
-  );
 }

@@ -12,12 +12,22 @@ export const createTicketSchema = z.object({
   userName: z.string().optional(),
 });
 
-export const closeTicketSchema = z.object({
-  response: z
+/** Respuesta en la conversación (usuario o admin): 10–5000 chars. */
+export const replyMessageSchema = z.object({
+  message: z
     .string()
-    .max(5000, "La respuesta no puede superar los 5000 caracteres")
+    .min(10, "El mensaje debe tener al menos 10 caracteres")
+    .max(5000, "El mensaje no puede superar los 5000 caracteres"),
+});
+
+/** Mensaje opcional al cerrar/reabrir un ticket: 0–5000 chars. */
+export const statusMessageSchema = z.object({
+  message: z
+    .string()
+    .max(5000, "El mensaje no puede superar los 5000 caracteres")
     .optional(),
 });
 
 export type CreateTicketFormData = z.infer<typeof createTicketSchema>;
-export type CloseTicketFormData = z.infer<typeof closeTicketSchema>;
+export type ReplyMessageFormData = z.infer<typeof replyMessageSchema>;
+export type StatusMessageFormData = z.infer<typeof statusMessageSchema>;
