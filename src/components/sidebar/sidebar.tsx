@@ -40,9 +40,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasNoBusinesses = !isLoadingBusinesses && businesses.length === 0
   const businessIdForMenu = activeBusiness?.isWorker ? activeBusiness.id : undefined
 
+  /* Si hay negocios, esperamos a que el negocio activo esté resuelto antes de
+     pedir las secciones. Así, cuando se entra como trabajador, la primera (y
+     única) petición ya incluye el businessId y el backend devuelve los
+     permisos correctos en vez de fetchear primero sin él. */
+  const isActiveBusinessResolved = businesses.length === 0 || !!activeBusiness
+
   const { data: sections, isLoading } = useGetAllSectionsQuery({
     businessId: businessIdForMenu,
-    enabled: !isLoadingBusinesses,
+    enabled: !isLoadingBusinesses && isActiveBusinessResolved,
   })
 
   const navSections = React.useMemo<NavSection[]>(() => {
@@ -111,7 +117,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {isLoading ? <NavMainSkeleton /> : <NavMain sections={navSections} />}
+        {isLoadingBusinesses || !isActiveBusinessResolved || isLoading ? (
+          <NavMainSkeleton />
+        ) : (
+          <NavMain sections={navSections} />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
