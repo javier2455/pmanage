@@ -27,7 +27,7 @@ interface AuthDataResponse {
   updatedAt: string;
   lastLogin: string;
   pageId: string;
-  rol: Role;
+  role: string;
   active: number;
   twoFactorEnabled: boolean;
   providers: [];
@@ -77,13 +77,6 @@ export interface InvitationInformationResponse {
   message: string;
   expired: boolean;
   data: InvitationInformationData;
-}
-
-interface Role {
-  id: number;
-  name: string;
-  pageId: string;
-  permission: string;
 }
 
 interface Plan {

@@ -75,13 +75,13 @@ export default function LoginPage() {
             "user",
             JSON.stringify({
                 name: user.name,
-                role: user.rol,
+                role: user.role,
                 email: user.email,
                 plan: user.plan,
                 avatar: user.avatar,
             }),
         );
-        const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
+        const roleName = user.role ?? "";
         const planType = user.plan?.type ?? user.plan?.name ?? "";
         setAuthCookies({
             token: accessToken,
