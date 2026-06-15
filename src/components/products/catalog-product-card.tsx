@@ -17,8 +17,6 @@ export function CatalogProductCard({
   onOpenDetails,
   onDelete,
 }: CatalogProductCardProps) {
-  const category = product.category?.name ?? "Sin categoría";
-
   return (
     <div
       role="button"
@@ -56,9 +54,6 @@ export function CatalogProductCard({
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="line-clamp-2 min-h-10 text-sm font-medium text-card-foreground">
             {product.name}
-          </span>
-          <span className="truncate text-xs text-muted-foreground">
-            {category}
           </span>
         </div>
         <div

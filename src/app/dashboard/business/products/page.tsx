@@ -43,9 +43,11 @@ export default function ProductsPage() {
   }, [businessSearch]);
 
   // Al cambiar la búsqueda, volvemos a la primera página de resultados.
-  useEffect(() => {
+  // Se hace en el handler (no en un efecto) para evitar renders en cascada.
+  function handleCatalogSearchChange(value: string) {
+    setCatalogSearch(value);
     setCatalogPage(1);
-  }, [debouncedCatalogSearch]);
+  }
 
   const { data, isLoading, isFetching, isError } = useAllProductOfMyBusinesses(
     activeBusinessId ?? "",
@@ -115,7 +117,7 @@ export default function ProductsPage() {
                 }
                 isFetching={allProductsFetching}
                 searchValue={catalogSearch}
-                onSearchChange={setCatalogSearch}
+                onSearchChange={handleCatalogSearchChange}
                 onPageChange={setCatalogPage}
                 onLimitChange={handleCatalogLimitChange}
               />

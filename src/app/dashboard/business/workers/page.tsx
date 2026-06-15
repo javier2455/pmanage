@@ -169,8 +169,8 @@ export default function WorkersPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="metrics" className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
+        <TabsContent value="metrics" className="flex flex-col gap-4 ">
+          <div className="flex flex-col gap-1 mt-4">
             <p className="text-sm text-muted-foreground">
               Desempeño de ventas de cada trabajador en el período
               seleccionado.
