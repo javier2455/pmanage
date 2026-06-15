@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/sidebar/sidebar"
 import { BusinessSwitcher } from "@/components/sidebar/business-switcher"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { BusinessProvider } from "@/context/business-context"
+import { AccessGuard } from "@/components/auth/access-guard"
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
@@ -16,7 +17,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <NotificationBell />
         </nav>
-        {children}
+        <AccessGuard>{children}</AccessGuard>
       </main>
       </BusinessProvider>
     </SidebarProvider>

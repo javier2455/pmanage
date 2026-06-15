@@ -23,6 +23,9 @@ import { getActivePlan } from "@/lib/api/plans";
 import { authRoutes } from "@/lib/routes/auth";
 import { getMe } from "@/lib/api/auth";
 import { getMyBusinessesList } from "@/lib/api/business";
+import { getAllSections } from "@/lib/api/navigation";
+import { collectAllowedUrls } from "@/lib/navigation-access";
+import { roleIdFromName } from "@/lib/roles";
 import { setAuthCookies } from "@/lib/cookies";
 import { useState } from "react";
 import {
@@ -105,8 +108,19 @@ export default function LoginPage() {
                my-business también incluye los propios. Coincide con el filtro
                del BusinessProvider para que el destino sea coherente. */
             const workerBusinesses = businesses.filter((b) => b.isWorker === true);
-            const target = workerBusinesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
-            router.push(target);
+            if (workerBusinesses.length === 0) {
+                router.push("/dashboard/business/create");
+                return;
+            }
+            /* Aterrizamos en la primera ruta a la que el trabajador realmente
+               tiene acceso (no en /dashboard fijo). Persistimos el negocio
+               activo para que las secciones consultadas coincidan con las que
+               cargará el dashboard al montar. */
+            const activeBusiness = workerBusinesses[0];
+            sessionStorage.setItem("activeBusinessId", activeBusiness.id);
+            const sections = await getAllSections({ businessId: activeBusiness.id });
+            const allowedUrls = collectAllowedUrls(sections, roleIdFromName(user.role ?? ""));
+            router.push(allowedUrls.find(Boolean) ?? "/dashboard/no-access");
             return;
         }
 
