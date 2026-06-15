@@ -154,7 +154,7 @@ export function createBusinessProductsColumns(
   ];
 }
 
-function BusinessProductActionsCell({
+export function BusinessProductActionsCell({
   row,
   onDelete,
 }: {

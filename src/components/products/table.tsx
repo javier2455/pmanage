@@ -12,11 +12,27 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import { sileo } from "sileo";
-import { Loader2, Package, Search } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  LayoutGrid,
+  List,
+  Loader2,
+  Package,
+  Search,
+} from "lucide-react";
 import type { ProductToShowInTable } from "@/lib/types/product";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ProductCatalogCard } from "@/components/products/product-catalog-card";
 import {
   Empty,
   EmptyContent,
@@ -124,6 +140,22 @@ export default function TableOfProducts({
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  // Vista de la lista: tabla (densa, ordenable por columnas) o tarjetas
+  // (catálogo visual). Se recuerda entre visitas vía localStorage.
+  const [viewMode, setViewMode] = React.useState<"table" | "grid">("table");
+  React.useEffect(() => {
+    const stored = window.localStorage.getItem("business-products-view");
+    if (stored === "grid" || stored === "table") setViewMode(stored);
+  }, []);
+  React.useEffect(() => {
+    window.localStorage.setItem("business-products-view", viewMode);
+  }, [viewMode]);
+
+  const currentSort = sorting[0];
+  const sortField = currentSort?.id ?? "";
+  const sortDesc = currentSort?.desc ?? false;
+
   const [detailsProductId, setDetailsProductId] = React.useState<string | null>(
     null,
   );
@@ -191,6 +223,73 @@ export default function TableOfProducts({
                 aria-controls="business-products-table"
               />
             </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              {/* Orden: en tabla se usa el encabezado; en tarjetas, este control. */}
+              {viewMode === "grid" ? (
+                <div className="flex items-center gap-1.5">
+                  <Select
+                    value={sortField || undefined}
+                    onValueChange={(id) =>
+                      setSorting([{ id, desc: sortDesc }])
+                    }
+                  >
+                    <SelectTrigger size="sm" className="w-37.5">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Nombre</SelectItem>
+                      <SelectItem value="price">Precio</SelectItem>
+                      <SelectItem value="stock">Stock</SelectItem>
+                      <SelectItem value="category">Categoría</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    disabled={!sortField}
+                    onClick={() =>
+                      setSorting([
+                        { id: sortField || "name", desc: !sortDesc },
+                      ])
+                    }
+                    aria-label={
+                      sortDesc ? "Orden descendente" : "Orden ascendente"
+                    }
+                  >
+                    {sortDesc ? (
+                      <ArrowDown className="size-4" />
+                    ) : (
+                      <ArrowUp className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              ) : null}
+
+              <div className="inline-flex items-center rounded-md border border-border p-0.5">
+                <Button
+                  type="button"
+                  variant={viewMode === "table" ? "secondary" : "ghost"}
+                  size="icon-sm"
+                  onClick={() => setViewMode("table")}
+                  aria-label="Vista de tabla"
+                  aria-pressed={viewMode === "table"}
+                >
+                  <List className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="icon-sm"
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Vista de tarjetas"
+                  aria-pressed={viewMode === "grid"}
+                >
+                  <LayoutGrid className="size-4" />
+                </Button>
+              </div>
+            </div>
           </div>
 
           {isEmpty ? (
@@ -251,7 +350,8 @@ export default function TableOfProducts({
                 )}
                 aria-busy={isFetching}
               >
-                <Table id="business-products-table" className="min-w-[700px]">
+                {viewMode === "table" ? (
+                <Table id="business-products-table" className="min-w-175">
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id}>
@@ -304,6 +404,18 @@ export default function TableOfProducts({
                     ))}
                   </TableBody>
                 </Table>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {table.getRowModel().rows.map((row) => (
+                      <ProductCatalogCard
+                        key={row.id}
+                        bp={row.original}
+                        onOpenDetails={handleRowClick}
+                        onDelete={handleDeleteProduct}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

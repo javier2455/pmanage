@@ -102,44 +102,56 @@ export function createCatalogProductsColumns(
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Abrir acciones"
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-48 p-1">
-              <Link
-                href={`/dashboard/business/products/catalog/edit?id=${row.original.id}`}
-                className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                <Pencil className="size-4 text-primary" />
-                Editar
-              </Link>
-              <DeleteDialog
-                deleteType="Producto"
-                name={row.original.name}
-                onConfirm={() => onDeleteProduct(row.original.id)}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                    Eliminar
-                  </button>
-                }
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <CatalogProductActionsCell row={row.original} onDelete={onDeleteProduct} />
       ),
     },
   ];
+}
+
+export function CatalogProductActionsCell({
+  row,
+  onDelete,
+}: {
+  row: Product;
+  onDelete: (productId: string) => void | Promise<void>;
+}) {
+  return (
+    <div className="flex justify-end">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Abrir acciones"
+          >
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-48 p-1">
+          <Link
+            href={`/dashboard/business/products/catalog/edit?id=${row.id}`}
+            className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+          >
+            <Pencil className="size-4 text-primary" />
+            Editar
+          </Link>
+          <DeleteDialog
+            deleteType="Producto"
+            name={row.name}
+            onConfirm={() => onDelete(row.id)}
+            trigger={
+              <button
+                type="button"
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+              >
+                <Trash2 className="size-4 text-destructive" />
+                Eliminar
+              </button>
+            }
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
 }
