@@ -227,10 +227,10 @@ export function AssignProductToBusinessForm() {
             }}
           />
           <p className="text-xs text-muted-foreground">
-            Opcional — administra tus categorías en{" "}
+            Opcional — administra tus categorías en la sección de{" "}
             <Link
               href="/dashboard/business/categories/products"
-              className="underline-offset-2 hover:underline"
+              className="underline-offset-2 hover:text-white hover:underline"
             >
               Categorías
             </Link>

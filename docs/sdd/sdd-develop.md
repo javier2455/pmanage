@@ -52,6 +52,7 @@ Cambios respecto a `main` agrupados por estado:
 | 28 | **Horario de atención del negocio** (config por día) | ✅ Frontend + backend (`GET`/`PUT /businesses/:id/schedule`) | `16d42a6` (1.7.0) | Sí |
 | 29 | **Refactor de permisos de trabajador a secciones** (payload de 3 capas con `sectionId`) | ✅ Mergeada | `de7e16a` (1.8.0) | Sí |
 | 30 | **Stock con cantidades decimales** (unidades de peso/volumen) | ✅ Frontend mergeado | `c771e5e` (1.8.1) | Sí — verificar persistencia decimal en backend |
+| 31 | **Editar la categoría de un producto dentro del negocio** (precio + categoría en un solo diálogo) | 🟡 Frontend implementado, backend pendiente | _(sin commit aún)_ | **No** — espera `PATCH .../products/:bpId/category` (ver [docs/backend-categoria-business-product.md](../backend-categoria-business-product.md)) |
 
 > Ajustes menores en el rango 1.3.8–1.8.1 (no itemizados): eliminación del menú estático de fallback, hover en filas de productos, fix `markAllAsRead`, afinado de límites de notificaciones, botones `outline`.
 
@@ -63,7 +64,7 @@ Cambios respecto a `main` agrupados por estado:
 
 **Qué hace.** Cada vez que cambia el precio de un `BusinessProduct` se registra un `PriceHistoryEntry` con precio anterior, precio nuevo, moneda, usuario y fecha. El usuario puede:
 
-- Editar el precio inline desde la fila del producto vía `EditPriceDialog` (reemplaza el viejo `EditProductForm` + `PriceHistoryTrigger`).
+- Editar el precio inline desde la fila del producto vía `EditPriceDialog` (reemplaza el viejo `EditProductForm` + `PriceHistoryTrigger`). _Nota (feature 31): este diálogo se renombró a `EditBusinessProductDialog` y ahora también edita la categoría._
 - Ver el historial completo en una **página dedicada** (antes era un modal popover desde la fila).
 - Comparar el historial de múltiples productos en paralelo (feature Pro, `485ae8b`).
 

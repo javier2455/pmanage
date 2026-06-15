@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { ProductToShowInTable } from "@/lib/types/product";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
-import { EditPriceDialog } from "@/components/products/edit-price-dialog";
+import { EditBusinessProductDialog } from "@/components/products/edit-business-product-dialog";
 
 export type BusinessProductsColumnMeta = {
   headerClassName?: string;
@@ -183,7 +183,7 @@ export function BusinessProductActionsCell({
             className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
           >
             <Pencil className="size-4 text-primary" />
-            Editar precio
+            Editar
           </button>
           <DeleteDialog
             deleteType="Producto"
@@ -201,13 +201,14 @@ export function BusinessProductActionsCell({
           />
         </PopoverContent>
       </Popover>
-      <EditPriceDialog
+      <EditBusinessProductDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         businessProductId={row.id}
         productId={row.product.id}
         productName={row.product.name}
         currentPrice={Number(row.price)}
+        currentCategoryId={(row.category ?? row.product.category)?.id ?? null}
       />
     </div>
   );

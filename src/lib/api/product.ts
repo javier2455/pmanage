@@ -145,6 +145,19 @@ export async function deleteProductInBusiness(
   }
 }
 
+export async function updateBusinessProductCategory(
+  businessId: string,
+  businessProductId: string,
+  categoryId: string | null,
+) {
+  // `categoryId: null` des-asigna la categoría. Ver docs/backend-categoria-business-product.md.
+  const { data } = await apiClient.patch(
+    productRoutes.updateBusinessProductCategory(businessId, businessProductId),
+    { categoryId },
+  );
+  return data;
+}
+
 export async function updateBusinessProductPrice(businessProductId: string, price: number) {
   const reponse = await apiClient.put(
     productRoutes.updateBusinessProductPrice(businessProductId),

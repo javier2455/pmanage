@@ -52,15 +52,21 @@ export const editProductSchema = z.object({
   active: z.boolean().nullable().optional(),
 });
 
-export const updateBusinessProductPriceSchema = z.object({
+/**
+ * Edición de un producto ya asignado a un negocio: precio + categoría.
+ * Cada campo viaja a su propio endpoint (ver docs/backend-categoria-business-product.md);
+ * el formulario solo envía los que cambiaron.
+ */
+export const editBusinessProductSchema = z.object({
   price: z
     .number({ error: "Ingresa un precio válido" })
     .positive("El precio debe ser mayor a 0")
     .max(1000000, "El precio máximo es de 1,000,000"),
+  categoryId: z.string().nullable().optional(),
 });
 
 export type CreateProductFormData = z.infer<typeof createProductSchema>;
 export type CreateProductInBusinessFormData = z.infer<typeof createProductInBusinessSchema>;
 export type AssignProductToBusinessFormData = z.infer<typeof assignProductToBusinessSchema>;
 export type EditProductFormData = z.infer<typeof editProductSchema>;
-export type UpdateBusinessProductPriceFormData = z.infer<typeof updateBusinessProductPriceSchema>;
+export type EditBusinessProductFormData = z.infer<typeof editBusinessProductSchema>;

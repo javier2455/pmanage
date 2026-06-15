@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-12** (horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales, categoría a nivel de `BusinessProduct`, logout funcional y búsqueda de productos en servidor).
+> Última actualización: **2026-06-15** (edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales, categoría a nivel de `BusinessProduct`, logout funcional y búsqueda de productos en servidor).
 
 ---
 
@@ -78,6 +78,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 28 | **Horario de atención del negocio** (config por día, abrir/cerrar, multi-día) | `16d42a6` (1.7.0) | — (backend GET/PUT entregado) |
 | 29 | **Refactor de permisos de trabajador a secciones** — payload de 3 capas (sección + menú + submenú) alineado con `GET /section` | `de7e16a` (1.8.0) | — |
 | 30 | **Stock con cantidades decimales** para unidades de peso/volumen (kg, lb, g, L, mL) | `c771e5e` (1.8.1) | Verificar que backend persista decimales en `add-stock` (ver detalle) |
+| 31 | **Editar la categoría de un producto dentro del negocio** (antes solo se podía el precio) | _(sin commit aún)_ | **Endpoint backend pendiente** (ver detalle) |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
 
@@ -113,6 +114,14 @@ El asignador de permisos de trabajador dejó de basarse en `GET /menu/` y ahora 
 El formulario de ingreso de stock acepta decimales para unidades de peso/volumen (kg, lb, g, L, mL); las unidades enteras (`ud`) siguen exigiendo enteros. El schema de validación pasó a ser una fábrica `makeInventoryUpdateStockSchema(allowDecimals)` ([src/lib/validations/inventory.ts](../src/lib/validations/inventory.ts)) — la unidad sólo se conoce al elegir el producto en tiempo de render — y limita a 3 decimales. Nuevo helper `parseDecimalInput` ([src/lib/units.ts](../src/lib/units.ts)) que acepta coma o punto como separador.
 
 **Verificar en backend:** que `POST .../add-stock` acepte y persista cantidades decimales (no las redondee a entero) para que el stock mostrado coincida con lo ingresado.
+
+### Detalle: Editar la categoría de un producto dentro del negocio (feature 31)
+
+Hasta ahora la categoría de un `BusinessProduct` **solo** podía fijarse al asignar el producto al negocio (feature 27); editar un producto ya asignado permitía cambiar **solo el precio**. Esta feature añade la edición de la categoría desde la misma tabla de productos del negocio.
+
+**Frontend completo:** el antiguo `EditPriceDialog` se reemplazó por `EditBusinessProductDialog` ([src/components/products/edit-business-product-dialog.tsx](../src/components/products/edit-business-product-dialog.tsx)), que edita **precio + categoría** (reutiliza el `Combobox` de categorías del form de asignación y `useGetAllProductCategoriesQuery`). El menú de acciones dice "Editar" en vez de "Editar precio" ([src/components/products/business-products-table-columns.tsx](../src/components/products/business-products-table-columns.tsx)). Precio y categoría viajan a **endpoints distintos**; el diálogo solo dispara la(s) mutación(es) que cambiaron. Limpiar el selector envía `categoryId: null` (quita la categoría). Nuevos: ruta `updateBusinessProductCategory`, API `updateBusinessProductCategory`, hook `useUpdateBusinessProductCategoryMutation` y `editBusinessProductSchema` (se eliminó el `updateBusinessProductPriceSchema` que quedó sin uso).
+
+**Pendiente (backend):** implementar `PATCH /businesses/{businessId}/products/{businessProductId}/category` con `{ categoryId: string | null }` (el `null` des-asigna). Hasta entonces, el cambio de categoría falla con `404`; el cambio de precio sigue funcionando. Contrato completo en [docs/backend-categoria-business-product.md](backend-categoria-business-product.md).
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 

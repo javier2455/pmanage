@@ -12,6 +12,7 @@ import {
   edit,
   getAllProducts,
   getProductById,
+  updateBusinessProductCategory,
   updateBusinessProductPrice,
 } from "@/lib/api/product";
 import {
@@ -156,6 +157,28 @@ export function useUpdateBusinessProductPriceMutation() {
       });
       queryClient.invalidateQueries({
         queryKey: ["product-price-history", variables.productId],
+      });
+    },
+  });
+}
+
+export function useUpdateBusinessProductCategoryMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      businessId,
+      businessProductId,
+      categoryId,
+    }: {
+      businessId: string;
+      businessProductId: string;
+      categoryId: string | null;
+      productId: string;
+    }) =>
+      updateBusinessProductCategory(businessId, businessProductId, categoryId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["all-product-of-my-businesses", variables.businessId],
       });
     },
   });
