@@ -109,9 +109,26 @@ export function SaleCartPanel({
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
-                            <span className="min-w-8 px-1 text-center text-sm font-medium tabular-nums text-card-foreground">
-                              {item.quantity}
-                            </span>
+                            <Input
+                              key={item.quantity}
+                              type="text"
+                              inputMode="numeric"
+                              defaultValue={String(item.quantity)}
+                              onFocus={(e) => e.target.select()}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") e.currentTarget.blur()
+                              }}
+                              onBlur={(e) => {
+                                const parsed = parseDecimalInput(e.target.value)
+                                if (Number.isNaN(parsed)) {
+                                  e.target.value = String(item.quantity)
+                                  return
+                                }
+                                onSetQuantity(item.productId, parsed)
+                              }}
+                              className="h-8 w-12 rounded-none border-0 border-x border-border px-1 text-center text-sm font-medium tabular-nums shadow-none focus-visible:ring-0"
+                              aria-label={`Cantidad de ${item.productName}`}
+                            />
                             <Button
                               type="button"
                               variant="ghost"
