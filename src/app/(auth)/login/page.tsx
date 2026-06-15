@@ -101,7 +101,11 @@ export default function LoginPage() {
 
         if (mode === "worker") {
             const businesses = await getMyBusinessesList();
-            const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
+            /* En modo worker solo cuentan los negocios donde es trabajador;
+               my-business también incluye los propios. Coincide con el filtro
+               del BusinessProvider para que el destino sea coherente. */
+            const workerBusinesses = businesses.filter((b) => b.isWorker === true);
+            const target = workerBusinesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
             router.push(target);
             return;
         }

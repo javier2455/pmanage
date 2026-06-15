@@ -35,10 +35,12 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
+  const [loginMode, setLoginMode] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("activeBusinessId");
     if (stored) setActiveBusinessId(stored);
+    setLoginMode(sessionStorage.getItem("loginMode"));
   }, []);
 
   // 🔥 Traer negocios del usuario
@@ -58,10 +60,15 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const businesses: Business[] = useMemo(
-    () => (Array.isArray(data) ? data : []),
-    [data]
-  );
+  const businesses: Business[] = useMemo(() => {
+    const all: Business[] = Array.isArray(data) ? data : [];
+    /* Cuando se entra como trabajador, my-business también trae los negocios
+       propios; el selector solo debe mostrar aquellos donde es trabajador. */
+    if (loginMode === "worker") {
+      return all.filter((b) => b.isWorker === true);
+    }
+    return all;
+  }, [data, loginMode]);
 
   useEffect(() => {
     if (isLoading) return;
