@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  RefreshCw,
+  RotateCcw,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +32,7 @@ import { formatTicketDate } from "@/components/support-tickets/my-tickets-table-
 export default function SupportDetailClient() {
   const searchParams = useSearchParams();
   const ticketId = searchParams.get("id") ?? "";
-  const { data: ticket, isLoading, isError } =
+  const { data: ticket, isLoading, isError, isFetching, refetch } =
     useGetMyTicketByIdQuery(ticketId);
   const replyMutation = useAddUserMessageMutation();
 
@@ -79,6 +85,18 @@ export default function SupportDetailClient() {
               </div>
               <div className="flex items-center gap-2">
                 <TicketStatusBadge status={ticket.status} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  title="Actualizar conversación"
+                  aria-label="Actualizar conversación"
+                >
+                  <RefreshCw
+                    className={`size-4 ${isFetching ? "animate-spin" : ""}`}
+                  />
+                </Button>
                 {ticket.status === "closed" ? (
                   <TicketStatusDialog
                     ticketId={ticket.id}

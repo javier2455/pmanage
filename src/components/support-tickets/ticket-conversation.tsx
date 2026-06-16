@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type {
   SupportTicket,
@@ -42,35 +45,47 @@ export function TicketConversation({
           },
         ];
 
+  // Mantiene la vista en el último mensaje al cargar/recibir mensajes nuevos.
+  // El scroll real ocurre en el Viewport interno del ScrollArea de Radix.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const viewport = scrollRef.current?.querySelector<HTMLElement>(
+      "[data-slot=scroll-area-viewport]",
+    );
+    if (viewport) viewport.scrollTop = viewport.scrollHeight;
+  }, [messages.length]);
+
   return (
-    <div className="flex flex-col gap-3">
-      {messages.map((msg) => {
-        const isOwn = msg.senderType === viewerType;
-        return (
-          <div
-            key={msg.id}
-            className={cn(
-              "flex flex-col gap-1",
-              isOwn ? "items-end" : "items-start",
-            )}
-          >
+    <ScrollArea ref={scrollRef} className="max-h-[55dvh] min-h-32">
+      <div className="flex flex-col gap-3 pr-3">
+        {messages.map((msg) => {
+          const isOwn = msg.senderType === viewerType;
+          return (
             <div
+              key={msg.id}
               className={cn(
-                "max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap sm:max-w-[75%]",
-                isOwn
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground",
+                "flex flex-col gap-1",
+                isOwn ? "items-end" : "items-start",
               )}
             >
-              {msg.message}
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap sm:max-w-[75%]",
+                  isOwn
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground",
+                )}
+              >
+                {msg.message}
+              </div>
+              <span className="px-1 text-xs text-muted-foreground">
+                {msg.senderName ?? SENDER_LABEL[msg.senderType]} ·{" "}
+                {formatTicketDate(msg.createdAt)}
+              </span>
             </div>
-            <span className="px-1 text-xs text-muted-foreground">
-              {msg.senderName ?? SENDER_LABEL[msg.senderType]} ·{" "}
-              {formatTicketDate(msg.createdAt)}
-            </span>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </ScrollArea>
   );
 }

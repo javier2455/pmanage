@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sileo } from "sileo";
 import { Loader2, Send } from "lucide-react";
@@ -34,7 +34,7 @@ export function TicketReplyForm({
   hint,
 }: TicketReplyFormProps) {
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -74,12 +74,18 @@ export function TicketReplyForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
-      <Textarea
-        rows={3}
-        className="resize-none"
-        placeholder={placeholder}
-        {...register("message")}
-        aria-invalid={errors.message ? "true" : "false"}
+      <Controller
+        control={control}
+        name="message"
+        render={({ field }) => (
+          <Textarea
+            rows={3}
+            className="resize-none"
+            placeholder={placeholder}
+            aria-invalid={errors.message ? "true" : "false"}
+            {...field}
+          />
+        )}
       />
       {errors.message && (
         <p className="text-xs text-destructive">{errors.message.message}</p>
