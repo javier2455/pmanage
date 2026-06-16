@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import axios from "axios";
+import { sileo } from "sileo";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -9,9 +11,11 @@ import {
   Mail,
   RefreshCw,
   RotateCcw,
+  UserCheck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -22,6 +26,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import {
   useAddAdminMessageMutation,
+  useAssignTicketMutation,
   useGetAdminTicketByIdQuery,
 } from "@/hooks/use-support-ticket";
 import { TicketStatusBadge } from "@/components/support-tickets/ticket-status-badge";
@@ -30,12 +35,45 @@ import { TicketReplyForm } from "@/components/support-tickets/ticket-reply-form"
 import { TicketStatusDialog } from "@/components/support-tickets/ticket-status-dialog";
 import { formatTicketDate } from "@/components/support-tickets/my-tickets-table-columns";
 
+const SUCCESS_TOAST_STYLES = {
+  title: "text-white! text-[16px]! font-bold!",
+  description: "text-white/90! text-[15px]!",
+};
+
 export default function AdminSupportDetailClient() {
   const searchParams = useSearchParams();
   const ticketId = searchParams.get("id") ?? "";
   const { data: ticket, isLoading, isError, isFetching, refetch } =
     useGetAdminTicketByIdQuery(ticketId);
   const replyMutation = useAddAdminMessageMutation();
+  const assignMutation = useAssignTicketMutation();
+
+  async function handleAssign() {
+    if (!ticket) return;
+    try {
+      await assignMutation.mutateAsync(ticket.id);
+      sileo.success({
+        title: "Ticket asignado",
+        fill: "",
+        styles: SUCCESS_TOAST_STYLES,
+        description: "Ahora eres el admin responsable de este ticket",
+      });
+    } catch (error) {
+      const description =
+        axios.isAxiosError(error) && error.response?.data?.message
+          ? Array.isArray(error.response.data.message)
+            ? error.response.data.message.join(", ")
+            : error.response.data.message
+          : "Intenta de nuevo en unos segundos.";
+      sileo.error({
+        title: "No se pudo asignar el ticket",
+        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+        description,
+      });
+    }
+  }
+
+  const isClosed = ticket?.status === "closed";
 
   return (
     <section className="flex flex-col gap-6 p-4">
@@ -86,11 +124,16 @@ export default function AdminSupportDetailClient() {
                     ? `${ticket.userName} · ${ticket.userEmail}`
                     : ticket.userEmail}
                 </CardDescription>
-                <CardDescription>
-                  Creado el {formatTicketDate(ticket.createdAt)}
-                </CardDescription>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <Badge variant={ticket.assignedAdminId ? "secondary" : "outline"}>
+                    {ticket.assignedAdminId ? "Asignado" : "Sin asignar"}
+                  </Badge>
+                  <CardDescription>
+                    Creado el {formatTicketDate(ticket.createdAt)}
+                  </CardDescription>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <TicketStatusBadge status={ticket.status} />
                 <Button
                   variant="outline"
@@ -104,7 +147,22 @@ export default function AdminSupportDetailClient() {
                     className={`size-4 ${isFetching ? "animate-spin" : ""}`}
                   />
                 </Button>
-                {ticket.status === "closed" ? (
+                {!isClosed ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAssign}
+                    disabled={assignMutation.isPending}
+                  >
+                    {assignMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <UserCheck className="size-4" />
+                    )}
+                    Asignarme
+                  </Button>
+                ) : null}
+                {isClosed ? (
                   <TicketStatusDialog
                     ticketId={ticket.id}
                     ticketSubject={ticket.subject}
@@ -144,9 +202,9 @@ export default function AdminSupportDetailClient() {
               isPending={replyMutation.isPending}
               placeholder="Escribe la respuesta del equipo de soporte..."
               hint={
-                ticket.status === "closed"
+                isClosed
                   ? "Si respondes, el ticket se reabrirá automáticamente."
-                  : undefined
+                  : "Solo el admin asignado puede responder. Usa «Asignarme» si el envío falla."
               }
             />
           </CardContent>

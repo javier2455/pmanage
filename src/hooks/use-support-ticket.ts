@@ -8,6 +8,7 @@ import apiClient from "@/lib/axios";
 import {
   addAdminMessage,
   addUserMessage,
+  assignTicket,
   createTicket,
   getAllTickets,
   getMyTickets,
@@ -32,10 +33,8 @@ interface UseGetAllTicketsParams extends UseGetMyTicketsParams {
 }
 
 /**
- * Detalle de un ticket para el admin. funtion.md solo documenta
- * `GET /my-tickets/:id` (scope del dueño); aquí asumimos el endpoint REST
- * `GET /support-tickets/:id` para que el admin lea el hilo de cualquier ticket.
- * TODO(backend): confirmar que este endpoint existe.
+ * Detalle de un ticket para el admin vía `GET /support-tickets/:id`
+ * (endpoint oficial admin, ver docs/funtion.md §5).
  */
 async function getTicketByIdAdmin(id: string): Promise<SupportTicket> {
   const { data } = await apiClient.get(`${supportTicketRoutes.all}/${id}`);
@@ -128,5 +127,13 @@ export function useUpdateTicketStatusMutation() {
     }: { ticketId: string } & UpdateTicketStatusProps) =>
       updateTicketStatus(ticketId, payload),
     onSuccess: (_, { ticketId }) => invalidateTicket(queryClient, ticketId),
+  });
+}
+
+export function useAssignTicketMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ticketId: string) => assignTicket(ticketId),
+    onSuccess: (_, ticketId) => invalidateTicket(queryClient, ticketId),
   });
 }

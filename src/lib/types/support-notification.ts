@@ -16,17 +16,18 @@ export type SupportNotificationRecipient = "user" | "admin";
 export interface SupportNotification {
   id: string;
   ticketId: string;
-  messageId: string | null;
-  recipientType: SupportNotificationRecipient;
-  recipientUserId: string | null;
-  recipientEmail: string | null;
+  messageId?: string | null;
+  /** Puede omitirse en la respuesta de la lista (ver docs/funtion.md §11). */
+  recipientType?: SupportNotificationRecipient;
+  recipientUserId?: string | null;
+  recipientEmail?: string | null;
   eventType: SupportNotificationEvent;
   channel: "in_app" | "email";
   content: string;
-  metadata: Record<string, unknown> | null;
-  isSent: boolean;
-  sendError: string | null;
-  sentAt: string | null;
+  metadata?: Record<string, unknown> | null;
+  isSent?: boolean;
+  sendError?: string | null;
+  sentAt?: string | null;
   readAt: string | null;
   createdAt: string;
 }

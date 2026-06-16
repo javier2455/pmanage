@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MessageSquareReply } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { SupportTicket } from "@/lib/types/support-ticket";
 import { TicketStatusBadge } from "./ticket-status-badge";
 import {
@@ -49,14 +50,9 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
         cellClassName: "min-w-[220px] max-w-[340px]",
       } satisfies TicketsColumnMeta,
       cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-foreground">
-            {row.original.subject}
-          </span>
-          <span className="line-clamp-1 text-xs text-muted-foreground">
-            {row.original.message}
-          </span>
-        </div>
+        <span className="font-medium text-foreground">
+          {row.original.subject}
+        </span>
       ),
     },
     {
@@ -88,6 +84,19 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
         <TicketsSortableHeader column={column} label="Estado" />
       ),
       cell: ({ row }) => <TicketStatusBadge status={row.original.status} />,
+    },
+    {
+      id: "assignment",
+      accessorFn: (row) => (row.assignedAdminId ? 1 : 0),
+      meta: compactColumnMeta,
+      header: ({ column }) => (
+        <TicketsSortableHeader column={column} label="Asignación" />
+      ),
+      cell: ({ row }) => (
+        <Badge variant={row.original.assignedAdminId ? "secondary" : "outline"}>
+          {row.original.assignedAdminId ? "Asignado" : "Sin asignar"}
+        </Badge>
+      ),
     },
     {
       id: "lastMessage",

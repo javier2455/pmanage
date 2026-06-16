@@ -3,20 +3,20 @@ import { z } from "zod";
 export const createTicketSchema = z.object({
   subject: z
     .string()
-    .min(5, "El asunto debe tener al menos 5 caracteres")
+    .min(1, "El asunto es requerido")
     .max(255, "El asunto no puede superar los 255 caracteres"),
   message: z
     .string()
-    .min(10, "El mensaje debe tener al menos 10 caracteres")
+    .min(1, "El mensaje es requerido")
     .max(5000, "El mensaje no puede superar los 5000 caracteres"),
   userName: z.string().optional(),
 });
 
-/** Respuesta en la conversación (usuario o admin): 10–5000 chars. */
+/** Respuesta en la conversación (usuario o admin): requerida, máx. 5000 chars. */
 export const replyMessageSchema = z.object({
   message: z
     .string()
-    .min(10, "El mensaje debe tener al menos 10 caracteres")
+    .min(1, "El mensaje es requerido")
     .max(5000, "El mensaje no puede superar los 5000 caracteres"),
 });
 

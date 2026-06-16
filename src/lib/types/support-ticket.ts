@@ -37,6 +37,9 @@ export interface SupportTicket {
   reopenedBy: string | null;
   lastMessageAt: string | null;
   lastMessageBy: TicketSenderType | null;
+  /** Admin asignado (auto por menor carga, o manual vía /assign). Null al cerrar. */
+  assignedAdminId: string | null;
+  assignedAt: string | null;
   createdAt: string;
   updatedAt: string;
   /** Solo presente en el detalle (GET /:id); incluye el hilo de conversación. */
@@ -68,6 +71,18 @@ export interface CreateTicketProps {
 /** Cuerpo para responder un ticket (usuario o admin). */
 export interface AddMessageProps {
   message: string;
+}
+
+/**
+ * Respuesta de los endpoints de responder (POST /:id/messages y
+ * /:id/admin-messages): el ticket parcial actualizado + el mensaje creado.
+ */
+export interface AddMessageResponse {
+  ticket: Pick<
+    SupportTicket,
+    "id" | "status" | "assignedAdminId" | "lastMessageAt" | "lastMessageBy"
+  >;
+  message: SupportTicketMessage;
 }
 
 /** Cuerpo para cerrar/reabrir un ticket vía PATCH /:id/status. */

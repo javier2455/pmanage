@@ -59,14 +59,9 @@ export function createMyTicketsColumns(): ColumnDef<SupportTicket>[] {
         cellClassName: "min-w-[240px] max-w-[360px]",
       } satisfies TicketsColumnMeta,
       cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-foreground">
-            {row.original.subject}
-          </span>
-          <span className="line-clamp-1 text-xs text-muted-foreground">
-            {row.original.message}
-          </span>
-        </div>
+        <span className="font-medium text-foreground">
+          {row.original.subject}
+        </span>
       ),
     },
     {

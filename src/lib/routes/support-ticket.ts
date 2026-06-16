@@ -16,6 +16,9 @@ export const supportTicketRoutes = {
   // Estado (cerrar/reabrir) — canónico, ambos roles
   updateStatus: (id: string) => `${BASIC_ROUTE}/support-tickets/${id}/status`,
 
+  /** Un admin se apropia de un ticket (sin body). */
+  assign: (id: string) => `${BASIC_ROUTE}/support-tickets/${id}/assign`,
+
   /** @deprecated Endpoint de compatibilidad para cerrar (admin). */
   close: (id: string) => `${BASIC_ROUTE}/support-tickets/${id}/close`,
 

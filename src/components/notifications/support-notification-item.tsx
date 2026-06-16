@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMarkSupportNotificationAsRead } from "@/hooks/use-support-notification";
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import type {
   SupportNotification,
   SupportNotificationEvent,
@@ -29,14 +30,6 @@ const EVENT_META: Record<
   ticket_reopened: { label: "Ticket reabierto", icon: RotateCcw },
 };
 
-function ticketHref(notification: SupportNotification): string {
-  const base =
-    notification.recipientType === "admin"
-      ? "/dashboard/admin/support/details"
-      : "/dashboard/support/details";
-  return `${base}?id=${notification.ticketId}`;
-}
-
 export function SupportNotificationItem({
   notification,
   onAfterClick,
@@ -45,6 +38,7 @@ export function SupportNotificationItem({
   onAfterClick?: () => void;
 }) {
   const router = useRouter();
+  const { isAdmin } = useUserRoleAndPlan();
   const { mutate: markRead } = useMarkSupportNotificationAsRead();
 
   const meta = EVENT_META[notification.eventType] ?? {
@@ -54,10 +48,15 @@ export function SupportNotificationItem({
   const Icon = meta.icon;
   const isUnread = notification.readAt === null;
 
+  // El destino depende del rol del usuario logueado, no de `recipientType`
+  // (que puede no venir en la respuesta de la lista).
   function handleClick() {
     if (isUnread) markRead(notification.id);
     onAfterClick?.();
-    router.push(ticketHref(notification));
+    const base = isAdmin
+      ? "/dashboard/admin/support/details"
+      : "/dashboard/support/details";
+    router.push(`${base}?id=${notification.ticketId}`);
   }
 
   let relativeTime = "";
