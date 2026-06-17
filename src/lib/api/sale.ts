@@ -1,6 +1,13 @@
 import apiClient from "@/lib/axios";
 import { BusinessWithProducts } from "../types/business";
-import { CreateSaleProps, SalesResponseInterface, SaleWithProductAndBusiness } from "../types/sales";
+import {
+  CreateSaleProps,
+  PaymentHistoryItem,
+  PaymentsSummary,
+  RegistrarPagoDto,
+  SalesResponseInterface,
+  SaleWithProductAndBusiness,
+} from "../types/sales";
 import { salesRoutes } from "../routes/sales";
 
 interface GetAllSalesByBusinessIdProps {
@@ -40,5 +47,30 @@ export async function cancelSale(saleId: string, cancellationReason: string) {
     cancellationReason,
   });
 
+  return data;
+}
+
+export async function registerPayments(
+  saleId: string,
+  dto: RegistrarPagoDto,
+): Promise<{ resumen: PaymentsSummary }> {
+  const { data } = await apiClient.post(
+    salesRoutes.registerPayments(saleId),
+    dto,
+  );
+  return data;
+}
+
+export async function getPaymentsSummary(
+  saleId: string,
+): Promise<PaymentsSummary> {
+  const { data } = await apiClient.get(salesRoutes.paymentsSummary(saleId));
+  return data;
+}
+
+export async function getPaymentsHistory(
+  saleId: string,
+): Promise<PaymentHistoryItem[]> {
+  const { data } = await apiClient.get(salesRoutes.paymentsHistory(saleId));
   return data;
 }

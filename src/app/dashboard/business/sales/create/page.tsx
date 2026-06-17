@@ -6,8 +6,15 @@ import Link from "next/link"
 import { useBusiness } from "@/context/business-context"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import { useCreateSaleMutation } from "@/hooks/use-sales"
+import { useExchangeRate } from "@/hooks/use-exchange"
 import { BusinessWithProducts } from "@/lib/types/business"
 import { isIntegerUnit } from "@/lib/units"
+import {
+  BASE_CURRENCY,
+  getAvailableCurrencies,
+  getCurrencyRate,
+} from "@/lib/currency"
+import { PaymentDialog } from "@/components/sales/payment-dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -42,6 +49,10 @@ export default function CreateSalesPage() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [selectedCurrency, setSelectedCurrency] = useState(BASE_CURRENCY)
+  // Venta recién creada pendiente de cobro inline (flujo "Registrar venta y cobrar").
+  const [createdSaleId, setCreatedSaleId] = useState<string | null>(null)
+  const [paymentOpen, setPaymentOpen] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300)
@@ -53,6 +64,20 @@ export default function CreateSalesPage() {
     debouncedSearch,
   )
   const createSaleMutation = useCreateSaleMutation()
+
+  const { data: exchangeRate } = useExchangeRate(activeBusinessId ?? "")
+  const exchange = exchangeRate?.data
+  const availableCurrencies = useMemo(
+    () => getAvailableCurrencies(exchange),
+    [exchange],
+  )
+  // Si la moneda elegida deja de estar disponible (cambió el negocio/tasas),
+  // caemos a CUP sin tocar estado en un efecto (valor derivado en render).
+  const currency = availableCurrencies.includes(selectedCurrency)
+    ? selectedCurrency
+    : BASE_CURRENCY
+  // CUP por 1 unidad de la moneda elegida (1 para CUP).
+  const rate = getCurrencyRate(exchange, currency) ?? 1
 
   const products: BusinessWithProducts[] = data?.data ?? []
 
@@ -143,33 +168,44 @@ export default function CreateSalesPage() {
     router.push("/dashboard/business/sales")
   }
 
-  async function submitSale() {
+  async function submitSale(cobrarAhora: boolean) {
     if (cartItems.length === 0) return
 
     try {
       const response = await createSaleMutation.mutateAsync({
         idbusiness: activeBusinessId ?? "",
         descripcion: "",
+        currency,
         items: cartItems.map(({ productId, quantity, price }) => ({
           idproducto: productId,
           quantity,
-          price,
+          // Los precios se guardan en CUP; los enviamos en la moneda de la venta.
+          // TODO(backend): confirmar si `price` se espera en la moneda de la venta
+          // (asumido) o en CUP. De ser CUP, eliminar la división por `rate`.
+          price: currency === BASE_CURRENCY ? price : price / rate,
         })),
       })
 
-      if (response) {
-        sileo.success({
-          title: "Venta registrada correctamente",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
-          description: `Se registraron ${cartItems.length} producto(s) en la venta`,
-        })
-        setCartItems([])
-        router.push("/dashboard/business/sales")
+      const saleId = (response as { id?: string } | undefined)?.id
+
+      if (cobrarAhora && saleId) {
+        // Mostrador: nos quedamos en la página y abrimos el cobro de inmediato.
+        setCreatedSaleId(saleId)
+        setPaymentOpen(true)
+        return
       }
+
+      sileo.success({
+        title: "Venta registrada correctamente",
+        fill: "",
+        styles: {
+          title: "text-white! text-[16px]! font-bold!",
+          description: "text-white/90! text-[15px]!",
+        },
+        description: `Se registraron ${cartItems.length} producto(s) en la venta`,
+      })
+      setCartItems([])
+      router.push("/dashboard/business/sales")
     } catch (error) {
       let message = "Error al registrar la venta. Intenta de nuevo."
       if (axios.isAxiosError(error) && error.response?.data?.error === "Not Found") {
@@ -178,6 +214,16 @@ export default function CreateSalesPage() {
         message = error.response.data.message
       }
       sileo.error({ title: "No se pudo registrar la venta", description: message })
+    }
+  }
+
+  // Tras cobrar (o cerrar el cobro) de una venta recién creada, vamos a la lista.
+  function handlePaymentDialogChange(open: boolean) {
+    setPaymentOpen(open)
+    if (!open) {
+      setCartItems([])
+      setCreatedSaleId(null)
+      router.push("/dashboard/business/sales")
     }
   }
 
@@ -252,13 +298,27 @@ export default function CreateSalesPage() {
           items={cartItems}
           total={grandTotal}
           isPending={createSaleMutation.isPending}
+          currency={currency}
+          rate={rate}
+          availableCurrencies={availableCurrencies}
+          onCurrencyChange={setSelectedCurrency}
           onSetQuantity={setItemQuantity}
           onRemove={removeFromCart}
-          onSubmit={submitSale}
+          onSubmit={() => submitSale(false)}
+          onSubmitAndPay={() => submitSale(true)}
           onCancel={handleCancel}
           className="lg:sticky lg:top-6"
         />
       </div>
+
+      {/* Cobro inline tras "Registrar venta y cobrar" */}
+      {createdSaleId ? (
+        <PaymentDialog
+          saleId={createdSaleId}
+          open={paymentOpen}
+          onOpenChange={handlePaymentDialogChange}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,7 +1,11 @@
+"use client";
+
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -12,15 +16,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetSaleById } from "@/hooks/use-sales";
-import { Loader2 } from "lucide-react";
+import { FileText, Loader2, Wallet } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
+import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
+import { PaymentStatusBadge, resolvePaymentStatus } from "./payment-status-badge";
+import { PaymentDialog } from "./payment-dialog";
 
 interface DetailsDialogProps {
   saleId: string;
@@ -39,13 +39,22 @@ export default function DetailsDialog({
 }: DetailsDialogProps) {
   const { data, isLoading } = useGetSaleById(saleId);
   const isControlled = open !== undefined;
+  const [paymentOpen, setPaymentOpen] = React.useState(false);
 
   const triggerContent = trigger ?? (
     <Button variant="outline">Ver detalles</Button>
   );
 
+  const currency = data?.currency ?? BASE_CURRENCY;
   const total = Number(data?.total ?? 0);
+  const totalPaid = Number(data?.totalPaid ?? 0);
+  const pendiente = Math.max(total - totalPaid, 0);
   const items = data?.items ?? [];
+  const status = resolvePaymentStatus({
+    isCancelled: data?.isCancelled,
+    paymentStatus: data?.paymentStatus,
+  });
+  const canPay = status === "pending" || status === "partially_paid";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,26 +72,29 @@ export default function DetailsDialog({
           )}
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[425px] md:max-w-[520px] overflow-hidden shadow-lg shadow-cyan-300/30">
-        <DialogHeader>
-          <DialogTitle className="text-card-foreground">
-            Resumen de venta
-          </DialogTitle>
+      <DialogContent className="flex max-h-[min(90vh,100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 shadow-lg shadow-cyan-300/30 sm:max-w-[425px] md:max-w-[520px]">
+        <DialogHeader className="shrink-0 gap-3 border-b border-border p-6">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-card-foreground">
+              Resumen de venta
+            </DialogTitle>
+            <PaymentStatusBadge status={status} />
+          </div>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex flex-1 items-center justify-center py-8">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="flex flex-col mt-4">
+          <div className="flex flex-1 flex-col overflow-y-auto px-6">
             {/* Items */}
             {items.length > 0 ? (
-              <div className="flex flex-col border-b border-border pb-2">
-                <span className="text-sm font-medium text-card-foreground mb-2">
+              <div className="flex flex-col border-b border-border py-4">
+                <span className="mb-2 text-sm font-medium text-card-foreground">
                   Productos ({items.length})
                 </span>
-                <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                <div className="flex max-h-60 flex-col gap-2 overflow-y-auto">
                   {items.map((item) => (
                     <div
                       key={item.id}
@@ -100,14 +112,15 @@ export default function DetailsDialog({
                           </span>
                           <span className="truncate text-xs text-muted-foreground">
                             {Number(item.quantity)} x{" "}
-                            {formatCurrency(Number(item.price))}
+                            {formatMoney(Number(item.price), currency)}
                           </span>
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-0.5">
                         <span className="text-sm font-medium tabular-nums text-card-foreground">
-                          {formatCurrency(
+                          {formatMoney(
                             Number(item.quantity) * Number(item.price),
+                            currency,
                           )}
                         </span>
                         {item.isCancelled && (
@@ -133,25 +146,15 @@ export default function DetailsDialog({
                 Total
               </span>
               <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                {formatCurrency(total)}
+                {formatMoney(total, currency)}
               </span>
             </div>
 
             {/* Descripción */}
             <div className="flex items-start justify-between border-b border-border py-4">
               <span className="text-sm text-muted-foreground">Descripción</span>
-              <span className="text-sm font-medium text-card-foreground text-right max-w-[55%]">
+              <span className="max-w-[55%] text-right text-sm font-medium text-card-foreground">
                 {data?.descripcion || "--"}
-              </span>
-            </div>
-
-            {/* Estado */}
-            <div className="flex items-center justify-between border-b border-border py-4">
-              <span className="text-sm text-muted-foreground">Estado</span>
-              <span
-                className={`text-sm font-medium tabular-nums ${data?.isCancelled ? "text-destructive" : "text-primary"}`}
-              >
-                {data?.isCancelled ? "Cancelada" : "Efectuada"}
               </span>
             </div>
 
@@ -161,7 +164,7 @@ export default function DetailsDialog({
                 <span className="text-sm text-muted-foreground">
                   Razón de cancelación
                 </span>
-                <span className="text-sm font-medium text-card-foreground tabular-nums">
+                <span className="text-sm font-medium tabular-nums text-card-foreground">
                   {data?.cancelledReason || "--"}
                 </span>
               </div>
@@ -182,7 +185,7 @@ export default function DetailsDialog({
               <span className="text-sm text-muted-foreground">
                 Fecha de creación
               </span>
-              <span className="text-sm font-medium text-card-foreground tabular-nums">
+              <span className="text-sm font-medium tabular-nums text-card-foreground">
                 {data?.createdAt
                   ? new Date(data.createdAt).toLocaleDateString("es-CO", {
                       day: "2-digit",
@@ -196,7 +199,49 @@ export default function DetailsDialog({
             </div>
           </div>
         )}
+
+        {/* Footer fijo: estado de pago + acción */}
+        {!isLoading && !data?.isCancelled && (
+          <DialogFooter className="shrink-0 flex-col gap-3 border-t border-border p-6 sm:flex-col">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Pagado</span>
+              <span className="font-semibold tabular-nums text-emerald-600">
+                {formatMoney(totalPaid, currency)}
+              </span>
+            </div>
+            {pendiente > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Pendiente</span>
+                <span className="font-semibold tabular-nums text-amber-600">
+                  {formatMoney(pendiente, currency)}
+                </span>
+              </div>
+            )}
+            {canPay ? (
+              <Button
+                type="button"
+                onClick={() => setPaymentOpen(true)}
+                className="w-full bg-emerald-500 font-semibold text-white hover:bg-emerald-600"
+              >
+                <Wallet className="mr-2 size-4" />
+                Registrar pago
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" className="w-full" disabled>
+                <FileText className="mr-2 size-4" />
+                Ver factura (próximamente)
+              </Button>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
+
+      {/* Dialog de cobro, controlado desde el footer */}
+      <PaymentDialog
+        saleId={saleId}
+        open={paymentOpen}
+        onOpenChange={setPaymentOpen}
+      />
     </Dialog>
   );
 }

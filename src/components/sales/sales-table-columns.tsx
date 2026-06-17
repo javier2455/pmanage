@@ -1,11 +1,13 @@
 "use client";
 
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, XCircle } from "lucide-react";
+import { ArrowUpDown, Wallet, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import { CancelSaleDialog } from "./cancel-sale-dialog";
-import { StatusBadge } from "../generic/status-badge";
+import { PaymentDialog } from "./payment-dialog";
+import { PaymentStatusBadge, resolvePaymentStatus } from "./payment-status-badge";
+import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 
 export type SalesColumnMeta = {
   headerClassName?: string;
@@ -16,13 +18,6 @@ const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
 } satisfies SalesColumnMeta;
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
 
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString("es-CO", {
@@ -106,7 +101,10 @@ export function createSalesColumns(
       ),
       cell: ({ row }) => (
         <span className="tabular-nums font-medium text-foreground">
-          {formatCurrency(Number(row.original.total))}
+          {formatMoney(
+            Number(row.original.total),
+            row.original.currency ?? BASE_CURRENCY,
+          )}
         </span>
       ),
     },
@@ -125,12 +123,9 @@ export function createSalesColumns(
       header: ({ column }) => (
         <SalesSortableHeader column={column} label="Estado" />
       ),
-      cell: ({ row }) =>
-        row.original.isCancelled ? (
-          <StatusBadge text="Cancelada" />
-        ) : (
-          <StatusBadge text="Efectuada" />
-        ),
+      cell: ({ row }) => (
+        <PaymentStatusBadge status={resolvePaymentStatus(row.original)} />
+      ),
     },
     {
       id: "actions",
@@ -142,9 +137,29 @@ export function createSalesColumns(
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
-      cell: ({ row }) =>
-        row.original.isCancelled ? null : (
-          <div className="flex justify-end">
+      cell: ({ row }) => {
+        if (row.original.isCancelled) return null;
+        const status = resolvePaymentStatus(row.original);
+        const canPay = status === "pending" || status === "partially_paid";
+        return (
+          <div className="flex justify-end gap-1">
+            {canPay && (
+              <PaymentDialog
+                saleId={row.original.id}
+                tooltip="Registrar pago"
+                trigger={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Registrar pago"
+                    className="text-muted-foreground transition-colors hover:bg-emerald-500/10 hover:text-emerald-600"
+                  >
+                    <Wallet className="size-4" />
+                  </Button>
+                }
+              />
+            )}
             <CancelSaleDialog
               tooltip="Cancelar venta"
               onConfirm={(cancellationReason) =>
@@ -163,7 +178,8 @@ export function createSalesColumns(
               }
             />
           </div>
-        ),
+        );
+      },
     },
   ];
 }

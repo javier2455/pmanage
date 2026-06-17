@@ -4,17 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ProductImage } from "@/components/products/product-image"
-import { ShoppingCart, Minus, Plus, Trash2, X } from "lucide-react"
+import { ShoppingCart, Minus, Plus, Trash2, X, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { isIntegerUnit, parseDecimalInput } from "@/lib/units"
-
-function formatMoney(value: number) {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
+import { formatMoney } from "@/lib/currency"
 
 export interface SaleCartItem {
   productId: string
@@ -31,9 +32,18 @@ interface SaleCartPanelProps {
   items: SaleCartItem[]
   total: number
   isPending: boolean
+  /** Moneda de la venta seleccionada (default "CUP"). */
+  currency: string
+  /** CUP por 1 unidad de la moneda elegida (1 para CUP). Los precios se guardan en CUP. */
+  rate: number
+  availableCurrencies: string[]
+  onCurrencyChange: (currency: string) => void
   onSetQuantity: (productId: string, quantity: number) => void
   onRemove: (productId: string) => void
+  /** Registrar venta sin cobrar. */
   onSubmit: () => void
+  /** Registrar venta y abrir el cobro de inmediato. */
+  onSubmitAndPay: () => void
   onCancel: () => void
   className?: string
 }
@@ -42,13 +52,20 @@ export function SaleCartPanel({
   items,
   total,
   isPending,
+  currency,
+  rate,
+  availableCurrencies,
+  onCurrencyChange,
   onSetQuantity,
   onRemove,
   onSubmit,
+  onSubmitAndPay,
   onCancel,
   className,
 }: SaleCartPanelProps) {
   const totalUnits = items.reduce((sum, i) => sum + i.quantity, 0)
+  // Los precios viven en CUP; los mostramos en la moneda elegida (precioCUP / tasa).
+  const toCurrency = (cupValue: number) => cupValue / (rate || 1)
 
   return (
     <Card className={cn("flex h-fit flex-col", className)}>
@@ -92,7 +109,7 @@ export function SaleCartPanel({
                         {item.productName}
                       </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        ${formatMoney(item.price)} c/u
+                        {formatMoney(toCurrency(item.price), currency)} c/u
                       </span>
 
                       {/* Stepper */}
@@ -166,7 +183,7 @@ export function SaleCartPanel({
 
                     <div className="flex flex-col items-end gap-1">
                       <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                        ${formatMoney(item.subtotal)}
+                        {formatMoney(toCurrency(item.subtotal), currency)}
                       </span>
                       <Button
                         type="button"
@@ -184,8 +201,25 @@ export function SaleCartPanel({
               })}
             </div>
 
-            {/* Total */}
+            {/* Moneda de la venta */}
             <div className="flex items-center justify-between border-t border-border pt-4">
+              <span className="text-sm font-medium text-card-foreground">Moneda</span>
+              <Select value={currency} onValueChange={onCurrencyChange} disabled={isPending}>
+                <SelectTrigger size="sm" className="min-w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCurrencies.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Total */}
+            <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-semibold text-card-foreground">Total</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
@@ -193,22 +227,31 @@ export function SaleCartPanel({
                 </span>
               </div>
               <span className="text-xl font-bold tabular-nums text-card-foreground">
-                ${formatMoney(total)}
-                <span className="ml-1 text-sm font-normal text-muted-foreground">MN</span>
+                {formatMoney(toCurrency(total), currency)}
               </span>
             </div>
 
             <div className="flex flex-col gap-2">
               <Button
                 type="button"
-                onClick={onSubmit}
+                onClick={onSubmitAndPay}
                 disabled={items.length === 0 || isPending}
                 className="w-full bg-emerald-500 font-semibold uppercase tracking-wide text-white hover:bg-emerald-600 disabled:opacity-50"
               >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                {isPending ? "Registrando..." : "Registrar venta"}
+                <Wallet className="mr-2 h-4 w-4" />
+                {isPending ? "Registrando..." : "Registrar venta y cobrar"}
               </Button>
-              <Button type="button" variant="outline" onClick={onCancel} className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSubmit}
+                disabled={items.length === 0 || isPending}
+                className="w-full font-semibold"
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                Registrar venta
+              </Button>
+              <Button type="button" variant="ghost" onClick={onCancel} className="w-full">
                 <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>

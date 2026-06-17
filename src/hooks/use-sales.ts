@@ -1,6 +1,14 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreateSaleProps } from "@/lib/types/sales";
-import { cancelSale, create, getAllSalesByBusinessId, getSaleById } from "@/lib/api/sale";
+import { CreateSaleProps, RegistrarPagoDto } from "@/lib/types/sales";
+import {
+    cancelSale,
+    create,
+    getAllSalesByBusinessId,
+    getPaymentsHistory,
+    getPaymentsSummary,
+    getSaleById,
+    registerPayments,
+} from "@/lib/api/sale";
 import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
 
 interface UseAllSalesByBusinessIdParams {
@@ -45,6 +53,40 @@ export function useCreateSaleMutation() {
             // notificaciones en el backend; refrescamos lista y conteo del badge.
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
+        },
+    });
+}
+
+export function usePaymentsSummary(saleId: string) {
+    return useQuery({
+        queryKey: ["payments-summary", saleId],
+        queryFn: () => getPaymentsSummary(saleId),
+        enabled: !!saleId,
+    });
+}
+
+export function usePaymentsHistory(saleId: string) {
+    return useQuery({
+        queryKey: ["payments-history", saleId],
+        queryFn: () => getPaymentsHistory(saleId),
+        enabled: !!saleId,
+    });
+}
+
+export function useRegisterPaymentsMutation() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ saleId, dto }: { saleId: string; dto: RegistrarPagoDto; businessId: string }) =>
+            registerPayments(saleId, dto),
+        onSuccess: (_, variables) => {
+            const bid = variables.businessId;
+            queryClient.invalidateQueries({ queryKey: ["payments-summary", variables.saleId] });
+            queryClient.invalidateQueries({ queryKey: ["payments-history", variables.saleId] });
+            queryClient.invalidateQueries({ queryKey: ["sale-by-id", variables.saleId] });
+            queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id", bid] });
+            queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
+            queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
         },
     });
 }
