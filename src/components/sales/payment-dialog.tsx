@@ -175,6 +175,26 @@ export function PaymentDialog({
   const totalNuevo = equivalentes.reduce((sum, e) => sum + e, 0);
   const pendienteTrasPago = Math.max(pendiente - totalNuevo, 0);
 
+  /**
+   * Autocompleta el monto de una fila para cubrir todo lo que falta, en la moneda
+   * de esa fila. Descuenta lo que ya aportan las demás filas (caso típico: pago
+   * único en una sola moneda → llena el pendiente completo).
+   */
+  function fillFullAmount(index: number) {
+    const otrasFilasBase = equivalentes.reduce(
+      (sum, e, i) => (i === index ? sum : sum + e),
+      0,
+    );
+    const restanteBase = Math.max(pendiente - otrasFilasBase, 0);
+    const moneda = rows[index]?.moneda ?? monedaBase;
+    const enMoneda =
+      moneda === monedaBase
+        ? restanteBase
+        : convertBetween(restanteBase, monedaBase, moneda, exchange) ?? restanteBase;
+    const redondeado = Math.round(enMoneda * 100) / 100;
+    updateRow(index, { monto: redondeado > 0 ? String(redondeado) : "" });
+  }
+
   async function handleSubmit() {
     const pagos: RegistrarPagoItem[] = rows.map((r) => ({
       moneda: r.moneda,
@@ -335,9 +355,18 @@ export function PaymentDialog({
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs text-muted-foreground">
-                          Monto
-                        </Label>
+                        <div className="flex items-center justify-between gap-2">
+                          <Label className="text-xs text-muted-foreground">
+                            Monto
+                          </Label>
+                          <button
+                            type="button"
+                            onClick={() => fillFullAmount(index)}
+                            className="text-xs font-medium text-emerald-600 hover:underline"
+                          >
+                            Pagar todo
+                          </button>
+                        </div>
                         <Input
                           type="text"
                           inputMode="decimal"
