@@ -24,7 +24,7 @@ export function makeInventoryUpdateStockSchema(allowDecimals = false) {
 
   return z.object({
     quantity,
-    entryPrice: z.number().min(1, "El precio de entrada es requerido").max(100000, "El precio de entrada máximo es de 100,000"),
+    entryPrice: z.number().min(1, "El precio de entrada es requerido").max(1000000, "El precio de entrada máximo es de 1,000,000"),
     productId: z.string().min(1, "El producto es requerido"),
     description: z.string().min(1, "La descripción es requerida"),
     providerId: z.string().uuid().nullable().optional(),
