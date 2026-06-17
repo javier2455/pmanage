@@ -15,10 +15,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useGetSaleById } from "@/hooks/use-sales";
+import { useDownloadFacturaMutation, useGetSaleById } from "@/hooks/use-sales";
 import { FileText, Loader2, Wallet } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
+import { openPdfInNewTab } from "@/lib/download";
+import { toastError } from "@/lib/toast";
 import { PaymentStatusBadge, resolvePaymentStatus } from "./payment-status-badge";
 import { PaymentDialog } from "./payment-dialog";
 
@@ -40,6 +42,19 @@ export default function DetailsDialog({
   const { data, isLoading } = useGetSaleById(saleId);
   const isControlled = open !== undefined;
   const [paymentOpen, setPaymentOpen] = React.useState(false);
+  const downloadFactura = useDownloadFacturaMutation();
+
+  function handleVerFactura() {
+    downloadFactura.mutate(saleId, {
+      onSuccess: (blob) => openPdfInNewTab(blob, `factura-${saleId}.pdf`),
+      onError: () =>
+        toastError({
+          title: "No se pudo abrir la factura",
+          description:
+            "La venta debe estar completamente pagada para generar la factura.",
+        }),
+    });
+  }
 
   const triggerContent = trigger ?? (
     <Button variant="outline">Ver detalles</Button>
@@ -227,9 +242,18 @@ export default function DetailsDialog({
                 Registrar pago
               </Button>
             ) : (
-              <Button type="button" variant="outline" className="w-full" disabled>
-                <FileText className="mr-2 size-4" />
-                Ver factura (próximamente)
+              <Button
+                type="button"
+                onClick={handleVerFactura}
+                disabled={downloadFactura.isPending}
+                className="w-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                {downloadFactura.isPending ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : (
+                  <FileText className="mr-2 size-4" />
+                )}
+                {downloadFactura.isPending ? "Generando factura..." : "Ver factura"}
               </Button>
             )}
           </DialogFooter>

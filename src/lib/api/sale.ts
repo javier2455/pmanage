@@ -74,3 +74,23 @@ export async function getPaymentsHistory(
   const { data } = await apiClient.get(salesRoutes.paymentsHistory(saleId));
   return data;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Facturación PDF (Fase 2). El PDF llega como binario (responseType: blob).  */
+/* -------------------------------------------------------------------------- */
+
+export async function downloadFactura(saleId: string): Promise<Blob> {
+  const { data } = await apiClient.get(salesRoutes.factura(saleId), {
+    responseType: "blob",
+  });
+  return data;
+}
+
+export async function regenerateFactura(saleId: string): Promise<Blob> {
+  const { data } = await apiClient.post(
+    salesRoutes.regenerateFactura(saleId),
+    null,
+    { responseType: "blob" },
+  );
+  return data;
+}
