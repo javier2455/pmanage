@@ -34,6 +34,7 @@ export async function markSupportNotificationAsRead(
 export async function markAllSupportNotificationsAsRead(): Promise<UnreadCountResponse> {
   const { data } = await apiClient.patch<UnreadCountResponse>(
     supportTicketRoutes.markAllNotificationsRead,
+    {},
   );
   return data;
 }
