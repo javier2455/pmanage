@@ -1,7 +1,7 @@
 import { BASIC_ROUTE,LOCAL_ROUTE } from ".";
 
 export const authRoutes = {
-  login: `${BASIC_ROUTE}/auth/login`,
+  login: `${BASIC_ROUTE}/auth/login/`,
   logout: `${BASIC_ROUTE}/auth/logout`,
   register: `${BASIC_ROUTE}/auth/register`,
   registerLocal: `${LOCAL_ROUTE}/auth/register`,

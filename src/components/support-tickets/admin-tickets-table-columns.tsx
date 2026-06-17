@@ -87,16 +87,21 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
     },
     {
       id: "assignment",
-      accessorFn: (row) => (row.assignedAdminId ? 1 : 0),
+      accessorFn: (row) => row.assignedAdminName ?? (row.assignedAdminId ? "" : "~"),
       meta: compactColumnMeta,
       header: ({ column }) => (
-        <TicketsSortableHeader column={column} label="Asignación" />
+        <TicketsSortableHeader column={column} label="Asignado a" />
       ),
-      cell: ({ row }) => (
-        <Badge variant={row.original.assignedAdminId ? "secondary" : "outline"}>
-          {row.original.assignedAdminId ? "Asignado" : "Sin asignar"}
-        </Badge>
-      ),
+      cell: ({ row }) =>
+        row.original.assignedAdminId ? (
+          <span className="text-foreground">
+            {row.original.assignedAdminName ?? "Asignado"}
+          </span>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground">
+            Sin asignar
+          </Badge>
+        ),
     },
     {
       id: "lastMessage",

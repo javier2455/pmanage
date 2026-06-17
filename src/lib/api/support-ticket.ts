@@ -83,7 +83,7 @@ export async function addAdminMessage(
 
 /** (Admin) Se apropia de un ticket (auto-asignación manual). */
 export async function assignTicket(id: string): Promise<SupportTicket> {
-  // Prueba: el endpoint no requiere body, pero enviamos un objeto vacío.
+  // Se envía un body vacío `{}` de forma intencional.
   const { data } = await apiClient.patch(supportTicketRoutes.assign(id), {});
   return data;
 }

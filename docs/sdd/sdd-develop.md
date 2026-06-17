@@ -6,13 +6,13 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.8.1-alpha` |
-| **Commits por delante de `main`** | 86 (al 2026-06-12) |
-| **Último commit** | `c771e5e` |
+| **Versión en `package.json`** | `1.15.4-alpha` |
+| **Commits por delante de `main`** | 104 (al 2026-06-16) |
+| **Último commit** | `da56ce3` |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-06-12 |
+| **Última actualización del documento** | 2026-06-16 |
 
 ---
 
@@ -52,7 +52,8 @@ Cambios respecto a `main` agrupados por estado:
 | 28 | **Horario de atención del negocio** (config por día) | ✅ Frontend + backend (`GET`/`PUT /businesses/:id/schedule`) | `16d42a6` (1.7.0) | Sí |
 | 29 | **Refactor de permisos de trabajador a secciones** (payload de 3 capas con `sectionId`) | ✅ Mergeada | `de7e16a` (1.8.0) | Sí |
 | 30 | **Stock con cantidades decimales** (unidades de peso/volumen) | ✅ Frontend mergeado | `c771e5e` (1.8.1) | Sí — verificar persistencia decimal en backend |
-| 31 | **Editar la categoría de un producto dentro del negocio** (precio + categoría en un solo diálogo) | 🟡 Frontend implementado, backend pendiente | _(sin commit aún)_ | **No** — espera `PATCH .../products/:bpId/category` (ver [docs/backend-categoria-business-product.md](../backend-categoria-business-product.md)) |
+| 31 | **Editar la categoría de un producto dentro del negocio** (precio + categoría en un solo diálogo) | 🟡 Frontend implementado, backend pendiente | `22ee005` (1.13.0) | **No** — espera `PATCH .../products/:bpId/category` (ver [docs/backend-categoria-business-product.md](../backend-categoria-business-product.md)) |
+| 32 | **Módulo de Tickets de Soporte** (conversación, cerrar/reabrir, asignación de admins) + **notificaciones de soporte** integradas (campana + página) | ✅ Frontend + backend (contrato entregado) | `c4b0801`→`da56ce3` (1.14.0–1.15.4) | Sí — verificar en QA (ver §2.15) |
 
 > Ajustes menores en el rango 1.3.8–1.8.1 (no itemizados): eliminación del menú estático de fallback, hover en filas de productos, fix `markAllAsRead`, afinado de límites de notificaciones, botones `outline`.
 
@@ -260,6 +261,33 @@ Reutiliza y amplía la tarjeta `NotificationSettingsCard` dentro de los detalles
 
 ---
 
+### 2.15. Módulo de Tickets de Soporte (`c4b0801` → `da56ce3`)
+
+**Qué hace.** Canal de soporte dentro de la app: el usuario crea tickets y conversa con el equipo; el admin gestiona, responde, cierra/reabre y se asigna tickets. Incluye notificaciones de soporte integradas en la bandeja existente. Contrato backend completo en [docs/funtion.md](../funtion.md).
+
+**Vistas.**
+- **Usuario** (`/dashboard/support`): listado "Mis tickets" paginado, diálogo de creación y detalle (`/dashboard/support/details?id=`) con **conversación tipo chat**, caja de respuesta y cerrar/reabrir.
+- **Admin** (`/dashboard/admin/support`): bandeja paginada con filtro por estado (Tabs), columna de asignación, y detalle de gestión (`/dashboard/admin/support/details?id=`) con responder, cerrar/reabrir, refrescar y **"Asignarme"**.
+
+**Conversación y estado.** El hilo se renderiza desde `ticket.messages`. Responder: `POST /:id/messages` (usuario) o `/:id/admin-messages` (admin), que reabre el ticket si estaba cerrado. Cerrar/reabrir: `PATCH /:id/status` (canónico; el `/close` legacy queda sin usar).
+
+**Asignación de admins.** Auto-asignación por menor carga (`assignedAdminId`/`assignedAdminName`/`assignedAt`); solo el admin asignado puede responder (`403` en caso contrario). `PATCH /:id/assign` (con body `{}` por diseño) permite tomar el ticket; el botón **"Asignarme"** aparece **solo en tickets sin asignar** y la bandeja muestra el **nombre** del admin asignado (columna "Asignado a").
+
+**Notificaciones de soporte.** Por usuario (no por negocio), fusionadas en la campana del topbar (contador combinado) y en `/dashboard/notifications` como pestaña "Soporte" con paginador propio. El deep-link resuelve destino (usuario vs admin) según el rol logueado, no por `recipientType` (que la lista puede omitir).
+
+**Archivos clave.**
+- [src/lib/routes/support-ticket.ts](../../src/lib/routes/support-ticket.ts), [src/lib/types/support-ticket.ts](../../src/lib/types/support-ticket.ts), [src/lib/validations/support-ticket.ts](../../src/lib/validations/support-ticket.ts), [src/lib/api/support-ticket.ts](../../src/lib/api/support-ticket.ts), [src/hooks/use-support-ticket.ts](../../src/hooks/use-support-ticket.ts).
+- Notificaciones: [src/lib/types/support-notification.ts](../../src/lib/types/support-notification.ts), [src/lib/api/support-notification.ts](../../src/lib/api/support-notification.ts), [src/hooks/use-support-notification.ts](../../src/hooks/use-support-notification.ts), [src/components/notifications/support-notification-item.tsx](../../src/components/notifications/support-notification-item.tsx).
+- UI: [src/components/support-tickets/](../../src/components/support-tickets/), [src/app/dashboard/support/](../../src/app/dashboard/support/), [src/app/dashboard/admin/support/](../../src/app/dashboard/admin/support/).
+- `ICON_MAP` ampliado con iconos de soporte (`LifeBuoy`, `Headset`, `Ticket`, etc.) para el gestor de menús ([src/lib/icon-map.ts](../../src/lib/icon-map.ts)).
+
+**Criterios de aceptación.**
+- Usuario crea ticket → aparece en su listado → abre el detalle y ve/responde la conversación.
+- Admin lista, filtra por estado, se asigna un ticket, responde y cierra/reabre.
+- Las notificaciones de soporte aparecen en la campana y en la pestaña "Soporte" de la página.
+
+**A verificar en QA.** Formas de respuesta de cada endpoint, flujo de asignación (qué admin puede responder), y registro de las dos secciones de navegación en el gestor de menús.
+
 ### 2.11. Otros mergeados menores
 
 - **ICON_MAP expandido** (`7a55b56`) — nuevos iconos para mayor consistencia en UI.
@@ -324,6 +352,8 @@ a las rutas definidas; fallan hasta que backend las implemente.
 `Notification`, y exponer 4 endpoints (listar paginado, conteo de no leídos, marcar una/todas leídas).
 Contrato completo en [docs/notificaciones-internas.md](../notificaciones-internas.md). Entrada de sidebar
 "Notificaciones" pendiente de agregarse a `GET /section` (payload en ese doc).
+
+> **Nota (feature 32):** las **notificaciones de soporte** son un segundo origen, **por usuario** (no por negocio), con su contrato **ya entregado** por backend (`/support-tickets/my-notifications`). Se integran en la misma campana y página de notificaciones (ver §2.15). El bloqueador de arriba aplica solo a las notificaciones **generales** (por negocio), no a las de soporte.
 
 ---
 

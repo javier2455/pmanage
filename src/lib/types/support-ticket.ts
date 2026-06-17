@@ -39,6 +39,8 @@ export interface SupportTicket {
   lastMessageBy: TicketSenderType | null;
   /** Admin asignado (auto por menor carga, o manual vía /assign). Null al cerrar. */
   assignedAdminId: string | null;
+  /** Nombre del admin asignado (si el backend lo incluye). */
+  assignedAdminName?: string | null;
   assignedAt: string | null;
   createdAt: string;
   updatedAt: string;

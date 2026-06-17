@@ -126,7 +126,9 @@ export default function AdminSupportDetailClient() {
                 </CardDescription>
                 <div className="flex items-center gap-2 pt-0.5">
                   <Badge variant={ticket.assignedAdminId ? "secondary" : "outline"}>
-                    {ticket.assignedAdminId ? "Asignado" : "Sin asignar"}
+                    {ticket.assignedAdminId
+                      ? `Asignado a ${ticket.assignedAdminName ?? "un agente"}`
+                      : "Sin asignar"}
                   </Badge>
                   <CardDescription>
                     Creado el {formatTicketDate(ticket.createdAt)}
@@ -147,7 +149,7 @@ export default function AdminSupportDetailClient() {
                     className={`size-4 ${isFetching ? "animate-spin" : ""}`}
                   />
                 </Button>
-                {!isClosed ? (
+                {!isClosed && !ticket.assignedAdminId ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -204,7 +206,9 @@ export default function AdminSupportDetailClient() {
               hint={
                 isClosed
                   ? "Si respondes, el ticket se reabrirá automáticamente."
-                  : "Solo el admin asignado puede responder. Usa «Asignarme» si el envío falla."
+                  : !ticket.assignedAdminId
+                    ? "Asígnate el ticket con «Asignarme» para poder responder."
+                    : undefined
               }
             />
           </CardContent>

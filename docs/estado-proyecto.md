@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-15** (edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales, categoría a nivel de `BusinessProduct`, logout funcional y búsqueda de productos en servidor).
+> Última actualización: **2026-06-16** (módulo de Tickets de Soporte con conversación, estado cerrar/reabrir, asignación de admins y notificaciones de soporte integradas; edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales y categoría a nivel de `BusinessProduct`).
 
 ---
 
@@ -9,10 +9,10 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.8.1-alpha` (rama `develop`) |
+| **Versión actual** | `1.15.4-alpha` (rama `develop`) |
 | **Versión en producción** | `1.0.0` (rama `main`) |
-| **Commits por delante de `main`** | **86** |
-| **Último commit** | `c771e5e` — 2026-06-12 |
+| **Commits por delante de `main`** | **104** |
+| **Último commit** | `da56ce3` — 2026-06-16 |
 | **PR `develop → main`** | **No creado** — deuda de promoción acumulada (sigue creciendo) |
 | **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId` — ver Punto pendiente abajo); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27) |
 
@@ -78,7 +78,8 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 28 | **Horario de atención del negocio** (config por día, abrir/cerrar, multi-día) | `16d42a6` (1.7.0) | — (backend GET/PUT entregado) |
 | 29 | **Refactor de permisos de trabajador a secciones** — payload de 3 capas (sección + menú + submenú) alineado con `GET /section` | `de7e16a` (1.8.0) | — |
 | 30 | **Stock con cantidades decimales** para unidades de peso/volumen (kg, lb, g, L, mL) | `c771e5e` (1.8.1) | Verificar que backend persista decimales en `add-stock` (ver detalle) |
-| 31 | **Editar la categoría de un producto dentro del negocio** (antes solo se podía el precio) | _(sin commit aún)_ | **Endpoint backend pendiente** (ver detalle) |
+| 31 | **Editar la categoría de un producto dentro del negocio** (antes solo se podía el precio) | `22ee005` (1.13.0) | **Endpoint backend pendiente** (ver detalle) |
+| 32 | **Módulo de Tickets de Soporte** — conversación tipo chat, cerrar/reabrir, asignación de admins + **notificaciones de soporte** integradas en la campana y la página de notificaciones | `c4b0801`→`da56ce3` (1.14.0–1.15.4) | — (backend entregó el contrato; ver detalle) |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
 
@@ -123,6 +124,26 @@ Hasta ahora la categoría de un `BusinessProduct` **solo** podía fijarse al asi
 
 **Pendiente (backend):** implementar `PATCH /businesses/{businessId}/products/{businessProductId}/category` con `{ categoryId: string | null }` (el `null` des-asigna). Hasta entonces, el cambio de categoría falla con `404`; el cambio de precio sigue funcionando. Contrato completo en [docs/backend-categoria-business-product.md](backend-categoria-business-product.md).
 
+### Detalle: Módulo de Tickets de Soporte (feature 32) — `c4b0801`→`da56ce3`
+
+Canal de soporte dentro de la app: el usuario reporta problemas y el equipo (admin) los gestiona. Evolucionó en varias iteraciones siguiendo el contrato del backend (spec completa en [docs/funtion.md](funtion.md)).
+
+**Capa de datos** (patrón de 5 capas): rutas, tipos, validaciones Zod, API y hooks de React Query para tickets ([src/lib/api/support-ticket.ts](../src/lib/api/support-ticket.ts), [src/hooks/use-support-ticket.ts](../src/hooks/use-support-ticket.ts)) y para notificaciones de soporte ([src/lib/api/support-notification.ts](../src/lib/api/support-notification.ts), [src/hooks/use-support-notification.ts](../src/hooks/use-support-notification.ts)). Listados paginados `{ data, meta }`; detalle y respuestas devuelven el ticket/objeto directo.
+
+**Vistas de usuario** (`/dashboard/support`): listado "Mis tickets" paginado, diálogo de creación (prerellenando `userName` desde la sesión) y **detalle con conversación tipo chat** ([ticket-conversation.tsx](../src/components/support-tickets/ticket-conversation.tsx) en `ScrollArea`), caja de respuesta y botones de **cerrar/reabrir**.
+
+**Vistas de admin** (`/dashboard/admin/support`): bandeja paginada con filtro por estado (Tabs `open`/`in_progress`/`closed`), columna **"Asignado a"** (nombre del admin), y **detalle de gestión** con responder, cerrar/reabrir, refrescar y **"Asignarme"** el ticket.
+
+**Conversación y estado.** El hilo se renderiza desde `ticket.messages`; responder usa `POST /:id/messages` (usuario) o `/admin-messages` (admin) y reabre el ticket si estaba cerrado. Cerrar/reabrir usa el endpoint canónico `PATCH /:id/status` (reemplaza al `/close` legacy).
+
+**Asignación de admins.** El backend auto-asigna el ticket al admin con menor carga (`assignedAdminId`/`assignedAdminName`/`assignedAt`); solo el admin asignado puede responder (un `403` lo indica). El botón **"Asignarme"** (`PATCH /:id/assign`, con body `{}` por diseño) aparece **solo en tickets sin asignar**; la bandeja y el detalle muestran el **nombre** del admin asignado.
+
+**Notificaciones de soporte integradas.** Son por usuario (no por negocio) y se **fusionan en la campana existente** del topbar (contador combinado, lista ordenada por fecha, "marcar todas") y en la página `/dashboard/notifications` como **pestaña "Soporte"** con su propio paginador ([support-notification-item.tsx](../src/components/notifications/support-notification-item.tsx)). El deep-link decide destino (detalle usuario vs admin) según el rol del usuario logueado.
+
+**Navegación.** Las secciones "Soporte" (usuario → `/dashboard/support`) y la vista de administración (`/dashboard/admin/support`) se registran desde el gestor de menús existente (no se hardcodean).
+
+**Estado.** Frontend completo; el backend entregó el contrato (mismo backend de producción). Verificar en QA las formas de respuesta y el flujo de asignación de admins.
+
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 
 El frontend está completo. Permite configurar un umbral por producto (`stockAlertThreshold`) al asignarlo al negocio o desde el diálogo en la tabla de inventario; si no hay umbral personalizado se usa un valor por defecto. Muestra badges por fila ("Sin stock" / "Stock bajo") y un banner-resumen en la página de inventario.
@@ -140,6 +161,8 @@ Dos piezas:
 2. **Bandeja in-app (campana):** `notification-bell.tsx` + `notification-item.tsx` + hook `use-notifications.ts`. El scaffolding del frontend está listo, **a la espera de que backend exponga la Parte 2** del contrato: canal `in_app`, estado `readAt` (leído/no leído) y endpoints para listar, contar no leídas y marcar como leídas.
 
 Spec completa del contrato in-app en [docs/notificaciones-internas.md](notificaciones-internas.md).
+
+> **Notificaciones de soporte (feature 32):** la campana y la página `/dashboard/notifications` ya **fusionan** un segundo origen de notificaciones — las de tickets de soporte (por usuario, endpoints `/support-tickets/my-notifications`) — con contador combinado y, en la página, una pestaña "Soporte" con paginador propio. A diferencia de las notificaciones generales (por negocio, aún bloqueadas), las de soporte **sí** tienen su contrato entregado por backend.
 
 ### Detalle: `expenseCategoryId` en gastos — bug de backend (bloqueador)
 
