@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -16,6 +17,20 @@ import { ShoppingCart, Minus, Plus, Trash2, X, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { isIntegerUnit, parseDecimalInput } from "@/lib/units"
 import { formatMoney } from "@/lib/currency"
+import type { SaleType } from "@/lib/types/sales"
+
+/** Datos de contacto/entrega de la venta (solo se usan en `delivery`). */
+export interface SaleDeliveryInfo {
+  address: string
+  contactPhone: string
+  contactName: string
+}
+
+const SALE_TYPE_OPTIONS: { value: SaleType; label: string }[] = [
+  { value: "in_store", label: "En tienda" },
+  { value: "delivery", label: "A domicilio" },
+  { value: "pickup", label: "Para recoger" },
+]
 
 export interface SaleCartItem {
   productId: string
@@ -38,6 +53,12 @@ interface SaleCartPanelProps {
   rate: number
   availableCurrencies: string[]
   onCurrencyChange: (currency: string) => void
+  /** Tipo de venta (en tienda / domicilio / recoger). */
+  saleType: SaleType
+  onSaleTypeChange: (saleType: SaleType) => void
+  /** Datos de entrega; solo relevantes cuando `saleType === "delivery"`. */
+  delivery: SaleDeliveryInfo
+  onDeliveryChange: (patch: Partial<SaleDeliveryInfo>) => void
   onSetQuantity: (productId: string, quantity: number) => void
   onRemove: (productId: string) => void
   /** Registrar venta sin cobrar. */
@@ -56,6 +77,10 @@ export function SaleCartPanel({
   rate,
   availableCurrencies,
   onCurrencyChange,
+  saleType,
+  onSaleTypeChange,
+  delivery,
+  onDeliveryChange,
   onSetQuantity,
   onRemove,
   onSubmit,
@@ -199,6 +224,97 @@ export function SaleCartPanel({
                   </div>
                 )
               })}
+            </div>
+
+            {/* Tipo de venta */}
+            <div className="flex flex-col gap-3 border-t border-border pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-card-foreground">
+                  Tipo de venta
+                </span>
+                <Select
+                  value={saleType}
+                  onValueChange={(v) => onSaleTypeChange(v as SaleType)}
+                  disabled={isPending}
+                >
+                  <SelectTrigger size="sm" className="min-w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SALE_TYPE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Datos de entrega — solo para ventas a domicilio */}
+              {saleType === "delivery" && (
+                <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label
+                      htmlFor="delivery-address"
+                      className="text-xs text-card-foreground"
+                    >
+                      Dirección de entrega{" "}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="delivery-address"
+                      value={delivery.address}
+                      onChange={(e) =>
+                        onDeliveryChange({ address: e.target.value })
+                      }
+                      placeholder="Calle, número, referencia..."
+                      disabled={isPending}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label
+                      htmlFor="delivery-name"
+                      className="text-xs text-card-foreground"
+                    >
+                      Nombre de contacto{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (opcional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="delivery-name"
+                      value={delivery.contactName}
+                      onChange={(e) =>
+                        onDeliveryChange({ contactName: e.target.value })
+                      }
+                      placeholder="A quién se entrega"
+                      disabled={isPending}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label
+                      htmlFor="delivery-phone"
+                      className="text-xs text-card-foreground"
+                    >
+                      Teléfono de contacto{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (opcional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="delivery-phone"
+                      type="tel"
+                      inputMode="tel"
+                      value={delivery.contactPhone}
+                      onChange={(e) =>
+                        onDeliveryChange({ contactPhone: e.target.value })
+                      }
+                      placeholder="Ej: 5 1234567"
+                      disabled={isPending}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Moneda de la venta */}
