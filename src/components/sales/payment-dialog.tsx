@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
 import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +38,7 @@ import {
   formatMoney,
   getAvailableCurrencies,
 } from "@/lib/currency";
+import { mapCurrencyError } from "@/lib/currency-errors";
 import { makePaymentsSchema } from "@/lib/validations/payments";
 import type { PaymentMethod, RegistrarPagoItem } from "@/lib/types/sales";
 import { toastError, toastSuccess } from "@/lib/toast";
@@ -56,24 +56,6 @@ interface PaymentRow {
   monto: string;
   metodo: PaymentMethod;
   referencia: string;
-}
-
-/** Traduce el código de error del backend a un mensaje claro. */
-function mapPaymentError(error: unknown): string {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as
-      | { code?: string; error?: string; message?: string }
-      | undefined;
-    const code = data?.code ?? data?.error ?? data?.message ?? "";
-    if (code.includes("PAGO_EXCEDE_TOTAL"))
-      return "La suma de pagos supera el total pendiente de la venta.";
-    if (code.includes("MONEDAS_NO_CONFIGURADAS"))
-      return "El negocio no tiene tasas configuradas para esa moneda.";
-    if (code.includes("MONEDA_NO_CONFIGURADA"))
-      return "La moneda seleccionada no está configurada en el negocio.";
-    if (data?.message) return data.message;
-  }
-  return "No se pudo registrar el pago. Intenta de nuevo.";
 }
 
 interface PaymentDialogProps {
@@ -229,7 +211,10 @@ export function PaymentDialog({
     } catch (error) {
       toastError({
         title: "No se pudo registrar el pago",
-        description: mapPaymentError(error),
+        description: mapCurrencyError(
+          error,
+          "No se pudo registrar el pago. Intenta de nuevo.",
+        ),
       });
     }
   }

@@ -15,8 +15,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useDownloadFacturaMutation, useGetSaleById } from "@/hooks/use-sales";
-import { FileText, Loader2, Wallet } from "lucide-react";
+import {
+  useDownloadFacturaMutation,
+  useGetSaleById,
+  useRegenerateFacturaMutation,
+} from "@/hooks/use-sales";
+import { FileText, Loader2, RefreshCw, Wallet } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { openPdfInNewTab } from "@/lib/download";
@@ -43,6 +47,7 @@ export default function DetailsDialog({
   const isControlled = open !== undefined;
   const [paymentOpen, setPaymentOpen] = React.useState(false);
   const downloadFactura = useDownloadFacturaMutation();
+  const regenerateFactura = useRegenerateFacturaMutation();
 
   function handleVerFactura() {
     downloadFactura.mutate(saleId, {
@@ -52,6 +57,17 @@ export default function DetailsDialog({
           title: "No se pudo abrir la factura",
           description:
             "La venta debe estar completamente pagada para generar la factura.",
+        }),
+    });
+  }
+
+  function handleRegenerarFactura() {
+    regenerateFactura.mutate(saleId, {
+      onSuccess: (blob) => openPdfInNewTab(blob, `factura-${saleId}.pdf`),
+      onError: () =>
+        toastError({
+          title: "No se pudo regenerar la factura",
+          description: "Inténtalo de nuevo en unos momentos.",
         }),
     });
   }
@@ -242,19 +258,39 @@ export default function DetailsDialog({
                 Registrar pago
               </Button>
             ) : (
-              <Button
-                type="button"
-                onClick={handleVerFactura}
-                disabled={downloadFactura.isPending}
-                className="w-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                {downloadFactura.isPending ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <FileText className="mr-2 size-4" />
-                )}
-                {downloadFactura.isPending ? "Generando factura..." : "Ver factura"}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  onClick={handleVerFactura}
+                  disabled={downloadFactura.isPending}
+                  className="w-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  {downloadFactura.isPending ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <FileText className="mr-2 size-4" />
+                  )}
+                  {downloadFactura.isPending
+                    ? "Generando factura..."
+                    : "Ver factura"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRegenerarFactura}
+                  disabled={regenerateFactura.isPending}
+                  className="w-full"
+                >
+                  {regenerateFactura.isPending ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 size-4" />
+                  )}
+                  {regenerateFactura.isPending
+                    ? "Regenerando..."
+                    : "Regenerar factura"}
+                </Button>
+              </div>
             )}
           </DialogFooter>
         )}

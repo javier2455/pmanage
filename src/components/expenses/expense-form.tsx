@@ -30,7 +30,9 @@ import {
   useUpdateExpenseMutation,
 } from "@/hooks/use-expenses";
 import { useGetAllExpenseCategoriesQuery } from "@/hooks/use-expense-categories";
+import { useExchangeRate } from "@/hooks/use-exchange";
 import { useBusiness } from "@/context/business-context";
+import { BASE_CURRENCY, getAvailableCurrencies } from "@/lib/currency";
 
 const NO_CATEGORY_VALUE = "__none__";
 
@@ -67,6 +69,10 @@ export function ExpenseForm({
     });
   const categories = categoriesData?.data ?? [];
 
+  // Monedas seleccionables del negocio (CUP + las que tengan tasa configurada).
+  const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "");
+  const availableCurrencies = getAvailableCurrencies(exchangeRateData?.data);
+
   const {
     register,
     handleSubmit,
@@ -81,10 +87,12 @@ export function ExpenseForm({
       amount: defaultValues?.amount ?? (undefined as unknown as number),
       description: defaultValues?.description ?? "",
       expenseCategoryId: defaultValues?.expenseCategoryId ?? null,
+      currency: defaultValues?.currency ?? BASE_CURRENCY,
     },
   });
 
   const selectedCategoryId = watch("expenseCategoryId");
+  const selectedCurrency = watch("currency") ?? BASE_CURRENCY;
 
   async function onSubmit(formData: CreateExpenseFormData) {
     const normalizedCategoryId =
@@ -170,22 +178,47 @@ export function ExpenseForm({
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="expense-amount" className="text-card-foreground">
-          Monto <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="expense-amount"
-          type="number"
-          min={1}
-          step="0.01"
-          placeholder="0.00"
-          {...register("amount", { valueAsNumber: true })}
-          aria-invalid={errors.amount ? "true" : "false"}
-        />
-        {errors.amount && (
-          <p className="text-xs text-destructive">{errors.amount.message}</p>
-        )}
+      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="expense-amount" className="text-card-foreground">
+            Monto <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="expense-amount"
+            type="number"
+            min={1}
+            step="0.01"
+            placeholder="0.00"
+            {...register("amount", { valueAsNumber: true })}
+            aria-invalid={errors.amount ? "true" : "false"}
+          />
+          {errors.amount && (
+            <p className="text-xs text-destructive">{errors.amount.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="expense-currency" className="text-card-foreground">
+            Moneda
+          </Label>
+          <Select
+            value={selectedCurrency}
+            onValueChange={(val) =>
+              setValue("currency", val, { shouldDirty: true })
+            }
+          >
+            <SelectTrigger id="expense-currency" className="w-full sm:w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableCurrencies.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

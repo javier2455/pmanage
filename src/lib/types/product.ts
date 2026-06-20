@@ -69,6 +69,18 @@ export type CreateProductInBusinessProps = {
      * `null`/ausente = sin alerta. Editable luego desde el inventario.
      */
     stockAlertThreshold?: number | null;
+    /**
+     * Moneda en la que se ingresó `entryPrice` (`CUP`, `USD`, `EURO`, `MLC`…).
+     * Si se omite o es `CUP`, no hay conversión. El backend convierte a CUP
+     * antes de persistir. Ver docs/multimoneda-productos.md.
+     */
+    currency?: string;
+    /**
+     * Tasa CUP por 1 unidad de `currency`. Si se omite, el backend la busca en
+     * `MonetaryExchange` del negocio. El frontend envía la misma tasa que usó
+     * para previsualizar el costo convertido.
+     */
+    exchangeRateApplied?: number;
 };
 
 export type EditProductProps = {

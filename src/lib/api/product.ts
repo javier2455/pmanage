@@ -67,8 +67,16 @@ export async function create(
 export async function createInBusiness(
   credentials: CreateProductInBusinessProps,
 ): Promise<CreateProductResponse> {
-  const { productId, categoryId, price, entryPrice, stock, stockAlertThreshold } =
-    credentials;
+  const {
+    productId,
+    categoryId,
+    price,
+    entryPrice,
+    stock,
+    stockAlertThreshold,
+    currency,
+    exchangeRateApplied,
+  } = credentials;
   const { data } = await apiClient.post(
     productRoutes.createProductInBusiness(credentials.businessId),
     {
@@ -80,6 +88,14 @@ export async function createInBusiness(
       ...(categoryId ? { categoryId } : {}),
       // Solo se envía si el usuario (Pro) definió un umbral.
       ...(stockAlertThreshold != null ? { stockAlertThreshold } : {}),
+      // Multimoneda: solo si el costo se ingresó en una moneda distinta a CUP.
+      // El backend convierte `entryPrice × exchangeRateApplied` a CUP.
+      ...(currency && currency !== "CUP"
+        ? {
+            currency,
+            ...(exchangeRateApplied ? { exchangeRateApplied } : {}),
+          }
+        : {}),
     },
   );
 

@@ -127,6 +127,8 @@ export type DashboardSummaryExpense = {
   id: string;
   title: string;
   amount: string | number;
+  /** Moneda del gasto. Puede faltar si el backend aún no la incluye aquí; el UI cae a CUP. */
+  currency?: string;
   description: string;
   createdAt: string;
 };

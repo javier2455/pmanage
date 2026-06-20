@@ -41,6 +41,10 @@ export const assignProductToBusinessSchema = createProductInBusinessSchema
     // La categoría se asigna al BusinessProduct al asignar el producto al
     // negocio. Opcional. Ver docs/category.md.
     categoryId: z.string().nullable().optional(),
+    // Moneda del `entryPrice`. El selector solo ofrece monedas con tasa válida,
+    // por eso no validamos contra una lista aquí. `exchangeRateApplied` se
+    // computa en el submit, no es campo del formulario. Ver docs/multimoneda-productos.md.
+    currency: z.string().optional(),
   });
 
 export const editProductSchema = z.object({

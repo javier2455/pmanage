@@ -8,6 +8,17 @@ export type AddStockToProductProps = {
     entryPrice: number;
     description: string;
     providerId?: string | null;
+    /**
+     * Moneda del costo del lote (`CUP`, `USD`, `EURO`, `MLC`…). Si se omite o es
+     * `CUP`, no hay conversión; el backend convierte a CUP antes de persistir y
+     * actualiza `entryPrice` con el último costo. Ver docs/multimoneda-productos.md.
+     */
+    currency?: string;
+    /**
+     * Tasa CUP por 1 unidad de `currency`. Si se omite, el backend la busca en
+     * `MonetaryExchange`. El frontend envía la misma tasa que usó para el preview.
+     */
+    exchangeRateApplied?: number;
 }
 
 export interface InventoryMeta {

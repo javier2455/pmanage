@@ -29,10 +29,14 @@ import {
   ArrowUp,
   Truck,
 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { InventoryUpdateStockFormData, makeInventoryUpdateStockSchema } from "@/lib/validations/inventory"
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
+import { useExchangeRate } from "@/hooks/use-exchange"
+import { EntryCostCurrency } from "@/components/products/entry-cost-currency"
+import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
+import { mapCurrencyError } from "@/lib/currency-errors"
 import {
   DEFAULT_LOW_STOCK_THRESHOLD,
   getStockAlertStatus,
@@ -50,6 +54,10 @@ export function UpdateStockForm() {
   const { activeBusinessId } = useBusiness()
   const { data } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const addStockToProductMutation = useAddStockToProductMutation()
+  // Tasas de cambio del negocio para el costo multimoneda del lote.
+  const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "")
+  const exchange = exchangeRateData?.data
+  const availableCurrencies = getAvailableCurrencies(exchange)
 
   const [selectedProduct, setSelectedProduct] = useState<BusinessWithProducts | null>(null)
   const [selectedProvider, setSelectedProvider] = useState<ProviderWithRelations | null>(null)
@@ -72,6 +80,7 @@ export function UpdateStockForm() {
     setValue,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<InventoryUpdateStockFormData>({
     resolver: useMemo(
@@ -84,6 +93,7 @@ export function UpdateStockForm() {
       productId: "",
       description: "",
       providerId: null,
+      currency: BASE_CURRENCY,
     },
   })
 
@@ -92,8 +102,13 @@ export function UpdateStockForm() {
 
   const quantityValue = watch("quantity")
   const newStockNum = Number(quantityValue) || 0
+  const entryPriceValue = watch("entryPrice")
 
   async function onSubmit(data: InventoryUpdateStockFormData) {
+    // Multimoneda: si el costo del lote se ingresó en otra moneda, enviamos la
+    // moneda y la misma tasa usada para previsualizar el costo en CUP.
+    const selectedCurrency = data.currency ?? BASE_CURRENCY
+    const rate = getCurrencyRate(exchange, selectedCurrency)
     try {
       const response = await addStockToProductMutation.mutateAsync({
         businessId: activeBusinessId ?? "",
@@ -102,6 +117,9 @@ export function UpdateStockForm() {
         entryPrice: data.entryPrice,
         description: data.description,
         providerId: data.providerId ?? null,
+        currency: selectedCurrency,
+        exchangeRateApplied:
+          selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
       })
       if (response) {
         sileo.success({
@@ -117,10 +135,14 @@ export function UpdateStockForm() {
       router.push("/dashboard/business/inventory")
       // handleCancel()
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message });
+      if (axios.isAxiosError(error)) {
+        const message = mapCurrencyError(
+          error,
+          "No se pudo actualizar el stock. Intenta de nuevo.",
+        );
+        setError("root", { message });
         sileo.error({
-          title: error.response?.data?.error, styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: error.response?.data?.message
+          title: error.response?.data?.error ?? "Error", styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: message
         });
       }
     }
@@ -305,6 +327,21 @@ export function UpdateStockForm() {
                   </p>
                 )}
               </div>
+
+              {/* Currency selector + preview de conversión a CUP */}
+              <Controller
+                control={control}
+                name="currency"
+                render={({ field }) => (
+                  <EntryCostCurrency
+                    currency={field.value ?? BASE_CURRENCY}
+                    onCurrencyChange={field.onChange}
+                    availableCurrencies={availableCurrencies}
+                    entryPrice={Number(entryPriceValue) || 0}
+                    exchangeRate={exchange}
+                  />
+                )}
+              />
 
               {/* New stock input */}
               <div className="flex flex-col gap-2 w-full">

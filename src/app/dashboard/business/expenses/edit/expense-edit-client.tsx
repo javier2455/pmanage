@@ -79,6 +79,7 @@ export default function ExpenseEditClient() {
                 amount: Number(data.amount),
                 description: data.description,
                 expenseCategoryId: data.expenseCategoryId ?? null,
+                currency: data.currency,
               }}
             />
           )}

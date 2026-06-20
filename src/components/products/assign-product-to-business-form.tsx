@@ -26,6 +26,10 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox"
 import { ProductCombobox } from "@/components/products/product-combobox"
+import { EntryCostCurrency } from "@/components/products/entry-cost-currency"
+import { useExchangeRate } from "@/hooks/use-exchange"
+import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
+import { mapCurrencyError } from "@/lib/currency-errors"
 import { AssignProductToBusinessFormData, assignProductToBusinessSchema } from "@/lib/validations/products"
 import { Product } from "@/lib/types/product"
 
@@ -37,6 +41,10 @@ export function AssignProductToBusinessForm() {
   const { activeBusinessId } = useBusiness()
   const { isProPlan } = useUserRoleAndPlan()
   const createProductInBusinessMutation = useCreateProductInBusinessMutation()
+  // Tasas de cambio del negocio para el costo multimoneda (ver multimoneda-productos.md).
+  const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "")
+  const exchange = exchangeRateData?.data
+  const availableCurrencies = getAvailableCurrencies(exchange)
   // Producto elegido en el combobox; lo guardamos completo porque la lista ya
   // no vive en memoria (se pagina/busca en servidor) y onSubmit lo necesita.
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -70,10 +78,12 @@ export function AssignProductToBusinessForm() {
       price: 0,
       stock: 0,
       stockAlertThreshold: null,
+      currency: BASE_CURRENCY,
     },
   })
 
   const selectedProductId = watch("productId")
+  const entryPriceValue = watch("entryPrice")
 
   async function onSubmit(data: AssignProductToBusinessFormData) {
     if (!activeBusinessId) {
@@ -91,6 +101,11 @@ export function AssignProductToBusinessForm() {
       return
     }
 
+    // Multimoneda: si el costo se ingresó en otra moneda, enviamos la moneda y la
+    // misma tasa con la que se previsualizó el costo en CUP (ver multimoneda-productos.md).
+    const selectedCurrency = data.currency ?? BASE_CURRENCY
+    const rate = getCurrencyRate(exchange, selectedCurrency)
+
     try {
       await createProductInBusinessMutation.mutateAsync({
         businessId: activeBusinessId,
@@ -106,6 +121,9 @@ export function AssignProductToBusinessForm() {
         stock: data.stock,
         // Solo aplica para usuarios Pro; el campo está oculto para el resto.
         stockAlertThreshold: isProPlan ? (data.stockAlertThreshold ?? null) : null,
+        currency: selectedCurrency,
+        exchangeRateApplied:
+          selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
       })
 
       sileo.success({
@@ -121,12 +139,16 @@ export function AssignProductToBusinessForm() {
       setSelectedProduct(null)
       router.push("/dashboard/business/products")
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message })
+      if (axios.isAxiosError(error)) {
+        const message = mapCurrencyError(
+          error,
+          "No se pudo asignar el producto. Intenta de nuevo.",
+        )
+        setError("root", { message })
         sileo.error({
           title: error.response?.data?.error ?? "Error",
           styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: error.response.data.message,
+          description: message,
         })
       }
     }
@@ -243,8 +265,8 @@ export function AssignProductToBusinessForm() {
           )}
         </div>
 
-        {/* Entry Price, Price, Stock */}
-        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+        {/* Costo de entrada + moneda */}
+        <div className="grid gap-4 sm:grid-cols-2 mb-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="entry-price" className="text-card-foreground">
               Precio de entrada <span className="text-destructive">*</span>
@@ -262,6 +284,23 @@ export function AssignProductToBusinessForm() {
               <p className="text-xs text-destructive">{errors.entryPrice.message}</p>
             )}
           </div>
+          <Controller
+            control={control}
+            name="currency"
+            render={({ field }) => (
+              <EntryCostCurrency
+                currency={field.value ?? BASE_CURRENCY}
+                onCurrencyChange={field.onChange}
+                availableCurrencies={availableCurrencies}
+                entryPrice={Number(entryPriceValue) || 0}
+                exchangeRate={exchange}
+              />
+            )}
+          />
+        </div>
+
+        {/* Precio de venta, Stock */}
+        <div className="grid gap-4 sm:grid-cols-2 mb-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="price" className="text-card-foreground">
               Precio <span className="text-destructive">*</span>

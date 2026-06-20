@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { Expense } from "@/lib/types/expenses";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import ExpenseDetailsDialog from "./expense-details-dialog";
 
 export type ExpensesColumnMeta = {
@@ -23,13 +24,6 @@ const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
 } satisfies ExpensesColumnMeta;
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("es-CO", {
@@ -92,7 +86,10 @@ export function createExpensesColumns(
       ),
       cell: ({ row }) => (
         <span className="tabular-nums font-medium text-foreground">
-          {formatCurrency(Number(row.original.amount))}
+          {formatMoney(
+            Number(row.original.amount),
+            row.original.currency ?? BASE_CURRENCY,
+          )}
         </span>
       ),
     },

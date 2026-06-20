@@ -57,7 +57,8 @@ export async function getProductInventoryHistory({
 }
 
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
-    const { quantity, entryPrice, description, providerId } = credentials;
+    const { quantity, entryPrice, description, providerId, currency, exchangeRateApplied } =
+        credentials;
     const { data } = await apiClient.post(
         inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId),
         {
@@ -65,6 +66,14 @@ export async function addStock(credentials: AddStockToProductProps): Promise<{ m
             entryPrice,
             description,
             ...(providerId ? { providerId } : {}),
+            // Multimoneda: solo si el costo del lote se ingresó en moneda distinta a CUP.
+            // El backend convierte `entryPrice × exchangeRateApplied` a CUP.
+            ...(currency && currency !== "CUP"
+                ? {
+                      currency,
+                      ...(exchangeRateApplied ? { exchangeRateApplied } : {}),
+                  }
+                : {}),
         },
     );
     return data;

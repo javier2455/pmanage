@@ -28,6 +28,9 @@ export function makeInventoryUpdateStockSchema(allowDecimals = false) {
     productId: z.string().min(1, "El producto es requerido"),
     description: z.string().min(1, "La descripción es requerida"),
     providerId: z.string().uuid().nullable().optional(),
+    // Moneda del costo del lote. El selector solo ofrece monedas con tasa válida;
+    // `exchangeRateApplied` se computa en el submit. Ver docs/multimoneda-productos.md.
+    currency: z.string().optional(),
   });
 }
 

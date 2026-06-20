@@ -2,6 +2,14 @@ export interface Expense {
   id: string;
   title: string;
   amount: string | number;
+  /**
+   * Moneda en la que se registró el gasto (`CUP`, `USD`, `EURO`, `MLC`…). A
+   * diferencia de productos, el `amount` se persiste y se muestra en esta moneda
+   * original; el backend solo convierte a la base para reportes/alertas. Si el
+   * gasto se creó antes de la feature, el backend devuelve `CUP` por defecto.
+   * Ver docs/078-expenses-multicurrency-frontend-guide.md.
+   */
+  currency: string;
   description: string;
   expenseCategoryId?: string | null;
   expenseCategoryName?: string | null;
@@ -27,6 +35,8 @@ export interface CreateExpenseProps {
   amount: number;
   description: string;
   expenseCategoryId?: string | null;
+  /** Moneda del gasto. Si se omite, el backend asume `CUP`. */
+  currency?: string;
 }
 
 export type UpdateExpenseProps = Partial<{
@@ -34,4 +44,5 @@ export type UpdateExpenseProps = Partial<{
   amount: number;
   description: string;
   expenseCategoryId: string | null;
+  currency: string;
 }>;
