@@ -10,6 +10,8 @@ export type Business = {
   address: string;
   phone: string | null;
   email: string | null;
+  /** Habilita delivery/mensajería para este negocio. Gate del backend para ventas `delivery`. */
+  acceptsMessaging: boolean;
   lat: number;
   lng: number;
   municipalityId: string | null;
@@ -72,6 +74,7 @@ export interface CreateBusinessPayload {
   address: string;
   phone: string | null;
   email: string | null;
+  acceptsMessaging?: boolean;
   municipalityId: string;
   lat: number;
   lng: number;
@@ -84,6 +87,7 @@ export interface UpdateBusinessPayload {
   address: string;
   phone: string | null;
   email: string | null;
+  acceptsMessaging?: boolean;
   municipalityId?: string;
   lat?: number;
   lng?: number;

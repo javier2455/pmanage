@@ -42,7 +42,9 @@ import {
   Tags,
   Trash2,
   TriangleAlert,
+  Truck,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteDialog } from "@/components/delete-dialog";
@@ -131,6 +133,7 @@ export function BusinessDetailsForm() {
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
+      acceptsMessaging: activeBusiness?.acceptsMessaging ?? false,
       municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
       lat: toCoord(activeBusiness?.lat, HAVANA_LAT),
       lng: toCoord(activeBusiness?.lng, HAVANA_LNG),
@@ -138,6 +141,7 @@ export function BusinessDetailsForm() {
   });
 
   const selectedType = watch("type");
+  const watchedAcceptsMessaging = watch("acceptsMessaging");
   const watchedLat = toCoord(watch("lat"), toCoord(activeBusiness?.lat, HAVANA_LAT));
   const watchedLng = toCoord(watch("lng"), toCoord(activeBusiness?.lng, HAVANA_LNG));
   const watchedAddress = watch("address");
@@ -160,6 +164,7 @@ export function BusinessDetailsForm() {
       address: activeBusiness?.address ?? "",
       phone: activeBusiness?.phone ?? "",
       email: activeBusiness?.email ?? "",
+      acceptsMessaging: activeBusiness?.acceptsMessaging ?? false,
       municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
       lat: toCoord(activeBusiness?.lat, HAVANA_LAT),
       lng: toCoord(activeBusiness?.lng, HAVANA_LNG),
@@ -185,6 +190,7 @@ export function BusinessDetailsForm() {
           address: data.address,
           phone: data.phone && !isDialCodeOnly(data.phone) ? data.phone : null,
           email: data.email || null,
+          acceptsMessaging: data.acceptsMessaging,
           municipalityId: data.municipalityId || undefined,
           lat: data.lat,
           lng: data.lng,
@@ -585,6 +591,42 @@ export function BusinessDetailsForm() {
                   </EditableFieldWrapper>
                 )}
               </div>
+            </div>
+
+            {/* Delivery */}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="acceptsMessaging" className="text-card-foreground">
+                Delivery
+              </Label>
+              {isEditing ? (
+                <div className="flex items-start justify-between gap-4 rounded-md border border-input p-3">
+                  <div className="flex items-start gap-2">
+                    <Truck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Aceptar pedidos a domicilio. Los clientes podrán pedir
+                      entrega a domicilio.
+                    </span>
+                  </div>
+                  <Switch
+                    id="acceptsMessaging"
+                    checked={watchedAcceptsMessaging ?? false}
+                    onCheckedChange={(checked) =>
+                      setValue("acceptsMessaging", checked, { shouldDirty: true })
+                    }
+                  />
+                </div>
+              ) : (
+                <EditableFieldWrapper>
+                  <div className="relative flex min-h-9 items-center rounded-md border border-input bg-muted/50 px-3 py-2 pr-8">
+                    <Truck className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm text-foreground">
+                      {activeBusiness?.acceptsMessaging
+                        ? "Activado"
+                        : "Desactivado"}
+                    </span>
+                  </div>
+                </EditableFieldWrapper>
+              )}
             </div>
 
             {isEditing && (

@@ -14,6 +14,10 @@ export interface BusinessSettings {
   monthlyClosingAlert: NotificationChannel[] | null;
   lowStockAlert: NotificationChannel[] | null;
   outOfStockAlert: NotificationChannel[] | null;
+  /** Canales para avisar cuando llega una orden de delivery. */
+  deliveryOrderChannels: NotificationChannel[] | null;
+  /** Canales para avisar cuando la orden de delivery está lista. */
+  orderReadyChannels: NotificationChannel[] | null;
 }
 
 /** Payload de actualización parcial (PATCH). El backend crea la config al crear el negocio. */

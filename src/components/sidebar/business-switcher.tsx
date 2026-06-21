@@ -13,9 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Check, ChevronsUpDown, Store, Plus } from "lucide-react"
+import { Check, ChevronsUpDown, Store, Plus, Truck } from "lucide-react"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
+import { Badge } from "@/components/ui/badge"
 
 export function BusinessSwitcher() {
   const router = useRouter()
@@ -58,10 +59,16 @@ export function BusinessSwitcher() {
               </div>
               <div className="flex flex-1 flex-col">
                 <span className="text-sm">{business.name}</span>
-                {/* <span className="text-xs text-muted-foreground">
-                  {business.}
-                </span> */}
               </div>
+              {business.acceptsMessaging && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+                >
+                  <Truck className="size-2.5" />
+                  Delivery
+                </Badge>
+              )}
               <Check
                 className={cn(
                   "ml-auto size-4 shrink-0",

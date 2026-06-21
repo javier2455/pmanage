@@ -56,6 +56,8 @@ interface SaleCartPanelProps {
   /** Tipo de venta (en tienda / domicilio / recoger). */
   saleType: SaleType
   onSaleTypeChange: (saleType: SaleType) => void
+  /** El negocio tiene delivery habilitado (`acceptsMessaging`). Si es `false`, la opción "A domicilio" se deshabilita. */
+  acceptsDelivery: boolean
   /** Datos de entrega; solo relevantes cuando `saleType === "delivery"`. */
   delivery: SaleDeliveryInfo
   onDeliveryChange: (patch: Partial<SaleDeliveryInfo>) => void
@@ -79,6 +81,7 @@ export function SaleCartPanel({
   onCurrencyChange,
   saleType,
   onSaleTypeChange,
+  acceptsDelivery,
   delivery,
   onDeliveryChange,
   onSetQuantity,
@@ -242,7 +245,11 @@ export function SaleCartPanel({
                   </SelectTrigger>
                   <SelectContent>
                     {SALE_TYPE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
+                      <SelectItem
+                        key={opt.value}
+                        value={opt.value}
+                        disabled={opt.value === "delivery" && !acceptsDelivery}
+                      >
                         {opt.label}
                       </SelectItem>
                     ))}
@@ -250,8 +257,16 @@ export function SaleCartPanel({
                 </Select>
               </div>
 
+              {/* Aviso cuando el negocio no ofrece delivery */}
+              {!acceptsDelivery && (
+                <p className="text-xs text-muted-foreground">
+                  Este negocio no acepta delivery. Habilítalo en los datos del
+                  negocio para vender a domicilio.
+                </p>
+              )}
+
               {/* Datos de entrega — solo para ventas a domicilio */}
-              {saleType === "delivery" && (
+              {saleType === "delivery" && acceptsDelivery && (
                 <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
                   <div className="flex flex-col gap-1.5">
                     <Label

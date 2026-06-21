@@ -41,7 +41,9 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
+  Truck,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { sileo } from "sileo";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
@@ -164,11 +166,14 @@ export default function CreateBusinessPage() {
       address: "",
       phone: "",
       email: "",
+      acceptsMessaging: false,
       municipalityId: "",
       lat: HAVANA_LAT,
       lng: HAVANA_LNG,
     },
   });
+
+  const acceptsMessaging = watch("acceptsMessaging");
 
   const lat = watch("lat");
   const lng = watch("lng");
@@ -525,6 +530,34 @@ export default function CreateBusinessPage() {
                       </p>
                     )}
                   </div>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                      <Truck className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <Label
+                        htmlFor="acceptsMessaging"
+                        className="text-card-foreground"
+                      >
+                        Aceptar pedidos a domicilio (delivery)
+                      </Label>
+                      <span className="text-sm text-muted-foreground">
+                        Los clientes podrán pedir entrega a domicilio.
+                      </span>
+                    </div>
+                  </div>
+                  <Switch
+                    id="acceptsMessaging"
+                    checked={acceptsMessaging ?? false}
+                    onCheckedChange={(checked) =>
+                      setValue("acceptsMessaging", checked, {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
                 </div>
               </div>
             </CardContent>

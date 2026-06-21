@@ -38,7 +38,9 @@ export type NotificationKey =
   | "dailyClose"
   | "monthlyClose"
   | "lowStock"
-  | "outOfStock";
+  | "outOfStock"
+  | "deliveryOrder"
+  | "orderReady";
 
 type ChannelMatrix = Record<NotificationKey, Record<NotificationChannel, boolean>>;
 
@@ -52,6 +54,8 @@ const FIELD_BY_KEY: Record<NotificationKey, keyof UpdateBusinessSettingsPayload>
   monthlyClose: "monthlyClosingAlert",
   lowStock: "lowStockAlert",
   outOfStock: "outOfStockAlert",
+  deliveryOrder: "deliveryOrderChannels",
+  orderReady: "orderReadyChannels",
 };
 
 const EMPTY_MATRIX: ChannelMatrix = {
@@ -59,6 +63,8 @@ const EMPTY_MATRIX: ChannelMatrix = {
   monthlyClose: { email: false, sms: false, whatsapp: false },
   lowStock: { email: false, sms: false, whatsapp: false },
   outOfStock: { email: false, sms: false, whatsapp: false },
+  deliveryOrder: { email: false, sms: false, whatsapp: false },
+  orderReady: { email: false, sms: false, whatsapp: false },
 };
 
 type ChannelConfig = {
@@ -127,6 +133,23 @@ const CATEGORIES: NotificationCategory[] = [
   },
 ];
 
+/** Categoría de delivery; solo se muestra si el negocio acepta delivery (`acceptsMessaging`). */
+const DELIVERY_CATEGORY: NotificationCategory = {
+  title: "Delivery",
+  items: [
+    {
+      key: "deliveryOrder",
+      label: "Nueva orden de delivery",
+      description: "Aviso cuando llega un pedido a domicilio.",
+    },
+    {
+      key: "orderReady",
+      label: "Orden lista",
+      description: "Aviso cuando el pedido está listo para entregar.",
+    },
+  ],
+};
+
 /** Convierte la respuesta del backend (arrays por alerta) a la matriz de la UI. */
 function settingsToMatrix(settings: BusinessSettings): ChannelMatrix {
   const matrix: ChannelMatrix = structuredClone(EMPTY_MATRIX);
@@ -146,10 +169,15 @@ function settingsToMatrix(settings: BusinessSettings): ChannelMatrix {
 /**
  * Convierte la matriz de la UI al payload del backend.
  * Una alerta sin canales se envía como `null` (no `[]`), según docs/API.md.
+ * Solo se incluyen las `keys` visibles para no pisar config oculta (p. ej.
+ * los canales de delivery cuando el negocio no acepta delivery).
  */
-function matrixToPayload(matrix: ChannelMatrix): UpdateBusinessSettingsPayload {
+function matrixToPayload(
+  matrix: ChannelMatrix,
+  keys: NotificationKey[],
+): UpdateBusinessSettingsPayload {
   const payload: UpdateBusinessSettingsPayload = {};
-  for (const key of Object.keys(FIELD_BY_KEY) as NotificationKey[]) {
+  for (const key of keys) {
     const enabled = CHANNELS.filter((ch) => matrix[key][ch.key]).map(
       (ch) => ch.key,
     );
@@ -166,6 +194,12 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   const { mutate: saveSettings, isPending } = useUpdateBusinessSettings();
 
   const [matrix, setMatrix] = useState<ChannelMatrix>(EMPTY_MATRIX);
+
+  // La sección de delivery solo aplica si el negocio acepta delivery.
+  const categories = business?.acceptsMessaging
+    ? [...CATEGORIES, DELIVERY_CATEGORY]
+    : CATEGORIES;
+  const activeKeys = categories.flatMap((c) => c.items.map((i) => i.key));
 
   // Sincroniza la matriz con la config que llega del backend.
   useEffect(() => {
@@ -194,7 +228,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   function handleSave() {
     if (!businessId) return;
     saveSettings(
-      { businessId, payload: matrixToPayload(matrix) },
+      { businessId, payload: matrixToPayload(matrix, activeKeys) },
       {
         onSuccess: () =>
           sileo.success({ title: "Preferencias de notificaciones guardadas" }),
@@ -240,7 +274,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
 
             {/* Notification categories */}
             <div className="flex flex-col gap-4">
-              {CATEGORIES.map((category) => (
+              {categories.map((category) => (
                 <div
                   key={category.title}
                   className="flex flex-col gap-3 rounded-lg border border-border p-4"

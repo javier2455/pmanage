@@ -45,7 +45,8 @@ interface CartItem {
 
 export default function CreateSalesPage() {
   const router = useRouter()
-  const { activeBusinessId } = useBusiness()
+  const { activeBusinessId, activeBusiness } = useBusiness()
+  const acceptsDelivery = activeBusiness?.acceptsMessaging ?? false
 
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -65,6 +66,11 @@ export default function CreateSalesPage() {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  // Si el negocio activo no acepta delivery, no dejamos la venta en "domicilio".
+  useEffect(() => {
+    if (!acceptsDelivery && saleType === "delivery") setSaleType("in_store")
+  }, [acceptsDelivery, saleType])
 
   const { data, isLoading } = useAllProductOfMyBusinesses(
     activeBusinessId ?? "",
@@ -334,6 +340,7 @@ export default function CreateSalesPage() {
           onCurrencyChange={setSelectedCurrency}
           saleType={saleType}
           onSaleTypeChange={setSaleType}
+          acceptsDelivery={acceptsDelivery}
           delivery={delivery}
           onDeliveryChange={(patch) =>
             setDelivery((prev) => ({ ...prev, ...patch }))
