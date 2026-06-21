@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreateSaleProps, RegistrarPagoDto } from "@/lib/types/sales";
+import { CancelSaleProps, CreateSaleProps, RegistrarPagoDto } from "@/lib/types/sales";
 import {
     cancelSale,
     create,
@@ -108,8 +108,8 @@ export function useRegenerateFacturaMutation() {
 export function useCancelSaleMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ saleId, cancellationReason }: { saleId: string; cancellationReason: string; businessId: string }) =>
-            cancelSale(saleId, cancellationReason),
+        mutationFn: ({ saleId, body }: { saleId: string; body: CancelSaleProps; businessId: string }) =>
+            cancelSale(saleId, body),
         onSuccess: (_, variables) => {
             const bid = variables.businessId;
             queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id", bid] });

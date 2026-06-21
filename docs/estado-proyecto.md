@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-16** (módulo de Tickets de Soporte con conversación, estado cerrar/reabrir, asignación de admins y notificaciones de soporte integradas; edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales y categoría a nivel de `BusinessProduct`).
+> Última actualización: **2026-06-20** (suite **Multimoneda**: ventas con moneda + pagos multimoneda con factura PDF descargar/regenerar, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33). Anterior — 2026-06-16: módulo de Tickets de Soporte con conversación, estado cerrar/reabrir, asignación de admins y notificaciones de soporte integradas; edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales y categoría a nivel de `BusinessProduct`.
 
 ---
 
@@ -9,12 +9,11 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.15.4-alpha` (rama `develop`) |
+| **Versión actual** | `1.16.5-alpha` (rama `develop`) |
 | **Versión en producción** | `1.0.0` (rama `main`) |
-| **Commits por delante de `main`** | **104** |
-| **Último commit** | `da56ce3` — 2026-06-16 |
+| **Último commit** | `18b503a` — 2026-06-20 |
 | **PR `develop → main`** | **No creado** — deuda de promoción acumulada (sigue creciendo) |
-| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId` — ver Punto pendiente abajo); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27) |
+| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId`); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27); (4) **multimoneda — backend**: bug de conversión de pagos con base ≠ CUP, `currency` no aceptado en gastos, y regla de delivery por negocio (ver feature 33) |
 
 ---
 
@@ -80,6 +79,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 30 | **Stock con cantidades decimales** para unidades de peso/volumen (kg, lb, g, L, mL) | `c771e5e` (1.8.1) | Verificar que backend persista decimales en `add-stock` (ver detalle) |
 | 31 | **Editar la categoría de un producto dentro del negocio** (antes solo se podía el precio) | `22ee005` (1.13.0) | **Endpoint backend pendiente** (ver detalle) |
 | 32 | **Módulo de Tickets de Soporte** — conversación tipo chat, cerrar/reabrir, asignación de admins + **notificaciones de soporte** integradas en la campana y la página de notificaciones | `c4b0801`→`da56ce3` (1.14.0–1.15.4) | — (backend entregó el contrato; ver detalle) |
+| 33 | **Suite Multimoneda** (ventas + pagos + factura PDF + compras de inventario + asignar producto + tipo de venta/entrega + gastos) | `be2fec8`→`18b503a` (1.16.0–1.16.5) | **Backend**: bug de conversión de pagos (base ≠ CUP), `currency` rechazado en gastos, regla de delivery por negocio (ver detalle) |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
 
@@ -144,6 +144,51 @@ Canal de soporte dentro de la app: el usuario reporta problemas y el equipo (adm
 
 **Estado.** Frontend completo; el backend entregó el contrato (mismo backend de producción). Verificar en QA las formas de respuesta y el flujo de asignación de admins.
 
+### Detalle: Suite Multimoneda (feature 33) — `be2fec8`→`18b503a`
+
+Reemplaza la venta atómica en una sola moneda por un flujo completo de moneda + pagos
++ factura, y extiende la divisa a inventario, productos y gastos. Spec/guía de
+referencia en [docs/guia-implementacion-multimoneda.md](guia-implementacion-multimoneda.md)
+(con su sección **0.1 Estado de implementación**). Infra base reutilizada:
+`src/lib/currency.ts`, `useExchangeRate` y `getAvailableCurrencies` (monedas derivadas
+de `MonetaryExchange`, nunca lista fija).
+
+**Implementado (frontend completo):**
+
+- **Ventas + pagos (Fase 1):** selector de moneda al crear venta
+  ([sales/create/page.tsx](../src/app/dashboard/business/sales/create/page.tsx) + [sale-cart-panel.tsx](../src/components/sales/sale-cart-panel.tsx)),
+  dialog de pagos multimoneda con preview de equivalente y `sugerencia`
+  ([payment-dialog.tsx](../src/components/sales/payment-dialog.tsx)), badges de
+  `paymentStatus` en tabla y detalle.
+- **Factura PDF (Fase 2):** descargar **y regenerar** desde el detalle, solo en
+  ventas `paid` ([details-dialog.tsx](../src/components/sales/details-dialog.tsx)).
+- **Compras de inventario (Fase 3):** `currency` + `exchangeRateApplied` en add-stock,
+  con preview del costo en CUP ([update-stock-form.tsx](../src/components/inventory/update-stock-form.tsx)).
+- **Asignar producto al negocio:** mismo costo multimoneda, vía el componente
+  compartido `EntryCostCurrency` ([entry-cost-currency.tsx](../src/components/products/entry-cost-currency.tsx)).
+- **Tipo de venta + entrega:** `saleType` (`in_store`/`delivery`/`pickup`) con campos
+  de delivery condicionales y validación (dirección obligatoria si `delivery`).
+- **Gastos multimoneda:** `currency` en tipos/validación/formulario y visualización
+  por moneda con `formatMoney`.
+- **Util compartido** `mapCurrencyError` ([src/lib/currency-errors.ts](../src/lib/currency-errors.ts)).
+
+**Desviación de diseño:** en add-stock y asignar producto la **tasa no es editable**;
+se toma automática de `MonetaryExchange` y se envía como `exchangeRateApplied` para que
+lo previsualizado sea exactamente lo que se guarda.
+
+**Pendiente (backend) — bloquea parte de la suite:**
+
+- 🐞 **Conversión de pagos con base ≠ CUP**: el backend invierte el cruce de tasas; un
+  pago en EUR sobre una venta en USD se acredita mal y la venta no llega a `paid`. Caso
+  reproducible y fórmula correcta en
+  [docs/bug-conversion-pagos-multimoneda.md](bug-conversion-pagos-multimoneda.md).
+- 🚧 **Gastos `currency`**: `POST /api/v2/expenses` responde `400 "property currency
+  should not exist"`; el DTO de gastos no acepta el campo. El frontend ya lo envía.
+- ❓ **Delivery por negocio**: `POST /v2/sales` con `saleType: delivery` puede responder
+  `400 "Este negocio no ofrece servicio de delivery/mensajería"`. La condición vive en
+  el backend y no está expuesta en el front (el tipo `Business` no tiene flag de
+  delivery); pendiente confirmar la regla para deshabilitar la opción en la UI.
+
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 
 El frontend está completo. Permite configurar un umbral por producto (`stockAlertThreshold`) al asignarlo al negocio o desde el diálogo en la tabla de inventario; si no hay umbral personalizado se usa un valor por defecto. Muestra badges por fila ("Sin stock" / "Stock bajo") y un banner-resumen en la página de inventario.
@@ -203,7 +248,7 @@ Trabajo de frontend completado pero **revertido en `develop`** porque depende de
 | Feature | Commit original | Revert | Notas |
 |---|---|---|---|
 | Categorías de producto globales por usuario (Opción A) | `27af9af` | `9288ffa` | Backend debe definir el modelo. Diff completo y plan de re-aplicación en [docs/PENDIENTE-categorias-producto-globales.md](PENDIENTE-categorias-producto-globales.md) |
-| Sistema de gestión de divisas con conversión dinámica | `348fbaa` | `0d3375d` | Revertido tras merge de PR #10; pendiente de re-alineación |
+| Sistema de gestión de divisas con conversión dinámica | `348fbaa` | `0d3375d` | Revertido tras merge de PR #10. **Superado por la Suite Multimoneda (feature 33)**, que adopta otro enfoque: moneda por venta + pagos con tasa congelada, en vez de conversión dinámica global. Esta fila ya no requiere re-aplicación. |
 
 ---
 
@@ -297,8 +342,9 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
    - Endpoints de alertas de stock: `GET /businesses/:id/stock-alerts` + `PATCH .../stock-alert` ([docs/backend-alertas-stock.md](backend-alertas-stock.md)).
    - **Migración de categorías** a nivel de `BusinessProduct` y paginación de `GET /category` ([docs/category.md](category.md), feature 27).
    - **Decimales en `add-stock`**: confirmar que el backend persiste cantidades fraccionarias para unidades de peso/volumen (feature 30).
-2. **Crear PR `develop → main`** con los **86 commits** acumulados — la deuda de promoción sigue creciendo. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
-3. **Re-aplicar las reversiones** (categorías globales, divisas) cuando backend confirme el modelo — ambos diffs están conservados en el historial.
+   - **Multimoneda (feature 33)**: corregir el bug de conversión de pagos con base ≠ CUP ([docs/bug-conversion-pagos-multimoneda.md](bug-conversion-pagos-multimoneda.md)); aceptar `currency` en `POST/PATCH /expenses`; y definir/exponer la regla de delivery por negocio.
+2. **Crear PR `develop → main`** con los commits acumulados — la deuda de promoción sigue creciendo. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
+3. **Re-aplicar la reversión** de categorías globales cuando backend confirme el modelo (el diff está conservado en el historial). La reversión de "divisas" quedó superada por la Suite Multimoneda (feature 33) y ya no requiere re-aplicación.
 4. Continuar con Variante A del roadmap (rentabilidad, comparativas, métricas por worker).
 
 ---

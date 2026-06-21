@@ -6,13 +6,12 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.15.4-alpha` |
-| **Commits por delante de `main`** | 104 (al 2026-06-16) |
-| **Último commit** | `da56ce3` |
+| **Versión en `package.json`** | `1.16.5-alpha` |
+| **Último commit** | `18b503a` (al 2026-06-20) |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-06-16 |
+| **Última actualización del documento** | 2026-06-20 |
 
 ---
 
@@ -54,6 +53,7 @@ Cambios respecto a `main` agrupados por estado:
 | 30 | **Stock con cantidades decimales** (unidades de peso/volumen) | ✅ Frontend mergeado | `c771e5e` (1.8.1) | Sí — verificar persistencia decimal en backend |
 | 31 | **Editar la categoría de un producto dentro del negocio** (precio + categoría en un solo diálogo) | 🟡 Frontend implementado, backend pendiente | `22ee005` (1.13.0) | **No** — espera `PATCH .../products/:bpId/category` (ver [docs/backend-categoria-business-product.md](../backend-categoria-business-product.md)) |
 | 32 | **Módulo de Tickets de Soporte** (conversación, cerrar/reabrir, asignación de admins) + **notificaciones de soporte** integradas (campana + página) | ✅ Frontend + backend (contrato entregado) | `c4b0801`→`da56ce3` (1.14.0–1.15.4) | Sí — verificar en QA (ver §2.15) |
+| 33 | **Suite Multimoneda** (ventas + pagos + factura PDF + compras de inventario + asignar producto + tipo de venta/entrega + gastos) | 🟡 Frontend completo, backend parcial | `be2fec8`→`18b503a` (1.16.0–1.16.5) | **Parcial** — pagos/factura/stock OK; bloquea: bug de conversión base ≠ CUP, `currency` en gastos, regla de delivery (ver §2.16) |
 
 > Ajustes menores en el rango 1.3.8–1.8.1 (no itemizados): eliminación del menú estático de fallback, hover en filas de productos, fix `markAllAsRead`, afinado de límites de notificaciones, botones `outline`.
 
@@ -296,6 +296,42 @@ Reutiliza y amplía la tarjeta `NotificationSettingsCard` dentro de los detalles
 - **Bump de versión** a `1.1.0-alpha` (`c3937f2`), `1.3.1-alpha` (`3138a7e`), `1.3.2-alpha` (`ef36fac`).
 - **Upgrade lucide-react** a `1.17.0` (`ef36fac`).
 
+### 2.16. Suite Multimoneda (feature 33) — `be2fec8`→`18b503a`
+
+**Qué hace.** Lleva la divisa a todo el flujo comercial: ventas en cualquier moneda
+configurada, pagos parciales/mixtos con tasa congelada, factura PDF, compras de
+inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y
+gastos con moneda. Reutiliza `src/lib/currency.ts`, `useExchangeRate` y
+`getAvailableCurrencies` (monedas derivadas de `MonetaryExchange`, no lista fija).
+
+**Spec/guía completa.** [docs/guia-implementacion-multimoneda.md](../guia-implementacion-multimoneda.md)
+(sección **0.1 Estado de implementación** = fuente de verdad del estado actual).
+Detalle también en [estado-proyecto.md](../estado-proyecto.md) (feature 33).
+
+**Archivos clave.**
+- Ventas/pagos: [payment-dialog.tsx](../../src/components/sales/payment-dialog.tsx),
+  [sale-cart-panel.tsx](../../src/components/sales/sale-cart-panel.tsx),
+  [sales/create/page.tsx](../../src/app/dashboard/business/sales/create/page.tsx),
+  [details-dialog.tsx](../../src/components/sales/details-dialog.tsx) (factura descargar/regenerar).
+- Inventario/productos: [update-stock-form.tsx](../../src/components/inventory/update-stock-form.tsx),
+  [entry-cost-currency.tsx](../../src/components/products/entry-cost-currency.tsx) (componente compartido).
+- Gastos: [expense-form.tsx](../../src/components/expenses/expense-form.tsx).
+- Utilidades: [src/lib/currency.ts](../../src/lib/currency.ts), [src/lib/currency-errors.ts](../../src/lib/currency-errors.ts).
+
+**Desviación de diseño.** En add-stock y asignar producto la **tasa no es editable**:
+se toma automática de `MonetaryExchange` y se envía como `exchangeRateApplied` para que
+el preview coincida con lo guardado.
+
+**Bloqueadores (backend) — ver §3.**
+- 🐞 Conversión de pagos con base ≠ CUP invertida → [docs/bug-conversion-pagos-multimoneda.md](../bug-conversion-pagos-multimoneda.md).
+- 🚧 `POST/PATCH /expenses` no acepta `currency` (400 `"property currency should not exist"`).
+- ❓ Regla de delivery por negocio no expuesta (`400 "Este negocio no ofrece servicio de delivery/mensajería"`).
+
+**Criterios de aceptación.**
+- Venta en USD + pago mixto USD/CUP → conversión correcta, `paid` al completar.
+- Factura solo visible/descargable en ventas `paid`; regenerar reemplaza el PDF.
+- add-stock/asignar producto en USD → `entryPrice` guardado en CUP = `monto × tasa`.
+
 ---
 
 ## 3. Trabajo en curso (ramas en flight)
@@ -441,7 +477,7 @@ Este bloque cambia significativamente la arquitectura: requiere modelar `Journal
 - **Query keys de React Query**: usar arrays `[entity, businessId, ...args]` — nunca strings sueltos.
 - **Schemas Zod**: viven en `src/lib/validations/`, no inline.
 - **Forms**: React Hook Form + zodResolver, siempre.
-- **Currency display**: formatear con `Intl.NumberFormat` por código de moneda; nunca concatenar `"$"` manualmente.
+- **Currency display**: usar `formatMoney(value, currency)` de [src/lib/currency.ts](../../src/lib/currency.ts) (código de moneda como sufijo). **No** usar `Intl.NumberFormat` con `style: "currency"`: `EURO`/`MLC` no son ISO 4217 y rompen el formateo. Nunca concatenar `"$"` manualmente ni hardcodear `"COP"`/`"CUP"`. Las monedas seleccionables salen de `getAvailableCurrencies(exchange)`, no de listas fijas.
 - **Mutations**: invalidar solo las queries específicas afectadas; no usar `queryClient.invalidateQueries()` sin key.
 - **Imports**: usar alias `@/` definido en `tsconfig.json`.
 

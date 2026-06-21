@@ -1,6 +1,7 @@
 import apiClient from "@/lib/axios";
 import { BusinessWithProducts } from "../types/business";
 import {
+  CancelSaleProps,
   CreateSaleProps,
   PaymentHistoryItem,
   PaymentsSummary,
@@ -42,10 +43,8 @@ export async function create(
   return data;
 }
 
-export async function cancelSale(saleId: string, cancellationReason: string) {
-  const { data } = await apiClient.post(salesRoutes.cancelSale(saleId), {
-    cancellationReason,
-  });
+export async function cancelSale(saleId: string, body: CancelSaleProps) {
+  const { data } = await apiClient.post(salesRoutes.cancelSale(saleId), body);
 
   return data;
 }

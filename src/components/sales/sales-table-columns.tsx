@@ -3,7 +3,7 @@
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Wallet, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
+import type { CancelSaleProps, SaleWithProductAndBusiness } from "@/lib/types/sales";
 import { CancelSaleDialog } from "./cancel-sale-dialog";
 import { PaymentDialog } from "./payment-dialog";
 import { PaymentStatusBadge, resolvePaymentStatus } from "./payment-status-badge";
@@ -54,7 +54,7 @@ function SalesSortableHeader({
 export function createSalesColumns(
   onCancelSale: (
     saleId: string,
-    cancellationReason: string,
+    body: CancelSaleProps,
   ) => void | Promise<void>,
 ): ColumnDef<SaleWithProductAndBusiness>[] {
   return [
@@ -161,10 +161,9 @@ export function createSalesColumns(
               />
             )}
             <CancelSaleDialog
+              saleId={row.original.id}
               tooltip="Cancelar venta"
-              onConfirm={(cancellationReason) =>
-                onCancelSale(row.original.id, cancellationReason)
-              }
+              onConfirm={(body) => onCancelSale(row.original.id, body)}
               trigger={
                 <Button
                   type="button"

@@ -50,6 +50,51 @@ Esto no refleja la realidad del negocio:
 
 ---
 
+## 0.1. Estado de implementación (actualizado 2026-06-20)
+
+> **Todo lo descrito en esta guía ya está implementado en el frontend.** Esta
+> sección resume el estado real, las **desviaciones** respecto a la guía y lo que
+> queda **pendiente del backend**. El resto del documento se conserva como
+> especificación/referencia.
+
+| Fase | Estado | Notas |
+|------|--------|-------|
+| **Fase 1** — Ventas + pagos | ✅ Implementado | Selector de moneda al crear venta, dialog de pagos multimoneda con preview de equivalente y `sugerencia`, badges de `paymentStatus` en tabla y detalle. |
+| **Fase 2** — Factura PDF | ✅ Implementado | Descargar **y regenerar** (ambos botones en el detalle, solo cuando la venta está `paid`). |
+| **Fase 3** — Compras (add-stock) | ✅ Implementado | Selector de moneda + preview del costo convertido a CUP. **Desviación:** la tasa se toma automática de `MonetaryExchange` y se **envía** como `exchangeRateApplied` (no es editable), por decisión de producto. |
+
+**Extras implementados (fuera de la guía original):**
+
+- **Asignar producto al negocio multimoneda** (`createWithBusiness`): el `entryPrice`
+  admite `currency` + `exchangeRateApplied`, igual que add-stock. Componente
+  compartido `EntryCostCurrency`
+  ([src/components/products/entry-cost-currency.tsx](../src/components/products/entry-cost-currency.tsx))
+  reutilizado en ambos formularios. Contrato en [multimoneda-productos.md](./multimoneda-productos.md).
+- **Tipo de venta + entrega** (`saleType` + `deliveryAddress`/`deliveryContactPhone`/`deliveryContactName`):
+  selector en el carrito ([sale-cart-panel.tsx](../src/components/sales/sale-cart-panel.tsx))
+  con campos de delivery condicionales y validación (dirección obligatoria si `saleType = delivery`).
+- **Gastos multimoneda** (`currency` en el gasto): tipos, validación, selector en el
+  formulario y visualización por moneda con `formatMoney`. ⚠️ **Bloqueado por backend** (ver pendientes).
+- **Util compartido de errores** `mapCurrencyError`
+  ([src/lib/currency-errors.ts](../src/lib/currency-errors.ts)), usado en pagos, productos y stock.
+
+**Pendiente del backend (no es frontend):**
+
+- 🐞 **Bug de conversión de pagos con base ≠ CUP:** el backend **invierte el cruce de
+  tasas**; un pago en EUR sobre una venta en USD se acredita mal y la venta no llega a
+  `paid`. Caso reproducible y fórmula correcta en
+  [docs/bug-conversion-pagos-multimoneda.md](./bug-conversion-pagos-multimoneda.md).
+- 🚧 **Gastos `currency`:** `POST /api/v2/expenses` responde `400 "property currency
+  should not exist"` (el DTO no acepta el campo). El frontend ya lo envía; falta
+  añadir/desplegar `currency` en el backend de gastos.
+- ❓ **Negocio sin delivery:** `POST /v2/sales` con `saleType: delivery` puede responder
+  `400 "Este negocio no ofrece servicio de delivery/mensajería"`. La regla vive en el
+  backend y **no está expuesta** en el front (el tipo `Business` no tiene flag de
+  delivery). Pendiente: confirmar la condición y, si procede, exponer el flag para
+  deshabilitar la opción en la UI.
+
+---
+
 ## 1. Conceptos base de moneda y tasas (leer primero)
 
 Estos conceptos aplican a **todas** las fases.
@@ -438,12 +483,17 @@ backend lo normaliza a CUP automáticamente.
    `currency` y `exchangeRateApplied` al body (solo cuando `currency !== "CUP"`).
 3. **UI** → en [update-stock-form.tsx](../src/components/inventory/update-stock-form.tsx):
    - Selector de moneda (reusar `getAvailableCurrencies`).
-   - Campo de **tasa editable** prellenado desde `MonetaryExchange` (permite tasa
-     pactada con el proveedor).
-   - Preview "Costo en CUP" = `entryPrice × exchangeRateApplied` antes de confirmar.
+   - Preview "Costo en CUP" = `entryPrice × tasa` antes de confirmar.
    - Manejar error `MONEDA_COMPRA_NO_CONFIGURADA`.
+   > **Implementado con desviación:** la tasa **no** es editable. Se toma automática
+   > de `MonetaryExchange` (`getCurrencyRate`) y se envía como `exchangeRateApplied`
+   > para garantizar que lo previsualizado sea lo que se guarda (misma decisión que en
+   > "Asignar producto"). Si más adelante se quiere permitir una tasa pactada con el
+   > proveedor, basta con hacer editable ese valor.
 4. **Historial** → mostrar la `currency` original en
    [inventory-history-timeline.tsx](../src/components/inventory/inventory-history-timeline.tsx).
+   > **Pendiente (menor):** el historial aún no muestra la `currency` original de la
+   > compra (el costo se guarda en CUP igualmente). Mejora opcional.
 
 ### 4.4. Errores
 

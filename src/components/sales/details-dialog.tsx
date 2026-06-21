@@ -16,17 +16,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  useCancelSaleMutation,
   useDownloadFacturaMutation,
   useGetSaleById,
   useRegenerateFacturaMutation,
 } from "@/hooks/use-sales";
-import { FileText, Loader2, RefreshCw, Wallet } from "lucide-react";
+import { FileText, Loader2, RefreshCw, Wallet, XCircle } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { openPdfInNewTab } from "@/lib/download";
-import { toastError } from "@/lib/toast";
+import { toastError, toastSuccess } from "@/lib/toast";
+import { useBusiness } from "@/context/business-context";
+import axios from "axios";
+import type { CancelSaleProps } from "@/lib/types/sales";
 import { PaymentStatusBadge, resolvePaymentStatus } from "./payment-status-badge";
 import { PaymentDialog } from "./payment-dialog";
+import { CancelSaleDialog } from "./cancel-sale-dialog";
 
 interface DetailsDialogProps {
   saleId: string;
@@ -44,10 +49,36 @@ export default function DetailsDialog({
   onOpenChange,
 }: DetailsDialogProps) {
   const { data, isLoading } = useGetSaleById(saleId);
+  const { activeBusinessId } = useBusiness();
   const isControlled = open !== undefined;
   const [paymentOpen, setPaymentOpen] = React.useState(false);
+  const [cancelOpen, setCancelOpen] = React.useState(false);
   const downloadFactura = useDownloadFacturaMutation();
   const regenerateFactura = useRegenerateFacturaMutation();
+  const cancelSaleMutation = useCancelSaleMutation();
+
+  async function handleCancelSale(body: CancelSaleProps) {
+    try {
+      await cancelSaleMutation.mutateAsync({
+        saleId,
+        body,
+        businessId: activeBusinessId ?? "",
+      });
+      toastSuccess({
+        title: "Venta cancelada correctamente",
+        description: "La venta se ha actualizado correctamente.",
+      });
+    } catch (error) {
+      toastError({
+        title: "No se pudo cancelar la venta",
+        description:
+          axios.isAxiosError(error) && error.response?.data?.message
+            ? error.response.data.message
+            : "Inténtalo de nuevo.",
+      });
+      throw error; // mantiene el diálogo abierto si falla
+    }
+  }
 
   function handleVerFactura() {
     downloadFactura.mutate(saleId, {
@@ -105,7 +136,7 @@ export default function DetailsDialog({
       )}
       <DialogContent className="flex max-h-[min(90vh,100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 shadow-lg shadow-cyan-300/30 sm:max-w-[425px] md:max-w-[520px]">
         <DialogHeader className="shrink-0 gap-3 border-b border-border p-6">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 pr-8">
             <DialogTitle className="text-card-foreground">
               Resumen de venta
             </DialogTitle>
@@ -292,6 +323,15 @@ export default function DetailsDialog({
                 </Button>
               </div>
             )}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setCancelOpen(true)}
+              className="w-full border border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <XCircle className="mr-2 size-4" />
+              Cancelar / Devolver
+            </Button>
           </DialogFooter>
         )}
       </DialogContent>
@@ -301,6 +341,14 @@ export default function DetailsDialog({
         saleId={saleId}
         open={paymentOpen}
         onOpenChange={setPaymentOpen}
+      />
+
+      {/* Dialog de cancelación / devolución, controlado desde el footer */}
+      <CancelSaleDialog
+        saleId={saleId}
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        onConfirm={handleCancelSale}
       />
     </Dialog>
   );

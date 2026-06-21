@@ -102,6 +102,8 @@ export enum InventoryActionType {
     PURCHASE = "purchase",
     CANCEL_SALE = "cancel_sale",
     INITIAL_STOCK = "initial_stock",
+    /** Merma: unidades de una venta cancelada que NO vuelven al stock (dañadas). */
+    LOSS = "loss",
 }
 
 export type InventoryActionTypeLabels = {
@@ -112,6 +114,7 @@ export const inventoryActionTypeLabels: InventoryActionTypeLabels = {
     [InventoryActionType.PURCHASE]: "Compra",
     [InventoryActionType.CANCEL_SALE]: "Cancelación de venta",
     [InventoryActionType.INITIAL_STOCK]: "Stock inicial",
+    [InventoryActionType.LOSS]: "Pérdida",
 };
 
 /* -------------------------------------------------------------------------- */

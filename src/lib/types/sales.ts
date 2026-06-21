@@ -43,6 +43,25 @@ export interface CreateSaleItemProps {
   price: number;
 }
 
+// --- Cancelación de venta (total o parcial con merma) ---
+
+export interface CancelSaleItemInput {
+  /** ID del item de venta (`SalesProductInfoResponse.id`). */
+  itemId: string;
+  /**
+   * Unidades que vuelven al stock. La diferencia respecto a la cantidad de la
+   * línea la registra el backend como pérdida (`LOSS`). Si se omite, vuelven todas.
+   */
+  quantity?: number;
+  cancellationReason?: string;
+}
+
+export interface CancelSaleProps {
+  cancellationReason: string;
+  /** Ausente/vacío = cancelación total. Con items = cancelación parcial. */
+  items?: CancelSaleItemInput[];
+}
+
 export interface CreateSaleProps {
   idbusiness: string;
   descripcion: string;

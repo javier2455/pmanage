@@ -12,7 +12,7 @@ import Link from "next/link";
 import axios from "axios";
 import { sileo } from "sileo";
 import { Loader2, Plus, Receipt } from "lucide-react";
-import type { SaleWithProductAndBusiness, SalesResponseInterface } from "@/lib/types/sales";
+import type { CancelSaleProps, SaleWithProductAndBusiness, SalesResponseInterface } from "@/lib/types/sales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,9 +71,9 @@ export default function TableOfSales({
   const cancelSaleMutation = useCancelSaleMutation();
 
   const handleCancelSale = React.useCallback(
-    async (saleId: string, cancellationReason: string) => {
+    async (saleId: string, body: CancelSaleProps) => {
       try {
-        await cancelSaleMutation.mutateAsync({ saleId, cancellationReason, businessId: activeBusinessId ?? "" });
+        await cancelSaleMutation.mutateAsync({ saleId, body, businessId: activeBusinessId ?? "" });
         sileo.success({
           title: "Venta cancelada correctamente",
           fill: "",
