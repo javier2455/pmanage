@@ -312,7 +312,7 @@ Detalle también en [estado-proyecto.md](../estado-proyecto.md) (feature 33).
 - Ventas/pagos: [payment-dialog.tsx](../../src/components/sales/payment-dialog.tsx),
   [sale-cart-panel.tsx](../../src/components/sales/sale-cart-panel.tsx),
   [sales/create/page.tsx](../../src/app/dashboard/business/sales/create/page.tsx),
-  [details-dialog.tsx](../../src/components/sales/details-dialog.tsx) (factura descargar/regenerar).
+  [details-dialog.tsx](../../src/components/sales/details-dialog.tsx) (factura descargar).
 - Inventario/productos: [update-stock-form.tsx](../../src/components/inventory/update-stock-form.tsx),
   [entry-cost-currency.tsx](../../src/components/products/entry-cost-currency.tsx) (componente compartido).
 - Gastos: [expense-form.tsx](../../src/components/expenses/expense-form.tsx).
@@ -329,7 +329,7 @@ el preview coincida con lo guardado.
 
 **Criterios de aceptación.**
 - Venta en USD + pago mixto USD/CUP → conversión correcta, `paid` al completar.
-- Factura solo visible/descargable en ventas `paid`; regenerar reemplaza el PDF.
+- Factura solo visible/descargable en ventas `paid`.
 - add-stock/asignar producto en USD → `entryPrice` guardado en CUP = `monto × tasa`.
 
 ---

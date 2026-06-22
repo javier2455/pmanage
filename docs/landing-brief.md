@@ -45,7 +45,7 @@ Agrupadas por área. Todo esto está implementado en el producto.
 - **Moneda por venta** (CUP, USD, EUR, MLC, etc.).
 - **Pagos multimoneda:** registrar pagos parciales o completos en distintas monedas; el sistema convierte con la tasa del negocio y marca la venta como *pendiente / parcialmente pagada / pagada*.
 - **Tipos de venta:** en tienda (`in_store`), entrega a domicilio (`delivery`) y recogida (`pickup`), con datos de entrega (dirección, contacto, teléfono).
-- **Factura PDF:** descargar y regenerar la factura de ventas pagadas.
+- **Factura PDF:** descargar la factura de ventas pagadas.
 - **Cancelar venta** con motivo/razón y registro de la cancelación.
 - Detalle de venta con estado de pago, items y método.
 

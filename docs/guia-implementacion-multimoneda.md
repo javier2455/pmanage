@@ -45,7 +45,7 @@ Esto no refleja la realidad del negocio:
 | Fase | Alcance | Qué entrega al usuario |
 |------|---------|------------------------|
 | **Fase 1** | Ventas con moneda + pagos multimoneda | Crear venta en cualquier moneda, registrar abonos, ver estado de pago |
-| **Fase 2** | Facturación PDF | Descargar/regenerar la factura de una venta pagada |
+| **Fase 2** | Facturación PDF | Descargar la factura de una venta pagada |
 | **Fase 3** | Compras de inventario multimoneda | Registrar entrada de stock con costo en divisa, normalizado a CUP |
 
 ---
@@ -60,7 +60,7 @@ Esto no refleja la realidad del negocio:
 | Fase | Estado | Notas |
 |------|--------|-------|
 | **Fase 1** — Ventas + pagos | ✅ Implementado | Selector de moneda al crear venta, dialog de pagos multimoneda con preview de equivalente y `sugerencia`, badges de `paymentStatus` en tabla y detalle. |
-| **Fase 2** — Factura PDF | ✅ Implementado | Descargar **y regenerar** (ambos botones en el detalle, solo cuando la venta está `paid`). |
+| **Fase 2** — Factura PDF | ✅ Implementado | Descargar la factura desde el detalle, solo cuando la venta está `paid`. |
 | **Fase 3** — Compras (add-stock) | ✅ Implementado | Selector de moneda + preview del costo convertido a CUP. **Desviación:** la tasa se toma automática de `MonetaryExchange` y se **envía** como `exchangeRateApplied` (no es editable), por decisión de producto. |
 
 **Extras implementados (fuera de la guía original):**
@@ -378,7 +378,7 @@ interface PaymentHistoryItem {
 
 ## 3. FASE 2 — Facturación PDF
 
-**Objetivo:** descargar o regenerar la factura PDF de una venta **pagada**.
+**Objetivo:** descargar la factura PDF de una venta **pagada**.
 
 ### 3.1. Endpoints
 
@@ -401,20 +401,16 @@ Content-Disposition: inline; filename="factura-{saleId}.pdf"
 | 400 | La venta no está completamente pagada |
 | 404 | Venta no encontrada |
 
-#### `POST /v2/sales/:saleId/factura/regenerate` — Regenerar factura
-
-Fuerza la regeneración y reemplaza la anterior. Misma respuesta que `GET /factura`.
-
 ### 3.2. Pasos de implementación (Fase 2)
 
-1. **Rutas** → `factura(saleId)`, `regenerateFactura(saleId)`.
-2. **API** → `downloadFactura(saleId): Promise<Blob>` y `regenerateFactura(...)`
+1. **Rutas** → `factura(saleId)`.
+2. **API** → `downloadFactura(saleId): Promise<Blob>`
    con `{ responseType: "blob" }`.
    > Reutilizar el patrón ya existente en
    > [src/lib/api/accounting-close.ts](../src/lib/api/accounting-close.ts)
    > (`exportToPdf` usa `responseType: "blob"`).
-3. **Hooks** → `useDownloadFacturaMutation` / `useRegenerateFacturaMutation`
-   (sin invalidación; disparan la descarga en `onSuccess`).
+3. **Hooks** → `useDownloadFacturaMutation`
+   (sin invalidación; dispara la descarga en `onSuccess`).
 4. **UI** → reutilizar el helper `downloadBlob` (existe en la página de cierre
    contable diario) para crear `URL.createObjectURL` y abrir en pestaña nueva.
    Botón **"Ver factura"** en el detalle, **visible solo si `paymentStatus === 'paid'`**.
@@ -514,7 +510,6 @@ backend lo normaliza a CUP automáticamente.
 | `GET`  | `/v2/sales/:saleId/payments/summary` | 1 |
 | `GET`  | `/v2/sales/:saleId/payments` | 1 |
 | `GET`  | `/v2/sales/:saleId/factura` | 2 |
-| `POST` | `/v2/sales/:saleId/factura/regenerate` | 2 |
 | `POST` | `/v2/inventory/business/:businessId/product/:productId/add-stock` | 3 |
 | `GET`  | `/v2/monetary-exchange/business/:businessId` | base (ya existe) |
 

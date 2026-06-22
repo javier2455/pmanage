@@ -84,12 +84,3 @@ export async function downloadFactura(saleId: string): Promise<Blob> {
   });
   return data;
 }
-
-export async function regenerateFactura(saleId: string): Promise<Blob> {
-  const { data } = await apiClient.post(
-    salesRoutes.regenerateFactura(saleId),
-    null,
-    { responseType: "blob" },
-  );
-  return data;
-}

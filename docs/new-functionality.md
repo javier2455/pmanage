@@ -211,13 +211,6 @@ El frontend debe abrirlo en una pestaña nueva o descargarlo según prefiera el 
 
 ---
 
-### 3.6. POST /v2/sales/:saleId/factura/regenerate — Regenerar factura
-
-Fuerza la regeneración de la factura PDF. Reemplaza la factura anterior.
-
-**Response:** Igual que `GET /factura`.
-
----
 
 ## 4. Convenciones de moneda y tasas
 
@@ -407,7 +400,6 @@ Sugerido:   111.67 USD  (o 33,500 CUP si prefiere pagar en CUP)
 | `GET` | `/v2/sales/:saleId/payments/summary` | Resumen de pagos |
 | `GET` | `/v2/sales/:saleId/payments` | Historial de pagos |
 | `GET` | `/v2/sales/:saleId/factura` | Descargar factura PDF |
-| `POST` | `/v2/sales/:saleId/factura/regenerate` | Regenerar factura PDF |
 
 Todos requieren `Authorization: Bearer <token>`.
 
@@ -566,7 +558,6 @@ POST /v2/inventory/business/:businessId/product/:productId/add-stock
 | `GET` | `/v2/sales/:saleId/payments/summary` | Resumen de pagos |
 | `GET` | `/v2/sales/:saleId/payments` | Historial de pagos |
 | `GET` | `/v2/sales/:saleId/factura` | Descargar factura PDF |
-| `POST` | `/v2/sales/:saleId/factura/regenerate` | Regenerar factura PDF |
 | `POST` | `/v2/inventory/business/:businessId/product/:productId/add-stock` | Agregar stock (compra) con moneda y tasa |
 | `GET` | `/v2/inventory/business/:businessId/current` | Inventario actual |
 | `GET` | `/v2/inventory/business/:businessId/product/:productId/history` | Historial de inventario |

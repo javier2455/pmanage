@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-20** (suite **Multimoneda**: ventas con moneda + pagos multimoneda con factura PDF descargar/regenerar, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33). Anterior — 2026-06-16: módulo de Tickets de Soporte con conversación, estado cerrar/reabrir, asignación de admins y notificaciones de soporte integradas; edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales y categoría a nivel de `BusinessProduct`.
+> Última actualización: **2026-06-20** (suite **Multimoneda**: ventas con moneda + pagos multimoneda con factura PDF descargable, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33). Anterior — 2026-06-16: módulo de Tickets de Soporte con conversación, estado cerrar/reabrir, asignación de admins y notificaciones de soporte integradas; edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales y categoría a nivel de `BusinessProduct`.
 
 ---
 
@@ -160,7 +160,7 @@ de `MonetaryExchange`, nunca lista fija).
   dialog de pagos multimoneda con preview de equivalente y `sugerencia`
   ([payment-dialog.tsx](../src/components/sales/payment-dialog.tsx)), badges de
   `paymentStatus` en tabla y detalle.
-- **Factura PDF (Fase 2):** descargar **y regenerar** desde el detalle, solo en
+- **Factura PDF (Fase 2):** descargar desde el detalle, solo en
   ventas `paid` ([details-dialog.tsx](../src/components/sales/details-dialog.tsx)).
 - **Compras de inventario (Fase 3):** `currency` + `exchangeRateApplied` en add-stock,
   con preview del costo en CUP ([update-stock-form.tsx](../src/components/inventory/update-stock-form.tsx)).

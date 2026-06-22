@@ -12,5 +12,4 @@ export const salesRoutes = {
     paymentsHistory: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/payments`,
     // Facturación PDF (Fase 2). Ver docs/guia-implementacion-multimoneda.md §3.
     factura: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/factura`,
-    regenerateFactura: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/factura/regenerate`,
 };

@@ -8,7 +8,6 @@ import {
     getPaymentsHistory,
     getPaymentsSummary,
     getSaleById,
-    regenerateFactura,
     registerPayments,
 } from "@/lib/api/sale";
 import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
@@ -96,12 +95,6 @@ export function useRegisterPaymentsMutation() {
 export function useDownloadFacturaMutation() {
     return useMutation({
         mutationFn: (saleId: string) => downloadFactura(saleId),
-    });
-}
-
-export function useRegenerateFacturaMutation() {
-    return useMutation({
-        mutationFn: (saleId: string) => regenerateFactura(saleId),
     });
 }
 
