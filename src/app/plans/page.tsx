@@ -22,7 +22,7 @@ const plans = [
         name: "Basico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
         monthlyPrice: 5,
-        yearlyPrice: 3,
+        yearlyPrice: 4,
         badge: null,
         features: [
             { text: "1 negocio", included: true },

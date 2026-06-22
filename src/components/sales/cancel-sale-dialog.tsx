@@ -33,7 +33,9 @@ type Mode = "full" | "partial"
 /** Estado editable por línea en modo parcial. */
 interface ItemState {
     selected: boolean
-    /** Unidades que vuelven al stock (el resto de la línea es pérdida). */
+    /** Cantidad de la línea que se cancela (`quantity`). */
+    cancelQty: number
+    /** Unidades canceladas que vuelven al stock (`returnToStock`). El resto es pérdida. */
     returnQty: number
     reason: string
 }
@@ -79,7 +81,8 @@ export function CancelSaleDialog({
         if (!isOpen) return
         const next: Record<string, ItemState> = {}
         for (const item of activeItems) {
-            next[item.id] = { selected: false, returnQty: Number(item.quantity), reason: "" }
+            const qty = Number(item.quantity)
+            next[item.id] = { selected: false, cancelQty: qty, returnQty: qty, reason: "" }
         }
         setItemState(next)
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -103,11 +106,16 @@ export function CancelSaleDialog({
     const selectedItems = activeItems.filter((i) => itemState[i.id]?.selected)
     const reasonInvalid = submitted && !reason.trim()
     const noItemsSelected = mode === "partial" && submitted && selectedItems.length === 0
+    const hasInvalidQty =
+        mode === "partial" &&
+        selectedItems.some((i) => !(itemState[i.id]?.cancelQty > 0))
+    const invalidQty = submitted && hasInvalidQty
 
     async function handleConfirm() {
         setSubmitted(true)
         if (!reason.trim()) return
         if (mode === "partial" && selectedItems.length === 0) return
+        if (hasInvalidQty) return
 
         const body: CancelSaleProps =
             mode === "full"
@@ -118,7 +126,8 @@ export function CancelSaleDialog({
                           const st = itemState[item.id]
                           return {
                               itemId: item.id,
-                              quantity: st.returnQty,
+                              quantity: st.cancelQty,
+                              returnToStock: st.returnQty,
                               ...(st.reason.trim()
                                   ? { cancellationReason: st.reason.trim() }
                                   : {}),
@@ -216,7 +225,7 @@ export function CancelSaleDialog({
                                         if (!st) return null
                                         const qty = Number(item.quantity)
                                         const integer = isIntegerUnit(item.product?.unit)
-                                        const loss = Math.max(qty - st.returnQty, 0)
+                                        const loss = Math.max(st.cancelQty - st.returnQty, 0)
                                         return (
                                             <div
                                                 key={item.id}
@@ -253,6 +262,38 @@ export function CancelSaleDialog({
                                                     <div className="flex flex-col gap-2 pl-7">
                                                         <div className="flex items-center justify-between gap-2">
                                                             <Label
+                                                                htmlFor={`cancel-${item.id}`}
+                                                                className="text-xs text-muted-foreground"
+                                                            >
+                                                                Cantidad a cancelar
+                                                            </Label>
+                                                            <Input
+                                                                id={`cancel-${item.id}`}
+                                                                type="number"
+                                                                min={integer ? 1 : "0.001"}
+                                                                max={qty}
+                                                                step={integer ? 1 : "0.001"}
+                                                                value={st.cancelQty}
+                                                                onChange={(e) => {
+                                                                    const raw = Number(e.target.value)
+                                                                    const clamped = Number.isFinite(raw)
+                                                                        ? Math.min(Math.max(raw, 0), qty)
+                                                                        : 0
+                                                                    // El devuelto nunca puede superar lo cancelado.
+                                                                    updateItem(item.id, {
+                                                                        cancelQty: clamped,
+                                                                        returnQty: Math.min(
+                                                                            st.returnQty,
+                                                                            clamped,
+                                                                        ),
+                                                                    })
+                                                                }}
+                                                                disabled={isLoading}
+                                                                className="h-8 w-24 text-right tabular-nums"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <Label
                                                                 htmlFor={`return-${item.id}`}
                                                                 className="text-xs text-muted-foreground"
                                                             >
@@ -262,13 +303,13 @@ export function CancelSaleDialog({
                                                                 id={`return-${item.id}`}
                                                                 type="number"
                                                                 min={0}
-                                                                max={qty}
+                                                                max={st.cancelQty}
                                                                 step={integer ? 1 : "0.001"}
                                                                 value={st.returnQty}
                                                                 onChange={(e) => {
                                                                     const raw = Number(e.target.value)
                                                                     const clamped = Number.isFinite(raw)
-                                                                        ? Math.min(Math.max(raw, 0), qty)
+                                                                        ? Math.min(Math.max(raw, 0), st.cancelQty)
                                                                         : 0
                                                                     updateItem(item.id, {
                                                                         returnQty: clamped,
@@ -304,6 +345,11 @@ export function CancelSaleDialog({
                             {noItemsSelected && (
                                 <p className="text-xs text-destructive">
                                     Selecciona al menos un producto.
+                                </p>
+                            )}
+                            {invalidQty && (
+                                <p className="text-xs text-destructive">
+                                    La cantidad a cancelar debe ser mayor a 0.
                                 </p>
                             )}
                         </div>

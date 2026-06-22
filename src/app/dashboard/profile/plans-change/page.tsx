@@ -70,7 +70,7 @@ const plans = [
         name: "Básico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
         monthlyPrice: 5,
-        yearlyPrice: 3,
+        yearlyPrice: 4,
         icon: Sparkles,
         features: [
             { text: "1 negocio", included: true },

@@ -49,10 +49,16 @@ export interface CancelSaleItemInput {
   /** ID del item de venta (`SalesProductInfoResponse.id`). */
   itemId: string;
   /**
-   * Unidades que vuelven al stock. La diferencia respecto a la cantidad de la
-   * línea la registra el backend como pérdida (`LOSS`). Si se omite, vuelven todas.
+   * Cantidad a cancelar de la línea. Si se omite, se cancela toda la cantidad
+   * del ítem. El resto de la línea sigue activo (cancelación parcial).
    */
   quantity?: number;
+  /**
+   * Unidades (de las canceladas) que vuelven al stock. Si se omite, vuelven
+   * todas (`= quantity`). La diferencia `quantity - returnToStock` la registra
+   * el backend como pérdida (`LOSS`); `0` = todo dañado.
+   */
+  returnToStock?: number;
   cancellationReason?: string;
 }
 
