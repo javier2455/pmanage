@@ -112,7 +112,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
                     <div className="grid gap-6 sm:grid-cols-3">
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="usd" className="text-card-foreground">USD a MN</Label>
+                            <Label htmlFor="usd" className="text-card-foreground">USD a CUP</Label>
                             <InputGroup>
                                 <InputGroupAddon>
                                     <DollarSign className="size-4" />
@@ -129,7 +129,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                             </InputGroup>
                             {currentData?.USD != null && (
                                 <p className="text-xs text-muted-foreground">
-                                    Valor actual: {currentData.USD} MN
+                                    Valor actual: {currentData.USD} CUP
                                 </p>
                             )}
                             {errors.USD && (
@@ -138,7 +138,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="euro" className="text-card-foreground">EUR a MN</Label>
+                            <Label htmlFor="euro" className="text-card-foreground">EUR a CUP</Label>
                             <InputGroup>
                                 <InputGroupAddon>
                                     <Euro className="size-4" />
@@ -155,7 +155,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                             </InputGroup>
                             {currentData?.EURO != null && (
                                 <p className="text-xs text-muted-foreground">
-                                    Valor actual: {currentData.EURO} MN
+                                    Valor actual: {currentData.EURO} CUP
                                 </p>
                             )}
                             {errors.EURO && (
@@ -164,7 +164,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="transferencia" className="text-card-foreground">Transferencia a MN</Label>
+                            <Label htmlFor="transferencia" className="text-card-foreground">Transferencia a CUP</Label>
                             <InputGroup>
                                 <InputGroupAddon>
                                     <CreditCard className="size-4" />
@@ -181,7 +181,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                             </InputGroup>
                             {currentData?.CUP_TRANSFERENCIA != null && (
                                 <p className="text-xs text-muted-foreground">
-                                    Valor actual: {currentData.CUP_TRANSFERENCIA} MN
+                                    Valor actual: {currentData.CUP_TRANSFERENCIA} CUP
                                 </p>
                             )}
                             {errors.CUP_TRANSFERENCIA && (

@@ -26,10 +26,10 @@ export default function ExchangeCard({ title, value, currency }: ExchangeCardPro
                     <span className="text-3xl font-bold text-card-foreground">
                         {value}
                     </span>
-                    <span className="text-sm text-muted-foreground">{'MN'}</span>
+                    <span className="text-sm text-muted-foreground">{'CUP'}</span>
                 </div>
                 {/* <p className="mt-1 text-xs text-muted-foreground">
-                    {'1'} {currency} = {value} {'MN'}
+                    {'1'} {currency} = {value} {'CUP'}
                 </p> */}
             </CardContent>
         </Card>

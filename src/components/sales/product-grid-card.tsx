@@ -141,7 +141,7 @@ export function ProductGridCard({
         <span className="mt-1 text-base font-bold tabular-nums text-primary">
           ${formatMoney(bp.price)}
           <span className="ml-1 text-xs font-normal text-muted-foreground">
-            MN
+            CUP
           </span>
         </span>
       </div>

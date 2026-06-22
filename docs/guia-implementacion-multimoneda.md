@@ -16,7 +16,7 @@
 ### El problema que resolvemos
 
 Hoy una venta es un evento atómico en una sola moneda implícita (CUP, mostrada
-como "MN" y formateada como COP en varios componentes). Solo tiene dos estados:
+como "CUP" y formateada como COP en varios componentes). Solo tiene dos estados:
 "Efectuada" o "Cancelada" (`isCancelled: boolean`). **No existe el concepto de pago.**
 
 Esto no refleja la realidad del negocio:
