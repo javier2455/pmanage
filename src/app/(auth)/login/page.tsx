@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Store, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react"
+import { NegoraLogo } from "@/components/brand/negora-logo"
 import Link from 'next/link'
 import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -283,15 +284,13 @@ export default function LoginPage() {
         <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
             <Card className="w-full max-w-md">
                 <CardHeader className="flex flex-col items-center gap-4 pb-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                        <Store className="h-6 w-6" />
-                    </div>
+                    <NegoraLogo className="h-12 w-12 rounded-xl" />
                     <div className="flex flex-col items-center gap-1">
                         <CardTitle className="text-2xl font-bold text-card-foreground">
                             Iniciar sesión
                         </CardTitle>
                         <CardDescription>
-                            Ingresa tus credenciales para acceder a VentasPro
+                            Ingresa tus credenciales para acceder a Negora
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -306,7 +305,7 @@ export default function LoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="admin@ventaspro.com"
+                                    placeholder="admin@negora.com"
                                     autoComplete="email"
                                     {...register("email")}
                                     aria-invalid={!!errors.email}

@@ -1,4 +1,4 @@
-# Análisis Estratégico de Planes — PManage
+# Análisis Estratégico de Planes — Negora
 
 > Fecha: 2026-05-19
 
@@ -81,13 +81,13 @@ Agrupadas por categoría. La mayoría aprovechan datos que **el backend ya almac
 | **Shopify POS** | $15–30/mes | Variantes de producto, descuentos, fidelización de clientes, integración e-commerce |
 | **Facturama** | $10–25/mes | Cumplimiento fiscal, XML timbrado, facturación electrónica CFDI |
 
-**Lo que PManage hace diferente y bien:**
+**Lo que Negora hace diferente y bien:**
 - Manejo nativo de tasas de cambio multi-moneda (USD, MLC, CUP Transferencia, Clásica, EUR) — ningún competidor tiene esto para el mercado cubano
 - Flujo de operación simple y directo, sin sobrecarga de funcionalidades contables complejas
 - Orientado específicamente a agromarkets, mercados y MIPYMEs, no a empresas con contabilidad formal
 
 **Gap principal frente a competidores:**
-El mayor diferencial que los competidores tienen sobre PManage hoy es la capacidad de dar **información para tomar decisiones**, no solo registrar operaciones. Reportes comparativos, rentabilidad por producto, y presupuestos son lo que convierte un sistema de registro en una herramienta de gestión.
+El mayor diferencial que los competidores tienen sobre Negora hoy es la capacidad de dar **información para tomar decisiones**, no solo registrar operaciones. Reportes comparativos, rentabilidad por producto, y presupuestos son lo que convierte un sistema de registro en una herramienta de gestión.
 
 ---
 

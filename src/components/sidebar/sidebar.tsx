@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Store } from "lucide-react"
 
+import { NegoraLogo } from "@/components/brand/negora-logo"
 import { NavMain, type NavItem, type NavSection, type NavSubItem } from "@/components/sidebar/nav-main"
 import { NavUser } from "@/components/sidebar/nav-user"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -104,11 +104,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Store className="size-4" />
-                </div>
+                <NegoraLogo className="size-8 rounded-lg" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">GeosGS</span>
+                  <span className="truncate font-semibold">Negora</span>
                   <span className="truncate text-xs">Sistema de Gestión</span>
                 </div>
               </Link>

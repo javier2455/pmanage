@@ -1,7 +1,7 @@
 # Especificaciones Técnicas — Variantes de Plan Pro
 
 > Fecha: 2026-05-19
-> Proyecto: PManage
+> Proyecto: Negora
 > Backend base URL: `http://psearch.dveloxsoft.com/api/v2`
 
 Este documento describe con detalle los cambios necesarios en backend y frontend para implementar cada variante. Está pensado para ser compartido con el equipo de backend para revisión y acuerdo.

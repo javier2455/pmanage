@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { registerSchema, type RegisterFormData } from "@/lib/validations/auth"
-import { Lock, Mail, Store, User, Loader2, AlertTriangle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { Lock, Mail, User, Loader2, AlertTriangle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { NegoraLogo } from "@/components/brand/negora-logo"
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from 'axios'
 import { useRegisterMutation } from '@/hooks/use-auth'
@@ -174,9 +175,7 @@ function RegisterPageContent() {
     <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-4 pb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Store className="h-6 w-6" />
-          </div>
+          <NegoraLogo className="h-12 w-12 rounded-xl" />
           <div className="flex flex-col items-center gap-1">
             <CardTitle className="text-2xl font-bold text-card-foreground">
               Crear cuenta
@@ -184,7 +183,7 @@ function RegisterPageContent() {
             <CardDescription>
               {invitationData
                 ? `Has sido invitado a ${invitationData.business.name}. Completa tu registro.`
-                : "Registrate para comenzar a usar VentasPro"}
+                : "Registrate para comenzar a usar Negora"}
             </CardDescription>
           </div>
         </CardHeader>

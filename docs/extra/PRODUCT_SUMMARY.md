@@ -1,8 +1,8 @@
-# PManage — Resumen del Producto y Análisis de Precios
+# Negora — Resumen del Producto y Análisis de Precios
 
-## ¿Qué es PManage?
+## ¿Qué es Negora?
 
-PManage es una **plataforma de gestión empresarial todo-en-uno** orientada a pequeñas empresas, agromarket y MIPYMEs. Centraliza operaciones de ventas, inventario, contabilidad y equipo de trabajo en un solo sistema, con soporte para múltiples negocios y tasas de cambio manuales (contexto del mercado cubano y latinoamericano).
+Negora es una **plataforma de gestión empresarial todo-en-uno** orientada a pequeñas empresas, agromarket y MIPYMEs. Centraliza operaciones de ventas, inventario, contabilidad y equipo de trabajo en un solo sistema, con soporte para múltiples negocios y tasas de cambio manuales (contexto del mercado cubano y latinoamericano).
 
 ---
 

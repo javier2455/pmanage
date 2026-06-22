@@ -64,7 +64,7 @@ const plans = [
 
 const WHATSAPP_NUMBER = "5215512345678"
 const WHATSAPP_MESSAGE = encodeURIComponent(
-    "Hola, estoy interesado en conocer mas sobre los planes de VentasPro."
+    "Hola, estoy interesado en conocer mas sobre los planes de Negora."
 )
 
 export default function PlansPage() {

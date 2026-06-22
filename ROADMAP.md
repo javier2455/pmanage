@@ -1,4 +1,4 @@
-# Roadmap — GeosGS Sistema de Gestión
+# Roadmap — Negora Sistema de Gestión
 
 Documento de seguimiento de mejoras, funcionalidades pendientes y deuda técnica.
 Marca cada ítem con `[x]` cuando esté completado.
