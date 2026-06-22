@@ -40,6 +40,7 @@ export function NavigationTree({ sections, onAction }: NavigationTreeProps) {
           title={section.name}
           childCount={section.menus?.length ?? 0}
           depth={0}
+          order={section.order}
           badges={<RoleBadges roles={section.roles} />}
           onAddChild={() =>
             onAction({ type: "add-menu", sectionId: section.id })
@@ -55,6 +56,7 @@ export function NavigationTree({ sections, onAction }: NavigationTreeProps) {
               title={menu.name}
               childCount={menu.submenus?.length ?? 0}
               depth={1}
+              order={menu.order}
               badges={<RoleBadges roles={menu.roles} />}
               onAddChild={() =>
                 onAction({ type: "add-submenu", menuId: menu.id })
@@ -78,6 +80,7 @@ export function NavigationTree({ sections, onAction }: NavigationTreeProps) {
                   title={submenu.name}
                   childCount={null}
                   depth={2}
+                  order={submenu.order}
                   badges={<RoleBadges roles={submenu.roles} />}
                   onEdit={() =>
                     onAction({

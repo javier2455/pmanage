@@ -75,6 +75,15 @@ Marca cada ítem con `[x]` cuando esté completado.
 - [ ] Gráfica de evolución del balance (últimos 30 días)
 - [ ] Gráfica de top 5 productos más vendidos del mes
 
+### Flujo de caja
+> Ampliar el módulo de caja (`currency-account`) de la foto del saldo a un flujo
+> completo. Detalle y contrato propuesto al backend en [docs/flujo-de-caja.md](docs/flujo-de-caja.md).
+- [x] Fase 1 — Consolidación visual: total en moneda base (CUP), tab "Consolidado" y widget en el dashboard
+- [ ] Libro de movimientos de caja (requiere `GET /currency-accounts/movements/{businessId}`; ver contrato en el doc)
+- [ ] Ajustes manuales de caja: depósito, retiro y transferencia entre monedas (endpoints nuevos)
+- [ ] Flujo por período en base caja (entradas vs salidas con saldo corriente, por moneda)
+- [ ] Proyección de cobros (ventas pendientes / cuentas por cobrar) — ver `CONTABILIDAD_NUCLEO.md`
+
 ### Filtros avanzados en ventas
 - [ ] Agregar filtro por rango de fechas en la tabla de ventas (reusar `DateFilter`)
 - [ ] Agregar filtro por estado (activa / cancelada)

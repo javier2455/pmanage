@@ -44,6 +44,8 @@ interface NavigationNodeProps {
   depth: 0 | 1 | 2;
   /** Slot opcional para chips/badges (roles, plan, etc.) renderizados al lado del título. */
   badges?: React.ReactNode;
+  /** Valor de `order` que devuelve el backend; se muestra como chip si está definido. */
+  order?: number | null;
 }
 
 export function NavigationNode({
@@ -57,6 +59,7 @@ export function NavigationNode({
   onDelete,
   depth,
   badges,
+  order,
 }: NavigationNodeProps) {
   const config = NAV_NODE_CONFIG[kind];
   const hasChildren = childCount !== null && childCount > 0;
@@ -64,12 +67,16 @@ export function NavigationNode({
 
   const [open, setOpen] = React.useState(depth === 0);
 
-  const subtitle =
+  const childSubtitle =
     childCount === null
       ? "Sin hijos"
       : childCount === 0
         ? `Sin ${config.childLabel}`
         : `${childCount} ${config.childLabel}`;
+
+  const orderLabel =
+    typeof order === "number" ? `Orden ${order}` : "Orden sin definir";
+  const subtitle = `${orderLabel} · ${childSubtitle}`;
 
   const Row = (
     <div
@@ -108,6 +115,17 @@ export function NavigationNode({
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-medium text-foreground">
             {title}
+          </span>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
+              typeof order === "number"
+                ? "bg-primary/10 text-primary"
+                : "bg-muted text-muted-foreground",
+            )}
+            title="Valor de orden enviado por el backend"
+          >
+            {typeof order === "number" ? `#${order}` : "#—"}
           </span>
           {badges && <div className="hidden md:block">{badges}</div>}
         </div>

@@ -13,6 +13,11 @@ El sistema ya maneja ventas, gastos, inventario y un cierre contable básico (di
 
 La base ya existe: hay `entryPrice` en inventario para calcular costos, hay `exchange-rate` para multi-moneda, y hay cierre diario/mensual como punto de partida. Lo que falta es el **esqueleto contable** que conecta todo.
 
+> **Primer paso pragmático (base caja).** El módulo `currency-account` y su flujo de caja
+> ([../flujo-de-caja.md](../flujo-de-caja.md)) ya llevan el saldo de efectivo por moneda y su
+> consolidación. Es un avance en **base caja** previo a la partida doble descrita aquí: cuando
+> exista el plan de cuentas, el Flujo de Caja formal sustituye/absorbe esa lógica.
+
 ---
 
 ## 2.1.A — Plan de Cuentas (Chart of Accounts)

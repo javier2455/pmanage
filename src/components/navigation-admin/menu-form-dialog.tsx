@@ -120,6 +120,8 @@ export function MenuFormDialog({
           url: data.url,
           active: data.active,
           roles: data.roles,
+          // Si se deja vacío va `undefined` y el backend asigna el orden.
+          order: data.order,
         });
         toastSuccess({
           title: "Menú creado",
@@ -223,26 +225,37 @@ export function MenuFormDialog({
             </div>
           </div>
 
-          {isEdit && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="menu-order">
-                Orden <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="menu-order"
-                type="number"
-                min={1}
-                {...register("order", { valueAsNumber: true })}
-                aria-invalid={errors.order ? "true" : "false"}
-              />
-              <p className="text-xs text-muted-foreground">
-                Define la posición del menú dentro de la sección.
-              </p>
-              {errors.order && (
-                <p className="text-xs text-destructive">{errors.order.message}</p>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="menu-order">
+              Orden{" "}
+              {isEdit ? (
+                <span className="text-destructive">*</span>
+              ) : (
+                <span className="text-xs text-muted-foreground">(opcional)</span>
               )}
-            </div>
-          )}
+            </Label>
+            <Input
+              id="menu-order"
+              type="number"
+              min={1}
+              placeholder={isEdit ? undefined : "Lo asigna el backend si lo dejas vacío"}
+              {...register("order", {
+                setValueAs: (v) =>
+                  v === "" || v === null || v === undefined
+                    ? undefined
+                    : Number(v),
+              })}
+              aria-invalid={errors.order ? "true" : "false"}
+            />
+            <p className="text-xs text-muted-foreground">
+              {isEdit
+                ? "Define la posición del menú dentro de la sección."
+                : "Posición del menú dentro de la sección. Si lo dejas vacío, el backend asigna el siguiente."}
+            </p>
+            {errors.order && (
+              <p className="text-xs text-destructive">{errors.order.message}</p>
+            )}
+          </div>
 
           <div className="flex flex-col gap-2">
             <Label>

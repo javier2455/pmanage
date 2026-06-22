@@ -3,6 +3,7 @@
 import RecentExpensesTable from "@/components/dashboard/recent-expenses-table";
 import RecentSalesTable from "@/components/dashboard/recent-sales-table";
 import StatsCard from "@/components/dashboard/stats-card";
+import CashBalanceWidget from "@/components/currency-account/cash-balance-widget";
 import { useBusiness } from "@/context/business-context";
 import { useDashboardSummary } from "@/hooks/use-business";
 
@@ -22,7 +23,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           variant="sales"
           title="Ventas"
@@ -37,6 +38,7 @@ export default function DashboardPage() {
           yesterday={dashboardSummary?.expenses?.yesterday ?? 0}
           percentageChange={dashboardSummary?.expenses?.percentageChange ?? 0}
         />
+        <CashBalanceWidget />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
