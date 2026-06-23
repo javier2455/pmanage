@@ -48,6 +48,10 @@ export const PRO_ROUTES = [
     redirect: "/dashboard",
   },
   {
+    path: "/dashboard/business/workers",
+    redirect: "/dashboard",
+  },
+  {
     path: "/dashboard/accounting-close/monthly",
     redirect: "/dashboard",
   },
