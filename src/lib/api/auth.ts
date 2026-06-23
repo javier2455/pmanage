@@ -29,6 +29,7 @@ interface AuthDataResponse {
   pageId: string;
   role: string;
   active: number;
+  deactivatedAt: string | null;
   twoFactorEnabled: boolean;
   providers: [];
   hasPassword: boolean;

@@ -7,6 +7,7 @@ export const AUTH_COOKIE_NAMES = {
   token: "auth_token",
   role: "user_role",
   planType: "user_plan_type",
+  deactivated: "user_deactivated",
 } as const;
 
 const COOKIE_MAX_AGE_DAYS = 1;
@@ -43,6 +44,22 @@ export function setAuthCookies(params: {
 }
 
 /**
+ * Marca o limpia el estado de desactivación del usuario en cookie, para que el
+ * middleware pueda redirigir a la pantalla de reactivación sin parpadeo.
+ * Pasar el `deactivatedAt` (string) para marcar como desactivado, o `null`/""
+ * para limpiar al reactivar.
+ */
+export function setDeactivatedCookie(deactivatedAt: string | null | undefined): void {
+  if (typeof document === "undefined") return;
+
+  if (deactivatedAt) {
+    document.cookie = `${AUTH_COOKIE_NAMES.deactivated}=${encodeURIComponent(deactivatedAt)}; ${buildCookieOptions()}`;
+  } else {
+    document.cookie = `${AUTH_COOKIE_NAMES.deactivated}=; Path=${COOKIE_PATH}; Max-Age=0`;
+  }
+}
+
+/**
  * Elimina todas las cookies de autenticación (solo en el cliente).
  * Llamar en logout y cuando expire la sesión.
  */
@@ -53,6 +70,7 @@ export function clearAuthCookies(): void {
   document.cookie = `${AUTH_COOKIE_NAMES.token}=; Path=${COOKIE_PATH}; ${past}`;
   document.cookie = `${AUTH_COOKIE_NAMES.role}=; Path=${COOKIE_PATH}; ${past}`;
   document.cookie = `${AUTH_COOKIE_NAMES.planType}=; Path=${COOKIE_PATH}; ${past}`;
+  document.cookie = `${AUTH_COOKIE_NAMES.deactivated}=; Path=${COOKIE_PATH}; ${past}`;
 }
 
 /**
@@ -63,9 +81,10 @@ export function getAuthCookies(): {
   token: string | null;
   role: string | null;
   planType: string | null;
+  deactivated: string | null;
 } {
   if (typeof document === "undefined") {
-    return { token: null, role: null, planType: null };
+    return { token: null, role: null, planType: null, deactivated: null };
   }
 
   const cookies = document.cookie.split(";").reduce<Record<string, string>>((acc, c) => {
@@ -78,5 +97,6 @@ export function getAuthCookies(): {
     token: cookies[AUTH_COOKIE_NAMES.token] ?? null,
     role: cookies[AUTH_COOKIE_NAMES.role] ?? null,
     planType: cookies[AUTH_COOKIE_NAMES.planType] ?? null,
+    deactivated: cookies[AUTH_COOKIE_NAMES.deactivated] ?? null,
   };
 }

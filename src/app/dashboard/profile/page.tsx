@@ -28,6 +28,7 @@ import Link from "next/link"
 import { useAuthUserData } from "@/hooks/use-auth"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getPlanLabel, getPlanPrice } from "@/components/assign-plans/utils"
+import { DeactivateAccountCard } from "@/components/account/deactivate-account-card"
 
 function formatDate(dateString?: string | null): string {
   if (!dateString) return "—"
@@ -320,6 +321,9 @@ export default function ProfilePage() {
             </Badge>
           </CardContent>
         </Card> */}
+
+        {/* Zona de peligro: auto-baja de la cuenta */}
+        <DeactivateAccountCard />
       </div>
     </div>
   )

@@ -19,3 +19,15 @@ export const updateUserSchema = z
   );
 
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>;
+
+export const deactivateAccountSchema = z.object({
+  reason: z
+    .string()
+    .max(500, "El motivo no puede superar los 500 caracteres")
+    .optional(),
+  confirm: z.boolean().refine((value) => value === true, {
+    message: "Debes confirmar que entiendes las consecuencias",
+  }),
+});
+
+export type DeactivateAccountFormData = z.infer<typeof deactivateAccountSchema>;

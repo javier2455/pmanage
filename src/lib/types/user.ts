@@ -76,6 +76,19 @@ export interface UpdateUserFormPayload {
   avatar?: File | null;
 }
 
+export interface DeactivateAccountPayload {
+  reason?: string;
+}
+
+export interface DeactivateAccountResponse {
+  message: string;
+  deactivatedAt: string;
+}
+
+export interface ReactivateAccountResponse {
+  message: string;
+}
+
 type OAuthProvider = {
   id: number;
   provider: string;

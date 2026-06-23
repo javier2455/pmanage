@@ -27,7 +27,7 @@ import { getMyBusinessesList } from "@/lib/api/business";
 import { getAllSections } from "@/lib/api/navigation";
 import { collectAllowedUrls } from "@/lib/navigation-access";
 import { roleIdFromName } from "@/lib/roles";
-import { setAuthCookies } from "@/lib/cookies";
+import { setAuthCookies, setDeactivatedCookie } from "@/lib/cookies";
 import { useState } from "react";
 import {
     LoginTypeSelectionModal,
@@ -92,6 +92,9 @@ export default function LoginPage() {
             role: roleName,
             planType,
         });
+        // Si la cuenta ya está desactivada, sembramos la cookie para que el
+        // middleware redirija a la pantalla de reactivación sin parpadeo.
+        setDeactivatedCookie(user.deactivatedAt);
     };
 
     const finalizePostLogin = async ({
@@ -137,6 +140,13 @@ export default function LoginPage() {
 
     const routeAfterGetMe = async (params: PendingLogin) => {
         const { user } = params;
+        // Cuenta desactivada: persistimos la sesión y enviamos directo a la
+        // pantalla de reactivación, sin elegir modo ni comprobar plan/negocios.
+        if (user.deactivatedAt) {
+            persistSessionUser(user, params.accessToken, params.refreshToken);
+            router.replace("/cuenta-desactivada");
+            return;
+        }
         if (user.isWorker && !user.isOwner) {
             await finalizePostLogin({ ...params, mode: "worker" });
             return;
