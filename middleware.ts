@@ -7,9 +7,11 @@ const AUTH_COOKIE_NAMES = {
   role: "user_role",
   planType: "user_plan_type",
   deactivated: "user_deactivated",
+  planExpired: "user_plan_expired",
 } as const;
 
 const REACTIVATION_PATH = "/cuenta-desactivada";
+const SELECT_PLAN_PATH = "/seleccionar-plan";
 
 function isAdminRole(role: string | undefined): boolean {
   if (!role) return false;
@@ -22,10 +24,12 @@ export function middleware(request: NextRequest) {
   const role = request.cookies.get(AUTH_COOKIE_NAMES.role)?.value;
   const planType = request.cookies.get(AUTH_COOKIE_NAMES.planType)?.value;
   const isDeactivated = Boolean(request.cookies.get(AUTH_COOKIE_NAMES.deactivated)?.value);
+  const isPlanExpired = Boolean(request.cookies.get(AUTH_COOKIE_NAMES.planExpired)?.value);
 
   const isDashboard = pathname.startsWith("/dashboard");
   const isPlans = pathname.startsWith("/plans");
   const isReactivation = pathname.startsWith(REACTIVATION_PATH);
+  const isSelectPlan = pathname.startsWith(SELECT_PLAN_PATH);
 
   // La pantalla de reactivación requiere sesión, pero solo es válida si el
   // usuario está realmente desactivado.
@@ -39,6 +43,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // El paywall de selección de plan requiere sesión, pero solo es válido si el
+  // plan está realmente vencido / el usuario no tiene plan.
+  if (isSelectPlan) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    if (isDeactivated) {
+      return NextResponse.redirect(new URL(REACTIVATION_PATH, request.url));
+    }
+    if (!isPlanExpired) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (isDashboard || isPlans) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", request.url));
@@ -46,6 +65,10 @@ export function middleware(request: NextRequest) {
     // Usuario desactivado: solo puede acceder a la pantalla de reactivación.
     if (isDeactivated) {
       return NextResponse.redirect(new URL(REACTIVATION_PATH, request.url));
+    }
+    // Plan vencido / sin plan: bloquear el dashboard y forzar la selección.
+    if (isPlanExpired) {
+      return NextResponse.redirect(new URL(SELECT_PLAN_PATH, request.url));
     }
   }
 
@@ -65,5 +88,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/plans/:path*", "/cuenta-desactivada"],
+  matcher: ["/dashboard/:path*", "/plans/:path*", "/cuenta-desactivada", "/seleccionar-plan/:path*"],
 };

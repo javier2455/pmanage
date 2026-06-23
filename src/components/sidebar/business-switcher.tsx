@@ -13,14 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Check, ChevronsUpDown, Store, Plus, Truck } from "lucide-react"
+import { Check, ChevronsUpDown, Store, Plus, Truck, Lock } from "lucide-react"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Badge } from "@/components/ui/badge"
 
 export function BusinessSwitcher() {
   const router = useRouter()
-  const { businesses, setActiveBusinessId, activeBusiness, isLoading } =
+  const { businesses, archivedBusinesses, setActiveBusinessId, activeBusiness, isLoading } =
     useBusiness()
   const { isProPlan } = useUserRoleAndPlan()
 
@@ -80,6 +80,34 @@ export function BusinessSwitcher() {
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
+        {archivedBusinesses.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-muted-foreground">
+              Archivados
+            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {archivedBusinesses.map((business) => (
+                <DropdownMenuItem
+                  key={business.id}
+                  disabled
+                  className="flex cursor-not-allowed items-center gap-2 opacity-60"
+                >
+                  <div className="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+                    <Lock className="size-3" />
+                  </div>
+                  <span className="flex-1 truncate text-sm">{business.name}</span>
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+                  >
+                    Recupéralo con Pro
+                  </Badge>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => canAddBusiness && router.push("/dashboard/business/create")}

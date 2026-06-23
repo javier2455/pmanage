@@ -20,6 +20,8 @@ import { clearAuthCookies } from "@/lib/cookies";
 
 type BusinessContextType = {
   businesses: Business[];
+  /** Negocios archivados por un downgrade de plan (solo lectura, recuperables con Pro). */
+  archivedBusinesses: Business[];
   activeBusinessId: string | null;
   activeBusiness: Business | null;
   setActiveBusinessId: (id: string) => void;
@@ -34,14 +36,16 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
-  const [loginMode, setLoginMode] = useState<string | null>(null);
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem("activeBusinessId");
-    if (stored) setActiveBusinessId(stored);
-    setLoginMode(sessionStorage.getItem("loginMode"));
-  }, []);
+  // Inicialización perezosa desde sessionStorage (en cliente): evita el patrón
+  // de setState dentro de un efecto de montaje. En SSR no hay `window`, así que
+  // arrancan en null; durante hidratación la lista de negocios aún no resolvió
+  // (isLoading), por lo que estos valores no afectan el HTML inicial.
+  const [activeBusinessId, setActiveBusinessId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : sessionStorage.getItem("activeBusinessId"),
+  );
+  const [loginMode] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : sessionStorage.getItem("loginMode"),
+  );
 
   // 🔥 Traer negocios del usuario
   const { data, isLoading, isError, error } = useQuery({
@@ -60,7 +64,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const businesses: Business[] = useMemo(() => {
+  const scopedBusinesses: Business[] = useMemo(() => {
     const all: Business[] = Array.isArray(data) ? data : [];
     /* Cuando se entra como trabajador, my-business también trae los negocios
        propios; el selector solo debe mostrar aquellos donde es trabajador. */
@@ -69,6 +73,18 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     }
     return all;
   }, [data, loginMode]);
+
+  /* Los negocios archivados (downgrade de plan) no son operables: se separan
+     para mostrarlos bloqueados en el selector, pero nunca como activos. */
+  const businesses: Business[] = useMemo(
+    () => scopedBusinesses.filter((b) => b.status !== "archived"),
+    [scopedBusinesses],
+  );
+
+  const archivedBusinesses: Business[] = useMemo(
+    () => scopedBusinesses.filter((b) => b.status === "archived"),
+    [scopedBusinesses],
+  );
 
   useEffect(() => {
     if (isLoading) return;
@@ -130,6 +146,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     <BusinessContext.Provider
       value={{
         businesses,
+        archivedBusinesses,
         activeBusinessId,
         activeBusiness,
         setActiveBusinessId,

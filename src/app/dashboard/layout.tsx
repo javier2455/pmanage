@@ -5,9 +5,11 @@ import { NotificationBell } from "@/components/notifications/notification-bell"
 import { BusinessProvider } from "@/context/business-context"
 import { AccessGuard } from "@/components/auth/access-guard"
 import { ReactivationGuard } from "@/components/auth/reactivation-guard"
+import { PlanGuard } from "@/components/auth/plan-guard"
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactivationGuard>
+      <PlanGuard>
       <SidebarProvider>
         <BusinessProvider>
         <AppSidebar />
@@ -23,6 +25,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
         </BusinessProvider>
       </SidebarProvider>
+      </PlanGuard>
     </ReactivationGuard>
   )
 }

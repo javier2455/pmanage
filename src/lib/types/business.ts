@@ -24,6 +24,17 @@ export type Business = {
   geocoded: boolean;
   active: boolean;
   isWorker: boolean;
+  /**
+   * Estado del negocio respecto a los límites del plan.
+   * `archived` = bloqueado en solo-lectura tras un downgrade (los datos se
+   * conservan y se restauran al volver a Pro). Si el backend aún no lo envía se
+   * asume `active`.
+   * TODO(backend): incluir `status`/`archivedReason` en `GET /businesses/my-businesses`.
+   * Contrato: docs/análisis-planes/backend-cambios.md.
+   */
+  status?: "active" | "archived";
+  /** Motivo del archivado (p.ej. `plan_downgrade`). `null`/ausente si está activo. */
+  archivedReason?: string | null;
 };
 
 export type BusinessWithProducts = {

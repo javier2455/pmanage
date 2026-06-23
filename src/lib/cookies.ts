@@ -8,6 +8,7 @@ export const AUTH_COOKIE_NAMES = {
   role: "user_role",
   planType: "user_plan_type",
   deactivated: "user_deactivated",
+  planExpired: "user_plan_expired",
 } as const;
 
 const COOKIE_MAX_AGE_DAYS = 1;
@@ -60,6 +61,22 @@ export function setDeactivatedCookie(deactivatedAt: string | null | undefined): 
 }
 
 /**
+ * Marca o limpia el estado de plan vencido / sin plan del usuario en cookie,
+ * para que el middleware pueda redirigir al paywall de selección de plan sin
+ * parpadeo. Pasar `true` cuando `expiredPlan || hasNeverHadPlan`, `false` para
+ * limpiar tras elegir un plan.
+ */
+export function setPlanExpiredCookie(expired: boolean): void {
+  if (typeof document === "undefined") return;
+
+  if (expired) {
+    document.cookie = `${AUTH_COOKIE_NAMES.planExpired}=1; ${buildCookieOptions()}`;
+  } else {
+    document.cookie = `${AUTH_COOKIE_NAMES.planExpired}=; Path=${COOKIE_PATH}; Max-Age=0`;
+  }
+}
+
+/**
  * Elimina todas las cookies de autenticación (solo en el cliente).
  * Llamar en logout y cuando expire la sesión.
  */
@@ -71,6 +88,7 @@ export function clearAuthCookies(): void {
   document.cookie = `${AUTH_COOKIE_NAMES.role}=; Path=${COOKIE_PATH}; ${past}`;
   document.cookie = `${AUTH_COOKIE_NAMES.planType}=; Path=${COOKIE_PATH}; ${past}`;
   document.cookie = `${AUTH_COOKIE_NAMES.deactivated}=; Path=${COOKIE_PATH}; ${past}`;
+  document.cookie = `${AUTH_COOKIE_NAMES.planExpired}=; Path=${COOKIE_PATH}; ${past}`;
 }
 
 /**
@@ -82,9 +100,10 @@ export function getAuthCookies(): {
   role: string | null;
   planType: string | null;
   deactivated: string | null;
+  planExpired: string | null;
 } {
   if (typeof document === "undefined") {
-    return { token: null, role: null, planType: null, deactivated: null };
+    return { token: null, role: null, planType: null, deactivated: null, planExpired: null };
   }
 
   const cookies = document.cookie.split(";").reduce<Record<string, string>>((acc, c) => {
@@ -98,5 +117,6 @@ export function getAuthCookies(): {
     role: cookies[AUTH_COOKIE_NAMES.role] ?? null,
     planType: cookies[AUTH_COOKIE_NAMES.planType] ?? null,
     deactivated: cookies[AUTH_COOKIE_NAMES.deactivated] ?? null,
+    planExpired: cookies[AUTH_COOKIE_NAMES.planExpired] ?? null,
   };
 }

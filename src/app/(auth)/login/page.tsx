@@ -27,7 +27,7 @@ import { getMyBusinessesList } from "@/lib/api/business";
 import { getAllSections } from "@/lib/api/navigation";
 import { collectAllowedUrls } from "@/lib/navigation-access";
 import { roleIdFromName } from "@/lib/roles";
-import { setAuthCookies, setDeactivatedCookie } from "@/lib/cookies";
+import { setAuthCookies, setDeactivatedCookie, setPlanExpiredCookie } from "@/lib/cookies";
 import { useState } from "react";
 import {
     LoginTypeSelectionModal,
@@ -95,6 +95,10 @@ export default function LoginPage() {
         // Si la cuenta ya está desactivada, sembramos la cookie para que el
         // middleware redirija a la pantalla de reactivación sin parpadeo.
         setDeactivatedCookie(user.deactivatedAt);
+        // Si el plan está vencido o nunca tuvo plan, sembramos la cookie para que
+        // el middleware redirija al paywall de selección de plan sin parpadeo.
+        // El PlanGuard la corrige luego con /auth/me.
+        setPlanExpiredCookie(Boolean(user.expiredPlan || user.hasNeverHadPlan));
     };
 
     const finalizePostLogin = async ({

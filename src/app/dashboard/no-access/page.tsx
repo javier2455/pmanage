@@ -41,8 +41,10 @@ export default function NoAccessPage() {
           <div className="flex flex-col items-center gap-1">
             <CardTitle className="text-xl font-bold">Sin accesos</CardTitle>
             <CardDescription>
-              Tu usuario no tiene permisos asignados en este negocio.
-              Comunícate con el administrador para que habilite tus accesos.
+              Tu usuario no tiene accesos activos en este momento. Esto puede
+              deberse a que aún no se te han asignado permisos, o a que el
+              propietario cambió a un plan sin gestión de equipo y tu acceso quedó
+              pausado. Comunícate con el administrador del negocio para reactivarlo.
             </CardDescription>
           </div>
         </CardHeader>
