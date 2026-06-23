@@ -77,7 +77,7 @@ export interface UpdateUserFormPayload {
 }
 
 export interface DeactivateAccountPayload {
-  reason?: string;
+  deletionReason?: string;
 }
 
 export interface DeactivateAccountResponse {

@@ -59,7 +59,9 @@ export function DeactivateAccountCard() {
 
   async function onSubmit(values: DeactivateAccountFormData) {
     try {
-      await deactivateMutation.mutateAsync({ reason: values.reason?.trim() || undefined });
+      await deactivateMutation.mutateAsync({
+        deletionReason: values.reason?.trim() || undefined,
+      });
       // El middleware/guard bloquearán el resto; vamos directo a reactivación.
       router.replace("/cuenta-desactivada");
     } catch {
