@@ -114,16 +114,30 @@ export interface UpdateBusinessResponse {
 
 
 export interface DashboardSummaryResponse {
-  sales: DashboardSummaryStat;
-  expenses: DashboardSummaryStat;
+  sales: DashboardSalesStat;
+  expenses: DashboardExpensesStat;
   lastFiveSales: DashboardSummarySale[];
   lastFiveExpenses: DashboardSummaryExpense[];
   recentActivity: DashboardSummaryActivity[];
 }
 
-export type DashboardSummaryStat = {
-  today: number;
-  yesterday: number;
+/** Total de ventas/gastos de un período agrupado por moneda. */
+export type DashboardCurrencyTotal = {
+  currency: string;
+  total: number;
+};
+
+export type DashboardSalesStat = {
+  today: DashboardCurrencyTotal[];
+  yesterday: DashboardCurrencyTotal[];
+  totalTransactions: number;
+  percentageChange: number;
+};
+
+export type DashboardExpensesStat = {
+  today: DashboardCurrencyTotal[];
+  yesterday: DashboardCurrencyTotal[];
+  totalCount: number;
   percentageChange: number;
 };
 
@@ -133,6 +147,7 @@ export type DashboardSummarySale = {
   cantidad: number;
   precio: number;
   total: number;
+  currency: string;
   isCancelled: boolean;
   cancelledReason: string | null;
   createdAt: string;
@@ -153,6 +168,7 @@ export type DashboardSummaryActivity = {
   actionType: string;
   productName: string;
   quantity: number;
+  currency: string;
   description: string;
   createdAt: string;
 };

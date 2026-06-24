@@ -2,23 +2,18 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { ArrowDownRight, ArrowUpRight, DollarSign, Minus, Receipt } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { BASE_CURRENCY, formatMoney } from '@/lib/currency'
+import type { DashboardCurrencyTotal } from '@/lib/types/business'
 
 type StatsCardVariant = 'sales' | 'expenses'
 
 interface StatsCardProps {
   variant: StatsCardVariant
   title: string
-  today: number
-  yesterday: number
+  today: DashboardCurrencyTotal[]
+  yesterday: DashboardCurrencyTotal[]
   percentageChange: number
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
+  count?: number
 }
 
 function trendDirection(change: number, variant: StatsCardVariant) {
@@ -34,6 +29,7 @@ export default function StatsCard({
   today,
   yesterday,
   percentageChange,
+  count,
 }: StatsCardProps) {
   const direction = trendDirection(percentageChange, variant)
   const isGood = direction === 'up-good' || direction === 'down-good'
@@ -57,14 +53,29 @@ export default function StatsCard({
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="flex items-end justify-between gap-3">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Hoy</p>
-            <div className="text-2xl font-bold text-card-foreground">{formatCurrency(today)}</div>
+            {today.length === 0 ? (
+              <div className="text-2xl font-bold text-card-foreground">
+                {formatMoney(0, BASE_CURRENCY)}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                {today.map((item) => (
+                  <div
+                    key={item.currency}
+                    className="text-2xl font-bold text-card-foreground"
+                  >
+                    {formatMoney(item.total, item.currency)}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div
             className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
+              'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
               trendClass,
             )}
           >
@@ -72,12 +83,30 @@ export default function StatsCard({
             <span>{formattedChange}</span>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between border-t border-border pt-2">
+        <div className="mt-3 flex items-start justify-between border-t border-border pt-2">
           <span className="text-xs text-muted-foreground">Ayer</span>
-          <span className="text-sm font-medium text-card-foreground">
-            {formatCurrency(yesterday)}
-          </span>
+          <div className="flex flex-col items-end gap-0.5">
+            {yesterday.length === 0 ? (
+              <span className="text-sm font-medium text-card-foreground">
+                {formatMoney(0, BASE_CURRENCY)}
+              </span>
+            ) : (
+              yesterday.map((item) => (
+                <span
+                  key={item.currency}
+                  className="text-sm font-medium text-card-foreground"
+                >
+                  {formatMoney(item.total, item.currency)}
+                </span>
+              ))
+            )}
+          </div>
         </div>
+        {typeof count === 'number' ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {count} {count === 1 ? 'transacción' : 'transacciones'}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )

@@ -9,6 +9,7 @@ export const AUTH_COOKIE_NAMES = {
   planType: "user_plan_type",
   deactivated: "user_deactivated",
   planExpired: "user_plan_expired",
+  needsReconciliation: "user_needs_reconciliation",
 } as const;
 
 const COOKIE_MAX_AGE_DAYS = 1;
@@ -77,6 +78,22 @@ export function setPlanExpiredCookie(expired: boolean): void {
 }
 
 /**
+ * Marca o limpia el estado de "necesita reconciliación de negocios": el usuario
+ * tiene más negocios activos de los que permite su plan y debe elegir cuál
+ * conservar. El middleware lo usa para bloquear el dashboard y permitir el paso
+ * a `/seleccionar-plan/reconciliar` aunque el plan siga vigente (no vencido).
+ */
+export function setNeedsReconciliationCookie(needed: boolean): void {
+  if (typeof document === "undefined") return;
+
+  if (needed) {
+    document.cookie = `${AUTH_COOKIE_NAMES.needsReconciliation}=1; ${buildCookieOptions()}`;
+  } else {
+    document.cookie = `${AUTH_COOKIE_NAMES.needsReconciliation}=; Path=${COOKIE_PATH}; Max-Age=0`;
+  }
+}
+
+/**
  * Elimina todas las cookies de autenticación (solo en el cliente).
  * Llamar en logout y cuando expire la sesión.
  */
@@ -89,6 +106,7 @@ export function clearAuthCookies(): void {
   document.cookie = `${AUTH_COOKIE_NAMES.planType}=; Path=${COOKIE_PATH}; ${past}`;
   document.cookie = `${AUTH_COOKIE_NAMES.deactivated}=; Path=${COOKIE_PATH}; ${past}`;
   document.cookie = `${AUTH_COOKIE_NAMES.planExpired}=; Path=${COOKIE_PATH}; ${past}`;
+  document.cookie = `${AUTH_COOKIE_NAMES.needsReconciliation}=; Path=${COOKIE_PATH}; ${past}`;
 }
 
 /**
@@ -101,9 +119,10 @@ export function getAuthCookies(): {
   planType: string | null;
   deactivated: string | null;
   planExpired: string | null;
+  needsReconciliation: string | null;
 } {
   if (typeof document === "undefined") {
-    return { token: null, role: null, planType: null, deactivated: null, planExpired: null };
+    return { token: null, role: null, planType: null, deactivated: null, planExpired: null, needsReconciliation: null };
   }
 
   const cookies = document.cookie.split(";").reduce<Record<string, string>>((acc, c) => {
@@ -118,5 +137,6 @@ export function getAuthCookies(): {
     planType: cookies[AUTH_COOKIE_NAMES.planType] ?? null,
     deactivated: cookies[AUTH_COOKIE_NAMES.deactivated] ?? null,
     planExpired: cookies[AUTH_COOKIE_NAMES.planExpired] ?? null,
+    needsReconciliation: cookies[AUTH_COOKIE_NAMES.needsReconciliation] ?? null,
   };
 }

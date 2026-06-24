@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Check, ChevronsUpDown, Store, Plus, Truck, Lock } from "lucide-react"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
+import { getMaxBusinesses } from "@/lib/pro-gates"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Badge } from "@/components/ui/badge"
 
@@ -22,9 +23,11 @@ export function BusinessSwitcher() {
   const router = useRouter()
   const { businesses, archivedBusinesses, setActiveBusinessId, activeBusiness, isLoading } =
     useBusiness()
-  const { isProPlan } = useUserRoleAndPlan()
+  const { planType } = useUserRoleAndPlan()
 
-  const canAddBusiness = isProPlan || businesses.length === 0
+  // El tope depende del plan (Pro=3, Básico/Free=1) y solo cuenta negocios
+  // activos (`businesses` ya excluye los archivados).
+  const canAddBusiness = businesses.length < getMaxBusinesses(planType)
 
   return (
     <DropdownMenu>

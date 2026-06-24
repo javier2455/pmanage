@@ -1,9 +1,10 @@
-import { setAuthCookies, setPlanExpiredCookie } from "@/lib/cookies";
+import { setAuthCookies, setPlanExpiredCookie, setNeedsReconciliationCookie } from "@/lib/cookies";
 
 /**
  * Sincroniza el estado de sesión local tras elegir un plan self-service.
  * Actualiza el `plan` guardado en sessionStorage, la cookie `user_plan_type`
- * (que lee el middleware para el gating Pro) y limpia la cookie de plan vencido.
+ * (que lee el middleware para el gating Pro), limpia la cookie de plan vencido y
+ * la de reconciliación pendiente (el `select` ya archivó el excedente).
  * El `PlanGuard` revalidará con `/auth/me` en el próximo render del dashboard.
  */
 export function applySelectedPlanToSession(plan: {
@@ -32,4 +33,5 @@ export function applySelectedPlanToSession(plan: {
   const planType = plan.type ?? plan.name ?? undefined;
   setAuthCookies({ planType });
   setPlanExpiredCookie(false);
+  setNeedsReconciliationCookie(false);
 }

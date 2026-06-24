@@ -27,16 +27,18 @@ export default function DashboardPage() {
         <StatsCard
           variant="sales"
           title="Ventas"
-          today={dashboardSummary?.sales?.today ?? 0}
-          yesterday={dashboardSummary?.sales?.yesterday ?? 0}
+          today={dashboardSummary?.sales?.today ?? []}
+          yesterday={dashboardSummary?.sales?.yesterday ?? []}
           percentageChange={dashboardSummary?.sales?.percentageChange ?? 0}
+          count={dashboardSummary?.sales?.totalTransactions}
         />
         <StatsCard
           variant="expenses"
           title="Gastos"
-          today={dashboardSummary?.expenses?.today ?? 0}
-          yesterday={dashboardSummary?.expenses?.yesterday ?? 0}
+          today={dashboardSummary?.expenses?.today ?? []}
+          yesterday={dashboardSummary?.expenses?.yesterday ?? []}
           percentageChange={dashboardSummary?.expenses?.percentageChange ?? 0}
+          count={dashboardSummary?.expenses?.totalCount}
         />
         <CashBalanceWidget />
       </div>

@@ -34,6 +34,18 @@ export function isFreePlan(planType: string | undefined): boolean {
 }
 
 /**
+ * Tope de negocios activos por plan. Pro permite 3; el resto (Básico/Free) 1.
+ * Fuente única reutilizada por el switcher, la creación de negocios y la
+ * detección de exceso para forzar la reconciliación.
+ */
+export const PLAN_BUSINESS_LIMIT = { pro: 3, default: 1 } as const;
+
+/** Máximo de negocios activos permitidos según el tipo de plan. */
+export function getMaxBusinesses(planType: string | undefined): number {
+  return isProPlan(planType) ? PLAN_BUSINESS_LIMIT.pro : PLAN_BUSINESS_LIMIT.default;
+}
+
+/**
  * Rutas protegidas por plan Pro.
  *
  * Cada entrada define:

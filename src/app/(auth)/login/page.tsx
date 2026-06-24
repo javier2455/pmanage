@@ -27,7 +27,8 @@ import { getMyBusinessesList } from "@/lib/api/business";
 import { getAllSections } from "@/lib/api/navigation";
 import { collectAllowedUrls } from "@/lib/navigation-access";
 import { roleIdFromName } from "@/lib/roles";
-import { setAuthCookies, setDeactivatedCookie, setPlanExpiredCookie } from "@/lib/cookies";
+import { setAuthCookies, setDeactivatedCookie, setPlanExpiredCookie, setNeedsReconciliationCookie } from "@/lib/cookies";
+import { getMaxBusinesses } from "@/lib/pro-gates";
 import { useState } from "react";
 import {
     LoginTypeSelectionModal,
@@ -135,8 +136,24 @@ export default function LoginPage() {
         const activePlan = await getActivePlan();
         if (activePlan?.data?.isActive || activePlan?.isActive) {
             const businesses = await getMyBusinessesList();
-            const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
-            router.push(target);
+            const activeBusinesses = businesses.filter((b) => b.status !== "archived");
+            if (activeBusinesses.length === 0) {
+                setNeedsReconciliationCookie(false);
+                router.push("/dashboard/business/create");
+                return;
+            }
+            /* Si el usuario quedó con más negocios activos de los que permite su
+               plan (p. ej. tras expirar el trial Pro), debe elegir cuál conservar
+               antes de entrar al dashboard. Sembramos la cookie para que el
+               middleware bloquee el dashboard hasta que reconcilie. */
+            const planType = user.plan?.type ?? user.plan?.name ?? "";
+            if (activeBusinesses.length > getMaxBusinesses(planType)) {
+                setNeedsReconciliationCookie(true);
+                router.push("/seleccionar-plan/reconciliar");
+                return;
+            }
+            setNeedsReconciliationCookie(false);
+            router.push("/dashboard");
         } else {
             router.push("/plans");
         }

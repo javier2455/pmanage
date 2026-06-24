@@ -4,6 +4,7 @@ import { BusinessSwitcher } from "@/components/sidebar/business-switcher"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { BusinessProvider } from "@/context/business-context"
 import { AccessGuard } from "@/components/auth/access-guard"
+import { RouteGuard } from "@/components/auth/route-guard"
 import { ReactivationGuard } from "@/components/auth/reactivation-guard"
 import { PlanGuard } from "@/components/auth/plan-guard"
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -21,7 +22,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <NotificationBell />
           </nav>
-          <AccessGuard>{children}</AccessGuard>
+          <RouteGuard>
+            <AccessGuard>{children}</AccessGuard>
+          </RouteGuard>
         </main>
         </BusinessProvider>
       </SidebarProvider>

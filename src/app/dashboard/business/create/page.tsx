@@ -10,6 +10,7 @@ import {
 import { useCreateBusinessMutation } from "@/hooks/use-business";
 import { useBusiness } from "@/context/business-context";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
+import { getMaxBusinesses } from "@/lib/pro-gates";
 import {
   useGetAllProvinces,
   useGetAllMunicipalitiesByProvinceId,
@@ -122,22 +123,23 @@ export default function CreateBusinessPage() {
   const router = useRouter();
   const createBusinessMutation = useCreateBusinessMutation();
   const { businesses, isLoading: isLoadingBusinesses } = useBusiness();
-  const { isProPlan } = useUserRoleAndPlan();
+  const { planType } = useUserRoleAndPlan();
+  const maxBusinesses = getMaxBusinesses(planType);
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
   const [step, setStep] = useState<Step>("info");
 
   useEffect(() => {
     if (isLoadingBusinesses) return;
-    if (!isProPlan && businesses.length >= 1) {
+    if (businesses.length >= maxBusinesses) {
       sileo.error({
-        title: "Plan requerido",
+        title: "Límite de negocios alcanzado",
         description:
-          "Solo usuarios con plan Pro pueden crear más de un negocio. Actualiza tu plan para desbloquear esta función.",
+          "Alcanzaste el número de negocios que permite tu plan. Cambia a Pro para gestionar más negocios.",
         styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       router.replace("/dashboard");
     }
-  }, [isProPlan, businesses.length, isLoadingBusinesses, router]);
+  }, [maxBusinesses, businesses.length, isLoadingBusinesses, router]);
 
   const { data: provincesData, isLoading: isLoadingProvinces } =
     useGetAllProvinces();
@@ -245,7 +247,7 @@ export default function CreateBusinessPage() {
     }
   };
 
-  if (!isProPlan && businesses.length >= 1) {
+  if (businesses.length >= maxBusinesses) {
     return null;
   }
 
