@@ -96,6 +96,12 @@ export default function DetailsDialog({
 
   const currency = data?.currency ?? BASE_CURRENCY;
   const total = Number(data?.total ?? 0);
+  // El backend puede mandar la tarifa como string; coercemos para no romper el
+  // formateo (formatMoney trata un string como no-finito y mostraría 0).
+  const deliveryFee =
+    data?.deliveryFee != null && data.deliveryFee !== ""
+      ? Number(data.deliveryFee)
+      : null;
   const totalPaid = Number(data?.totalPaid ?? 0);
   const pendiente = Math.max(total - totalPaid, 0);
   const items = data?.items ?? [];
@@ -238,8 +244,8 @@ export default function DetailsDialog({
                     Precio de la mensajería
                   </span>
                   <span className="text-sm font-medium tabular-nums text-card-foreground">
-                    {data?.deliveryFee != null
-                      ? formatMoney(data.deliveryFee, currency)
+                    {deliveryFee != null && Number.isFinite(deliveryFee)
+                      ? formatMoney(deliveryFee, currency)
                       : "--"}
                   </span>
                 </div>

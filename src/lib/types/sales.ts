@@ -40,8 +40,12 @@ export interface SaleWithProductAndBusiness {
   deliveryAddress?: string | null;
   deliveryContactPhone?: string | null;
   deliveryContactName?: string | null;
-  /** Precio de la mensajería. `null` cuando la venta no es a domicilio; `>= 0` en ventas `delivery`. */
-  deliveryFee?: number | null;
+  /**
+   * Precio de la mensajería. `null` cuando la venta no es a domicilio; `>= 0` en
+   * ventas `delivery`. El backend puede enviarlo como string (igual que `total`),
+   * así que conviene coercer con `Number()` antes de formatear.
+   */
+  deliveryFee?: number | string | null;
 }
 
 export interface CreateSaleItemProps {
