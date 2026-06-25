@@ -6,12 +6,12 @@
 | | |
 |---|---|
 | **Rama** | `develop` |
-| **Versión en `package.json`** | `1.16.5-alpha` |
-| **Último commit** | `18b503a` (al 2026-06-20) |
+| **Versión en `package.json`** | `1.24.0-alpha` |
+| **Último commit** | `1b4a255` (al 2026-06-24) |
 | **Entorno** | Pre-producción / staging (pruebas internas) |
 | **Sirve para** | Validar features antes de promover a `main` |
 | **Backend** | `https://psearch.dveloxsoft.com/api/v2` (mismo que producción) |
-| **Última actualización del documento** | 2026-06-20 |
+| **Última actualización del documento** | 2026-06-24 |
 
 ---
 
@@ -53,9 +53,19 @@ Cambios respecto a `main` agrupados por estado:
 | 30 | **Stock con cantidades decimales** (unidades de peso/volumen) | ✅ Frontend mergeado | `c771e5e` (1.8.1) | Sí — verificar persistencia decimal en backend |
 | 31 | **Editar la categoría de un producto dentro del negocio** (precio + categoría en un solo diálogo) | 🟡 Frontend implementado, backend pendiente | `22ee005` (1.13.0) | **No** — espera `PATCH .../products/:bpId/category` (ver [docs/backend-categoria-business-product.md](../backend-categoria-business-product.md)) |
 | 32 | **Módulo de Tickets de Soporte** (conversación, cerrar/reabrir, asignación de admins) + **notificaciones de soporte** integradas (campana + página) | ✅ Frontend + backend (contrato entregado) | `c4b0801`→`da56ce3` (1.14.0–1.15.4) | Sí — verificar en QA (ver §2.15) |
-| 33 | **Suite Multimoneda** (ventas + pagos + factura PDF + compras de inventario + asignar producto + tipo de venta/entrega + gastos) | 🟡 Frontend completo, backend parcial | `be2fec8`→`18b503a` (1.16.0–1.16.5) | **Parcial** — pagos/factura/stock OK; bloquea: bug de conversión base ≠ CUP, `currency` en gastos, regla de delivery (ver §2.16) |
+| 33 | **Suite Multimoneda** (ventas + pagos + factura PDF + compras de inventario + asignar producto + tipo de venta/entrega + gastos) | 🟡 Frontend completo, backend parcial | `be2fec8`→`18b503a` (1.16.0–1.16.5) | **Parcial** — pagos/factura/stock OK; bloquea: bug de conversión base ≠ CUP, `currency` en gastos (ver §2.16) |
+| 34 | **Cancelación de venta con devolución parcial + merma** (`items[]` con `quantity`; lo no devuelto = pérdida `LOSS`) | ✅ Frontend + backend (acepta items) | `9b19004`, `c722f66` (1.20.0) | Sí (ver §2.17) |
+| 35 | **Delivery / mensajería por negocio** (`acceptsMessaging`) + datos de entrega en la venta | ✅ Frontend + backend | `4e4e6bb` (1.16.6), `3b9e3e6` (1.18.0) | Sí — **resuelve** el bloqueador de delivery de la feature 33 (ver §2.18) |
+| 36 | **Rebranding a Negora** (logo, `icon.svg`, copy, landing brief) | ✅ Mergeada | `685aef5` (1.19.0) | Sí |
+| 37 | **Módulo de Caja / cuentas en divisa** (saldo consolidado, tabla por moneda, widget, inicializar presupuestos) | 🟡 Fase 1 visual; movimientos/ajustes pendientes | `7221bee` | Parcial — Fase 1 lista; resto requiere endpoints (ver §2.19) |
+| 38 | **Desactivación / reactivación de cuenta** (gracia 15 días, `deletionReason`, `ReactivationGuard` + middleware) | ✅ Frontend + backend (verificar) | `8b11178` (1.22.0), `829ad64` (1.22.3) | Sí — verificar `deactivatedAt`/reactivación (ver §2.20) |
+| 39 | **Selección de plan self-service + trial Pro 15 días + reconciliación de negocios** | 🟡 Frontend completo, backend pendiente | `8311d4d` (1.23.0), `1b4a255` (1.24.0) | **No** — espera `POST /plans/select`, `status`/`archivedReason` y enforcement (ver §2.21 y §3.4) |
+| 40 | **Stats del dashboard por moneda** (`DashboardCurrencyTotal` + contador de transacciones) | ✅ Mergeada | `1b4a255` (1.24.0) | Sí |
+| 41 | **`RouteGuard` cliente** para rutas Pro/admin en build estático | ✅ Mergeada | `1b4a255` (1.24.0) | Sí |
 
 > Ajustes menores en el rango 1.3.8–1.8.1 (no itemizados): eliminación del menú estático de fallback, hover en filas de productos, fix `markAllAsRead`, afinado de límites de notificaciones, botones `outline`.
+>
+> Ajustes menores 1.16.6–1.24.0: moneda nacional `MN → CUP` (`059bc2e`), eliminación de la regeneración de factura (`4a45bd6`), ajuste de precios anuales (`c722f66`), ruta Pro adicional para trabajadores (`1501574`), doc comparativo de planes (`c722dd0`).
 
 ---
 
@@ -325,12 +335,68 @@ el preview coincida con lo guardado.
 **Bloqueadores (backend) — ver §3.**
 - 🐞 Conversión de pagos con base ≠ CUP invertida → [docs/bug-conversion-pagos-multimoneda.md](../bug-conversion-pagos-multimoneda.md).
 - 🚧 `POST/PATCH /expenses` no acepta `currency` (400 `"property currency should not exist"`).
-- ❓ Regla de delivery por negocio no expuesta (`400 "Este negocio no ofrece servicio de delivery/mensajería"`).
+- ✅ Regla de delivery por negocio resuelta con `acceptsMessaging` (ver §2.18).
 
 **Criterios de aceptación.**
 - Venta en USD + pago mixto USD/CUP → conversión correcta, `paid` al completar.
 - Factura solo visible/descargable en ventas `paid`.
 - add-stock/asignar producto en USD → `entryPrice` guardado en CUP = `monto × tasa`.
+
+---
+
+### 2.17. Cancelación de venta con devolución parcial y merma (`9b19004`, `c722f66`)
+
+**Qué hace.** La cancelación deja de ser todo-o-nada: por cada línea se indica cuántas unidades vuelven al stock; la diferencia respecto a lo vendido la registra el backend como **pérdida (`LOSS`)**. El payload pasó de `{ cancellationReason }` a `{ cancellationReason, items?: CancelSaleItemInput[] }` (cada item: `itemId`, `quantity?` — si se omite vuelven todas —, `cancellationReason?`). Sin `items` = cancelación total (compatibilidad).
+
+**Archivos clave.**
+- [src/lib/types/sales.ts](../../src/lib/types/sales.ts) — `CancelSaleItemInput`, `CancelSaleProps`.
+- [src/components/sales/cancel-sale-dialog.tsx](../../src/components/sales/cancel-sale-dialog.tsx) — selección de cantidades por línea.
+- [src/components/inventory/inventory-action-type-style.ts](../../src/components/inventory/inventory-action-type-style.ts) — estilo del movimiento `LOSS`.
+- [src/components/sales/details-dialog.tsx](../../src/components/sales/details-dialog.tsx) — muestra devuelto vs. merma.
+
+**Criterios de aceptación.** Cancelar parcial devuelve solo lo indicado al stock y asienta el resto como pérdida; cancelar sin items sigue siendo total.
+
+### 2.18. Delivery / mensajería por negocio (`4e4e6bb`, `3b9e3e6`)
+
+**Qué hace.** Cierra el bloqueador de delivery de la suite Multimoneda en dos capas:
+- **Datos de entrega en la venta** (1.16.6): el carrito pide dirección y contacto cuando la venta es `delivery`, con validación.
+- **Flag por negocio** (1.18.0): `Business` gana `acceptsMessaging`; se configura al crear el negocio y en el formulario de detalles, y el switcher/carrito deshabilitan la opción de delivery cuando el negocio no la ofrece.
+
+**Archivos clave.**
+- [src/lib/types/business.ts](../../src/lib/types/business.ts), [src/lib/validations/business.ts](../../src/lib/validations/business.ts), [src/lib/types/business-settings.ts](../../src/lib/types/business-settings.ts), [src/lib/validations/business-settings.ts](../../src/lib/validations/business-settings.ts).
+- [src/components/business/business-details-form.tsx](../../src/components/business/business-details-form.tsx), [src/components/sales/sale-cart-panel.tsx](../../src/components/sales/sale-cart-panel.tsx), [src/components/sidebar/business-switcher.tsx](../../src/components/sidebar/business-switcher.tsx).
+
+### 2.19. Módulo de Caja / cuentas en divisa — flujo de caja Fase 1 (`7221bee`)
+
+**Qué hace.** Foto del saldo del negocio por moneda + consolidado en CUP. Spec y contrato propuesto en [docs/flujo-de-caja.md](../flujo-de-caja.md).
+
+**Implementado (Fase 1).** Página `/dashboard/business/currency-accounts`, tabla de saldos por moneda, tarjeta de saldo consolidado, widget en el dashboard y diálogo de inicializar presupuestos. Capa de datos en [src/lib/api/currency-account.ts](../../src/lib/api/currency-account.ts), [src/hooks/use-currency-account.ts](../../src/hooks/use-currency-account.ts), [src/lib/types/currency-account.ts](../../src/lib/types/currency-account.ts), [src/lib/validations/currency-account.ts](../../src/lib/validations/currency-account.ts) y la utilidad [src/lib/cash-flow.ts](../../src/lib/cash-flow.ts).
+
+**Pendiente (roadmap).** Libro de movimientos (`GET /currency-accounts/movements/{businessId}`), ajustes manuales (depósito/retiro/transferencia) y flujo por período. Ver [docs/flujo-de-caja.md](../flujo-de-caja.md) y `ROADMAP.md`.
+
+### 2.20. Desactivación / reactivación de cuenta (`8b11178`, `829ad64`)
+
+**Qué hace.** "Zona de peligro" en el perfil para darse de baja con **15 días de gracia** antes del borrado permanente. Confirma con motivo opcional + checkbox y envía `{ deletionReason }` (1.22.3). Tras desactivar, el usuario va a `/cuenta-desactivada` (única ruta accesible).
+
+**Doble barrera.** El `middleware.ts` bloquea por la cookie `user_deactivated` y el [ReactivationGuard](../../src/components/auth/reactivation-guard.tsx) revalida contra `/auth/me` (`deactivatedAt`).
+
+**Archivos clave.** [src/components/account/deactivate-account-card.tsx](../../src/components/account/deactivate-account-card.tsx), [src/app/cuenta-desactivada/page.tsx](../../src/app/cuenta-desactivada/page.tsx), [src/hooks/use-user.ts](../../src/hooks/use-user.ts), [src/lib/api/user.ts](../../src/lib/api/user.ts), [src/lib/session.ts](../../src/lib/session.ts), [src/lib/validations/user.ts](../../src/lib/validations/user.ts).
+
+**A verificar en QA.** `getMe` devuelve `deactivatedAt`; endpoint de reactivación dentro de la gracia; borrado definitivo al expirar.
+
+### 2.21. Selección de plan self-service + trial Pro + reconciliación (`8311d4d`, `1b4a255`)
+
+**Qué hace.** Sustituye el flujo manual (WhatsApp) por uno self-service. El registro es un **trial de 15 días con alcance Pro**; al expirar el usuario elige **Básico** (1 negocio) o **Pro** (3 negocios + equipo). Principio "conservar y bloquear, nunca borrar": el exceso se archiva y se restaura al volver a Pro. Contrato backend en [docs/análisis-planes/backend-cambios.md](../análisis-planes/backend-cambios.md); comparativa en [docs/análisis-planes/comparativa-planes.md](../análisis-planes/comparativa-planes.md).
+
+**Frontend.**
+- `/seleccionar-plan` ([page.tsx](../../src/app/seleccionar-plan/page.tsx)): elegir plan + periodo y llamar a `POST /plans/select` (`selectPlan()` en [src/lib/api/plans.ts](../../src/lib/api/plans.ts), [src/hooks/use-plans.ts](../../src/hooks/use-plans.ts)); datos en [src/lib/plans-data.ts](../../src/lib/plans-data.ts).
+- `/seleccionar-plan/reconciliar` ([page.tsx](../../src/app/seleccionar-plan/reconciliar/page.tsx)): al bajar a Básico con exceso de negocios, elegir `keepBusinessId`.
+- [PlanGuard](../../src/components/auth/plan-guard.tsx) + [plan-session.ts](../../src/lib/plan-session.ts): redirige al paywall si el plan venció / nunca tuvo plan; si está vigente sincroniza plan a sessionStorage + cookie `user_plan_type` y fuerza reconciliación ante exceso (`getMaxBusinesses` en [pro-gates.ts](../../src/lib/pro-gates.ts)). El `middleware.ts` bloquea por cookies `user_plan_expired` / `user_needs_reconciliation`.
+- `Business.status`/`archivedReason` separan activos vs archivados en switcher y `business-context`.
+
+**Bloqueador (backend) — ver §3.4.** `POST /plans/select` transaccional, trial Pro automático al registrar, `status`/`archivedReason` en `my-businesses`, suspensión de trabajadores/invitaciones y enforcement server-side.
+
+**Criterios de aceptación.** Plan vencido → paywall; bajar a Básico con >1 negocio → reconciliar y archivar el resto; volver a Pro → restaurar negocios archivados por downgrade.
 
 ---
 
@@ -390,6 +456,18 @@ Contrato completo en [docs/notificaciones-internas.md](../notificaciones-interna
 "Notificaciones" pendiente de agregarse a `GET /section` (payload en ese doc).
 
 > **Nota (feature 32):** las **notificaciones de soporte** son un segundo origen, **por usuario** (no por negocio), con su contrato **ya entregado** por backend (`/support-tickets/my-notifications`). Se integran en la misma campana y página de notificaciones (ver §2.15). El bloqueador de arriba aplica solo a las notificaciones **generales** (por negocio), no a las de soporte.
+
+### 3.4. Selección de plan self-service / trial Pro (frontend listo, backend pendiente)
+
+**Qué hace.** Ver §2.21. El frontend asume el contrato completo de [docs/análisis-planes/backend-cambios.md](../análisis-planes/backend-cambios.md) (marcadores `TODO(backend):` en código).
+
+**Bloqueador.** Backend debe entregar:
+- `POST /plans/select` `{ planType, billingPeriod, keepBusinessId? }` **transaccional** (con `KEEP_BUSINESS_REQUIRED` si falta el negocio a conservar).
+- Asignación automática del **trial Pro** (`expireDate = now + 15 días`) al registrar; `expiredPlan`/`hasNeverHadPlan` correctos en `getMe`.
+- Campos `status` (`active`/`archived`) y `archivedReason` en la entidad `Business` y en `GET /businesses/my-businesses`; suspensión de `Worker`/`Invitation` al downgrade y restauración al volver a Pro.
+- **Enforcement server-side**: límite de negocios por plan (`BUSINESS_LIMIT_REACHED`), gestión de equipo solo Pro (`PRO_REQUIRED`), escritura bloqueada en negocios `archived` (`BUSINESS_ARCHIVED`), plan vencido (`PLAN_EXPIRED`).
+
+Códigos de error y tabla de contratos consumidos en [backend-cambios.md](../análisis-planes/backend-cambios.md).
 
 ---
 

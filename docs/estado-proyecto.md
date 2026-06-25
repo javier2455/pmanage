@@ -1,7 +1,7 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-20** (suite **Multimoneda**: ventas con moneda + pagos multimoneda con factura PDF descargable, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33). Anterior — 2026-06-16: módulo de Tickets de Soporte con conversación, estado cerrar/reabrir, asignación de admins y notificaciones de soporte integradas; edición de categoría de un producto dentro del negocio; horario de atención del negocio, refactor de permisos de trabajador a secciones, stock con decimales y categoría a nivel de `BusinessProduct`.
+> Última actualización: **2026-06-24** (trial Pro de 15 días + **selección de plan self-service** y **reconciliación de negocios** al hacer downgrade; **desactivación/reactivación de cuenta** con gracia de 15 días; **módulo de Caja / cuentas en divisa** (flujo de caja Fase 1); cancelación de venta con **devolución parcial y merma**; **delivery/mensajería por negocio** (`acceptsMessaging`); **rebranding a Negora**; stats del dashboard agrupadas por moneda; `RouteGuard` cliente para rutas Pro/admin en build estático — ver features 34–41). Anterior — 2026-06-20: suite **Multimoneda** (ventas con moneda + pagos multimoneda con factura PDF, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33).
 
 ---
 
@@ -9,11 +9,11 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.16.5-alpha` (rama `develop`) |
+| **Versión actual** | `1.24.0-alpha` (rama `develop`) |
 | **Versión en producción** | `1.0.0` (rama `main`) |
-| **Último commit** | `18b503a` — 2026-06-20 |
+| **Último commit** | `1b4a255` — 2026-06-24 |
 | **PR `develop → main`** | **No creado** — deuda de promoción acumulada (sigue creciendo) |
-| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId`); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27); (4) **multimoneda — backend**: bug de conversión de pagos con base ≠ CUP, `currency` no aceptado en gastos, y regla de delivery por negocio (ver feature 33) |
+| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId`); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27); (4) **multimoneda — backend**: bug de conversión de pagos con base ≠ CUP y `currency` no aceptado en gastos (ver feature 33); (5) **selección de plan self-service / trial Pro**: contrato `POST /plans/select`, campos `Business.status`/`archivedReason`, suspensión de trabajadores y enforcement server-side aún por entregar (ver feature 39 y [análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)) |
 
 ---
 
@@ -79,9 +79,19 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 30 | **Stock con cantidades decimales** para unidades de peso/volumen (kg, lb, g, L, mL) | `c771e5e` (1.8.1) | Verificar que backend persista decimales en `add-stock` (ver detalle) |
 | 31 | **Editar la categoría de un producto dentro del negocio** (antes solo se podía el precio) | `22ee005` (1.13.0) | **Endpoint backend pendiente** (ver detalle) |
 | 32 | **Módulo de Tickets de Soporte** — conversación tipo chat, cerrar/reabrir, asignación de admins + **notificaciones de soporte** integradas en la campana y la página de notificaciones | `c4b0801`→`da56ce3` (1.14.0–1.15.4) | — (backend entregó el contrato; ver detalle) |
-| 33 | **Suite Multimoneda** (ventas + pagos + factura PDF + compras de inventario + asignar producto + tipo de venta/entrega + gastos) | `be2fec8`→`18b503a` (1.16.0–1.16.5) | **Backend**: bug de conversión de pagos (base ≠ CUP), `currency` rechazado en gastos, regla de delivery por negocio (ver detalle) |
+| 33 | **Suite Multimoneda** (ventas + pagos + factura PDF + compras de inventario + asignar producto + tipo de venta/entrega + gastos) | `be2fec8`→`18b503a` (1.16.0–1.16.5) | **Backend**: bug de conversión de pagos (base ≠ CUP), `currency` rechazado en gastos (ver detalle) |
+| 34 | **Cancelación de venta con devolución parcial y registro de merma** (`items[]` con `quantity`; lo no devuelto se asienta como pérdida `LOSS`) | `9b19004`, `c722f66` (1.20.0) | — (backend acepta el payload de items) |
+| 35 | **Delivery / mensajería por negocio** (`acceptsMessaging`) + datos de entrega en la venta (dirección + contacto) | `4e4e6bb` (1.16.6), `3b9e3e6` (1.18.0) | — (**resuelve** el bloqueador de delivery de la feature 33) |
+| 36 | **Rebranding a Negora** (logo `NegoraLogo`, `icon.svg`, copy y landing brief) | `685aef5` (1.19.0) | — |
+| 37 | **Módulo de Caja / cuentas en divisa** (saldo consolidado en CUP, tabla de saldos por moneda, widget en dashboard, inicializar presupuestos) — flujo de caja Fase 1 | `7221bee` | Parcial (Fase 1 visual; libro de movimientos y ajustes manuales pendientes — ver detalle) |
+| 38 | **Desactivación / reactivación de cuenta** (gracia de 15 días, `deletionReason`, `cuenta-desactivada`, `ReactivationGuard` + middleware) | `8b11178` (1.22.0), `829ad64` (1.22.3) | — (verificar `deactivatedAt` y reactivación en backend) |
+| 39 | **Selección de plan self-service + trial Pro de 15 días + reconciliación de negocios** (`/seleccionar-plan`, `/seleccionar-plan/reconciliar`, `PlanGuard`, `plan-session`) | `8311d4d` (1.23.0), `1b4a255` (1.24.0) | **Backend**: `POST /plans/select`, `Business.status`/`archivedReason`, suspensión de trabajadores y enforcement (ver detalle y [análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)) |
+| 40 | **Stats del dashboard agrupadas por moneda** (`DashboardCurrencyTotal`, total por divisa + contador de transacciones) | `1b4a255` (1.24.0) | — |
+| 41 | **`RouteGuard` cliente** para rutas Pro/admin (barrera real en build estático donde el middleware está inerte) | `1b4a255` (1.24.0) | — |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
+>
+> **Ajustes menores (1.16.6 → 1.24.0):** unificación de la moneda nacional `MN → CUP` en exchange-rate y grilla de productos (`059bc2e`); **eliminación de la regeneración de factura** (se conserva solo la descarga) (`4a45bd6`); ajuste de precios anuales en planes (`c722f66`); ruta Pro adicional para trabajadores en `PRO_ROUTES` (`1501574`, 1.22.1); documento de análisis comparativo de planes (`c722dd0`, 1.22.2, → [análisis-planes/comparativa-planes.md](análisis-planes/comparativa-planes.md)).
 
 ### Detalle: Categoría a nivel de `BusinessProduct` (feature 27) — `2a13ebe`
 
@@ -184,10 +194,62 @@ lo previsualizado sea exactamente lo que se guarda.
   [docs/bug-conversion-pagos-multimoneda.md](bug-conversion-pagos-multimoneda.md).
 - 🚧 **Gastos `currency`**: `POST /api/v2/expenses` responde `400 "property currency
   should not exist"`; el DTO de gastos no acepta el campo. El frontend ya lo envía.
-- ❓ **Delivery por negocio**: `POST /v2/sales` con `saleType: delivery` puede responder
-  `400 "Este negocio no ofrece servicio de delivery/mensajería"`. La condición vive en
-  el backend y no está expuesta en el front (el tipo `Business` no tiene flag de
-  delivery); pendiente confirmar la regla para deshabilitar la opción en la UI.
+- ✅ **Delivery por negocio** (resuelto en la feature 35): el tipo `Business` ahora
+  expone `acceptsMessaging` y la UI deshabilita la opción de delivery cuando el negocio
+  no lo ofrece, evitando el `400 "Este negocio no ofrece servicio de delivery/mensajería"`.
+
+### Detalle: Cancelación de venta con devolución parcial y merma (feature 34) — `9b19004`, `c722f66`
+
+La cancelación de venta dejó de ser todo-o-nada. El `CancelSaleDialog` ([src/components/sales/cancel-sale-dialog.tsx](../src/components/sales/cancel-sale-dialog.tsx)) permite **devolver solo parte** de cada línea: por cada item se indica cuántas unidades vuelven al stock; la diferencia respecto a la cantidad vendida la registra el backend como **pérdida (`LOSS`)**. El payload pasó de `{ cancellationReason }` a `{ cancellationReason, items?: CancelSaleItemInput[] }` donde cada item lleva `itemId`, `quantity?` (si se omite, vuelven todas) y `cancellationReason?` ([src/lib/types/sales.ts](../src/lib/types/sales.ts)). Ausencia de `items` = cancelación total (compatibilidad).
+
+El historial de inventario distingue el nuevo tipo de movimiento con su estilo propio ([inventory-action-type-style.ts](../src/components/inventory/inventory-action-type-style.ts)), y el detalle de venta muestra lo devuelto vs. la merma. La iteración `1.20.0` (`c722f66`) afinó el manejo de cantidades por línea en el diálogo.
+
+### Detalle: Delivery / mensajería por negocio (feature 35) — `4e4e6bb`, `3b9e3e6`
+
+Dos capas que cierran el bloqueador de delivery de la suite Multimoneda:
+
+- **Datos de entrega en la venta** (`1.16.6`, `4e4e6bb`): cuando la venta es `delivery`, el carrito ([sale-cart-panel.tsx](../src/components/sales/sale-cart-panel.tsx)) pide dirección y datos de contacto, validados antes de enviar.
+- **Flag por negocio** (`1.18.0`, `3b9e3e6`): el tipo `Business` gana `acceptsMessaging` ([src/lib/types/business.ts](../src/lib/types/business.ts)); se configura al crear el negocio y en el formulario de detalles ([business-details-form.tsx](../src/components/business/business-details-form.tsx)), y el `switcher`/carrito **deshabilitan** la opción de delivery cuando el negocio no la ofrece. La tarjeta de ajustes de notificación ([notification-settings-card.tsx](../src/components/business/notification-settings-card.tsx)) y las validaciones de negocio se ampliaron en consecuencia.
+
+### Detalle: Rebranding a Negora (feature 36) — `685aef5`
+
+Cambio de marca de **PManage → Negora** en toda la app y documentación: nuevo componente de logo ([src/components/brand/negora-logo.tsx](../src/components/brand/negora-logo.tsx)), favicon migrado a `src/app/icon.svg`, copy en pantallas de auth (login/registro/verificación/aceptar invitación), sidebar y página de planes. Se añadió el [docs/landing-brief.md](landing-brief.md) con el brief de la landing.
+
+### Detalle: Módulo de Caja / cuentas en divisa (feature 37) — `7221bee`
+
+Primer paso del **flujo de caja**: una foto del saldo del negocio por moneda y consolidado en CUP. Spec y contrato propuesto al backend en [docs/flujo-de-caja.md](flujo-de-caja.md).
+
+**Frontend (Fase 1, visual):** página `/dashboard/business/currency-accounts` con tabla de saldos por moneda ([balances-table.tsx](../src/components/currency-account/balances-table.tsx)), **tarjeta de saldo consolidado** en CUP ([consolidated-balance-card.tsx](../src/components/currency-account/consolidated-balance-card.tsx)), **widget de caja** en el dashboard ([cash-balance-widget.tsx](../src/components/currency-account/cash-balance-widget.tsx)) y diálogo para **inicializar presupuestos** ([initialize-budgets-dialog.tsx](../src/components/currency-account/initialize-budgets-dialog.tsx)). Capa de datos en [src/lib/api/currency-account.ts](../src/lib/api/currency-account.ts), [src/hooks/use-currency-account.ts](../src/hooks/use-currency-account.ts), [src/lib/types/currency-account.ts](../src/lib/types/currency-account.ts) y la utilidad [src/lib/cash-flow.ts](../src/lib/cash-flow.ts).
+
+**Pendiente (roadmap, ver [flujo-de-caja.md](flujo-de-caja.md) y `ROADMAP.md`):** libro de movimientos de caja (`GET /currency-accounts/movements/{businessId}`), ajustes manuales (depósito/retiro/transferencia entre monedas) y flujo por período en base caja.
+
+### Detalle: Desactivación / reactivación de cuenta (feature 38) — `8b11178`, `829ad64`
+
+"Zona de peligro" en el perfil para darse de baja con **15 días de gracia** antes del borrado permanente. La tarjeta [deactivate-account-card.tsx](../src/components/account/deactivate-account-card.tsx) confirma con motivo opcional y checkbox, y envía `{ deletionReason }` (`1.22.3`, `829ad64`, renombrado desde el payload anterior). Tras desactivar, el usuario va a `/cuenta-desactivada` ([src/app/cuenta-desactivada/page.tsx](../src/app/cuenta-desactivada/page.tsx)), única ruta accesible.
+
+**Doble barrera (cookie rápida + verdad fresca):** el `middleware.ts` bloquea por la cookie `user_deactivated` (sin parpadeo) y el [ReactivationGuard](../src/components/auth/reactivation-guard.tsx) revalida contra `/auth/me` (`deactivatedAt`), sembrando o limpiando la cookie. Capa de datos en [src/hooks/use-user.ts](../src/hooks/use-user.ts), [src/lib/api/user.ts](../src/lib/api/user.ts), [src/lib/session.ts](../src/lib/session.ts) y validación en [src/lib/validations/user.ts](../src/lib/validations/user.ts).
+
+**Verificar en backend:** que `GET /auth/me` devuelva `deactivatedAt`, que exista el endpoint de reactivación dentro de la gracia y que el borrado definitivo se ejecute al expirar el plazo.
+
+### Detalle: Selección de plan self-service + trial Pro + reconciliación (feature 39) — `8311d4d`, `1b4a255`
+
+Reemplaza el flujo manual (redirección a WhatsApp) por uno self-service. El registro pasa a ser un **trial de 15 días con alcance Pro**; al expirar, el usuario elige **Básico** (1 negocio, sin equipo) o **Pro** (hasta 3 negocios, equipo, features Pro). **Principio: "conservar y bloquear, nunca borrar"** — el exceso se archiva y se restaura al volver a Pro. Contrato completo para backend en [docs/análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md) y comparativa en [docs/análisis-planes/comparativa-planes.md](análisis-planes/comparativa-planes.md).
+
+**Frontend completo:**
+- **Paywall de selección** `/seleccionar-plan` ([page.tsx](../src/app/seleccionar-plan/page.tsx)): elegir plan + periodo (mensual/anual) y llamar a `POST /plans/select` vía `selectPlan()` ([src/lib/api/plans.ts](../src/lib/api/plans.ts), [src/hooks/use-plans.ts](../src/hooks/use-plans.ts)). Datos de planes centralizados en [src/lib/plans-data.ts](../src/lib/plans-data.ts).
+- **Reconciliación** `/seleccionar-plan/reconciliar` ([page.tsx](../src/app/seleccionar-plan/reconciliar/page.tsx)): si al bajar a Básico hay más negocios activos que el tope del plan, el usuario elige cuál `keepBusinessId` conservar; el resto se archiva.
+- **Guards.** [PlanGuard](../src/components/auth/plan-guard.tsx) consulta `/auth/me`: si `expiredPlan`/`hasNeverHadPlan` → siembra cookie y redirige al paywall; si el plan está vigente, sincroniza el plan real a sessionStorage + cookie `user_plan_type` ([plan-session.ts](../src/lib/plan-session.ts)) y, si hay exceso de negocios para el plan (`getMaxBusinesses` en [pro-gates.ts](../src/lib/pro-gates.ts)), fuerza la reconciliación. El `middleware.ts` hace el bloqueo rápido por cookies (`user_plan_expired`, `user_needs_reconciliation`).
+- **Negocios archivados.** `Business` gana `status: "active" | "archived"` y `archivedReason`; el switcher ([business-switcher.tsx](../src/components/sidebar/business-switcher.tsx)) y el `business-context` separan activos vs archivados (solo lectura).
+
+**Pendiente (backend) — bloquea la promoción:** `POST /plans/select` transaccional (con `KEEP_BUSINESS_REQUIRED`), asignación automática del trial Pro al registrar, campos `status`/`archivedReason` en `GET /businesses/my-businesses`, suspensión de trabajadores e invitaciones al hacer downgrade, y **enforcement server-side** (límite de negocios, gestión de equipo solo Pro, escritura bloqueada en negocios `archived`). Marcadores `TODO(backend):` en el código; tabla de contratos y códigos de error en [backend-cambios.md](análisis-planes/backend-cambios.md).
+
+### Detalle: Stats del dashboard por moneda (feature 40) — `1b4a255`
+
+Las tarjetas de Ventas y Gastos del dashboard ([stats-card.tsx](../src/components/dashboard/stats-card.tsx)) dejaron de asumir una sola moneda (antes `Intl.NumberFormat` con `COP` hardcodeado). Ahora reciben `today`/`yesterday` como arrays `DashboardCurrencyTotal[]` ([src/lib/types/business.ts](../src/lib/types/business.ts)) y renderizan **una línea por moneda** con `formatMoney`, más un contador de transacciones (`totalTransactions`/`totalCount`). Si no hay datos, muestra `0` en la moneda base (CUP).
+
+### Detalle: `RouteGuard` cliente para rutas Pro/admin (feature 41) — `1b4a255`
+
+En el build estático (`output: "export"`) el `middleware.ts` **no se ejecuta**, así que el gateo de URL queda inerte en producción. [RouteGuard](../src/components/auth/route-guard.tsx) es la barrera real de cliente: redirige fuera de rutas Pro (`isProRoute`/`getProRedirect` de [pro-gates.ts](../src/lib/pro-gates.ts)) a usuarios no-Pro y fuera de `/dashboard/admin/*` a no-admins. Solo redirige cuando plan/rol ya están resueltos (evita expulsar durante la hidratación). El backend sigue siendo la autoridad (responde `403`); esto es UX para no mostrar páginas inoperables.
 
 ### Detalle: Alertas de stock bajo (feature Pro) — `3eaf9c3`, `22f6a12`, `b1e1a93`
 
@@ -342,7 +404,9 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
    - Endpoints de alertas de stock: `GET /businesses/:id/stock-alerts` + `PATCH .../stock-alert` ([docs/backend-alertas-stock.md](backend-alertas-stock.md)).
    - **Migración de categorías** a nivel de `BusinessProduct` y paginación de `GET /category` ([docs/category.md](category.md), feature 27).
    - **Decimales en `add-stock`**: confirmar que el backend persiste cantidades fraccionarias para unidades de peso/volumen (feature 30).
-   - **Multimoneda (feature 33)**: corregir el bug de conversión de pagos con base ≠ CUP ([docs/bug-conversion-pagos-multimoneda.md](bug-conversion-pagos-multimoneda.md)); aceptar `currency` en `POST/PATCH /expenses`; y definir/exponer la regla de delivery por negocio.
+   - **Multimoneda (feature 33)**: corregir el bug de conversión de pagos con base ≠ CUP ([docs/bug-conversion-pagos-multimoneda.md](bug-conversion-pagos-multimoneda.md)) y aceptar `currency` en `POST/PATCH /expenses`. (La regla de delivery por negocio ya quedó resuelta con `acceptsMessaging`, feature 35.)
+   - **Selección de plan self-service / trial Pro (feature 39)**: implementar `POST /plans/select` transaccional, asignación automática del trial Pro al registrar, `status`/`archivedReason` en `GET /businesses/my-businesses`, suspensión de trabajadores/invitaciones en downgrade y enforcement server-side ([docs/análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)).
+   - **Desactivación de cuenta (feature 38)**: confirmar `deactivatedAt` en `getMe`, endpoint de reactivación dentro de la gracia y borrado definitivo al expirar el plazo.
 2. **Crear PR `develop → main`** con los commits acumulados — la deuda de promoción sigue creciendo. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
 3. **Re-aplicar la reversión** de categorías globales cuando backend confirme el modelo (el diff está conservado en el historial). La reversión de "divisas" quedó superada por la Suite Multimoneda (feature 33) y ya no requiere re-aplicación.
 4. Continuar con Variante A del roadmap (rentabilidad, comparativas, métricas por worker).
