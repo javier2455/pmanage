@@ -40,6 +40,8 @@ export interface SaleWithProductAndBusiness {
   deliveryAddress?: string | null;
   deliveryContactPhone?: string | null;
   deliveryContactName?: string | null;
+  /** Precio de la mensajería. `null` cuando la venta no es a domicilio; `>= 0` en ventas `delivery`. */
+  deliveryFee?: number | null;
 }
 
 export interface CreateSaleItemProps {
@@ -82,6 +84,8 @@ export interface CreateSaleProps {
   deliveryAddress?: string;
   deliveryContactPhone?: string;
   deliveryContactName?: string;
+  /** Precio de la mensajería. `null` si no es venta a domicilio; `>= 0` en ventas `delivery`. */
+  deliveryFee?: number | null;
 }
 
 // --- Pagos (Fase 1) ---

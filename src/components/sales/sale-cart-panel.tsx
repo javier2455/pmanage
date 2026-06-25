@@ -25,6 +25,8 @@ export interface SaleDeliveryInfo {
   address: string
   contactPhone: string
   contactName: string
+  /** Precio de la mensajería, en la moneda de la venta. Cadena cruda del input (se parsea al enviar). */
+  fee: string
 }
 
 const SALE_TYPE_OPTIONS: { value: SaleType; label: string }[] = [
@@ -95,6 +97,13 @@ export function SaleCartPanel({
   const totalUnits = items.reduce((sum, i) => sum + i.quantity, 0)
   // Los precios viven en CUP; los mostramos en la moneda elegida (precioCUP / tasa).
   const toCurrency = (cupValue: number) => cupValue / (rate || 1)
+  // La tarifa se ingresa directamente en la moneda de la venta (no en CUP).
+  const parsedFee = parseDecimalInput(delivery.fee)
+  const deliveryFee =
+    saleType === "delivery" && !Number.isNaN(parsedFee) ? parsedFee : 0
+  // Subtotal de productos en la moneda elegida; el total suma la mensajería.
+  const productsTotal = toCurrency(total)
+  const grandTotal = productsTotal + deliveryFee
 
   return (
     <Card className={cn("flex h-fit flex-col", className)}>
@@ -327,6 +336,31 @@ export function SaleCartPanel({
                       disabled={isPending}
                     />
                   </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label
+                      htmlFor="delivery-fee"
+                      className="text-xs text-card-foreground"
+                    >
+                      Precio de la mensajería{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({currency})
+                      </span>
+                    </Label>
+                    <Input
+                      id="delivery-fee"
+                      type="text"
+                      inputMode="decimal"
+                      value={delivery.fee}
+                      onChange={(e) => {
+                        const parsed = parseDecimalInput(e.target.value)
+                        if (e.target.value === "" || !Number.isNaN(parsed)) {
+                          onDeliveryChange({ fee: e.target.value })
+                        }
+                      }}
+                      placeholder="0"
+                      disabled={isPending}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -348,6 +382,24 @@ export function SaleCartPanel({
               </Select>
             </div>
 
+            {/* Desglose: productos + mensajería (solo cuando hay tarifa) */}
+            {deliveryFee > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Productos</span>
+                  <span className="tabular-nums text-card-foreground">
+                    {formatMoney(productsTotal, currency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Mensajería</span>
+                  <span className="tabular-nums text-card-foreground">
+                    {formatMoney(deliveryFee, currency)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Total */}
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
@@ -357,7 +409,7 @@ export function SaleCartPanel({
                 </span>
               </div>
               <span className="text-xl font-bold tabular-nums text-card-foreground">
-                {formatMoney(toCurrency(total), currency)}
+                {formatMoney(grandTotal, currency)}
               </span>
             </div>
 

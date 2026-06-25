@@ -233,6 +233,16 @@ export default function DetailsDialog({
                     {data?.deliveryContactPhone || "--"}
                   </span>
                 </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    Precio de la mensajería
+                  </span>
+                  <span className="text-sm font-medium tabular-nums text-card-foreground">
+                    {data?.deliveryFee != null
+                      ? formatMoney(data.deliveryFee, currency)
+                      : "--"}
+                  </span>
+                </div>
               </div>
             )}
 

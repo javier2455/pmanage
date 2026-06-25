@@ -57,6 +57,7 @@ export default function CreateSalesPage() {
     address: "",
     contactPhone: "",
     contactName: "",
+    fee: "",
   })
   // Venta recién creada pendiente de cobro inline (flujo "Registrar venta y cobrar").
   const [createdSaleId, setCreatedSaleId] = useState<string | null>(null)
@@ -204,6 +205,8 @@ export default function CreateSalesPage() {
         ...(saleType === "delivery"
           ? {
               deliveryAddress: delivery.address.trim(),
+              // Precio de la mensajería en la moneda de la venta; vacío = 0.
+              deliveryFee: delivery.fee.trim() ? Number(delivery.fee) : 0,
               ...(delivery.contactName.trim()
                 ? { deliveryContactName: delivery.contactName.trim() }
                 : {}),
