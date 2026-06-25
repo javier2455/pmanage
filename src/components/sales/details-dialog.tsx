@@ -207,6 +207,35 @@ export default function DetailsDialog({
               </span>
             </div>
 
+            {/* Datos de entrega / mensajería (solo ventas a domicilio) */}
+            {data?.saleType === "delivery" && (
+              <div className="flex flex-col gap-2 border-b border-border py-4">
+                <span className="text-sm font-medium text-card-foreground">
+                  Mensajería
+                </span>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    Dirección
+                  </span>
+                  <span className="max-w-[60%] text-right text-sm font-medium text-card-foreground">
+                    {data?.deliveryAddress || "--"}
+                  </span>
+                </div>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-sm text-muted-foreground">Contacto</span>
+                  <span className="max-w-[60%] text-right text-sm font-medium text-card-foreground">
+                    {data?.deliveryContactName || "--"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-muted-foreground">Teléfono</span>
+                  <span className="text-sm font-medium tabular-nums text-card-foreground">
+                    {data?.deliveryContactPhone || "--"}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Razón de cancelación */}
             {data?.isCancelled && (
               <div className="flex items-center justify-between border-b border-border py-4">

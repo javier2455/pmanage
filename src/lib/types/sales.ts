@@ -35,6 +35,11 @@ export interface SaleWithProductAndBusiness {
   paymentStatus?: PaymentStatus;
   totalPaid?: string | number;
   saleType?: SaleType;
+  // Datos de entrega / mensajería (ventas `delivery`). El backend los devuelve
+  // en el detalle de la venta; mismo contrato que `CreateSaleProps`.
+  deliveryAddress?: string | null;
+  deliveryContactPhone?: string | null;
+  deliveryContactName?: string | null;
 }
 
 export interface CreateSaleItemProps {

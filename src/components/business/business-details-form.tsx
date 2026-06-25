@@ -100,19 +100,29 @@ export function BusinessDetailsForm() {
   const municipalities = municipalitiesData?.data ?? [];
 
   useEffect(() => {
-    if (!activeBusiness?.municipality || provinces.length === 0) return;
+    // El nombre del municipio sale del objeto anidado `municipality` que
+    // devuelve `GET /businesses/my-businesses`. Si el backend aún no lo incluye
+    // (ver docs/backend/my-businesses-municipality-relation.md), `municipality`
+    // llega null y tanto provincia como municipio quedan vacíos.
+    const mun = activeBusiness?.municipality;
+    if (!mun) return;
 
-    const mun = activeBusiness.municipality;
     setResolvedMunicipalityName(mun.name);
-    setSelectedProvinceId(mun.provinceId);
+    // `provinceId` se normaliza a string: el backend puede mandarlo como número
+    // y el catálogo de provincias usa `id` numérico.
+    const provinceId = String(mun.provinceId);
+    setSelectedProvinceId(provinceId);
 
-    const province = provinces.find((p) => String(p.id) === mun.provinceId);
+    if (provinces.length === 0) return;
+    const province = provinces.find((p) => String(p.id) === provinceId);
     if (province) setResolvedProvinceName(province.name);
   }, [activeBusiness?.municipality, provinces]);
 
   useEffect(() => {
     if (!selectedProvinceId || provinces.length === 0) return;
-    const province = provinces.find((p) => String(p.id) === selectedProvinceId);
+    const province = provinces.find(
+      (p) => String(p.id) === String(selectedProvinceId),
+    );
     if (province) setResolvedProvinceName(province.name);
   }, [selectedProvinceId, provinces]);
 

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -316,15 +317,13 @@ export function SaleCartPanel({
                         (opcional)
                       </span>
                     </Label>
-                    <Input
-                      id="delivery-phone"
-                      type="tel"
-                      inputMode="tel"
+                    <PhoneInput
                       value={delivery.contactPhone}
-                      onChange={(e) =>
-                        onDeliveryChange({ contactPhone: e.target.value })
+                      onChange={(value) =>
+                        onDeliveryChange({ contactPhone: value })
                       }
-                      placeholder="Ej: 5 1234567"
+                      defaultCountry="cu"
+                      placeholder="5555 5555"
                       disabled={isPending}
                     />
                   </div>
