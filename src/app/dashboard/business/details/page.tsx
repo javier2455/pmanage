@@ -1,4 +1,5 @@
-import { BusinessDetailsForm } from "@/components/business/business-details-form";
+import { Suspense } from "react";
+import { BusinessDetailsTabs } from "@/components/business/business-details-tabs";
 
 export default function BusinessDetailsPage() {
   return (
@@ -11,7 +12,9 @@ export default function BusinessDetailsPage() {
           Información del negocio actual
         </p>
       </div>
-      <BusinessDetailsForm />
+      <Suspense>
+        <BusinessDetailsTabs />
+      </Suspense>
     </div>
   );
 }

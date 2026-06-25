@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Clock, Loader2, Save } from "lucide-react";
 import { sileo } from "sileo";
@@ -151,17 +150,21 @@ export function BusinessScheduleCard({
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
+            {/* Lista densa: una fila por día (Lunes → Domingo). En móvil las
+                horas bajan a una segunda línea (flex-wrap). */}
+            <div className="divide-y divide-border rounded-lg border border-border">
               {fields.map((field, index) => {
                 const isClosed = watch(`days.${index}.isClosed`);
                 const dayErrors = errors.days?.[index];
+                const errorMessage =
+                  dayErrors?.openTime?.message ?? dayErrors?.closeTime?.message;
                 return (
                   <div
                     key={field.id}
-                    className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:gap-4"
+                    className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5"
                   >
                     {/* Día + toggle abierto/cerrado */}
-                    <div className="flex items-center gap-3 sm:w-44">
+                    <div className="flex w-full items-center gap-3 sm:w-40">
                       <Controller
                         control={control}
                         name={`days.${index}.isClosed`}
@@ -178,56 +181,35 @@ export function BusinessScheduleCard({
                       </span>
                     </div>
 
-                    {/* Horas o etiqueta "Cerrado" */}
+                    {/* Horas inline o etiqueta "Cerrado" */}
                     {isClosed ? (
-                      <span className="text-sm text-muted-foreground sm:flex-1">
+                      <span className="text-sm text-muted-foreground">
                         Cerrado
                       </span>
                     ) : (
-                      <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
-                        <div className="flex flex-col gap-1">
-                          <Label
-                            htmlFor={`open-${index}`}
-                            className="text-xs text-muted-foreground"
-                          >
-                            Apertura
-                          </Label>
-                          <Input
-                            id={`open-${index}`}
-                            type="time"
-                            className="w-full sm:w-36"
-                            aria-label={`Hora de apertura ${DAYS[index].label}`}
-                            aria-invalid={dayErrors?.openTime ? "true" : "false"}
-                            {...register(`days.${index}.openTime`)}
-                          />
-                          {dayErrors?.openTime && (
-                            <p className="text-xs text-destructive">
-                              {dayErrors.openTime.message}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <Label
-                            htmlFor={`close-${index}`}
-                            className="text-xs text-muted-foreground"
-                          >
-                            Cierre
-                          </Label>
-                          <Input
-                            id={`close-${index}`}
-                            type="time"
-                            className="w-full sm:w-36"
-                            aria-label={`Hora de cierre ${DAYS[index].label}`}
-                            aria-invalid={dayErrors?.closeTime ? "true" : "false"}
-                            {...register(`days.${index}.closeTime`)}
-                          />
-                          {dayErrors?.closeTime && (
-                            <p className="text-xs text-destructive">
-                              {dayErrors.closeTime.message}
-                            </p>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          className="w-32"
+                          aria-label={`Hora de apertura ${DAYS[index].label}`}
+                          aria-invalid={dayErrors?.openTime ? "true" : "false"}
+                          {...register(`days.${index}.openTime`)}
+                        />
+                        <span className="text-sm text-muted-foreground">–</span>
+                        <Input
+                          type="time"
+                          className="w-32"
+                          aria-label={`Hora de cierre ${DAYS[index].label}`}
+                          aria-invalid={dayErrors?.closeTime ? "true" : "false"}
+                          {...register(`days.${index}.closeTime`)}
+                        />
                       </div>
+                    )}
+
+                    {errorMessage && (
+                      <p className="basis-full text-xs text-destructive">
+                        {errorMessage}
+                      </p>
                     )}
                   </div>
                 );
