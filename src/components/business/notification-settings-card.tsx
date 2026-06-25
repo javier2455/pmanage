@@ -11,8 +11,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ProBadge } from "@/components/ui/pro-badge";
+import { PRO_STYLE } from "@/components/assign-plans/utils";
+import { cn } from "@/lib/utils";
 import {
   Bell,
+  Clock,
   Loader2,
   Mail,
   MessageCircle,
@@ -75,6 +78,11 @@ type ChannelConfig = {
   pro: boolean;
   /** Requiere un teléfono válido asociado al negocio. */
   requiresPhone: boolean;
+  /**
+   * Canal aún en desarrollo: se muestra deshabilitado con badge "Próximamente".
+   * Quitar este flag cuando la integración esté lista.
+   */
+  comingSoon?: boolean;
 };
 
 const CHANNELS: ChannelConfig[] = [
@@ -86,6 +94,8 @@ const CHANNELS: ChannelConfig[] = [
     icon: MessageCircle,
     pro: true,
     requiresPhone: true,
+    // WhatsApp todavía en desarrollo: deshabilitado temporalmente.
+    comingSoon: true,
   },
 ];
 
@@ -117,11 +127,11 @@ const CATEGORIES: NotificationCategory[] = [
     ],
   },
   {
-    title: "Stock",
+    title: "Inventario",
     items: [
       {
         key: "lowStock",
-        label: "Stock bajo",
+        label: "Inevntario bajo",
         description: "Aviso cuando un producto se acerca a su umbral.",
       },
       {
@@ -135,11 +145,11 @@ const CATEGORIES: NotificationCategory[] = [
 
 /** Categoría de delivery; solo se muestra si el negocio acepta delivery (`acceptsMessaging`). */
 const DELIVERY_CATEGORY: NotificationCategory = {
-  title: "Delivery",
+  title: "Pedidos",
   items: [
     {
       key: "deliveryOrder",
-      label: "Nueva orden de delivery",
+      label: "Nueva orden de pedido",
       description: "Aviso cuando llega un pedido a domicilio.",
     },
     {
@@ -213,6 +223,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   const showPhoneWarning = isProPlan && !hasValidPhone;
 
   function isChannelDisabled(channel: ChannelConfig): boolean {
+    if (channel.comingSoon) return true;
     if (channel.pro && !isProPlan) return true;
     if (channel.requiresPhone && !hasValidPhone) return true;
     return false;
@@ -265,9 +276,9 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Para recibir avisos por SMS o WhatsApp necesitas un número de
-                  teléfono válido asociado al negocio. Edita el negocio para
-                  añadirlo. Mientras tanto, esas vías permanecen deshabilitadas.
+                  Para recibir avisos por SMS necesitas un número de teléfono
+                  válido asociado al negocio. Edita el negocio para añadirlo.
+                  Mientras tanto, esa vía permanece deshabilitada.
                 </p>
               </div>
             )}
@@ -291,14 +302,22 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                       return (
                         <span
                           key={channel.key}
-                          className={`flex w-20 items-center justify-center gap-1 text-xs font-medium text-muted-foreground ${
-                            isChannelDisabled(channel) ? "opacity-50" : ""
-                          }`}
+                          className="flex w-20 flex-col items-center justify-center gap-1 text-xs font-medium text-foreground"
                         >
-                          <Icon className="h-3.5 w-3.5" />
-                          {channel.label}
-                          {channel.pro && !isProPlan && (
-                            <ProBadge className="ml-0" />
+                          <span className="flex items-center gap-1">
+                            <Icon className="h-3.5 w-3.5" />
+                            {channel.label}
+                            {channel.pro && !channel.comingSoon && !isProPlan && (
+                              <ProBadge className="ml-0" />
+                            )}
+                          </span>
+                          {channel.comingSoon && (
+                            <span
+                              className={cn(PRO_STYLE.className, "whitespace-nowrap")}
+                            >
+                              <Clock className="size-2.5 shrink-0" />
+                              Próximamente
+                            </span>
                           )}
                         </span>
                       );
