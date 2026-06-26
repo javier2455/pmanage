@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { DollarSign, Euro, CreditCard, RefreshCw } from "lucide-react"
+import { Plus, RefreshCw, X } from "lucide-react"
 import { sileo } from "sileo"
 import axios from "axios"
 import { Button } from "@/components/ui/button"
@@ -11,13 +11,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useCreateExchangeRateMutation, useUpdateExchangeRateMutation } from "@/hooks/use-exchange"
 import { exchangeRateSchema, ExchangeRateFormData } from "@/lib/validations/exchange-rate"
-import { ExchangeRateTypeOne } from "@/lib/types/exchange-rate"
+import { ExchangeRateTypeOne, ExchangeRatePayload } from "@/lib/types/exchange-rate"
+import {
+    EXCHANGE_CURRENCIES,
+    KNOWN_CURRENCY_CODES,
+    type ExchangeCurrencyCode,
+} from "@/lib/currency"
+import { CurrencyIcon } from "./currency-icons"
 
 interface ExchangeRateFormProps {
     businessId: string
     currentData: ExchangeRateTypeOne | null
+}
+
+const LABEL_BY_CODE = new Map(EXCHANGE_CURRENCIES.map((c) => [c.code, c.label]))
+
+/** Códigos con tasa > 0 en los datos actuales. */
+function activeCodesFromData(data: ExchangeRateTypeOne | null): ExchangeCurrencyCode[] {
+    if (!data) return []
+    return KNOWN_CURRENCY_CODES.filter((code) => Number(data[code]) > 0)
+}
+
+/** Valores del formulario derivados de los datos: solo monedas con tasa > 0. */
+function formValuesFromData(data: ExchangeRateTypeOne | null): ExchangeRateFormData {
+    const values: ExchangeRateFormData = {}
+    if (!data) return values
+    for (const code of KNOWN_CURRENCY_CODES) {
+        const value = Number(data[code])
+        if (value > 0) values[code] = value
+    }
+    return values
 }
 
 export default function ExchangeRateForm({ businessId, currentData }: ExchangeRateFormProps) {
@@ -28,56 +59,65 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
 
     const isPending = createMutation.isPending || updateMutation.isPending
 
+    const [activeCodes, setActiveCodes] = useState<ExchangeCurrencyCode[]>(() =>
+        activeCodesFromData(currentData),
+    )
+
     const {
         register,
         handleSubmit,
         reset,
+        setValue,
         setError,
+        clearErrors,
         formState: { errors },
     } = useForm<ExchangeRateFormData>({
         resolver: zodResolver(exchangeRateSchema),
-        defaultValues: {
-            USD: undefined,
-            EURO: undefined,
-            CUP_TRANSFERENCIA: undefined,
-        },
+        defaultValues: formValuesFromData(currentData),
     })
 
-    useEffect(() => {
-        if (!currentData) return
-        reset({
-            USD: currentData.USD,
-            EURO: currentData.EURO,
-            CUP_TRANSFERENCIA: currentData.CUP_TRANSFERENCIA,
-        })
-    }, [currentData, reset])
+    const inactiveCodes = KNOWN_CURRENCY_CODES.filter((code) => !activeCodes.includes(code))
+
+    function addCurrency(code: ExchangeCurrencyCode) {
+        setActiveCodes((prev) => (prev.includes(code) ? prev : [...prev, code]))
+    }
+
+    function removeCurrency(code: ExchangeCurrencyCode) {
+        setActiveCodes((prev) => prev.filter((c) => c !== code))
+        setValue(code, undefined)
+        clearErrors(code)
+    }
 
     async function onSubmit(formData: ExchangeRateFormData) {
+        // Construir payload con las 10 monedas: activas con su valor, el resto en 0
+        // (así las quitadas dejan de estar disponibles en el sistema).
+        const payload: Omit<ExchangeRatePayload, "idbusiness"> = {}
+        let hasError = false
+        for (const code of KNOWN_CURRENCY_CODES) {
+            if (activeCodes.includes(code)) {
+                const value = formData[code]
+                if (value == null || !(value > 0)) {
+                    setError(code, { message: "Ingresa un valor mayor a 0" })
+                    hasError = true
+                    continue
+                }
+                payload[code] = value
+            } else {
+                payload[code] = 0
+            }
+        }
+        if (hasError) return
+
         try {
             let response
             if (isEditing) {
-                response = await updateMutation.mutateAsync({
-                    businessId,
-                    payload: {
-                        USD: formData.USD,
-                        EURO: formData.EURO,
-                        CUP_TRANSFERENCIA: formData.CUP_TRANSFERENCIA,
-                    },
-                })
+                response = await updateMutation.mutateAsync({ businessId, payload })
             } else {
-                response = await createMutation.mutateAsync({
-                    idbusiness: businessId,
-                    USD: formData.USD,
-                    EURO: formData.EURO,
-                    CUP_TRANSFERENCIA: formData.CUP_TRANSFERENCIA,
-                })
+                response = await createMutation.mutateAsync({ idbusiness: businessId, ...payload })
             }
             if (response?.data) {
-                reset({
-                    USD: response.data.USD ?? undefined,
-                    EURO: response.data.EURO ?? undefined,
-                    CUP_TRANSFERENCIA: response.data.CUP_TRANSFERENCIA ?? undefined,
-                })
+                reset(formValuesFromData(response.data))
+                setActiveCodes(activeCodesFromData(response.data))
             }
             sileo.success({
                 title: "Tasas actualizadas correctamente",
@@ -103,91 +143,84 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-xl font-bold">Actualizar tasas</CardTitle>
+                <CardTitle className="text-xl font-bold">Monedas del negocio</CardTitle>
                 <CardDescription>
-                    Modifica los valores y guarda los cambios para actualizar las tasas vigentes.
+                    Selecciona las monedas que utilizas, asígnales su tasa en CUP y guarda los cambios.
+                    Las monedas que agregues quedarán disponibles para ventas, gastos e inventario.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-                    <div className="grid gap-6 sm:grid-cols-3">
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="usd" className="text-card-foreground">USD a CUP</Label>
-                            <InputGroup>
-                                <InputGroupAddon>
-                                    <DollarSign className="size-4" />
-                                </InputGroupAddon>
-                                <InputGroupInput
-                                    id="usd"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0.00"
-                                    aria-invalid={errors.USD ? "true" : "false"}
-                                    {...register("USD", { valueAsNumber: true })}
-                                />
-                            </InputGroup>
-                            {currentData?.USD != null && (
-                                <p className="text-xs text-muted-foreground">
-                                    Valor actual: {currentData.USD} CUP
-                                </p>
-                            )}
-                            {errors.USD && (
-                                <p className="text-xs text-destructive">{errors.USD.message}</p>
-                            )}
+                    {activeCodes.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                            Aún no has agregado monedas. Usa el botón &quot;Agregar moneda&quot; para empezar.
+                        </p>
+                    ) : (
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {activeCodes.map((code) => {
+                                const currentValue = currentData ? Number(currentData[code]) : 0
+                                return (
+                                    <div key={code} className="flex flex-col gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <Label htmlFor={code} className="text-card-foreground">
+                                                {LABEL_BY_CODE.get(code) ?? code} a CUP
+                                            </Label>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-6 text-muted-foreground hover:text-destructive"
+                                                onClick={() => removeCurrency(code)}
+                                                aria-label={`Quitar ${LABEL_BY_CODE.get(code) ?? code}`}
+                                            >
+                                                <X className="size-4" />
+                                            </Button>
+                                        </div>
+                                        <InputGroup>
+                                            <InputGroupAddon>
+                                                <CurrencyIcon code={code} className="size-4" />
+                                            </InputGroupAddon>
+                                            <InputGroupInput
+                                                id={code}
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                placeholder="0.00"
+                                                aria-invalid={errors[code] ? "true" : "false"}
+                                                {...register(code, { valueAsNumber: true })}
+                                            />
+                                        </InputGroup>
+                                        {currentValue > 0 && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Valor actual: {currentValue} CUP
+                                            </p>
+                                        )}
+                                        {errors[code] && (
+                                            <p className="text-xs text-destructive">{errors[code]?.message}</p>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
+                    )}
 
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="euro" className="text-card-foreground">EUR a CUP</Label>
-                            <InputGroup>
-                                <InputGroupAddon>
-                                    <Euro className="size-4" />
-                                </InputGroupAddon>
-                                <InputGroupInput
-                                    id="euro"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0.00"
-                                    aria-invalid={errors.EURO ? "true" : "false"}
-                                    {...register("EURO", { valueAsNumber: true })}
-                                />
-                            </InputGroup>
-                            {currentData?.EURO != null && (
-                                <p className="text-xs text-muted-foreground">
-                                    Valor actual: {currentData.EURO} CUP
-                                </p>
-                            )}
-                            {errors.EURO && (
-                                <p className="text-xs text-destructive">{errors.EURO.message}</p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="transferencia" className="text-card-foreground">Transferencia a CUP</Label>
-                            <InputGroup>
-                                <InputGroupAddon>
-                                    <CreditCard className="size-4" />
-                                </InputGroupAddon>
-                                <InputGroupInput
-                                    id="transferencia"
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    placeholder="0.00"
-                                    aria-invalid={errors.CUP_TRANSFERENCIA ? "true" : "false"}
-                                    {...register("CUP_TRANSFERENCIA", { valueAsNumber: true })}
-                                />
-                            </InputGroup>
-                            {currentData?.CUP_TRANSFERENCIA != null && (
-                                <p className="text-xs text-muted-foreground">
-                                    Valor actual: {currentData.CUP_TRANSFERENCIA} CUP
-                                </p>
-                            )}
-                            {errors.CUP_TRANSFERENCIA && (
-                                <p className="text-xs text-destructive">{errors.CUP_TRANSFERENCIA.message}</p>
-                            )}
-                        </div>
+                    <div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button type="button" variant="outline" disabled={inactiveCodes.length === 0}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Agregar moneda
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                {inactiveCodes.map((code) => (
+                                    <DropdownMenuItem key={code} onSelect={() => addCurrency(code)}>
+                                        <CurrencyIcon code={code} className="mr-2 size-4" />
+                                        {LABEL_BY_CODE.get(code) ?? code}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     <Separator />

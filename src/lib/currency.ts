@@ -11,13 +11,16 @@
 export const BASE_CURRENCY = "CUP";
 
 /**
- * Códigos de moneda "reales" que pueden venir como columnas en MonetaryExchange.
- * Excluimos `CUP_TRANSFERENCIA` y `CLASICA`: son variantes de CUP, no monedas de
- * pago independientes.
+ * Códigos de moneda que pueden venir como columnas en MonetaryExchange.
+ * El usuario activa las que use dándoles una tasa > 0; las que queden en 0 no se
+ * consideran operables. `CUP_TRANSFERENCIA` y `CLASICA` se tratan como monedas
+ * más (decisión de producto), no como variantes ocultas de CUP.
  */
-const KNOWN_CURRENCY_CODES = [
+export const KNOWN_CURRENCY_CODES = [
   "USD",
   "EURO",
+  "CUP_TRANSFERENCIA",
+  "CLASICA",
   "MLC",
   "CAD",
   "GBP",
@@ -25,6 +28,22 @@ const KNOWN_CURRENCY_CODES = [
   "MXN",
   "JPY",
 ] as const;
+
+export type ExchangeCurrencyCode = (typeof KNOWN_CURRENCY_CODES)[number];
+
+/** Metadata de presentación de cada moneda configurable en MonetaryExchange. */
+export const EXCHANGE_CURRENCIES: { code: ExchangeCurrencyCode; label: string }[] = [
+  { code: "USD", label: "Dólar estadounidense" },
+  { code: "EURO", label: "Euro" },
+  { code: "CUP_TRANSFERENCIA", label: "CUP Transferencia" },
+  { code: "CLASICA", label: "Tarjeta Clásica" },
+  { code: "MLC", label: "MLC" },
+  { code: "CAD", label: "Dólar canadiense" },
+  { code: "GBP", label: "Libra esterlina" },
+  { code: "CHF", label: "Franco suizo" },
+  { code: "MXN", label: "Peso mexicano" },
+  { code: "JPY", label: "Yen japonés" },
+];
 
 /** Objeto de tasas tolerante: valores pueden venir como número o string. */
 export type ExchangeRateLike = Record<string, unknown> | null | undefined;

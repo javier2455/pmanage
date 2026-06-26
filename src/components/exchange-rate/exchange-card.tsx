@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { DollarSign, Euro, CreditCard } from 'lucide-react'
+import { CurrencyIcon } from './currency-icons'
 
 interface ExchangeCardProps {
     title: string
@@ -16,9 +16,7 @@ export default function ExchangeCard({ title, value, currency }: ExchangeCardPro
                     {title}
                 </CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                    {currency === 'USD' && <DollarSign className="h-4 w-4 text-primary" />}
-                    {currency === 'EUR' && <Euro className="h-4 w-4 text-primary" />}
-                    {currency === 'CUP_TRANSFERENCIA' && <CreditCard className="h-4 w-4 text-primary" />}
+                    <CurrencyIcon code={currency} className="h-4 w-4 text-primary" />
                 </div>
             </CardHeader>
             <CardContent>
@@ -28,9 +26,6 @@ export default function ExchangeCard({ title, value, currency }: ExchangeCardPro
                     </span>
                     <span className="text-sm text-muted-foreground">{'CUP'}</span>
                 </div>
-                {/* <p className="mt-1 text-xs text-muted-foreground">
-                    {'1'} {currency} = {value} {'CUP'}
-                </p> */}
             </CardContent>
         </Card>
     )
