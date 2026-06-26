@@ -81,6 +81,12 @@ export type CreateProductInBusinessProps = {
      * para previsualizar el costo convertido.
      */
     exchangeRateApplied?: number;
+    /**
+     * Si es `true`, el backend crea un gasto de "Reposición de stock"
+     * (`entryPrice × stock`, en la moneda original) de forma atómica con la
+     * creación del producto. Por defecto `false`.
+     */
+    registerAsExpense?: boolean;
 };
 
 export type EditProductProps = {

@@ -57,7 +57,7 @@ export async function getProductInventoryHistory({
 }
 
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
-    const { quantity, entryPrice, description, providerId, currency, exchangeRateApplied } =
+    const { quantity, entryPrice, description, providerId, currency, exchangeRateApplied, registerAsExpense } =
         credentials;
     const { data } = await apiClient.post(
         inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId),
@@ -66,6 +66,9 @@ export async function addStock(credentials: AddStockToProductProps): Promise<{ m
             entryPrice,
             description,
             ...(providerId ? { providerId } : {}),
+            // Auto-registro del gasto de reposición de stock. Solo se envía si el
+            // usuario lo marcó; el backend valida `entryPrice` y `quantity` > 0.
+            ...(registerAsExpense ? { registerAsExpense: true } : {}),
             // Multimoneda: solo si el costo del lote se ingresó en moneda distinta a CUP.
             // El backend convierte `entryPrice × exchangeRateApplied` a CUP.
             ...(currency && currency !== "CUP"

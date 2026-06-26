@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -94,6 +95,7 @@ export function UpdateStockForm() {
       description: "",
       providerId: null,
       currency: BASE_CURRENCY,
+      registerAsExpense: false,
     },
   })
 
@@ -120,6 +122,7 @@ export function UpdateStockForm() {
         currency: selectedCurrency,
         exchangeRateApplied:
           selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
+        registerAsExpense: data.registerAsExpense,
       })
       if (response) {
         sileo.success({
@@ -128,6 +131,20 @@ export function UpdateStockForm() {
             description: "text-white/90! text-[15px]!",
           }, description: "El stock se ha actualizado correctamente"
         });
+
+        // Confirmación adicional del gasto auto-registrado (en la moneda original).
+        if (data.registerAsExpense) {
+          const expenseAmount = (data.entryPrice * newStockNum).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+          sileo.success({
+            title: "Gasto registrado", fill: '', styles: {
+              title: "text-white! text-[16px]! font-bold!",
+              description: "text-white/90! text-[15px]!",
+            }, description: `${expenseAmount} ${selectedCurrency} en Reposición de stock`
+          });
+        }
       }
       reset()
       setSelectedProduct(null)
@@ -342,6 +359,35 @@ export function UpdateStockForm() {
                   />
                 )}
               />
+
+              {/* Registrar la entrada como gasto de reposición de stock */}
+              <div className="flex items-start gap-2 sm:col-span-2">
+                <Controller
+                  control={control}
+                  name="registerAsExpense"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="register-as-expense"
+                      checked={!!field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      disabled={!selectedProduct}
+                      className="mt-0.5"
+                    />
+                  )}
+                />
+                <div className="flex flex-col gap-1">
+                  <Label
+                    htmlFor="register-as-expense"
+                    className="cursor-pointer text-card-foreground"
+                  >
+                    Registrar como gasto de reposición de stock
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Crea automáticamente un gasto en la categoría «Reposición de
+                    stock» por el costo de entrada × cantidad.
+                  </p>
+                </div>
+              </div>
 
               {/* New stock input */}
               <div className="flex flex-col gap-2 w-full">

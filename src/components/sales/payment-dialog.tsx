@@ -44,16 +44,11 @@ import type { PaymentMethod, RegistrarPagoItem } from "@/lib/types/sales";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { PaymentStatusBadge } from "./payment-status-badge";
 
-const METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
-  { value: "cash", label: "Efectivo" },
-  { value: "transfer", label: "Transferencia" },
-  { value: "card", label: "Tarjeta" },
-  { value: "crypto", label: "Cripto" },
-];
-
 interface PaymentRow {
   moneda: string;
   monto: string;
+  // El método ya no se elige en la UI; se envía `"cash"` por defecto porque el
+  // backend aún lo requiere en el payload (ver RegistrarPagoItem).
   metodo: PaymentMethod;
   referencia: string;
 }
@@ -364,30 +359,7 @@ export function PaymentDialog({
                         />
                       </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs text-muted-foreground">
-                          Método
-                        </Label>
-                        <Select
-                          value={row.metodo}
-                          onValueChange={(v) =>
-                            updateRow(index, { metodo: v as PaymentMethod })
-                          }
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {METHOD_OPTIONS.map((m) => (
-                              <SelectItem key={m.value} value={m.value}>
-                                {m.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
+                      <div className="col-span-2 flex flex-col gap-1.5">
                         <Label className="text-xs text-muted-foreground">
                           Referencia
                         </Label>

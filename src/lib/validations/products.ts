@@ -45,6 +45,10 @@ export const assignProductToBusinessSchema = createProductInBusinessSchema
     // por eso no validamos contra una lista aquí. `exchangeRateApplied` se
     // computa en el submit, no es campo del formulario. Ver docs/multimoneda-productos.md.
     currency: z.string().optional(),
+    // Cuando es `true`, el backend crea además un gasto de "Reposición de stock"
+    // por `entryPrice × stock` en la moneda original. `entryPrice` y `stock` ya son
+    // requeridos (`min(1)`), así que la validación condicional del backend se cumple.
+    registerAsExpense: z.boolean().optional(),
   });
 
 export const editProductSchema = z.object({

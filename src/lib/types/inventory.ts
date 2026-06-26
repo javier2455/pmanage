@@ -19,6 +19,12 @@ export type AddStockToProductProps = {
      * `MonetaryExchange`. El frontend envía la misma tasa que usó para el preview.
      */
     exchangeRateApplied?: number;
+    /**
+     * Si es `true`, el backend crea un gasto de "Reposición de stock"
+     * (`entryPrice × quantity`, en la moneda original) de forma atómica con la
+     * entrada de stock. Por defecto `false`.
+     */
+    registerAsExpense?: boolean;
 }
 
 export interface InventoryMeta {

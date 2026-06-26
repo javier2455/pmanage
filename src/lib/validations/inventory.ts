@@ -31,6 +31,10 @@ export function makeInventoryUpdateStockSchema(allowDecimals = false) {
     // Moneda del costo del lote. El selector solo ofrece monedas con tasa válida;
     // `exchangeRateApplied` se computa en el submit. Ver docs/multimoneda-productos.md.
     currency: z.string().optional(),
+    // Cuando es `true`, el backend crea además un gasto de "Reposición de stock"
+    // por `entryPrice × quantity` en la moneda original. `entryPrice` y `quantity`
+    // ya son requeridos, así que la validación condicional del backend se cumple.
+    registerAsExpense: z.boolean().optional(),
   });
 }
 

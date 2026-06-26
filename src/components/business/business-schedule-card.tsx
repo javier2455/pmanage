@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Clock, Loader2, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { sileo } from "sileo";
 import {
   useBusinessSchedule,
@@ -150,9 +151,10 @@ export function BusinessScheduleCard({
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            {/* Lista densa: una fila por día (Lunes → Domingo). En móvil las
-                horas bajan a una segunda línea (flex-wrap). */}
-            <div className="divide-y divide-border rounded-lg border border-border">
+            {/* Grid de cards por día (Lunes → Domingo). 1 col en móvil, 2 en
+                tablet y 4 en escritorio. Los días cerrados se atenúan para que
+                los activos resalten. */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {fields.map((field, index) => {
                 const isClosed = watch(`days.${index}.isClosed`);
                 const dayErrors = errors.days?.[index];
@@ -161,10 +163,16 @@ export function BusinessScheduleCard({
                 return (
                   <div
                     key={field.id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5"
+                    className={cn(
+                      "flex flex-col gap-3 rounded-lg border p-3 transition-colors",
+                      isClosed ? "border-border bg-muted/30" : "border-border bg-card",
+                    )}
                   >
                     {/* Día + toggle abierto/cerrado */}
-                    <div className="flex w-full items-center gap-3 sm:w-40">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-card-foreground">
+                        {DAYS[index].label}
+                      </span>
                       <Controller
                         control={control}
                         name={`days.${index}.isClosed`}
@@ -176,40 +184,34 @@ export function BusinessScheduleCard({
                           />
                         )}
                       />
-                      <span className="text-sm font-medium text-card-foreground">
-                        {DAYS[index].label}
-                      </span>
                     </div>
 
-                    {/* Horas inline o etiqueta "Cerrado" */}
+                    {/* Horas o etiqueta "Cerrado" */}
                     {isClosed ? (
-                      <span className="text-sm text-muted-foreground">
-                        Cerrado
-                      </span>
+                      <span className="text-sm text-muted-foreground">Cerrado</span>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="time"
-                          className="w-32"
-                          aria-label={`Hora de apertura ${DAYS[index].label}`}
-                          aria-invalid={dayErrors?.openTime ? "true" : "false"}
-                          {...register(`days.${index}.openTime`)}
-                        />
-                        <span className="text-sm text-muted-foreground">–</span>
-                        <Input
-                          type="time"
-                          className="w-32"
-                          aria-label={`Hora de cierre ${DAYS[index].label}`}
-                          aria-invalid={dayErrors?.closeTime ? "true" : "false"}
-                          {...register(`days.${index}.closeTime`)}
-                        />
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            className="min-w-0 flex-1"
+                            aria-label={`Hora de apertura ${DAYS[index].label}`}
+                            aria-invalid={dayErrors?.openTime ? "true" : "false"}
+                            {...register(`days.${index}.openTime`)}
+                          />
+                          <span className="text-sm text-muted-foreground">–</span>
+                          <Input
+                            type="time"
+                            className="min-w-0 flex-1"
+                            aria-label={`Hora de cierre ${DAYS[index].label}`}
+                            aria-invalid={dayErrors?.closeTime ? "true" : "false"}
+                            {...register(`days.${index}.closeTime`)}
+                          />
+                        </div>
+                        {errorMessage && (
+                          <p className="text-xs text-destructive">{errorMessage}</p>
+                        )}
                       </div>
-                    )}
-
-                    {errorMessage && (
-                      <p className="basis-full text-xs text-destructive">
-                        {errorMessage}
-                      </p>
                     )}
                   </div>
                 );
