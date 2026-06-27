@@ -1,6 +1,9 @@
 import type { Suite } from "./harness";
 import { cashFlowSuite } from "./suites/cash-flow.suite";
+import { currencyErrorsSuite } from "./suites/currency-errors.suite";
 import { currencySuite } from "./suites/currency.suite";
+import { formatClosingCurrencySuite } from "./suites/format-closing-currency.suite";
+import { iconMapSuite } from "./suites/icon-map.suite";
 import { navigationAccessSuite } from "./suites/navigation-access.suite";
 import { normalizationSuite } from "./suites/normalization.suite";
 import { phoneSuite } from "./suites/phone.suite";
@@ -27,4 +30,7 @@ export const allSuites: Suite[] = [
   validationsSuite,
   phoneSuite,
   normalizationSuite,
+  formatClosingCurrencySuite,
+  currencyErrorsSuite,
+  iconMapSuite,
 ];
