@@ -4,44 +4,46 @@ RewriteEngine On
 # Never rewrite paths that already contain the placeholder
 RewriteRule __dynamic__ - [L]
 
-# Dynamic route rewrites.
-# Substitution targets are prefixed with /dev/ because this .htaccess
-# is deployed inside /dev/ on cPanel (see .github/workflows/deploy-workflow.yml).
-# For the main branch (deployed at root) those targets would be just /...
+# Dynamic route rewrites:
 # RewriteCond !-f and !-d ensures real files/directories (like Next.js
 # internal files __next.* or named pages like /create) are never rewritten.
 
-# Workers: /dev/dashboard/business/workers/{workerId}/edit
+# Workers: /dashboard/business/workers/{workerId}/edit
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dashboard/business/workers/([^/]+)/edit/?$ /dev/dashboard/business/workers/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/workers/([^/]+)/edit/?$ /dashboard/business/workers/__dynamic__/edit/ [L]
 
-# Workers: /dev/dashboard/business/workers/{workerId}
+# Workers: /dashboard/business/workers/{workerId}
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dashboard/business/workers/([^/]+)/?$ /dev/dashboard/business/workers/__dynamic__/ [L]
+RewriteRule ^dashboard/business/workers/([^/]+)/?$ /dashboard/business/workers/__dynamic__/ [L]
 
-# Products catalog: /dev/dashboard/business/products/catalog/{productId}/edit
+# Products catalog: /dashboard/business/products/catalog/{productId}/edit
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dashboard/business/products/catalog/([^/]+)/edit/?$ /dev/dashboard/business/products/catalog/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/products/catalog/([^/]+)/edit/?$ /dashboard/business/products/catalog/__dynamic__/edit/ [L]
 
-# Products: /dev/dashboard/business/products/{businessProductId}/edit
+# Products: /dashboard/business/products/{businessProductId}/edit
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dashboard/business/products/([^/]+)/edit/?$ /dev/dashboard/business/products/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/products/([^/]+)/edit/?$ /dashboard/business/products/__dynamic__/edit/ [L]
 
-# Expenses: /dev/dashboard/business/expenses/{expenseId}/edit
+# Providers: /dashboard/business/providers/{providerId}/edit
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dashboard/business/expenses/([^/]+)/edit/?$ /dev/dashboard/business/expenses/__dynamic__/edit/ [L]
+RewriteRule ^dashboard/business/providers/([^/]+)/edit/?$ /dashboard/business/providers/__dynamic__/edit/ [L]
 
-# Reset password: /dev/reset-password/{token}
+# Expenses: /dashboard/business/expenses/{expenseId}/edit
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^reset-password/([^/]+)/?$ /dev/reset-password/__dynamic__/ [L]
+RewriteRule ^dashboard/business/expenses/([^/]+)/edit/?$ /dashboard/business/expenses/__dynamic__/edit/ [L]
 
-# SPA fallback: serve /dev/index.html for any other non-existing path
+# Reset password: /reset-password/{token}
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ /dev/index.html [L]
+RewriteRule ^reset-password/([^/]+)/?$ /reset-password/__dynamic__/ [L]
+
+# SPA fallback: serve index.html for any other non-existing path
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]

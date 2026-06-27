@@ -9,10 +9,10 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.24.0-alpha` (rama `develop`) |
-| **Versión en producción** | `1.0.0` (rama `main`) |
-| **Último commit** | `1b4a255` — 2026-06-24 |
-| **PR `develop → main`** | **No creado** — deuda de promoción acumulada (sigue creciendo) |
+| **Versión actual** | `1.28.1-alpha` (rama `develop`) → `2.0.0` en `release/v2.0.0` |
+| **Versión en producción** | `1.0.0` (rama `main`) — pendiente de promover a `2.0.0` |
+| **Último commit** | `5bc8fe8` — 2026-06-27 |
+| **PR `develop → main`** | **En preparación** — rama `release/v2.0.0` lista (ver [Promoción a producción v2](#promoción-a-producción-v2)) |
 | **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId`); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27); (4) **multimoneda — backend**: bug de conversión de pagos con base ≠ CUP y `currency` no aceptado en gastos (ver feature 33); (5) **selección de plan self-service / trial Pro**: contrato `POST /plans/select`, campos `Business.status`/`archivedReason`, suspensión de trabajadores y enforcement server-side aún por entregar (ver feature 39 y [análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)) |
 
 ---
@@ -391,6 +391,41 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
 | Sin tests automatizados (ni unitarios ni e2e) | Regresiones no detectadas en CI | Alta |
 | Sin Prettier configurado | Inconsistencia de estilo entre archivos | Baja |
 | Query keys no centralizados en un archivo de constantes | Renombrar una key requiere buscar en todos los hooks | Baja |
+
+---
+
+## Promoción a producción v2
+
+Runbook para liberar la v2 (`develop` → `main`). Detalle de build/estático en
+[docs/conversion-a-estatico.md](conversion-a-estatico.md) y [docs/extra/build-output-config.md](extra/build-output-config.md).
+
+**Lo único que cambia para producción es `public/.htaccess`.** `next.config.ts` y el
+workflow ya son branch-aware: el `basePath`/`assetPrefix` se leen de
+`NEXT_PUBLIC_BASE_PATH`, que **solo** se inyecta en el job `deploy-dev`. En `main` la
+variable no existe → build a la raíz, sin `/dev`. No hay que tocarlos.
+
+| Archivo | ¿Cambia para main? |
+|---|---|
+| `next.config.ts` | ❌ No — branch-aware vía `NEXT_PUBLIC_BASE_PATH` |
+| `.github/workflows/deploy-workflow.yml` | ❌ No — el job `deploy-main` ya es correcto |
+| **`public/.htaccess`** | ✅ **Sí — sin prefijos `/dev/`** (targets a `/...` y fallback a `/index.html`) |
+| `package.json` | ✅ Sí — versión a `2.0.0` |
+
+**Rutas dinámicas y `.htaccess` (verificado):** las reglas cubren workers, products,
+products/catalog, providers, expenses y reset-password. `categories/[kind]` **no**
+necesita regla porque usa `generateStaticParams` con valores reales (`expenses`,
+`products`) y genera carpetas físicas en `out/`. Al añadir cualquier `[param]` nuevo,
+hay que añadir su regla aquí (sin `/dev/` en main, con `/dev/` en develop).
+
+**Pasos:**
+
+1. `release/v2.0.0` desde `develop`: `.htaccess` sin `/dev/` + regla de `providers`, y `package.json` a `2.0.0`. *(Hecho en la rama.)*
+2. Build de producción local **sin** la env var (`pnpm run build`) y confirmar que `out/index.html` referencia `/_next/...` (no `/dev/_next/...`); `pnpm test` + `tsc --noEmit` en verde.
+3. PR `release/v2.0.0 → main`. Al resolver, asegurar que gana el `.htaccess` **sin** `/dev/`.
+4. Push a `main` → job `deploy-main` (build a la raíz, preserva `.htaccess`/`api`/`dev`/`.well-known`, sube `out/`).
+5. **Verificar el `.htaccess` de la raíz por SSH** en `~/psearch.dveloxsoft.com/`: el clean preserva el remoto y el `scp` de `out/**` puede no transferir dotfiles; confirmar que es el nuevo y completo. Subirlo a mano si hace falta.
+6. Smoke test en `https://psearch.dveloxsoft.com/`: chunks `/_next/...` con `Content-Type: application/javascript`; recarga dura sobre rutas dinámicas (no 404); login → venta multimoneda → cancelación parcial → gating Pro. Confirmar que `/dev/` sigue intacto.
+7. Mover el bloque de features de `sdd-develop.md` a `sdd-main.md` y actualizar este snapshot.
 
 ---
 
