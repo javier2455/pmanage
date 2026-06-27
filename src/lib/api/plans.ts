@@ -1,6 +1,6 @@
 import apiClient from "@/lib/axios";
 import { plansRoutes } from "../routes/plans";
-import { AssignPlanPayload, AssignPlanResponse, CreateTypePlanPayload, PlanHistoryResponse } from "../types/plans";
+import { AssignPlanPayload, AssignPlanResponse, CreateTypePlanPayload, PlanHistoryResponse, SelectPlanPayload, SelectPlanResponse } from "../types/plans";
 
 export async function getActivePlan() {
     const { data } = await apiClient.get(plansRoutes.getActivePlan);
@@ -14,6 +14,16 @@ export async function getAllPlans() {
 
 export async function assignPlan(payload: AssignPlanPayload): Promise<AssignPlanResponse> {
     const { data } = await apiClient.post(plansRoutes.assignPlan, payload);
+    return data;
+}
+
+/**
+ * Selección self-service de plan al terminar el trial (Básico o Pro).
+ * Para bajar a Básico con varios negocios, `keepBusinessId` indica cuál se
+ * conserva; el backend archiva el resto y suspende trabajadores/invitaciones.
+ */
+export async function selectPlan(payload: SelectPlanPayload): Promise<SelectPlanResponse> {
+    const { data } = await apiClient.post(plansRoutes.selectPlan, payload);
     return data;
 }
 

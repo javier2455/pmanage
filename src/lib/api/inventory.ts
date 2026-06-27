@@ -3,6 +3,7 @@ import { inventoryRoutes } from "../routes/inventory";
 import {
     AddStockToProductProps,
     CurrentInventoryResponse,
+    InventoryHistoryInclude,
     InventoryHistoryResponse,
 } from "../types/inventory";
 
@@ -10,6 +11,11 @@ interface PaginatedByBusiness {
     businessId: string;
     page?: number;
     limit?: number;
+}
+
+interface ProductInventoryHistoryParams extends PaginatedByBusiness {
+    productId: string;
+    include?: InventoryHistoryInclude;
 }
 
 export async function getCurrentInventoryByBusinessId({
@@ -36,11 +42,42 @@ export async function getInventoryHistoryByBusinessId({
     return data;
 }
 
+export async function getProductInventoryHistory({
+    businessId,
+    productId,
+    page,
+    limit,
+    include,
+}: ProductInventoryHistoryParams): Promise<InventoryHistoryResponse> {
+    const { data } = await apiClient.get<InventoryHistoryResponse>(
+        inventoryRoutes.getProductInventoryHistory(businessId, productId),
+        { params: { page, limit, ...(include ? { include } : {}) } },
+    );
+    return data;
+}
+
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
-    const { quantity, entryPrice, description } = credentials;
+    const { quantity, entryPrice, description, providerId, currency, exchangeRateApplied, registerAsExpense } =
+        credentials;
     const { data } = await apiClient.post(
         inventoryRoutes.addStockToProduct(credentials.businessId, credentials.productId),
-        { quantity, entryPrice, description },
+        {
+            quantity,
+            entryPrice,
+            description,
+            ...(providerId ? { providerId } : {}),
+            // Auto-registro del gasto de reposición de stock. Solo se envía si el
+            // usuario lo marcó; el backend valida `entryPrice` y `quantity` > 0.
+            ...(registerAsExpense ? { registerAsExpense: true } : {}),
+            // Multimoneda: solo si el costo del lote se ingresó en moneda distinta a CUP.
+            // El backend convierte `entryPrice × exchangeRateApplied` a CUP.
+            ...(currency && currency !== "CUP"
+                ? {
+                      currency,
+                      ...(exchangeRateApplied ? { exchangeRateApplied } : {}),
+                  }
+                : {}),
+        },
     );
     return data;
 }

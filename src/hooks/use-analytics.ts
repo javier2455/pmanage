@@ -1,6 +1,12 @@
-import { getKPIS, getSalesTrend, getTopProducts } from "@/lib/api/analytics";
+import {
+  getKPIS,
+  getSalesByWorker,
+  getSalesTrend,
+  getTopProducts,
+} from "@/lib/api/analytics";
 import {
   PeriodParameters,
+  SalesByWorkerParameters,
   SalesTrendParameters,
   TopProductsParameters,
 } from "@/lib/types/analytics";
@@ -35,6 +41,17 @@ export function useAnalyticsTopProducts(
   return useQuery({
     queryKey: ["analytics-top-products", businessId, params],
     queryFn: () => getTopProducts(businessId, params),
+    enabled: !!businessId,
+  });
+}
+
+export function useAnalyticsSalesByWorker(
+  businessId: string,
+  params?: SalesByWorkerParameters,
+) {
+  return useQuery({
+    queryKey: ["analytics-sales-by-worker", businessId, params],
+    queryFn: () => getSalesByWorker(businessId, params),
     enabled: !!businessId,
   });
 }

@@ -16,13 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useGetExpenseByIdQuery } from "@/hooks/use-expenses";
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(value);
-}
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("es-CO", {
@@ -52,6 +46,8 @@ export default function ExpenseDetailsDialog({
   const { data, isLoading } = useGetExpenseByIdQuery(
     open === false ? "" : expenseId,
   );
+
+  const categoryName = data?.expenseCategoryName ?? null;
 
   const triggerContent = trigger ?? (
     <Button variant="outline">Ver detalles</Button>
@@ -96,7 +92,7 @@ export default function ExpenseDetailsDialog({
                 Monto
               </span>
               <span className="text-sm font-semibold tabular-nums text-card-foreground">
-                {formatCurrency(Number(data.amount))}
+                {formatMoney(Number(data.amount), data.currency ?? BASE_CURRENCY)}
               </span>
             </div>
 
@@ -104,6 +100,19 @@ export default function ExpenseDetailsDialog({
               <span className="text-sm font-medium text-card-foreground">Descripción</span>
               <span className="text-sm font-medium text-card-foreground text-right max-w-[60%] wrap-break-word">
                 {data.description || "--"}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between border-b border-border py-4">
+              <span className="text-sm font-medium text-card-foreground">
+                Categoría
+              </span>
+              <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
+                {categoryName ?? (
+                  <span className="text-muted-foreground italic">
+                    Sin categoría
+                  </span>
+                )}
               </span>
             </div>
 

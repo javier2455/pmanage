@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ProductToShowInTable } from "@/lib/types/product";
-import ProductDetailsDialog from "@/components/products/details-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
-import { EditPriceDialog } from "@/components/products/edit-price-dialog";
+import { EditBusinessProductDialog } from "@/components/products/edit-business-product-dialog";
 
 export type BusinessProductsColumnMeta = {
   headerClassName?: string;
@@ -118,14 +117,25 @@ export function createBusinessProductsColumns(
     },
     {
       id: "category",
-      accessorFn: (row) => row.product.category,
+      // La categoría vive en el BusinessProduct (raíz). Mantenemos el fallback a
+      // `product.category` por compatibilidad mientras el backend migra. Ver
+      // docs/category.md.
+      accessorFn: (row) => (row.category ?? row.product.category)?.name ?? "",
       meta: compactColumnMeta,
       header: ({ column }) => (
         <BusinessProductsSortableHeader column={column} label="Categoría" />
       ),
-      cell: ({ row }) => (
-        <span className="text-foreground">{row.original.product.category}</span>
-      ),
+      cell: ({ row }) => {
+        const categoryName =
+          (row.original.category ?? row.original.product.category)?.name ?? null;
+        return (
+          <span className="text-foreground">
+            {categoryName ?? (
+              <span className="italic text-muted-foreground">Sin categoría</span>
+            )}
+          </span>
+        );
+      },
     },
     {
       id: "actions",
@@ -144,7 +154,7 @@ export function createBusinessProductsColumns(
   ];
 }
 
-function BusinessProductActionsCell({
+export function BusinessProductActionsCell({
   row,
   onDelete,
 }: {
@@ -167,25 +177,13 @@ function BusinessProductActionsCell({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-52 p-1">
-          <ProductDetailsDialog
-            productId={row.product.id}
-            trigger={
-              <button
-                type="button"
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                Ver detalles
-              </button>
-            }
-          />
           <button
             type="button"
             onClick={() => setEditOpen(true)}
             className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
           >
             <Pencil className="size-4 text-primary" />
-            Editar precio
+            Editar
           </button>
           <DeleteDialog
             deleteType="Producto"
@@ -203,12 +201,14 @@ function BusinessProductActionsCell({
           />
         </PopoverContent>
       </Popover>
-      <EditPriceDialog
+      <EditBusinessProductDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         businessProductId={row.id}
+        productId={row.product.id}
         productName={row.product.name}
         currentPrice={Number(row.price)}
+        currentCategoryId={(row.category ?? row.product.category)?.id ?? null}
       />
     </div>
   );

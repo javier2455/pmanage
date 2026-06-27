@@ -11,9 +11,12 @@ import { History, Loader2, Package, Plus } from "lucide-react";
 import type {
   CurrentInventoryEntry,
   InventoryMeta,
+  StockAlert,
 } from "@/lib/types/inventory";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { SetStockAlertDialog } from "./set-stock-alert-dialog";
 import {
   Empty,
   EmptyDescription,
@@ -33,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 import {
-  currentInventoryColumns,
+  buildCurrentInventoryColumns,
   type CurrentInventoryColumnMeta,
 } from "./current-inventory-table-columns";
 
@@ -53,6 +56,11 @@ interface TableOfCurrentInventoryProps {
   isFetching?: boolean;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  /** Alertas configuradas del negocio (de `useStockAlerts`). */
+  alerts?: StockAlert[];
+  /** Solo los usuarios Pro pueden configurar alertas de stock. */
+  canManageAlerts?: boolean;
+  businessId: string;
 }
 
 export default function TableOfCurrentInventory({
@@ -61,10 +69,42 @@ export default function TableOfCurrentInventory({
   isFetching = false,
   onPageChange,
   onLimitChange,
+  alerts = [],
+  canManageAlerts = false,
+  businessId,
 }: TableOfCurrentInventoryProps) {
+  // Mapa businessProductId → umbral, derivado de las alertas configuradas.
+  const thresholdByBusinessProductId = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const alert of alerts) map.set(alert.businessProductId, alert.threshold);
+    return map;
+  }, [alerts]);
+
+  // Resuelve el umbral de una fila: prioriza el campo embebido del backend y
+  // cae a las alertas resueltas vía `GET /stock-alerts`.
+  const getThreshold = React.useCallback(
+    (entry: CurrentInventoryEntry): number | null =>
+      entry.stockAlertThreshold ??
+      thresholdByBusinessProductId.get(entry.id) ??
+      null,
+    [thresholdByBusinessProductId],
+  );
+
+  const [alertTarget, setAlertTarget] =
+    React.useState<CurrentInventoryEntry | null>(null);
+
+  const columns = React.useMemo(
+    () =>
+      buildCurrentInventoryColumns({
+        getThreshold,
+        onConfigureAlert: canManageAlerts ? setAlertTarget : undefined,
+      }),
+    [getThreshold, canManageAlerts],
+  );
+
   const table = useReactTable({
     data: entries,
-    columns: currentInventoryColumns,
+    columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
@@ -74,6 +114,7 @@ export default function TableOfCurrentInventory({
   const isEmpty = meta.total === 0;
 
   return (
+    <TooltipProvider>
     <Card>
       <CardContent className="flex flex-col gap-4 p-0">
         <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-end">
@@ -231,5 +272,20 @@ export default function TableOfCurrentInventory({
         </div>
       </CardContent>
     </Card>
+
+      {alertTarget && (
+        <SetStockAlertDialog
+          open={!!alertTarget}
+          onOpenChange={(open) => {
+            if (!open) setAlertTarget(null);
+          }}
+          businessId={businessId}
+          businessProductId={alertTarget.id}
+          productName={alertTarget.product?.name ?? "Producto"}
+          currentStock={alertTarget.stock}
+          currentThreshold={getThreshold(alertTarget)}
+        />
+      )}
+    </TooltipProvider>
   );
 }

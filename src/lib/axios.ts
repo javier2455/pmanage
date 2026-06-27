@@ -53,6 +53,7 @@ apiClient.interceptors.response.use(
     // Check if it's a 401 error and not the login or refresh endpoint
     const isAuthEndpoint =
       originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/logout') ||
       originalRequest.url?.includes('/auth/refresh') ||
       originalRequest.url?.includes('/auth/register') ||
       originalRequest.url?.includes('/auth/activate') ||

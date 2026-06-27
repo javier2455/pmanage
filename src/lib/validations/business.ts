@@ -1,25 +1,11 @@
 import { z } from "zod";
+import {
+  isDialCodeOnly,
+  optionalPhoneSchema,
+  requiredPhoneSchema,
+} from "@/lib/validations/phone";
 
-export function isDialCodeOnly(value: string | null | undefined): boolean {
-  if (!value) return false;
-  return /^\+\d{1,4}$/.test(value.trim());
-}
-
-const requiredPhoneSchema = z
-  .string()
-  .refine((val) => !!val && !isDialCodeOnly(val), {
-    message: "El número de teléfono es requerido",
-  })
-  .refine((val) => !val || isDialCodeOnly(val) || /^\+[1-9]\d{6,14}$/.test(val), {
-    message: "El número de teléfono no es válido",
-  });
-
-const optionalPhoneSchema = z
-  .string()
-  .refine(
-    (val) => !val || isDialCodeOnly(val) || /^\+[1-9]\d{6,14}$/.test(val),
-    { message: "El número de teléfono no es válido" }
-  );
+export { isDialCodeOnly };
 
 export const addToCartSchema = z.object({
   stock: z
@@ -38,6 +24,7 @@ export const createBusinessSchema = z.object({
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
   phone: requiredPhoneSchema,
   email: z.string().email("El correo no es válido").nullable().or(z.literal("")),
+  acceptsMessaging: z.boolean().optional(),
   municipalityId: z.string().min(1, "La ciudad es requerida"),
   lat: z.number({ message: "La ubicación es requerida" }),
   lng: z.number({ message: "La ubicación es requerida" }),
@@ -52,6 +39,7 @@ export const updateBusinessSchema = z.object({
   address: z.string().min(1, "La dirección es requerida").max(200, "La dirección no puede exceder 200 caracteres"),
   phone: optionalPhoneSchema.optional().or(z.literal("")),
   email: z.string().email("El correo no es válido").optional().or(z.literal("")),
+  acceptsMessaging: z.boolean().optional(),
   municipalityId: z.string().min(1, "El municipio es requerido").optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),

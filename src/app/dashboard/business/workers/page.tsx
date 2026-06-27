@@ -7,9 +7,12 @@ import {
   useAllInvitationsByBusinessId,
   useInvitationsCount,
 } from "@/hooks/use-invitations";
+import { useAnalyticsSalesByWorker } from "@/hooks/use-analytics";
 import TableOfWorkers from "@/components/workers/table-of-workers";
 import TableOfInvitations from "@/components/invitations/table-of-invitations";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
+import { PeriodFilter } from "@/components/analytics/period-filter";
+import { SalesByWorkerTable } from "@/components/analytics/sales-by-worker-table";
 import {
   Tabs,
   TabsContent,
@@ -17,9 +20,10 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import type { AnalyticsPeriod } from "@/lib/types/analytics";
 
 const DEFAULT_LIMIT = 5;
-const VALID_TABS = ["workers", "invitations"] as const;
+const VALID_TABS = ["workers", "invitations", "metrics"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 function isTabValue(value: string): value is TabValue {
@@ -33,6 +37,7 @@ export default function WorkersPage() {
   const [workersLimit, setWorkersLimit] = useState(DEFAULT_LIMIT);
   const [invitationsPage, setInvitationsPage] = useState(1);
   const [invitationsLimit, setInvitationsLimit] = useState(DEFAULT_LIMIT);
+  const [metricsPeriod, setMetricsPeriod] = useState<AnalyticsPeriod>("month");
 
   const businessId = activeBusinessId ?? "";
 
@@ -57,6 +62,13 @@ export default function WorkersPage() {
   });
 
   const { data: invitationsCount } = useInvitationsCount(businessId);
+
+  const {
+    data: salesByWorkerData,
+    isLoading: salesByWorkerLoading,
+    isFetching: salesByWorkerFetching,
+    isError: salesByWorkerError,
+  } = useAnalyticsSalesByWorker(businessId, { period: metricsPeriod });
 
   const handleTabChange = useCallback((next: string) => {
     if (isTabValue(next)) setActiveTab(next);
@@ -101,6 +113,9 @@ export default function WorkersPage() {
                 {invitationsCount}
               </Badge>
             ) : null}
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="cursor-pointer">
+            Desempeño de ventas
           </TabsTrigger>
         </TabsList>
 
@@ -150,6 +165,28 @@ export default function WorkersPage() {
               isFetching={invitationsFetching}
               onPageChange={setInvitationsPage}
               onLimitChange={handleInvitationsLimitChange}
+            />
+          )}
+        </TabsContent>
+
+        <TabsContent value="metrics" className="flex flex-col gap-4 ">
+          <div className="flex flex-col gap-1 mt-4">
+            <p className="text-sm text-muted-foreground">
+              Desempeño de ventas de cada trabajador en el período
+              seleccionado.
+            </p>
+            <PeriodFilter value={metricsPeriod} onChange={setMetricsPeriod} />
+          </div>
+
+          {salesByWorkerError ? (
+            <div className="text-sm text-destructive">
+              Error al cargar el desempeño de ventas
+            </div>
+          ) : (
+            <SalesByWorkerTable
+              data={salesByWorkerData?.data ?? []}
+              isLoading={salesByWorkerLoading && !salesByWorkerData}
+              isFetching={salesByWorkerFetching}
             />
           )}
         </TabsContent>

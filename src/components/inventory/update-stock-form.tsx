@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { BusinessWithProducts } from "@/lib/types/business"
 import { useBusiness } from "@/context/business-context"
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -27,11 +28,25 @@ import {
   X,
   RefreshCw,
   ArrowUp,
+  Truck,
 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { InventoryUpdateStockFormData, inventoryUpdateStockSchema } from "@/lib/validations/inventory"
+import { InventoryUpdateStockFormData, makeInventoryUpdateStockSchema } from "@/lib/validations/inventory"
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
+import { useExchangeRate } from "@/hooks/use-exchange"
+import { EntryCostCurrency } from "@/components/products/entry-cost-currency"
+import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
+import { mapCurrencyError } from "@/lib/currency-errors"
+import {
+  DEFAULT_LOW_STOCK_THRESHOLD,
+  getStockAlertStatus,
+  STOCK_ALERT_LABELS,
+} from "@/lib/stock-alert"
+import { formatStockWithUnit, isIntegerUnit, parseDecimalInput } from "@/lib/units"
+import { useGetAllProvidersQuery } from "@/hooks/use-provider"
+import type { ProviderWithRelations } from "@/lib/types/provider"
+import Link from "next/link"
 import { sileo } from "sileo"
 import axios from "axios"
 
@@ -40,8 +55,24 @@ export function UpdateStockForm() {
   const { activeBusinessId } = useBusiness()
   const { data } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const addStockToProductMutation = useAddStockToProductMutation()
+  // Tasas de cambio del negocio para el costo multimoneda del lote.
+  const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "")
+  const exchange = exchangeRateData?.data
+  const availableCurrencies = getAvailableCurrencies(exchange)
 
   const [selectedProduct, setSelectedProduct] = useState<BusinessWithProducts | null>(null)
+  const [selectedProvider, setSelectedProvider] = useState<ProviderWithRelations | null>(null)
+
+  const { data: providersData, isLoading: isLoadingProviders } =
+    useGetAllProvidersQuery({
+      page: 1,
+      limit: 1000,
+      businessId: activeBusinessId ?? undefined,
+    })
+  const providers: ProviderWithRelations[] = providersData?.data ?? []
+
+  // Las unidades de peso/volumen (kg, lb, g, L, mL) admiten decimales; `ud` no.
+  const allowDecimals = !isIntegerUnit(selectedProduct?.product.unit)
 
   const {
     register,
@@ -50,14 +81,21 @@ export function UpdateStockForm() {
     setValue,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<InventoryUpdateStockFormData>({
-    resolver: zodResolver(inventoryUpdateStockSchema),
+    resolver: useMemo(
+      () => zodResolver(makeInventoryUpdateStockSchema(allowDecimals)),
+      [allowDecimals],
+    ),
     defaultValues: {
       quantity: 0,
       entryPrice: 0,
       productId: "",
       description: "",
+      providerId: null,
+      currency: BASE_CURRENCY,
+      registerAsExpense: false,
     },
   })
 
@@ -66,8 +104,13 @@ export function UpdateStockForm() {
 
   const quantityValue = watch("quantity")
   const newStockNum = Number(quantityValue) || 0
+  const entryPriceValue = watch("entryPrice")
 
   async function onSubmit(data: InventoryUpdateStockFormData) {
+    // Multimoneda: si el costo del lote se ingresó en otra moneda, enviamos la
+    // moneda y la misma tasa usada para previsualizar el costo en CUP.
+    const selectedCurrency = data.currency ?? BASE_CURRENCY
+    const rate = getCurrencyRate(exchange, selectedCurrency)
     try {
       const response = await addStockToProductMutation.mutateAsync({
         businessId: activeBusinessId ?? "",
@@ -75,6 +118,11 @@ export function UpdateStockForm() {
         quantity: newStockNum,
         entryPrice: data.entryPrice,
         description: data.description,
+        providerId: data.providerId ?? null,
+        currency: selectedCurrency,
+        exchangeRateApplied:
+          selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
+        registerAsExpense: data.registerAsExpense,
       })
       if (response) {
         sileo.success({
@@ -83,16 +131,35 @@ export function UpdateStockForm() {
             description: "text-white/90! text-[15px]!",
           }, description: "El stock se ha actualizado correctamente"
         });
+
+        // Confirmación adicional del gasto auto-registrado (en la moneda original).
+        if (data.registerAsExpense) {
+          const expenseAmount = (data.entryPrice * newStockNum).toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+          sileo.success({
+            title: "Gasto registrado", fill: '', styles: {
+              title: "text-white! text-[16px]! font-bold!",
+              description: "text-white/90! text-[15px]!",
+            }, description: `${expenseAmount} ${selectedCurrency} en Reposición de stock`
+          });
+        }
       }
       reset()
       setSelectedProduct(null)
+      setSelectedProvider(null)
       router.push("/dashboard/business/inventory")
       // handleCancel()
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message });
+      if (axios.isAxiosError(error)) {
+        const message = mapCurrencyError(
+          error,
+          "No se pudo actualizar el stock. Intenta de nuevo.",
+        );
+        setError("root", { message });
         sileo.error({
-          title: error.response?.data?.error, styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: error.response?.data?.message
+          title: error.response?.data?.error ?? "Error", styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: message
         });
       }
     }
@@ -145,19 +212,32 @@ export function UpdateStockForm() {
                 <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-muted/50 px-3">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium tabular-nums text-card-foreground">
-                    {selectedProduct.stock} unidades
+                    {formatStockWithUnit(selectedProduct.stock, selectedProduct.product.unit)}
                   </span>
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      "ml-auto text-xs",
-                      selectedProduct.stock <= 10
-                        ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                    )}
-                  >
-                    {selectedProduct.stock <= 10 ? "Stock bajo" : "Disponible"}
-                  </Badge>
+                  {(() => {
+                    // Umbral propio del negocio-producto si el backend lo manda;
+                    // si viene `null`/ausente, `getStockAlertStatus` cae al
+                    // default visual (`DEFAULT_LOW_STOCK_THRESHOLD`).
+                    const status = getStockAlertStatus(
+                      selectedProduct.stock,
+                      selectedProduct.stockAlertThreshold,
+                      DEFAULT_LOW_STOCK_THRESHOLD,
+                      selectedProduct.product.unit,
+                    )
+                    const statusStyles: Record<typeof status, string> = {
+                      out: "border-destructive/20 bg-destructive/10 text-destructive dark:text-red-400",
+                      low: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                      ok: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                    }
+                    return (
+                      <Badge
+                        variant="secondary"
+                        className={cn("ml-auto text-xs", statusStyles[status])}
+                      >
+                        {STOCK_ALERT_LABELS[status]}
+                      </Badge>
+                    )
+                  })()}
                 </div>
               </div>
 
@@ -177,6 +257,70 @@ export function UpdateStockForm() {
                     CUP
                   </span>
                 </div>
+              </div>
+
+              {/* Provider selector */}
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <Label className="text-card-foreground">
+                  Proveedor <span className="text-xs text-muted-foreground">(opcional)</span>
+                </Label>
+                <Combobox<ProviderWithRelations | null>
+                  value={selectedProvider}
+                  onValueChange={(item) => {
+                    setSelectedProvider(item)
+                    setValue("providerId", item?.id ?? null)
+                    if (item && selectedProduct) {
+                      const providerProduct = item.providerProducts?.find(
+                        (pp) => pp.product.id === selectedProduct.product.id,
+                      )
+                      if (providerProduct) {
+                        setValue("entryPrice", Number(providerProduct.price))
+                      }
+                    }
+                  }}
+                  items={providers}
+                  itemToStringLabel={(p) => (p ? p.name : "")}
+                  isItemEqualToValue={(a, b) => a?.id === b?.id}
+                >
+                  <ComboboxInput
+                    placeholder={
+                      isLoadingProviders
+                        ? "Cargando proveedores..."
+                        : providers.length === 0
+                          ? "Aún no hay proveedores"
+                          : "Seleccionar proveedor..."
+                    }
+                    className="w-full"
+                    showClear={!!selectedProvider}
+                    disabled={isLoadingProviders || providers.length === 0}
+                  />
+                  <ComboboxContent>
+                    <ComboboxList className="max-h-64">
+                      {providers.map((p) => (
+                        <ComboboxItem key={p.id} value={p}>
+                          {p.name}
+                        </ComboboxItem>
+                      ))}
+                      <ComboboxEmpty>
+                        No se encontró ningún proveedor.
+                      </ComboboxEmpty>
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+                {providers.length === 0 && !isLoadingProviders && (
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Truck className="h-3 w-3" />
+                    <span>
+                      No tienes proveedores aún.{" "}
+                      <Link
+                        href="/dashboard/business/providers/create"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        Crear proveedor →
+                      </Link>
+                    </span>
+                  </p>
+                )}
               </div>
 
               {/* Entry price input */}
@@ -201,6 +345,50 @@ export function UpdateStockForm() {
                 )}
               </div>
 
+              {/* Currency selector + preview de conversión a CUP */}
+              <Controller
+                control={control}
+                name="currency"
+                render={({ field }) => (
+                  <EntryCostCurrency
+                    currency={field.value ?? BASE_CURRENCY}
+                    onCurrencyChange={field.onChange}
+                    availableCurrencies={availableCurrencies}
+                    entryPrice={Number(entryPriceValue) || 0}
+                    exchangeRate={exchange}
+                  />
+                )}
+              />
+
+              {/* Registrar la entrada como gasto de reposición de stock */}
+              <div className="flex items-start gap-2 sm:col-span-2">
+                <Controller
+                  control={control}
+                  name="registerAsExpense"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="register-as-expense"
+                      checked={!!field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      disabled={!selectedProduct}
+                      className="mt-0.5"
+                    />
+                  )}
+                />
+                <div className="flex flex-col gap-1">
+                  <Label
+                    htmlFor="register-as-expense"
+                    className="cursor-pointer text-card-foreground"
+                  >
+                    Registrar como gasto de reposición de stock
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Crea automáticamente un gasto en la categoría «Reposición de
+                    stock» por el costo de entrada × cantidad.
+                  </p>
+                </div>
+              </div>
+
               {/* New stock input */}
               <div className="flex flex-col gap-2 w-full">
                 <Label htmlFor="new-stock" className="text-card-foreground">
@@ -208,10 +396,27 @@ export function UpdateStockForm() {
                 </Label>
                 <Input
                   id="new-stock"
-                  type="number"
-                  min="1"
-                  placeholder="Ej: 50"
-                  {...register("quantity", { valueAsNumber: true })}
+                  type={allowDecimals ? "text" : "number"}
+                  inputMode={allowDecimals ? "decimal" : "numeric"}
+                  min={allowDecimals ? undefined : "1"}
+                  step={allowDecimals ? undefined : 1}
+                  placeholder={allowDecimals ? "Ej: 0,5" : "Ej: 50"}
+                  onKeyDown={(e) => {
+                    if (allowDecimals) {
+                      // Input de texto: dejar pasar dígitos, un separador decimal
+                      // (coma o punto) y teclas de control/navegación; bloquear
+                      // el resto de caracteres imprimibles.
+                      if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
+                      if (!/[0-9.,]/.test(e.key)) e.preventDefault();
+                    } else if ([".", ",", "e", "E", "+", "-"].includes(e.key)) {
+                      // El stock entero (`ud`) no admite fracciones.
+                      e.preventDefault();
+                    }
+                  }}
+                  {...register("quantity", {
+                    setValueAs: (v) =>
+                      allowDecimals ? parseDecimalInput(v) : Math.trunc(Number(v)) || NaN,
+                  })}
                   disabled={!selectedProduct}
                   aria-invalid={errors.quantity ? "true" : "false"}
                 />
@@ -226,9 +431,11 @@ export function UpdateStockForm() {
                     <span>
                       El nuevo stock total sera de{" "}
                       <span className="font-semibold text-card-foreground">
-                        {selectedProduct.stock + newStockNum}
-                      </span>{" "}
-                      unidades
+                        {formatStockWithUnit(
+                          (Number(selectedProduct.stock) || 0) + newStockNum,
+                          selectedProduct.product.unit,
+                        )}
+                      </span>
                     </span>
                   </p>
                 )}
@@ -257,7 +464,6 @@ export function UpdateStockForm() {
           <Button
             type="button"
             variant="outline"
-            className="bg-transparent"
             onClick={() => {
               setSelectedProduct(null)
               reset()

@@ -6,6 +6,11 @@ export type ExchangeRateTypeOne = {
     CUP_TRANSFERENCIA: number;
     CLASICA: number;
     MLC: number;
+    CAD: number;
+    GBP: number;
+    CHF: number;
+    MXN: number;
+    JPY: number;
     createdAt: string;
     updatedAt: string;
 }

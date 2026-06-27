@@ -77,7 +77,7 @@ function PhoneInput({
   return (
     <div
       className={cn(
-        "border-input flex h-9 w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none dark:bg-input/20",
+        "border-input bg-transparent flex h-9 w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none dark:bg-input/20",
         "focus-within:border-ring focus-within:ring-ring/30 focus-within:ring-[3px]",
         ariaInvalid === true || ariaInvalid === "true"
           ? "border-destructive ring-destructive/20"

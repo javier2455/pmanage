@@ -26,7 +26,7 @@ import {
 import Link from "next/link"
 import { useGetUserPlanHistory } from "@/hooks/use-plans"
 import type { PlanHistoryResponse } from "@/lib/types/plans"
-import { getPlanLabel } from "@/components/assign-plans/utils"
+import { getPlanLabel, getPlanPrice } from "@/components/assign-plans/utils"
 
 function PlanHistorySkeleton() {
   return (
@@ -89,7 +89,10 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 }
 
 function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
-  const totalSpent = history.reduce((acc, item) => acc + parseFloat(String(item.price)), 0)
+  const totalSpent = history.reduce(
+    (acc, item) => acc + getPlanPrice(item.plan, parseFloat(String(item.price))),
+    0,
+  )
   const totalPlans = history.length
   const activePlan = history.find((item) => item.isActive)
 
@@ -225,9 +228,9 @@ function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
                       </div>
                       <div className="flex shrink-0 items-baseline gap-1">
                         <span className="text-2xl font-bold text-card-foreground">
-                          ${parseFloat(String(item.price)).toFixed(2)}
+                          ${getPlanPrice(item.plan, parseFloat(String(item.price))).toFixed(2)}
                         </span>
-                        <span className="text-sm text-muted-foreground">CUP</span>
+                        <span className="text-sm text-muted-foreground">USD</span>
                       </div>
                     </div>
 

@@ -83,6 +83,26 @@ export function getPlanLabel(
   return plan.name ?? raw
 }
 
+/**
+ * Precio mensual canónico (USD) de cada plan, alineado con las vistas de planes
+ * (`/plans` y `/dashboard/profile/plans-change`): Gratuito 0, Básico 5, Pro/Premium 15.
+ *
+ * El historial guarda un `price` que puede no coincidir con el plan; esta función
+ * deriva el precio a partir del `type`/`name` del plan. Para tipos sin precio fijo
+ * (enterprise/custom), devuelve `fallback` (típicamente el precio guardado).
+ */
+export function getPlanPrice(
+  plan: { type?: string | null; name?: string | null } | null | undefined,
+  fallback = 0,
+): number {
+  if (!plan) return fallback
+  const t = normalize((plan.type ?? plan.name ?? "").toString())
+  if (t.includes("free") || t.includes("gratis") || t.includes("gratuito")) return 0
+  if (t.includes("basico") || t.includes("basic") || t.includes("básico")) return 5
+  if (t.includes("premium") || t.includes("plus") || t.includes("pro") || t.includes("profesional")) return 15
+  return fallback
+}
+
 /** Estilo unificado para funcionalidades Pro (sidebar, navbar, etc.) */
 export const PRO_STYLE = {
   icon: Sparkles,

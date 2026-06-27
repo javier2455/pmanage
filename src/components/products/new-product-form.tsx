@@ -52,7 +52,6 @@ export function NewProductForm() {
         defaultValues: {
             name: "",
             description: "",
-            category: "",
             unit: "kg",
         },
     })
@@ -86,7 +85,6 @@ export function NewProductForm() {
             const response = await createProductMutation.mutateAsync({
                 name: data.name,
                 description: data.description ?? null,
-                category: data.category,
                 unit: data.unit,
                 imageUrl: imageFile ?? undefined,
             })
@@ -154,23 +152,8 @@ export function NewProductForm() {
                     )}
                 </div>
                 <div className="my-4">
-                    {/* Category + Unit */}
+                    {/* Unit */}
                     <div className="grid gap-4 sm:grid-cols-2 mb-6">
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="product-category" className="text-card-foreground">
-                                Categoria <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="product-category"
-                                placeholder="Ej: Electrónica, Ropa..."
-                                {...register("category")}
-                                aria-invalid={errors.category ? "true" : "false"}
-                            />
-                            {errors.category && (
-                                <p className="text-xs text-destructive">{errors.category.message}</p>
-                            )}
-                        </div>
-
                         <div className="flex flex-col gap-2">
                             <Label className="text-card-foreground">
                                 Unidad de medida <span className="text-destructive">*</span>
@@ -336,7 +319,7 @@ export function NewProductForm() {
 
                 {/* Buttons */}
                 <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <Button type="button" variant="default" asChild>
+                    <Button type="button" variant="outline" asChild>
                         <Link href={pathname === '/dashboard/business/inventory/create' ? '/dashboard/business/inventory' : '/dashboard/business/products'}>
                             <X className="mr-2 h-4 w-4" />
                             Cancelar

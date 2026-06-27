@@ -1,7 +1,10 @@
 import apiClient from "@/lib/axios";
 import { userRoutes } from "../routes/user";
 import {
+    DeactivateAccountPayload,
+    DeactivateAccountResponse,
     GetAllUsersParams,
+    ReactivateAccountResponse,
     UpdateUserFormPayload,
     UsersListResponse,
     UserPlanStatsResponse,
@@ -42,5 +45,23 @@ export async function updateUser(userId: string, payload: UpdateUserFormPayload)
         headers: { "Content-Type": "multipart/form-data" },
     });
 
+    return data;
+}
+
+export async function deactivateAccount(
+    payload: DeactivateAccountPayload = {},
+): Promise<DeactivateAccountResponse> {
+    const { data } = await apiClient.post<DeactivateAccountResponse>(
+        userRoutes.deactivate,
+        payload,
+    );
+    return data;
+}
+
+export async function reactivateAccount(): Promise<ReactivateAccountResponse> {
+    const { data } = await apiClient.post<ReactivateAccountResponse>(
+        userRoutes.reactivate,
+        {},
+    );
     return data;
 }

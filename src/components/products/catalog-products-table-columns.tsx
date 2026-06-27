@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Product } from "@/lib/types/product";
-import ProductDetailsDialog from "@/components/products/details-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
 
@@ -82,17 +81,6 @@ export function createCatalogProductsColumns(
       ),
     },
     {
-      id: "category",
-      accessorFn: (row) => row.category,
-      meta: compactColumnMeta,
-      header: ({ column }) => (
-        <CatalogProductsSortableHeader column={column} label="Categoría" />
-      ),
-      cell: ({ row }) => (
-        <span className="text-foreground">{row.original.category}</span>
-      ),
-    },
-    {
       id: "unit",
       accessorFn: (row) => row.unit,
       meta: compactColumnMeta,
@@ -114,56 +102,56 @@ export function createCatalogProductsColumns(
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Abrir acciones"
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-48 p-1">
-              <ProductDetailsDialog
-                productId={row.original.id}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                  >
-                    <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                    Ver detalles
-                  </button>
-                }
-              />
-              <Link
-                href={`/dashboard/business/products/catalog/edit?id=${row.original.id}`}
-                className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                <Pencil className="size-4 text-primary" />
-                Editar
-              </Link>
-              <DeleteDialog
-                deleteType="Producto"
-                name={row.original.name}
-                onConfirm={() => onDeleteProduct(row.original.id)}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                    Eliminar
-                  </button>
-                }
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <CatalogProductActionsCell row={row.original} onDelete={onDeleteProduct} />
       ),
     },
   ];
+}
+
+export function CatalogProductActionsCell({
+  row,
+  onDelete,
+}: {
+  row: Product;
+  onDelete: (productId: string) => void | Promise<void>;
+}) {
+  return (
+    <div className="flex justify-end">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Abrir acciones"
+          >
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-48 p-1">
+          <Link
+            href={`/dashboard/business/products/catalog/edit?id=${row.id}`}
+            className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+          >
+            <Pencil className="size-4 text-primary" />
+            Editar
+          </Link>
+          <DeleteDialog
+            deleteType="Producto"
+            name={row.name}
+            onConfirm={() => onDelete(row.id)}
+            trigger={
+              <button
+                type="button"
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+              >
+                <Trash2 className="size-4 text-destructive" />
+                Eliminar
+              </button>
+            }
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
 }

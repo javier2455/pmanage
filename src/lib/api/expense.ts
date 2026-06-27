@@ -10,15 +10,17 @@ import {
 interface GetAllExpensesParams {
   page?: number;
   limit?: number;
+  businessId?: string;
 }
 
 export async function getAllExpenses({
   page,
   limit,
+  businessId,
 }: GetAllExpensesParams = {}): Promise<GetAllExpensesResponse> {
   const { data } = await apiClient.get<GetAllExpensesResponse>(
     expensesRoutes.getAllExpenses,
-    { params: { page, limit } },
+    { params: { page, limit, businessId } },
   );
   return data;
 }

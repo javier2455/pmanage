@@ -1,6 +1,14 @@
 import apiClient from "@/lib/axios";
 import { BusinessWithProducts } from "../types/business";
-import { CreateSaleProps, SalesResponseInterface, SaleWithProductAndBusiness } from "../types/sales";
+import {
+  CancelSaleProps,
+  CreateSaleProps,
+  PaymentHistoryItem,
+  PaymentsSummary,
+  RegistrarPagoDto,
+  SalesResponseInterface,
+  SaleWithProductAndBusiness,
+} from "../types/sales";
 import { salesRoutes } from "../routes/sales";
 
 interface GetAllSalesByBusinessIdProps {
@@ -35,10 +43,44 @@ export async function create(
   return data;
 }
 
-export async function cancelSale(saleId: string, cancellationReason: string) {
-  const { data } = await apiClient.post(salesRoutes.cancelSale(saleId), {
-    cancellationReason,
-  });
+export async function cancelSale(saleId: string, body: CancelSaleProps) {
+  const { data } = await apiClient.post(salesRoutes.cancelSale(saleId), body);
 
+  return data;
+}
+
+export async function registerPayments(
+  saleId: string,
+  dto: RegistrarPagoDto,
+): Promise<{ resumen: PaymentsSummary }> {
+  const { data } = await apiClient.post(
+    salesRoutes.registerPayments(saleId),
+    dto,
+  );
+  return data;
+}
+
+export async function getPaymentsSummary(
+  saleId: string,
+): Promise<PaymentsSummary> {
+  const { data } = await apiClient.get(salesRoutes.paymentsSummary(saleId));
+  return data;
+}
+
+export async function getPaymentsHistory(
+  saleId: string,
+): Promise<PaymentHistoryItem[]> {
+  const { data } = await apiClient.get(salesRoutes.paymentsHistory(saleId));
+  return data;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Facturación PDF (Fase 2). El PDF llega como binario (responseType: blob).  */
+/* -------------------------------------------------------------------------- */
+
+export async function downloadFactura(saleId: string): Promise<Blob> {
+  const { data } = await apiClient.get(salesRoutes.factura(saleId), {
+    responseType: "blob",
+  });
   return data;
 }

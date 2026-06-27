@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
-import { AlertTriangle, CheckCircle2, Loader2, Store } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { NegoraLogo } from "@/components/brand/negora-logo";
 
 import {
   Card,
@@ -70,15 +71,13 @@ function AcceptInvitationPageContent() {
     <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center gap-4 pb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Store className="h-6 w-6" />
-          </div>
+          <NegoraLogo className="h-12 w-12 rounded-xl" />
           <div className="flex flex-col items-center gap-1 text-center">
             <CardTitle className="text-2xl font-bold text-card-foreground">
               Aceptar invitación
             </CardTitle>
             <CardDescription>
-              Has sido invitado a unirte a un negocio en VentasPro. Confirma para aceptar la invitación y obtener acceso.
+              Has sido invitado a unirte a un negocio en Negora. Confirma para aceptar la invitación y obtener acceso.
             </CardDescription>
           </div>
         </CardHeader>

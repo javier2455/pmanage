@@ -28,6 +28,11 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^dashboard/business/products/([^/]+)/edit/?$ /dashboard/business/products/__dynamic__/edit/ [L]
 
+# Providers: /dashboard/business/providers/{providerId}/edit
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^dashboard/business/providers/([^/]+)/edit/?$ /dashboard/business/providers/__dynamic__/edit/ [L]
+
 # Expenses: /dashboard/business/expenses/{expenseId}/edit
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

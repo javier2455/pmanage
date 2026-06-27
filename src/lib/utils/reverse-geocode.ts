@@ -1,5 +1,5 @@
 import apiClient from "@/lib/axios";
-import { businessRoutes } from "../routes/business";
+import { searchRoutes } from "../routes/search";
 
 export type ReverseGeocodeResult = {
   address: string;
@@ -12,7 +12,7 @@ export async function resolveAddressFromCoords(
   lng: number,
 ): Promise<ReverseGeocodeResult | null> {
   try {
-    const { data } = await apiClient.post(businessRoutes.reverseGeocode, {
+    const { data } = await apiClient.post(searchRoutes.reverseGeocode, {
       lat,
       lng,
     });

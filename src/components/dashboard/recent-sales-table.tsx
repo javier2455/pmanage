@@ -3,16 +3,10 @@ import { es } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { DashboardSummarySale } from "@/lib/types/business";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { StatusBadge } from "@/components/generic/status-badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-    }).format(value);
-}
 
 function formatRelativeTime(iso: string) {
     try {
@@ -76,7 +70,7 @@ export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
                                             sale.isCancelled && "line-through text-muted-foreground",
                                         )}
                                     >
-                                        {formatCurrency(sale.total)}
+                                        {formatMoney(sale.total, sale.currency ?? BASE_CURRENCY)}
                                     </span>
                                     {sale.isCancelled ? <StatusBadge text="Cancelada" /> : null}
                                 </div>

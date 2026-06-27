@@ -7,6 +7,30 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [Sin publicar]
+
+### Cambiado
+
+#### Permisos de trabajadores
+- Los módulos exclusivos de administradores del sistema ya **no aparecen** entre
+  los permisos asignables al crear o editar un trabajador (vista
+  `/dashboard/business/workers`). En concreto se ocultan **Asignar Planes**
+  (`/admin/assign-plans`) y **Gestión de menús** (`/admin/menus`): son de uso
+  exclusivo de administradores, no de dueños de negocio ni trabajadores (sea
+  plan gratuito, básico o pro).
+- Nuevo helper `filterAssignableMenuItems` y constante `ADMIN_ONLY_URL_SEGMENTS`
+  en [worker-permissions-section.tsx](src/components/workers/worker-permissions-section.tsx),
+  que filtran por **URL** (estable ante cambios de nombre en el backend). Para
+  ocultar más módulos admin-only basta con añadir su segmento de URL ahí.
+- El filtro se aplica tanto en la lista de checkboxes (`WorkerPermissionsSection`)
+  como en [worker-form.tsx](src/components/workers/worker-form.tsx): en modo
+  edición, si un trabajador ya tuviera uno de esos permisos no se vuelve a marcar
+  ni a reenviar al guardar, y la validación de "permisos incompletos" lo ignora.
+- **Nota:** es un control de UI en el cliente. El backend debería rechazar también
+  un `assign-plans` / `menus` enviado manualmente para un trabajador.
+
+---
+
 ## [0.10.0-beta] - 2026-03-24
 
 ### Agregado

@@ -12,7 +12,7 @@ import Link from "next/link";
 import axios from "axios";
 import { sileo } from "sileo";
 import { Loader2, Plus, Receipt } from "lucide-react";
-import type { SaleWithProductAndBusiness, SalesResponseInterface } from "@/lib/types/sales";
+import type { CancelSaleProps, SaleWithProductAndBusiness, SalesResponseInterface } from "@/lib/types/sales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,8 +33,10 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useCancelSaleMutation } from "@/hooks/use-sales";
+import { useBusiness } from "@/context/business-context";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
+import DetailsDialog from "./details-dialog";
 import {
   createSalesColumns,
   type SalesColumnMeta,
@@ -65,12 +67,13 @@ export default function TableOfSales({
   onPageChange,
   onLimitChange,
 }: TableOfSalesProps) {
+  const { activeBusinessId } = useBusiness();
   const cancelSaleMutation = useCancelSaleMutation();
 
   const handleCancelSale = React.useCallback(
-    async (saleId: string, cancellationReason: string) => {
+    async (saleId: string, body: CancelSaleProps) => {
       try {
-        await cancelSaleMutation.mutateAsync({ saleId, cancellationReason });
+        await cancelSaleMutation.mutateAsync({ saleId, body, businessId: activeBusinessId ?? "" });
         sileo.success({
           title: "Venta cancelada correctamente",
           fill: "",
@@ -100,7 +103,7 @@ export default function TableOfSales({
         }
       }
     },
-    [cancelSaleMutation],
+    [cancelSaleMutation, activeBusinessId],
   );
 
   const columns = React.useMemo(
@@ -109,6 +112,13 @@ export default function TableOfSales({
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [detailsSaleId, setDetailsSaleId] = React.useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+
+  const handleRowClick = React.useCallback((saleId: string) => {
+    setDetailsSaleId(saleId);
+    setDetailsOpen(true);
+  }, []);
 
   const table = useReactTable({
     data: sales,
@@ -210,10 +220,19 @@ export default function TableOfSales({
                 </TableHeader>
                 <TableBody>
                   {table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
+                    <TableRow
+                      key={row.id}
+                      onClick={() => handleRowClick(row.original.id)}
+                      className="cursor-pointer transition-colors hover:bg-muted/60"
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
+                          onClick={
+                            cell.column.id === "actions"
+                              ? (e) => e.stopPropagation()
+                              : undefined
+                          }
                           className={cn(
                             "px-4 py-3 text-foreground",
                             columnMeta(cell.column).cellClassName,
@@ -268,6 +287,13 @@ export default function TableOfSales({
           </div>
         </CardContent>
       </Card>
+      {detailsSaleId ? (
+        <DetailsDialog
+          saleId={detailsSaleId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }

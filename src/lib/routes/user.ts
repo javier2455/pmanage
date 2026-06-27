@@ -5,6 +5,10 @@ export const userRoutes = {
   getUserPlanStats: `${BASIC_ROUTE}/users/plan-stats`,
   updateUser: (userId: string) => `${BASIC_ROUTE}/users/update/${userId}`,
 
+  /* Auto-baja de cuenta */
+  deactivate: `${BASIC_ROUTE}/users/deactivate`,
+  reactivate: `${BASIC_ROUTE}/users/reactivate`,
+
   /* Business-workers */
   getAllBusinessWorkers: (businessId: string) =>
     `${BASIC_ROUTE}/business-workers/business/${businessId}`,

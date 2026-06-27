@@ -3,15 +3,8 @@ import { es } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { DashboardSummaryExpense } from "@/lib/types/business";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-
-function formatCurrency(value: number) {
-    return new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        maximumFractionDigits: 0,
-    }).format(value);
-}
 
 function formatRelativeTime(iso: string) {
     try {
@@ -62,7 +55,7 @@ export default function RecentExpensesTable({ expenses }: RecentExpensesTablePro
                                 </div>
                                 <div className="flex flex-col items-end">
                                     <span className="text-sm font-semibold text-red-600 dark:text-red-500">
-                                        -{formatCurrency(expense.amount)}
+                                        -{formatMoney(Number(expense.amount), expense.currency ?? BASE_CURRENCY)}
                                     </span>
                                 </div>
                             </div>

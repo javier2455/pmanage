@@ -13,17 +13,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Check, ChevronsUpDown, Store, Plus } from "lucide-react"
+import { Check, ChevronsUpDown, Store, Plus, Truck, Lock } from "lucide-react"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
+import { getMaxBusinesses } from "@/lib/pro-gates"
 import { ProBadge } from "@/components/ui/pro-badge"
+import { Badge } from "@/components/ui/badge"
 
 export function BusinessSwitcher() {
   const router = useRouter()
-  const { businesses, setActiveBusinessId, activeBusiness, isLoading } =
+  const { businesses, archivedBusinesses, setActiveBusinessId, activeBusiness, isLoading } =
     useBusiness()
-  const { isProPlan } = useUserRoleAndPlan()
+  const { planType } = useUserRoleAndPlan()
 
-  const canAddBusiness = isProPlan || businesses.length === 0
+  // El tope depende del plan (Pro=3, Básico/Free=1) y solo cuenta negocios
+  // activos (`businesses` ya excluye los archivados).
+  const canAddBusiness = businesses.length < getMaxBusinesses(planType)
 
   return (
     <DropdownMenu>
@@ -58,10 +62,16 @@ export function BusinessSwitcher() {
               </div>
               <div className="flex flex-1 flex-col">
                 <span className="text-sm">{business.name}</span>
-                {/* <span className="text-xs text-muted-foreground">
-                  {business.}
-                </span> */}
               </div>
+              {business.acceptsMessaging && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+                >
+                  <Truck className="size-2.5" />
+                  Delivery
+                </Badge>
+              )}
               <Check
                 className={cn(
                   "ml-auto size-4 shrink-0",
@@ -73,6 +83,34 @@ export function BusinessSwitcher() {
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
+        {archivedBusinesses.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-muted-foreground">
+              Archivados
+            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {archivedBusinesses.map((business) => (
+                <DropdownMenuItem
+                  key={business.id}
+                  disabled
+                  className="flex cursor-not-allowed items-center gap-2 opacity-60"
+                >
+                  <div className="flex size-5 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+                    <Lock className="size-3" />
+                  </div>
+                  <span className="flex-1 truncate text-sm">{business.name}</span>
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+                  >
+                    Recupéralo con Pro
+                  </Badge>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => canAddBusiness && router.push("/dashboard/business/create")}

@@ -457,7 +457,6 @@ export function AssignPlanConfirmDialog({
             variant="outline"
             onClick={onCancel}
             disabled={saving}
-            className="cursor-pointer bg-transparent"
           >
             Cancelar
           </Button>

@@ -10,6 +10,7 @@ import {
 import { useCreateBusinessMutation } from "@/hooks/use-business";
 import { useBusiness } from "@/context/business-context";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
+import { getMaxBusinesses } from "@/lib/pro-gates";
 import {
   useGetAllProvinces,
   useGetAllMunicipalitiesByProvinceId,
@@ -41,7 +42,9 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
+  Truck,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { sileo } from "sileo";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
@@ -120,22 +123,23 @@ export default function CreateBusinessPage() {
   const router = useRouter();
   const createBusinessMutation = useCreateBusinessMutation();
   const { businesses, isLoading: isLoadingBusinesses } = useBusiness();
-  const { isProPlan } = useUserRoleAndPlan();
+  const { planType } = useUserRoleAndPlan();
+  const maxBusinesses = getMaxBusinesses(planType);
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
   const [step, setStep] = useState<Step>("info");
 
   useEffect(() => {
     if (isLoadingBusinesses) return;
-    if (!isProPlan && businesses.length >= 1) {
+    if (businesses.length >= maxBusinesses) {
       sileo.error({
-        title: "Plan requerido",
+        title: "Límite de negocios alcanzado",
         description:
-          "Solo usuarios con plan Pro pueden crear más de un negocio. Actualiza tu plan para desbloquear esta función.",
+          "Alcanzaste el número de negocios que permite tu plan. Cambia a Pro para gestionar más negocios.",
         styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       router.replace("/dashboard");
     }
-  }, [isProPlan, businesses.length, isLoadingBusinesses, router]);
+  }, [maxBusinesses, businesses.length, isLoadingBusinesses, router]);
 
   const { data: provincesData, isLoading: isLoadingProvinces } =
     useGetAllProvinces();
@@ -164,11 +168,14 @@ export default function CreateBusinessPage() {
       address: "",
       phone: "",
       email: "",
+      acceptsMessaging: false,
       municipalityId: "",
       lat: HAVANA_LAT,
       lng: HAVANA_LNG,
     },
   });
+
+  const acceptsMessaging = watch("acceptsMessaging");
 
   const lat = watch("lat");
   const lng = watch("lng");
@@ -240,7 +247,7 @@ export default function CreateBusinessPage() {
     }
   };
 
-  if (!isProPlan && businesses.length >= 1) {
+  if (businesses.length >= maxBusinesses) {
     return null;
   }
 
@@ -525,6 +532,34 @@ export default function CreateBusinessPage() {
                       </p>
                     )}
                   </div>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                      <Truck className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <Label
+                        htmlFor="acceptsMessaging"
+                        className="text-card-foreground"
+                      >
+                        Aceptar pedidos a domicilio (delivery)
+                      </Label>
+                      <span className="text-sm text-muted-foreground">
+                        Los clientes podrán pedir entrega a domicilio.
+                      </span>
+                    </div>
+                  </div>
+                  <Switch
+                    id="acceptsMessaging"
+                    checked={acceptsMessaging ?? false}
+                    onCheckedChange={(checked) =>
+                      setValue("acceptsMessaging", checked, {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
                 </div>
               </div>
             </CardContent>

@@ -1,35 +1,65 @@
 "use client"
 
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import axios from "axios"
 import { sileo } from "sileo"
-import { X, Link2 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { X, Link2, BellRing } from "lucide-react"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useBusiness } from "@/context/business-context"
 import { useCreateProductInBusinessMutation } from "@/hooks/use-product"
-import { useGetAllProductsQuery } from "@/hooks/use-product"
+import { useGetAllProductCategoriesQuery } from "@/hooks/use-product-categories"
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ProBadge } from "@/components/ui/pro-badge"
 import { Separator } from "@/components/ui/separator"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
+import { ProductCombobox } from "@/components/products/product-combobox"
+import { EntryCostCurrency } from "@/components/products/entry-cost-currency"
+import { useExchangeRate } from "@/hooks/use-exchange"
+import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
+import { mapCurrencyError } from "@/lib/currency-errors"
 import { AssignProductToBusinessFormData, assignProductToBusinessSchema } from "@/lib/validations/products"
 import { Product } from "@/lib/types/product"
+
+type CategoryOption = { id: string; name: string }
 
 export function AssignProductToBusinessForm() {
   const router = useRouter()
   const pathname = usePathname()
   const { activeBusinessId } = useBusiness()
+  const { isProPlan } = useUserRoleAndPlan()
   const createProductInBusinessMutation = useCreateProductInBusinessMutation()
-  const { data: productsData, isLoading: isLoadingProducts } = useGetAllProductsQuery()
+  // Tasas de cambio del negocio para el costo multimoneda (ver multimoneda-productos.md).
+  const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "")
+  const exchange = exchangeRateData?.data
+  const availableCurrencies = getAvailableCurrencies(exchange)
+  // Producto elegido en el combobox; lo guardamos completo porque la lista ya
+  // no vive en memoria (se pagina/busca en servidor) y onSubmit lo necesita.
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+
+  // La categoría ahora vive en el BusinessProduct: se elige aquí, al asignar el
+  // producto al negocio. Ver docs/category.md.
+  const { data: categoriesData, isLoading: isLoadingCategories } =
+    useGetAllProductCategoriesQuery({
+      page: 1,
+      limit: 1000,
+      businessId: activeBusinessId ?? undefined,
+      enabled: !!activeBusinessId,
+    })
+  const productCategories = categoriesData?.data ?? []
 
   const {
     register,
@@ -38,18 +68,24 @@ export function AssignProductToBusinessForm() {
     setValue,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<AssignProductToBusinessFormData>({
     resolver: zodResolver(assignProductToBusinessSchema),
     defaultValues: {
       productId: "",
+      categoryId: null,
       entryPrice: 0,
       price: 0,
       stock: 0,
+      stockAlertThreshold: null,
+      currency: BASE_CURRENCY,
+      registerAsExpense: false,
     },
   })
 
   const selectedProductId = watch("productId")
+  const entryPriceValue = watch("entryPrice")
 
   async function onSubmit(data: AssignProductToBusinessFormData) {
     if (!activeBusinessId) {
@@ -60,11 +96,17 @@ export function AssignProductToBusinessForm() {
       return
     }
 
-    const product = productsData?.data?.find((p: Product) => p.id === data.productId)
+    const product =
+      selectedProduct?.id === data.productId ? selectedProduct : null
     if (!product) {
       setError("productId", { message: "Producto no encontrado" })
       return
     }
+
+    // Multimoneda: si el costo se ingresó en otra moneda, enviamos la moneda y la
+    // misma tasa con la que se previsualizó el costo en CUP (ver multimoneda-productos.md).
+    const selectedCurrency = data.currency ?? BASE_CURRENCY
+    const rate = getCurrencyRate(exchange, selectedCurrency)
 
     try {
       await createProductInBusinessMutation.mutateAsync({
@@ -72,12 +114,19 @@ export function AssignProductToBusinessForm() {
         productId: product.id,
         name: product.name,
         description: product.description,
-        category: product.category,
+        // La categoría se asigna al BusinessProduct desde el selector del form.
+        categoryId: data.categoryId ?? null,
         unit: product.unit,
         imageUrl: product.imageUrl ?? undefined,
         price: data.price,
         entryPrice: data.entryPrice,
         stock: data.stock,
+        // Solo aplica para usuarios Pro; el campo está oculto para el resto.
+        stockAlertThreshold: isProPlan ? (data.stockAlertThreshold ?? null) : null,
+        currency: selectedCurrency,
+        exchangeRateApplied:
+          selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
+        registerAsExpense: data.registerAsExpense,
       })
 
       sileo.success({
@@ -89,15 +138,37 @@ export function AssignProductToBusinessForm() {
         },
         description: "El producto se ha asignado a tu negocio correctamente",
       })
+
+      // Confirmación adicional del gasto auto-registrado (en la moneda original).
+      if (data.registerAsExpense) {
+        const expenseAmount = (data.entryPrice * data.stock).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+        sileo.success({
+          title: "Gasto registrado",
+          fill: "",
+          styles: {
+            title: "text-white! text-[16px]! font-bold!",
+            description: "text-white/90! text-[15px]!",
+          },
+          description: `${expenseAmount} ${selectedCurrency} en Reposición de stock`,
+        })
+      }
       reset()
+      setSelectedProduct(null)
       router.push("/dashboard/business/products")
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message })
+      if (axios.isAxiosError(error)) {
+        const message = mapCurrencyError(
+          error,
+          "No se pudo asignar el producto. Intenta de nuevo.",
+        )
+        setError("root", { message })
         sileo.error({
           title: error.response?.data?.error ?? "Error",
           styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: error.response.data.message,
+          description: message,
         })
       }
     }
@@ -129,42 +200,93 @@ export function AssignProductToBusinessForm() {
           <Label htmlFor="product-select" className="text-card-foreground">
             Producto <span className="text-destructive">*</span>
           </Label>
-          <Select
-            value={selectedProductId || undefined}
-            onValueChange={(value) => setValue("productId", value ?? "", { shouldValidate: true })}
-            disabled={isLoadingProducts}
-          >
-            <SelectTrigger
-              id="product-select"
-              className="w-full"
-              aria-invalid={errors.productId ? "true" : "false"}
-            >
-              <SelectValue
-                placeholder={
-                  isLoadingProducts ? "Cargando productos..." : "Selecciona un producto..."
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {productsData?.data?.map((product: Product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ProductCombobox
+            id="product-select"
+            value={selectedProductId}
+            invalid={!!errors.productId}
+            onChange={(product) => {
+              setSelectedProduct(product)
+              setValue("productId", product?.id ?? "", { shouldValidate: true })
+            }}
+          />
           {errors.productId && (
             <p className="text-xs text-destructive">{errors.productId.message}</p>
           )}
-          {!isLoadingProducts && productsData?.data?.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              No hay productos disponibles. Crea uno primero en la pestaña &quot;Crear nuevo producto&quot;.
+        </div>
+
+        {/* Category — se asigna al BusinessProduct */}
+        <div className="flex flex-col gap-2 mb-6">
+          <Label htmlFor="category-select" className="text-card-foreground">
+            Categoría
+          </Label>
+          <Controller
+            control={control}
+            name="categoryId"
+            render={({ field }) => {
+              const items: CategoryOption[] = productCategories.map((c) => ({
+                id: c.id,
+                name: c.name,
+              }))
+              const selectedOption: CategoryOption | null =
+                items.find((i) => i.id === field.value) ?? null
+              return (
+                <Combobox<CategoryOption | null>
+                  value={selectedOption}
+                  onValueChange={(opt) => field.onChange(opt?.id ?? null)}
+                  items={items}
+                  itemToStringLabel={(opt) => opt?.name ?? ""}
+                  isItemEqualToValue={(a, b) =>
+                    (a?.id ?? null) === (b?.id ?? null)
+                  }
+                >
+                  <ComboboxInput
+                    id="category-select"
+                    placeholder={
+                      isLoadingCategories
+                        ? "Cargando categorías..."
+                        : items.length === 0
+                          ? "Aún no hay categorías"
+                          : "Buscar categoría..."
+                    }
+                    className="w-full"
+                    showClear={!!selectedOption}
+                    disabled={isLoadingCategories || items.length === 0}
+                  />
+                  <ComboboxContent>
+                    <ComboboxList className="max-h-64">
+                      {items.map((opt) => (
+                        <ComboboxItem key={opt.id} value={opt}>
+                          {opt.name}
+                        </ComboboxItem>
+                      ))}
+                      <ComboboxEmpty>
+                        No se encontró ninguna categoría.
+                      </ComboboxEmpty>
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            Opcional — administra tus categorías en la sección de{" "}
+            <Link
+              href="/dashboard/business/categories/products"
+              className="underline-offset-2 hover:text-white hover:underline"
+            >
+              Categorías
+            </Link>
+            .
+          </p>
+          {errors.categoryId && (
+            <p className="text-xs text-destructive">
+              {errors.categoryId.message}
             </p>
           )}
         </div>
 
-        {/* Entry Price, Price, Stock */}
-        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+        {/* Costo de entrada + moneda */}
+        <div className="grid gap-4 sm:grid-cols-2 mb-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="entry-price" className="text-card-foreground">
               Precio de entrada <span className="text-destructive">*</span>
@@ -182,6 +304,51 @@ export function AssignProductToBusinessForm() {
               <p className="text-xs text-destructive">{errors.entryPrice.message}</p>
             )}
           </div>
+          <Controller
+            control={control}
+            name="currency"
+            render={({ field }) => (
+              <EntryCostCurrency
+                currency={field.value ?? BASE_CURRENCY}
+                onCurrencyChange={field.onChange}
+                availableCurrencies={availableCurrencies}
+                entryPrice={Number(entryPriceValue) || 0}
+                exchangeRate={exchange}
+              />
+            )}
+          />
+        </div>
+
+        {/* Registrar la entrada como gasto de reposición de stock */}
+        <div className="mb-6 flex items-start gap-2">
+          <Controller
+            control={control}
+            name="registerAsExpense"
+            render={({ field }) => (
+              <Checkbox
+                id="register-as-expense"
+                checked={!!field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+                className="mt-0.5"
+              />
+            )}
+          />
+          <div className="flex flex-col gap-1">
+            <Label
+              htmlFor="register-as-expense"
+              className="cursor-pointer text-card-foreground"
+            >
+              Registrar como gasto de reposición de stock
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Crea automáticamente un gasto en la categoría «Reposición de stock»
+              por el costo de entrada × stock.
+            </p>
+          </div>
+        </div>
+
+        {/* Precio de venta, Stock */}
+        <div className="grid gap-4 sm:grid-cols-2 mb-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="price" className="text-card-foreground">
               Precio <span className="text-destructive">*</span>
@@ -218,11 +385,53 @@ export function AssignProductToBusinessForm() {
           </div>
         </div>
 
+        {/* Stock alert threshold — feature Pro, opcional */}
+        {isProPlan && (
+          <div className="mb-6 flex flex-col gap-2">
+            <Label
+              htmlFor="stock-alert-threshold"
+              className="flex items-center gap-2 text-card-foreground"
+            >
+              <BellRing className="h-3.5 w-3.5 text-primary" />
+              Umbral de alerta de stock{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (opcional)
+              </span>
+              <ProBadge className="ml-0" />
+            </Label>
+            <Input
+              id="stock-alert-threshold"
+              type="number"
+              min={1}
+              step={1}
+              placeholder="Ej: 5"
+              {...register("stockAlertThreshold", {
+                setValueAs: (v) =>
+                  v === "" || v === null || v === undefined ? null : Number(v),
+              })}
+              aria-invalid={errors.stockAlertThreshold ? "true" : "false"}
+            />
+            {errors.stockAlertThreshold ? (
+              <p className="text-xs text-destructive">
+                {errors.stockAlertThreshold.message}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Te avisaremos cuando el stock baje de este valor. Puedes
+                ajustarlo o desactivarlo luego desde el inventario. Si lo dejas
+                vacío, el inventario marcará «Stock bajo» por defecto al quedar 5
+                unidades o menos (solo aviso visual; para recibir notificaciones
+                debes configurar un umbral).
+              </p>
+            )}
+          </div>
+        )}
+
         <Separator />
 
         {/* Buttons */}
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="default" asChild>
+          <Button type="button" variant="outline" asChild>
             <Link href={pathname === "/dashboard/business/inventory/create" ? "/dashboard/business/inventory" : "/dashboard/business/products"}>
               <X className="mr-2 h-4 w-4" />
               Cancelar

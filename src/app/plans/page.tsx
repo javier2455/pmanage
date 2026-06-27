@@ -22,14 +22,20 @@ const plans = [
         name: "Basico",
         description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
         monthlyPrice: 5,
-        yearlyPrice: 3,
+        yearlyPrice: 4,
         badge: null,
         features: [
             { text: "1 negocio", included: true },
             { text: "Hasta 100 productos", included: true },
             { text: "Registro de ventas y compras", included: true },
+            { text: "Gestión de gastos con categorías", included: true },
             { text: "Cierre contable diario", included: true },
             { text: "Tasas de cambio multi-moneda", included: true },
+            { text: "Historial de precios de productos", included: true },
+            { text: "Historial de inventario", included: true },
+            { text: "Búsqueda global", included: true },
+            { text: "Panel de estadísticas", included: true },
+            { text: "Notificaciones por correo", included: true },
             { text: "Soporte por WhatsApp o correo", included: true },
         ],
         highlighted: false,
@@ -45,11 +51,11 @@ const plans = [
             { text: "Hasta 3 negocios", included: true },
             { text: "Hasta 500 productos", included: true },
             { text: "Cierre contable mensual", included: true },
-            { text: "Exportar Excel/PDF", included: true },
-            { text: "Alertas de stock bajo", included: true },
-            { text: "Rentabilidad por producto", included: true },
-            { text: "Comparativa de periodos", included: true },
-            { text: "Ventas por trabajador", included: true },
+            { text: "Exportar cierres a Excel/PDF", included: true },
+            { text: "Gestión de proveedores", included: true },
+            { text: "Gestión de equipo y permisos", included: true },
+            { text: "Comparador de precios multi-producto", included: true },
+            { text: "Notificaciones por WhatsApp", included: true },
             { text: "Soporte prioritario 24/7", included: true },
         ],
         highlighted: false,
@@ -58,7 +64,7 @@ const plans = [
 
 const WHATSAPP_NUMBER = "5215512345678"
 const WHATSAPP_MESSAGE = encodeURIComponent(
-    "Hola, estoy interesado en conocer mas sobre los planes de VentasPro."
+    "Hola, estoy interesado en conocer mas sobre los planes de Negora."
 )
 
 export default function PlansPage() {
