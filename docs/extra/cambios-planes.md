@@ -74,7 +74,7 @@ Se quitó la leyenda anterior `USD o al cambio en moneda nacional / mes`.
 - Ventas por trabajador ✗
 
 Descripción del Gratuito cambia a:
-> *Prueba todas las funcionalidades del plan Básico sin compromiso.*
+> *Prueba todas las funcionalidades del plan Pro sin compromiso.*
 
 **Básico**: mismas 12 features que Gratuito (con los mismos checks/cruces).
 

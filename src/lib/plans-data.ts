@@ -23,7 +23,7 @@ export type PlanCardData = {
 export const PLANS: PlanCardData[] = [
   {
     name: "Gratuito",
-    description: "Prueba todas las funcionalidades del plan Básico sin compromiso.",
+    description: "Prueba todas las funcionalidades del plan Pro sin compromiso.",
     monthlyPrice: 0,
     yearlyPrice: 0,
     icon: Shield,
