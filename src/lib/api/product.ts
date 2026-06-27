@@ -12,15 +12,19 @@ import { businessRoutes } from "../routes/business";
 interface GetAllProductsParams {
   page?: number;
   limit?: number;
+  /** Filtra por nombre (case-insensitive) en el backend. */
+  search?: string;
 }
 
 export async function getAllProducts({
   page,
   limit,
+  search,
 }: GetAllProductsParams = {}): Promise<GetAllProductsResponse> {
   const { data } = await apiClient.get<GetAllProductsResponse>(
     productRoutes.getAllProducts,
-    { params: { page, limit } },
+    // Omitimos `search` cuando está vacío para no ensuciar la URL ni la cache.
+    { params: { page, limit, search: search || undefined } },
   );
   return data;
 }
@@ -33,13 +37,12 @@ export async function getProductById(productId: string) {
 export async function create(
   credentials: CreateProductProps,
 ): Promise<CreateProductResponse> {
-  const { category, description, name, unit, imageUrl } = credentials;
+  const { description, name, unit, imageUrl } = credentials;
 
   if (imageUrl instanceof File) {
     const formData = new FormData();
     formData.append("name", name);
     if (description) formData.append("description", description);
-    if (category) formData.append("category", category);
     formData.append("unit", unit);
     formData.append("imageUrl", imageUrl);
 
@@ -54,7 +57,6 @@ export async function create(
   }
 
   const { data } = await apiClient.post(productRoutes.createProduct, {
-    category,
     description,
     name,
     unit,
@@ -65,10 +67,40 @@ export async function create(
 export async function createInBusiness(
   credentials: CreateProductInBusinessProps,
 ): Promise<CreateProductResponse> {
-  const { productId, price, entryPrice, stock } = credentials;
+  const {
+    productId,
+    categoryId,
+    price,
+    entryPrice,
+    stock,
+    stockAlertThreshold,
+    currency,
+    exchangeRateApplied,
+    registerAsExpense,
+  } = credentials;
   const { data } = await apiClient.post(
     productRoutes.createProductInBusiness(credentials.businessId),
-    { productId, price, entryPrice, stock },
+    {
+      productId,
+      price,
+      entryPrice,
+      stock,
+      // La categoría se asigna al BusinessProduct en esta llamada. Ver docs/category.md.
+      ...(categoryId ? { categoryId } : {}),
+      // Solo se envía si el usuario (Pro) definió un umbral.
+      ...(stockAlertThreshold != null ? { stockAlertThreshold } : {}),
+      // Auto-registro del gasto de reposición de stock. Solo se envía si el
+      // usuario lo marcó; el backend valida `entryPrice` y `stock` > 0.
+      ...(registerAsExpense ? { registerAsExpense: true } : {}),
+      // Multimoneda: solo si el costo se ingresó en una moneda distinta a CUP.
+      // El backend convierte `entryPrice × exchangeRateApplied` a CUP.
+      ...(currency && currency !== "CUP"
+        ? {
+            currency,
+            ...(exchangeRateApplied ? { exchangeRateApplied } : {}),
+          }
+        : {}),
+    },
   );
 
   return data;
@@ -82,8 +114,6 @@ export async function edit(productId: string, credentials: EditProductProps) {
     formData.append("name", credentials.name);
     if (credentials.description !== null)
       formData.append("description", credentials.description);
-    if (credentials.category !== null)
-      formData.append("category", credentials.category);
     formData.append("unit", credentials.unit);
     if (credentials.active !== undefined && credentials.active !== null)
       formData.append("active", String(credentials.active));
@@ -133,6 +163,19 @@ export async function deleteProductInBusiness(
       message: "Error al eliminar el producto del negocio",
     };
   }
+}
+
+export async function updateBusinessProductCategory(
+  businessId: string,
+  businessProductId: string,
+  categoryId: string | null,
+) {
+  // `categoryId: null` des-asigna la categoría. Ver docs/backend-categoria-business-product.md.
+  const { data } = await apiClient.patch(
+    productRoutes.updateBusinessProductCategory(businessId, businessProductId),
+    { categoryId },
+  );
+  return data;
 }
 
 export async function updateBusinessProductPrice(businessProductId: string, price: number) {

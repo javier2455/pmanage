@@ -1,22 +1,34 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/sidebar/sidebar"
 import { BusinessSwitcher } from "@/components/sidebar/business-switcher"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { BusinessProvider } from "@/context/business-context"
+import { AccessGuard } from "@/components/auth/access-guard"
+import { RouteGuard } from "@/components/auth/route-guard"
+import { ReactivationGuard } from "@/components/auth/reactivation-guard"
+import { PlanGuard } from "@/components/auth/plan-guard"
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <BusinessProvider>
-      <AppSidebar />
-      <main className="bg-background flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
-        <nav className="flex items-center gap-2 p-4">
-          <SidebarTrigger />
-          <div className="flex flex-1 items-center justify-center px-2">
-            <BusinessSwitcher />
-          </div>
-        </nav>
-        {children}
-      </main>
-      </BusinessProvider>
-    </SidebarProvider>
+    <ReactivationGuard>
+      <PlanGuard>
+      <SidebarProvider>
+        <BusinessProvider>
+        <AppSidebar />
+        <main className="bg-background flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden p-4">
+          <nav className="flex items-center gap-2 p-4">
+            <SidebarTrigger />
+            <div className="flex flex-1 items-center justify-center px-2">
+              <BusinessSwitcher />
+            </div>
+            <NotificationBell />
+          </nav>
+          <RouteGuard>
+            <AccessGuard>{children}</AccessGuard>
+          </RouteGuard>
+        </main>
+        </BusinessProvider>
+      </SidebarProvider>
+      </PlanGuard>
+    </ReactivationGuard>
   )
 }

@@ -27,8 +27,9 @@ interface AuthDataResponse {
   updatedAt: string;
   lastLogin: string;
   pageId: string;
-  rol: Role;
+  role: string;
   active: number;
+  deactivatedAt: string | null;
   twoFactorEnabled: boolean;
   providers: [];
   hasPassword: boolean;
@@ -79,13 +80,6 @@ export interface InvitationInformationResponse {
   data: InvitationInformationData;
 }
 
-interface Role {
-  id: number;
-  name: string;
-  pageId: string;
-  permission: string;
-}
-
 interface Plan {
   id: string;
   name: string;
@@ -106,11 +100,23 @@ export async function login(credentials: LoginFormData): Promise<LoginResponse> 
   return data;
 }
 
+/**
+ * Invalida el access token en el backend tras cerrar sesión para que no pueda
+ * volver a usarse. Recibe el `refresh_token` en el body; el access token lo
+ * adjunta automáticamente el interceptor de `apiClient`.
+ */
+export async function logout(refreshToken: string) {
+  const { data } = await apiClient.post(authRoutes.logout, {
+    refresh_token: refreshToken,
+  });
+  return data;
+}
+
 export async function register(credentials: RegisterFormData): Promise<UserResponseOfRegister> {
   const { email, name, password, rolId, invitationId } = credentials;
   const body = invitationId
     ? { email, name, password, invitationId }
-    : { email, name, password, rolId };
+    : { email, name, password, rolId: Number(rolId) };
   const { data } = await apiClient.post(authRoutes.register, body);
   // const { data } = await apiClient.post(authRoutes.register, body);
   return data;

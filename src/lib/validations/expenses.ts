@@ -6,6 +6,10 @@ export const createExpenseSchema = z.object({
     .number({ error: "Ingresa un monto válido" })
     .positive("El monto debe ser mayor a 0"),
   description: z.string().min(1, "La descripción es requerida"),
+  expenseCategoryId: z.string().optional().nullable(),
+  // Moneda del gasto. El selector solo ofrece monedas con tasa válida; si se
+  // omite, el backend asume CUP. Ver docs/078-expenses-multicurrency-frontend-guide.md.
+  currency: z.string().optional(),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();

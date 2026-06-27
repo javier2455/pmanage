@@ -36,6 +36,14 @@ export interface Invitation {
   used: boolean;
   usedAt: string | null;
   userId: string | null;
+  /**
+   * Invitación cancelada por un downgrade de plan del propietario (el enlace de
+   * aceptar deja de funcionar; el registro se conserva).
+   * TODO(backend): incluir `canceled`/`canceledAt` en las respuestas de invitaciones.
+   * Contrato: docs/análisis-planes/backend-cambios.md.
+   */
+  canceled?: boolean;
+  canceledAt?: string | null;
   createdAt: string;
   updatedAt: string;
   business?: InvitationBusinessSummary;

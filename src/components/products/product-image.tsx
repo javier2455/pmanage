@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,12 +29,12 @@ export function ProductImage({ src, alt, size = "sm", className }: ProductImageP
                     className,
                 )}
             >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                     src={src}
                     alt={alt}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
+                    fill
+                    className="object-cover"
+                    sizes="96px"
                 />
             </div>
         );

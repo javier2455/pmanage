@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { assignPlan, createPlan, getAllPlans, getUserPlanHistory, removeUserPlan } from "@/lib/api/plans";
-import { AssignPlanPayload, CreateTypePlanPayload } from "@/lib/types/plans";
+import { assignPlan, createPlan, getAllPlans, getUserPlanHistory, removeUserPlan, selectPlan } from "@/lib/api/plans";
+import { AssignPlanPayload, CreateTypePlanPayload, SelectPlanPayload } from "@/lib/types/plans";
 
 export function useGetAllPlans() {
     return useQuery({
@@ -17,6 +17,21 @@ export function useGetUserPlanHistory() {
 }
 
 
+
+export function useSelectPlanMutation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (payload: SelectPlanPayload) => selectPlan(payload),
+        onSuccess: async () => {
+            // El plan y el set de negocios cambian: refrescar identidad y negocios.
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["auth-user-data"] }),
+                queryClient.invalidateQueries({ queryKey: ["businesses"] }),
+            ]);
+        },
+    });
+}
 
 export function useAssignPlanMutation() {
     const queryClient = useQueryClient();

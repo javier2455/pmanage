@@ -1,13 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Store } from "lucide-react"
-import type { LucideIcon } from "lucide-react"
 
-import { NavMain } from "@/components/sidebar/nav-main"
+import { NegoraLogo } from "@/components/brand/negora-logo"
+import { NavMain, type NavItem, type NavSection, type NavSubItem } from "@/components/sidebar/nav-main"
 import { NavUser } from "@/components/sidebar/nav-user"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetAllMenuItemsQuery } from "@/hooks/use-menu"
+import { useGetAllSectionsQuery } from "@/hooks/use-navigation"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
 import { isProRoute } from "@/lib/pro-gates"
@@ -25,22 +24,14 @@ import {
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 
-type NavSubItem = {
-  title: string
-  url: string
-  icon?: LucideIcon
-  pro?: boolean
-  disabled?: boolean
-}
-
-type NavItem = {
-  title: string
-  url: string
-  icon?: LucideIcon
-  isActive?: boolean
-  pro?: boolean
-  disabled?: boolean
-  items?: NavSubItem[]
+/**
+ * Filtro de visibilidad por rol. Si `roles` está vacío o es null se
+ * considera "visible a todos los roles" — alineado con la regla de negocio
+ * que permite secciones sin roles asignados.
+ */
+function isVisibleForRole(roles: string[] | null | undefined, roleId: string) {
+  if (!roles || roles.length === 0) return true
+  return roles.includes(roleId)
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -49,43 +40,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasNoBusinesses = !isLoadingBusinesses && businesses.length === 0
   const businessIdForMenu = activeBusiness?.isWorker ? activeBusiness.id : undefined
 
-  const { data: menu, isLoading } = useGetAllMenuItemsQuery({
+  /* Si hay negocios, esperamos a que el negocio activo esté resuelto antes de
+     pedir las secciones. Así, cuando se entra como trabajador, la primera (y
+     única) petición ya incluye el businessId y el backend devuelve los
+     permisos correctos en vez de fetchear primero sin él. */
+  const isActiveBusinessResolved = businesses.length === 0 || !!activeBusiness
+
+  const { data: sections, isLoading } = useGetAllSectionsQuery({
     businessId: businessIdForMenu,
-    enabled: !isLoadingBusinesses,
+    enabled: !isLoadingBusinesses && isActiveBusinessResolved,
   })
 
-  const navMain = React.useMemo<NavItem[]>(() => {
-    if (!menu) return []
-    return menu
-      .filter((item) => item.active)
-      .filter((item) => !item.roles || item.roles.includes(roleId))
-      .map<NavItem>((item) => {
-        const subs: NavSubItem[] = (item.submenus ?? [])
-          .filter((s) => s.active)
-          .filter((s) => !s.roles || s.roles.includes(roleId))
-          .map((s) => {
-            const pro = s.badge === "Pro" || isProRoute(s.url)
+  const navSections = React.useMemo<NavSection[]>(() => {
+    if (!sections) return []
+
+    return sections
+      .filter((s) => s.active)
+      .filter((s) => isVisibleForRole(s.roles, roleId))
+      .map<NavSection>((section) => {
+        const items: NavItem[] = (section.menus ?? [])
+          .filter((m) => m.active)
+          .filter((m) => isVisibleForRole(m.roles, roleId))
+          .map<NavItem>((menu) => {
+            const subs: NavSubItem[] = (menu.submenus ?? [])
+              .filter((s) => s.active)
+              .filter((s) => isVisibleForRole(s.roles, roleId))
+              .map((s) => {
+                const pro = s.badge === "Pro" || isProRoute(s.url)
+                return {
+                  title: s.name,
+                  url: s.url,
+                  icon: resolveIcon(s.icon),
+                  pro,
+                  disabled: hasNoBusinesses || (pro && !isProPlan),
+                }
+              })
+
+            const pro = menu.badge === "Pro" || isProRoute(menu.url)
             return {
-              title: s.name,
-              url: s.url,
-              icon: resolveIcon(s.icon),
+              title: menu.name,
+              url: menu.url || "#",
+              icon: resolveIcon(menu.icon),
+              items: subs.length ? subs : undefined,
               pro,
               disabled: hasNoBusinesses || (pro && !isProPlan),
             }
           })
+          .filter((item) => item.url !== "#" || (item.items && item.items.length > 0))
 
-        const pro = item.badge === "Pro" || isProRoute(item.url)
         return {
-          title: item.name,
-          url: item.url || "#",
-          icon: resolveIcon(item.icon),
-          items: subs.length ? subs : undefined,
-          pro,
-          disabled: hasNoBusinesses || (pro && !isProPlan),
+          id: section.id,
+          title: section.name,
+          items,
         }
       })
-      .filter((item) => !item.items || item.items.length > 0)
-  }, [menu, roleId, isProPlan, hasNoBusinesses])
+      .filter((section) => section.items.length > 0)
+  }, [sections, roleId, isProPlan, hasNoBusinesses])
 
   return (
     <Sidebar className="" collapsible="icon" {...props}>
@@ -94,11 +104,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Store className="size-4" />
-                </div>
+                <NegoraLogo className="size-8 rounded-lg" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">GeosGS</span>
+                  <span className="truncate font-semibold">Negora</span>
                   <span className="truncate text-xs">Sistema de Gestión</span>
                 </div>
               </Link>
@@ -107,7 +115,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {isLoading ? <NavMainSkeleton /> : <NavMain items={navMain} />}
+        {isLoadingBusinesses || !isActiveBusinessResolved || isLoading ? (
+          <NavMainSkeleton />
+        ) : (
+          <NavMain sections={navSections} />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

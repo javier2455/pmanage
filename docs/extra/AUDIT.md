@@ -1,4 +1,4 @@
-# Auditoría del Proyecto — pmanage (GeosGS) v0.16.2-beta
+# Auditoría del Proyecto — pmanage (Negora) v0.16.2-beta
 
 > Fecha: 2026-04-14 | Complementa al ROADMAP.md con hallazgos técnicos específicos
 

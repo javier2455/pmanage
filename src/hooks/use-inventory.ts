@@ -2,8 +2,12 @@ import {
     addStock,
     getCurrentInventoryByBusinessId,
     getInventoryHistoryByBusinessId,
+    getProductInventoryHistory,
 } from "@/lib/api/inventory";
-import { AddStockToProductProps } from "@/lib/types/inventory";
+import {
+    AddStockToProductProps,
+    InventoryHistoryInclude,
+} from "@/lib/types/inventory";
 import {
     keepPreviousData,
     useMutation,
@@ -14,6 +18,10 @@ import {
 interface PaginationParams {
     page?: number;
     limit?: number;
+}
+
+interface ProductHistoryParams extends PaginationParams {
+    include?: InventoryHistoryInclude;
 }
 
 export function useCurrentInventoryByBusinessId(
@@ -36,6 +44,20 @@ export function useInventoryHistoryByBusinessId(
         queryKey: ["inventory-history-by-business-id", businessId, params],
         queryFn: () => getInventoryHistoryByBusinessId({ businessId, ...params }),
         enabled: !!businessId,
+        placeholderData: keepPreviousData,
+    });
+}
+
+export function useProductInventoryHistory(
+    businessId: string,
+    productId: string,
+    params: ProductHistoryParams = {},
+) {
+    return useQuery({
+        queryKey: ["product-inventory-history", businessId, productId, params],
+        queryFn: () =>
+            getProductInventoryHistory({ businessId, productId, ...params }),
+        enabled: !!businessId && !!productId,
         placeholderData: keepPreviousData,
     });
 }

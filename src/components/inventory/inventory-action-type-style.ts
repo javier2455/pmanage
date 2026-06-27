@@ -31,6 +31,12 @@ export const inventoryActionTypeStyle: Record<
     badgeClassName:
       "border border-border bg-secondary text-secondary-foreground",
   },
+  [InventoryActionType.LOSS]: {
+    label: inventoryActionTypeLabels[InventoryActionType.LOSS],
+    dotClassName: "bg-destructive ring-destructive/25",
+    badgeClassName:
+      "border border-destructive/40 bg-destructive/10 text-destructive dark:text-red-400",
+  },
 };
 
 export const defaultInventoryActionTypeStyle: InventoryActionTypeStyle = {

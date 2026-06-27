@@ -3,6 +3,7 @@
 import RecentExpensesTable from "@/components/dashboard/recent-expenses-table";
 import RecentSalesTable from "@/components/dashboard/recent-sales-table";
 import StatsCard from "@/components/dashboard/stats-card";
+import CashBalanceWidget from "@/components/currency-account/cash-balance-widget";
 import { useBusiness } from "@/context/business-context";
 import { useDashboardSummary } from "@/hooks/use-business";
 
@@ -22,21 +23,24 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           variant="sales"
           title="Ventas"
-          today={dashboardSummary?.sales?.today ?? 0}
-          yesterday={dashboardSummary?.sales?.yesterday ?? 0}
+          today={dashboardSummary?.sales?.today ?? []}
+          yesterday={dashboardSummary?.sales?.yesterday ?? []}
           percentageChange={dashboardSummary?.sales?.percentageChange ?? 0}
+          count={dashboardSummary?.sales?.totalTransactions}
         />
         <StatsCard
           variant="expenses"
           title="Gastos"
-          today={dashboardSummary?.expenses?.today ?? 0}
-          yesterday={dashboardSummary?.expenses?.yesterday ?? 0}
+          today={dashboardSummary?.expenses?.today ?? []}
+          yesterday={dashboardSummary?.expenses?.yesterday ?? []}
           percentageChange={dashboardSummary?.expenses?.percentageChange ?? 0}
+          count={dashboardSummary?.expenses?.totalCount}
         />
+        <CashBalanceWidget />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

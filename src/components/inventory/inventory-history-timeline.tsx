@@ -1,14 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ArrowLeft, ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList, Loader2 } from "lucide-react";
 import type {
   InventoryEntry,
   InventoryMeta,
 } from "@/lib/types/inventory";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -27,7 +25,15 @@ interface InventoryHistoryTimelineProps {
   isFetching?: boolean;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  /** Título del estado vacío. Permite contextualizar negocio vs. producto. */
+  emptyTitle?: string;
+  /** Descripción del estado vacío. */
+  emptyDescription?: string;
 }
+
+const DEFAULT_EMPTY_TITLE = "Sin movimientos registrados";
+const DEFAULT_EMPTY_DESCRIPTION =
+  "Aún no hay entradas de inventario en este negocio.";
 
 function isSameDay(a: Date, b: Date) {
   return (
@@ -77,22 +83,15 @@ export default function InventoryHistoryTimeline({
   isFetching = false,
   onPageChange,
   onLimitChange,
+  emptyTitle = DEFAULT_EMPTY_TITLE,
+  emptyDescription = DEFAULT_EMPTY_DESCRIPTION,
 }: InventoryHistoryTimelineProps) {
   const isEmpty = meta.total === 0;
   const groups = React.useMemo(() => groupByDay(entries), [entries]);
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4 p-0">
-        <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <Button asChild variant="ghost" className="w-full sm:w-auto">
-            <Link href="/dashboard/business/inventory">
-              <ArrowLeft data-icon="inline-start" />
-              Volver a stock actual
-            </Link>
-          </Button>
-        </div>
-
+      <CardContent className="flex flex-col gap-4 p-0 pt-4">
         {isEmpty ? (
           <div className="px-4 pb-6">
             <Empty className="border-border border bg-card">
@@ -100,10 +99,8 @@ export default function InventoryHistoryTimeline({
                 <EmptyMedia variant="icon">
                   <ClipboardList />
                 </EmptyMedia>
-                <EmptyTitle>Sin movimientos registrados</EmptyTitle>
-                <EmptyDescription>
-                  Aún no hay entradas de inventario en este negocio.
-                </EmptyDescription>
+                <EmptyTitle>{emptyTitle}</EmptyTitle>
+                <EmptyDescription>{emptyDescription}</EmptyDescription>
               </EmptyHeader>
             </Empty>
           </div>

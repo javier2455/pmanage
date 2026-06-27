@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Store, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react"
+import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react"
+import { NegoraLogo } from "@/components/brand/negora-logo"
 import Link from 'next/link'
 import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,11 @@ import { getActivePlan } from "@/lib/api/plans";
 import { authRoutes } from "@/lib/routes/auth";
 import { getMe } from "@/lib/api/auth";
 import { getMyBusinessesList } from "@/lib/api/business";
-import { setAuthCookies } from "@/lib/cookies";
+import { getAllSections } from "@/lib/api/navigation";
+import { collectAllowedUrls } from "@/lib/navigation-access";
+import { roleIdFromName } from "@/lib/roles";
+import { setAuthCookies, setDeactivatedCookie, setPlanExpiredCookie, setNeedsReconciliationCookie } from "@/lib/cookies";
+import { getMaxBusinesses } from "@/lib/pro-gates";
 import { useState } from "react";
 import {
     LoginTypeSelectionModal,
@@ -75,19 +80,26 @@ export default function LoginPage() {
             "user",
             JSON.stringify({
                 name: user.name,
-                role: user.rol,
+                role: user.role,
                 email: user.email,
                 plan: user.plan,
                 avatar: user.avatar,
             }),
         );
-        const roleName = typeof user.rol === "string" ? user.rol : user.rol?.name ?? "";
+        const roleName = user.role ?? "";
         const planType = user.plan?.type ?? user.plan?.name ?? "";
         setAuthCookies({
             token: accessToken,
             role: roleName,
             planType,
         });
+        // Si la cuenta ya está desactivada, sembramos la cookie para que el
+        // middleware redirija a la pantalla de reactivación sin parpadeo.
+        setDeactivatedCookie(user.deactivatedAt);
+        // Si el plan está vencido o nunca tuvo plan, sembramos la cookie para que
+        // el middleware redirija al paywall de selección de plan sin parpadeo.
+        // El PlanGuard la corrige luego con /auth/me.
+        setPlanExpiredCookie(Boolean(user.expiredPlan || user.hasNeverHadPlan));
     };
 
     const finalizePostLogin = async ({
@@ -101,16 +113,47 @@ export default function LoginPage() {
 
         if (mode === "worker") {
             const businesses = await getMyBusinessesList();
-            const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
-            router.push(target);
+            /* En modo worker solo cuentan los negocios donde es trabajador;
+               my-business también incluye los propios. Coincide con el filtro
+               del BusinessProvider para que el destino sea coherente. */
+            const workerBusinesses = businesses.filter((b) => b.isWorker === true);
+            if (workerBusinesses.length === 0) {
+                router.push("/dashboard/business/create");
+                return;
+            }
+            /* Aterrizamos en la primera ruta a la que el trabajador realmente
+               tiene acceso (no en /dashboard fijo). Persistimos el negocio
+               activo para que las secciones consultadas coincidan con las que
+               cargará el dashboard al montar. */
+            const activeBusiness = workerBusinesses[0];
+            sessionStorage.setItem("activeBusinessId", activeBusiness.id);
+            const sections = await getAllSections({ businessId: activeBusiness.id });
+            const allowedUrls = collectAllowedUrls(sections, roleIdFromName(user.role ?? ""));
+            router.push(allowedUrls.find(Boolean) ?? "/dashboard/no-access");
             return;
         }
 
         const activePlan = await getActivePlan();
         if (activePlan?.data?.isActive || activePlan?.isActive) {
             const businesses = await getMyBusinessesList();
-            const target = businesses.length > 0 ? "/dashboard" : "/dashboard/business/create";
-            router.push(target);
+            const activeBusinesses = businesses.filter((b) => b.status !== "archived");
+            if (activeBusinesses.length === 0) {
+                setNeedsReconciliationCookie(false);
+                router.push("/dashboard/business/create");
+                return;
+            }
+            /* Si el usuario quedó con más negocios activos de los que permite su
+               plan (p. ej. tras expirar el trial Pro), debe elegir cuál conservar
+               antes de entrar al dashboard. Sembramos la cookie para que el
+               middleware bloquee el dashboard hasta que reconcilie. */
+            const planType = user.plan?.type ?? user.plan?.name ?? "";
+            if (activeBusinesses.length > getMaxBusinesses(planType)) {
+                setNeedsReconciliationCookie(true);
+                router.push("/seleccionar-plan/reconciliar");
+                return;
+            }
+            setNeedsReconciliationCookie(false);
+            router.push("/dashboard");
         } else {
             router.push("/plans");
         }
@@ -118,6 +161,13 @@ export default function LoginPage() {
 
     const routeAfterGetMe = async (params: PendingLogin) => {
         const { user } = params;
+        // Cuenta desactivada: persistimos la sesión y enviamos directo a la
+        // pantalla de reactivación, sin elegir modo ni comprobar plan/negocios.
+        if (user.deactivatedAt) {
+            persistSessionUser(user, params.accessToken, params.refreshToken);
+            router.replace("/cuenta-desactivada");
+            return;
+        }
         if (user.isWorker && !user.isOwner) {
             await finalizePostLogin({ ...params, mode: "worker" });
             return;
@@ -265,15 +315,13 @@ export default function LoginPage() {
         <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
             <Card className="w-full max-w-md">
                 <CardHeader className="flex flex-col items-center gap-4 pb-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                        <Store className="h-6 w-6" />
-                    </div>
+                    <NegoraLogo className="h-12 w-12 rounded-xl" />
                     <div className="flex flex-col items-center gap-1">
                         <CardTitle className="text-2xl font-bold text-card-foreground">
                             Iniciar sesión
                         </CardTitle>
                         <CardDescription>
-                            Ingresa tus credenciales para acceder a VentasPro
+                            Ingresa tus credenciales para acceder a Negora
                         </CardDescription>
                     </div>
                 </CardHeader>
@@ -288,7 +336,7 @@ export default function LoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="admin@ventaspro.com"
+                                    placeholder="admin@negora.com"
                                     autoComplete="email"
                                     {...register("email")}
                                     aria-invalid={!!errors.email}

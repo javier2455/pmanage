@@ -248,7 +248,6 @@ export default function CreatePlanPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="bg-transparent"
                 onClick={() => router.push("/dashboard/admin/assign-plans")}
               >
                 <X className="mr-2 h-4 w-4" />

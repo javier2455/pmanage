@@ -12,37 +12,65 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useGetProductByIdQuery } from "@/hooks/use-product"
+import { useGetProductCategoryByIdQuery } from "@/hooks/use-product-categories"
 import { Badge } from "@/components/ui/badge"
 import { ProductImage } from "@/components/products/product-image"
 
 interface ProductDetailsDialogProps {
     productId: string
+    /**
+     * Nombre de la categoría del BusinessProduct (por negocio). Cuando se abre
+     * desde la lista de productos de un negocio, pásalo para mostrar la categoría
+     * correcta, ya que el catálogo (`Product`) ya no lleva categoría. Ver
+     * docs/category.md.
+     */
+    categoryName?: string | null
     tooltip?: string
     trigger?: React.ReactNode
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
-export default function ProductDetailsDialog({ productId, tooltip, trigger }: ProductDetailsDialogProps) {
-    const { data, isLoading } = useGetProductByIdQuery(productId)
+export default function ProductDetailsDialog({ productId, categoryName: categoryNameProp, tooltip, trigger, open, onOpenChange }: ProductDetailsDialogProps) {
+    const isControlled = open !== undefined
+    const { data, isLoading } = useGetProductByIdQuery(productId, {
+        refetchOnMount: "always",
+    })
 
     const product = data?.data
     const business = product?.businesses?.[0]
 
+    const inlineCategoryName = product?.category?.name ?? null
+    const productCategoryId: string | null =
+        product?.categoryId ?? product?.category?.id ?? null
+    // Solo resolvemos por id si no nos pasaron la categoría del BusinessProduct ni
+    // viene embebida en el producto (compatibilidad durante la migración).
+    const shouldFetchCategoryById =
+        !categoryNameProp && !!productCategoryId && !inlineCategoryName
+    const { data: fetchedCategory } = useGetProductCategoryByIdQuery(
+        shouldFetchCategoryById ? productCategoryId : "",
+    )
+    const categoryName =
+        categoryNameProp ?? inlineCategoryName ?? fetchedCategory?.name ?? null
+
     const triggerContent = trigger ?? <Button variant="outline">Ver detalles</Button>
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                {tooltip ? (
-                    <span className="inline-flex">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                {triggerContent}
-                            </TooltipTrigger>
-                            <TooltipContent>{tooltip}</TooltipContent>
-                        </Tooltip>
-                    </span>
-                ) : triggerContent}
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {isControlled ? null : (
+                <DialogTrigger asChild>
+                    {tooltip ? (
+                        <span className="inline-flex">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    {triggerContent}
+                                </TooltipTrigger>
+                                <TooltipContent>{tooltip}</TooltipContent>
+                            </Tooltip>
+                        </span>
+                    ) : triggerContent}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-[425px] md:max-w-[520px] shadow-lg shadow-cyan-300/30">
                 <DialogHeader>
                     <DialogTitle className="text-card-foreground">
@@ -77,7 +105,9 @@ export default function ProductDetailsDialog({ productId, tooltip, trigger }: Pr
                         <div className="flex items-center justify-between border-b border-border py-4">
                             <span className="text-sm text-muted-foreground">Categoría</span>
                             <span className="text-sm font-medium text-card-foreground">
-                                {product?.category ?? "--"}
+                                {categoryName ?? (
+                                    <span className="text-muted-foreground italic">Sin categoría</span>
+                                )}
                             </span>
                         </div>
                         <div className="flex items-center justify-between border-b border-border py-4">

@@ -21,7 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
-import { clearAuthCookies } from "@/lib/cookies";
+import { clearSession } from "@/lib/session";
 import { PlanIndicator } from "@/components/sidebar/plan-indicator";
 
 interface StoredUser {
@@ -58,12 +58,8 @@ export function NavUser() {
   const userEmail = user.email ?? "";
   const userAvatar = user.avatar ?? "";
 
-  function handleLogout() {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("refresh_token");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("activeBusinessId");
-    clearAuthCookies();
+  async function handleLogout() {
+    await clearSession();
     router.push("/login");
   }
 

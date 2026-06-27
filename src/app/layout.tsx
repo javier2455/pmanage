@@ -5,8 +5,12 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "sileo";
 
 export const metadata: Metadata = {
-  title: "Sistema de Gestión de Negocios",
-  description: "Sistema de Gestión para todo tipo de negocios",
+  title: {
+    default: "Negora",
+    template: "%s · Negora",
+  },
+  description:
+    "Sistema de gestión multimoneda para negocios reales: ventas, inventario y finanzas en un solo lugar.",
 };
 
 export default function RootLayout({

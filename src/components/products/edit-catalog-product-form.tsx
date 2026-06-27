@@ -34,7 +34,11 @@ export function EditCatalogProductForm() {
     const searchParams = useSearchParams()
     const productId = searchParams.get("id") ?? ""
 
-    const { data, isLoading, isError } = useGetProductByIdQuery(productId)
+    // Force refetch on every mount: the global staleTime for ["product"] is 10 min,
+    // so without this, navigating from the products list serves stale cache.
+    const { data, isLoading, isError } = useGetProductByIdQuery(productId, {
+        refetchOnMount: "always",
+    })
     const editProductMutation = useEditProductMutation()
 
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -54,7 +58,6 @@ export function EditCatalogProductForm() {
         defaultValues: {
             name: "",
             description: "",
-            category: "",
             unit: "kg",
             imageUrl: "",
         },
@@ -69,7 +72,6 @@ export function EditCatalogProductForm() {
         reset({
             name: productData.name,
             description: productData.description ?? "",
-            category: productData.category,
             unit: productData.unit,
             imageUrl: productData.imageUrl ?? "",
         })
@@ -104,7 +106,6 @@ export function EditCatalogProductForm() {
                 credentials: {
                     name: data.name,
                     description: data.description ?? null,
-                    category: data.category ?? null,
                     unit: data.unit,
                     imageUrl: imageFile ?? data.imageUrl ?? null,
                 },
@@ -195,21 +196,6 @@ export function EditCatalogProductForm() {
                 <div className="my-4">
                     <div className="grid gap-4 sm:grid-cols-2 mb-6">
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="product-category" className="text-card-foreground">
-                                Categoria <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="product-category"
-                                placeholder="Ej: Electrónica, Ropa..."
-                                {...register("category")}
-                                aria-invalid={errors.category ? "true" : "false"}
-                            />
-                            {errors.category && (
-                                <p className="text-xs text-destructive">{errors.category.message}</p>
-                            )}
-                        </div>
-
-                        <div className="flex flex-col gap-2">
                             <Label className="text-card-foreground">
                                 Unidad de medida <span className="text-destructive">*</span>
                             </Label>
@@ -263,7 +249,8 @@ export function EditCatalogProductForm() {
                                 alt="Imagen del producto"
                                 fill
                                 className="object-cover"
-                                unoptimized
+                                sizes="256px"
+                                unoptimized={!!imagePreview}
                             />
                             {imagePreview && (
                                 <button
@@ -309,7 +296,7 @@ export function EditCatalogProductForm() {
                 <Separator />
 
                 <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <Button type="button" variant="default" asChild>
+                    <Button type="button" variant="outline" asChild>
                         <Link href="/dashboard/business/products">
                             <X className="mr-2 h-4 w-4" />
                             Cancelar

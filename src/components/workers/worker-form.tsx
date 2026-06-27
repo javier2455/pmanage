@@ -25,8 +25,7 @@ import {
   useCreateWorkerMutation,
   useUpdateWorkerMutation,
 } from "@/hooks/use-workers";
-import { useGetMenuListQuery } from "@/hooks/use-menu";
-import type { MenuListItem } from "@/lib/types/menu";
+import { useGetAllSectionsQuery } from "@/hooks/use-navigation";
 import type {
   Worker,
   WorkerPermissoEntry,
@@ -38,9 +37,10 @@ import {
   type WorkerFormData,
 } from "@/lib/validations/workers";
 import {
-  groupKey,
-  groupMenuItems,
+  buildPermSections,
+  flattenPermItems,
   WorkerPermissionsSection,
+  type SelectedPermItem,
 } from "./worker-permissions-section";
 
 interface WorkerFormProps {
@@ -53,18 +53,40 @@ const SUCCESS_TOAST_STYLES = {
   description: "text-white/90! text-[15px]!",
 };
 
-function buildPermisos(items: MenuListItem[]): WorkerPermissoEntry[] {
-  return items.map((item) => ({
-    read: true,
-    write: true,
-    update: true,
-    delete: true,
-    download: true,
-    all: true,
-    ...(item.idSubmenu
-      ? { subMenuId: item.idSubmenu }
-      : { menuId: item.idMenu }),
-  }));
+const ALL_ACTIONS = {
+  read: true,
+  write: true,
+  update: true,
+  delete: true,
+  download: true,
+  all: true,
+} as const;
+
+/**
+ * Construye el array de permisos con las 3 capas que exige el backend:
+ * una entrada por cada menú/submenú seleccionado y una por cada sección
+ * padre involucrada (deduplicada). Sin la entrada de sección el backend
+ * poda el árbol desde la raíz y devuelve navegación vacía.
+ */
+function buildPermisos(items: SelectedPermItem[]): WorkerPermissoEntry[] {
+  const entries: WorkerPermissoEntry[] = [];
+  const sectionIds = new Set<string>();
+
+  for (const item of items) {
+    sectionIds.add(item.idSection);
+    entries.push({
+      ...ALL_ACTIONS,
+      ...(item.idSubmenu
+        ? { subMenuId: item.idSubmenu }
+        : { menuId: item.idMenu }),
+    });
+  }
+
+  for (const sectionId of sectionIds) {
+    entries.push({ ...ALL_ACTIONS, sectionId });
+  }
+
+  return entries;
 }
 
 export function WorkerForm({ mode, worker }: WorkerFormProps) {
@@ -75,9 +97,14 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
   const updateMutation = useUpdateWorkerMutation();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
 
-  const { data: menuList } = useGetMenuListQuery();
+  const { data: sectionsRaw } = useGetAllSectionsQuery();
+  const sections = useMemo(
+    () => buildPermSections(sectionsRaw ?? []),
+    [sectionsRaw],
+  );
+  const flatItems = useMemo(() => flattenPermItems(sections), [sections]);
 
-  const [selected, setSelected] = useState<Map<string, MenuListItem>>(
+  const [selected, setSelected] = useState<Map<string, SelectedPermItem>>(
     new Map(),
   );
   const selectedKeys = useMemo(
@@ -86,16 +113,16 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
   );
 
   useEffect(() => {
-    if (!isEdit || !worker || !menuList) return;
+    if (!isEdit || !worker || flatItems.length === 0) return;
     const permissionNames = new Set(worker.permissions);
-    const next = new Map<string, MenuListItem>();
-    for (const item of menuList) {
+    const next = new Map<string, SelectedPermItem>();
+    for (const item of flatItems) {
       if (permissionNames.has(item.name)) {
         next.set(item.idSubmenu ?? item.idMenu, item);
       }
     }
     setSelected(next);
-  }, [isEdit, worker, menuList]);
+  }, [isEdit, worker, flatItems]);
 
   const createForm = useForm<WorkerFormData>({
     resolver: zodResolver(workerFormSchema),
@@ -114,7 +141,7 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
     },
   });
 
-  function handleToggle(item: MenuListItem, children?: MenuListItem[]) {
+  function handleToggle(item: SelectedPermItem, children?: SelectedPermItem[]) {
     const key = item.idSubmenu ?? item.idMenu;
     setSelected((prev) => {
       const next = new Map(prev);
@@ -139,16 +166,15 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
   }
 
   function getIncompleteParentName(): string | null {
-    if (!menuList) return null;
-    const groups = groupMenuItems(menuList);
-    for (const group of groups) {
-      if (!group.parent || !group.parentKey) continue;
-      if (!selected.has(group.parentKey)) continue;
-      if (group.children.length === 0) continue;
-      const hasChildSelected = group.children.some((child) =>
-        selected.has(groupKey(child)),
-      );
-      if (!hasChildSelected) return group.parent.name;
+    for (const section of sections) {
+      for (const menu of section.menus) {
+        if (!selected.has(menu.idMenu)) continue;
+        if (menu.submenus.length === 0) continue;
+        const hasChildSelected = menu.submenus.some((sub) =>
+          selected.has(sub.idSubmenu),
+        );
+        if (!hasChildSelected) return menu.name;
+      }
     }
     return null;
   }
@@ -433,7 +459,7 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
         </Card>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="default" asChild>
+          <Button type="button" variant="outline" asChild>
             <Link href="/dashboard/business/workers">
               <X className="mr-2 h-4 w-4" />
               Cancelar

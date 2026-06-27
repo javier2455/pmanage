@@ -7,5 +7,9 @@ export const salesRoutes = {
     createSale: `${BASIC_ROUTE}/sales`,
     deleteSale: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}`,
     cancelSale: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/cancel`,
-
-}; 
+    registerPayments: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/payments`,
+    paymentsSummary: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/payments/summary`,
+    paymentsHistory: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/payments`,
+    // Facturación PDF (Fase 2). Ver docs/guia-implementacion-multimoneda.md §3.
+    factura: (saleId: string) => `${BASIC_ROUTE}/sales/${saleId}/factura`,
+};

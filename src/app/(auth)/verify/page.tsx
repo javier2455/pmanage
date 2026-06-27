@@ -12,7 +12,8 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Store, RefreshCw, MailCheck, CheckCircle2, AlertTriangle } from "lucide-react"
+import { RefreshCw, MailCheck, CheckCircle2, AlertTriangle } from "lucide-react"
+import { NegoraLogo } from "@/components/brand/negora-logo"
 import axios, { AxiosError } from "axios"
 import { useRouter } from "next/navigation"
 import { authRoutes } from "@/lib/routes/auth";
@@ -156,7 +157,7 @@ export default function VerifyPage() {
                                 ¡Cuenta verificada!
                             </CardTitle>
                             <CardDescription>
-                                Tu correo ha sido verificado correctamente. Ya puedes iniciar sesión y comenzar a usar VentasPro.
+                                Tu correo ha sido verificado correctamente. Ya puedes iniciar sesión y comenzar a usar Negora.
                             </CardDescription>
                         </div>
                     </CardHeader>
@@ -174,9 +175,7 @@ export default function VerifyPage() {
         <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
             <Card className="w-full max-w-md">
                 <CardHeader className="flex flex-col items-center gap-4 pb-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                        <Store className="h-6 w-6" />
-                    </div>
+                    <NegoraLogo className="h-12 w-12 rounded-xl" />
                     <div className="flex flex-col items-center gap-1">
                         <CardTitle className="text-2xl font-bold text-card-foreground">
                             Verifica tu cuenta

@@ -34,6 +34,7 @@ export interface WorkerPermissoEntry {
   delete: boolean;
   download: boolean;
   all: boolean;
+  sectionId?: string;
   menuId?: string;
   subMenuId?: string;
 }

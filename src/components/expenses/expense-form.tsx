@@ -13,6 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   CreateExpenseFormData,
@@ -22,7 +29,12 @@ import {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
 } from "@/hooks/use-expenses";
+import { useGetAllExpenseCategoriesQuery } from "@/hooks/use-expense-categories";
+import { useExchangeRate } from "@/hooks/use-exchange";
 import { useBusiness } from "@/context/business-context";
+import { BASE_CURRENCY, getAvailableCurrencies } from "@/lib/currency";
+
+const NO_CATEGORY_VALUE = "__none__";
 
 interface ExpenseFormProps {
   mode: "create" | "edit";
@@ -48,10 +60,25 @@ export function ExpenseForm({
   const isEdit = mode === "edit";
   const mutation = isEdit ? updateMutation : createMutation;
 
+  const { data: categoriesData, isLoading: isLoadingCategories } =
+    useGetAllExpenseCategoriesQuery({
+      page: 1,
+      limit: 1000,
+      businessId: activeBusinessId ?? undefined,
+      enabled: !!activeBusinessId,
+    });
+  const categories = categoriesData?.data ?? [];
+
+  // Monedas seleccionables del negocio (CUP + las que tengan tasa configurada).
+  const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "");
+  const availableCurrencies = getAvailableCurrencies(exchangeRateData?.data);
+
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<CreateExpenseFormData>({
     resolver: zodResolver(createExpenseSchema),
@@ -59,16 +86,29 @@ export function ExpenseForm({
       title: defaultValues?.title ?? "",
       amount: defaultValues?.amount ?? (undefined as unknown as number),
       description: defaultValues?.description ?? "",
+      expenseCategoryId: defaultValues?.expenseCategoryId ?? null,
+      currency: defaultValues?.currency ?? BASE_CURRENCY,
     },
   });
 
+  const selectedCategoryId = watch("expenseCategoryId");
+  const selectedCurrency = watch("currency") ?? BASE_CURRENCY;
+
   async function onSubmit(formData: CreateExpenseFormData) {
+    const normalizedCategoryId =
+      formData.expenseCategoryId && formData.expenseCategoryId.length > 0
+        ? formData.expenseCategoryId
+        : null;
+    const payload = {
+      ...formData,
+      expenseCategoryId: normalizedCategoryId,
+    };
     try {
       if (isEdit) {
         if (!expenseId) return;
         await updateMutation.mutateAsync({
           expenseId,
-          credentials: formData,
+          credentials: payload,
         });
         sileo.success({
           title: "Gasto actualizado correctamente",
@@ -85,7 +125,7 @@ export function ExpenseForm({
         }
         await createMutation.mutateAsync({
           idbusiness: activeBusinessId,
-          ...formData,
+          ...payload,
         });
         sileo.success({
           title: "Gasto registrado correctamente",
@@ -138,22 +178,47 @@ export function ExpenseForm({
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="expense-amount" className="text-card-foreground">
-          Monto <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="expense-amount"
-          type="number"
-          min={1}
-          step="0.01"
-          placeholder="0.00"
-          {...register("amount", { valueAsNumber: true })}
-          aria-invalid={errors.amount ? "true" : "false"}
-        />
-        {errors.amount && (
-          <p className="text-xs text-destructive">{errors.amount.message}</p>
-        )}
+      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="expense-amount" className="text-card-foreground">
+            Monto <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="expense-amount"
+            type="number"
+            min={1}
+            step="0.01"
+            placeholder="0.00"
+            {...register("amount", { valueAsNumber: true })}
+            aria-invalid={errors.amount ? "true" : "false"}
+          />
+          {errors.amount && (
+            <p className="text-xs text-destructive">{errors.amount.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="expense-currency" className="text-card-foreground">
+            Moneda
+          </Label>
+          <Select
+            value={selectedCurrency}
+            onValueChange={(val) =>
+              setValue("currency", val, { shouldDirty: true })
+            }
+          >
+            <SelectTrigger id="expense-currency" className="w-full sm:w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableCurrencies.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -175,6 +240,53 @@ export function ExpenseForm({
         )}
       </div>
 
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="expense-category" className="text-card-foreground">
+          Categoría
+        </Label>
+        <Select
+          value={selectedCategoryId ?? NO_CATEGORY_VALUE}
+          onValueChange={(val) =>
+            setValue(
+              "expenseCategoryId",
+              val === NO_CATEGORY_VALUE ? null : val,
+              { shouldDirty: true },
+            )
+          }
+          disabled={isLoadingCategories || categories.length === 0}
+        >
+          <SelectTrigger id="expense-category" className="w-full">
+            <SelectValue
+              placeholder={
+                isLoadingCategories
+                  ? "Cargando categorías..."
+                  : categories.length === 0
+                    ? "Aún no hay categorías"
+                    : "Sin categoría"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_CATEGORY_VALUE}>Sin categoría</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Opcional — administra tus categorías en la sección de{" "}
+          <Link
+            href="/dashboard/business/categories/expenses"
+            className="underline-offset-2 hover:underline"
+          >
+            Categorías
+          </Link>
+          .
+        </p>
+      </div>
+
       {errors.root && (
         <p className="text-sm text-destructive">{errors.root.message}</p>
       )}
@@ -182,7 +294,7 @@ export function ExpenseForm({
       <Separator />
 
       <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button type="button" variant="default" asChild>
+        <Button type="button" variant="outline" asChild>
           <Link href="/dashboard/business/expenses">
             <X className="mr-2 h-4 w-4" />
             Cancelar
