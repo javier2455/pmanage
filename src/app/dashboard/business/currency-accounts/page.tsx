@@ -1,12 +1,16 @@
 "use client";
 
+import { useState } from "react";
+
 import { useBusiness } from "@/context/business-context";
 import { useCurrencyBalances } from "@/hooks/use-currency-account";
 import { useExchangeRate } from "@/hooks/use-exchange";
+import { useTransactionsByBusiness } from "@/hooks/use-financial-transactions";
 import { getAvailableCurrencies } from "@/lib/currency";
 import { BalancesTable } from "@/components/currency-account/balances-table";
 import { ConsolidatedBalanceCard } from "@/components/currency-account/consolidated-balance-card";
 import { InitializeBudgetsDialog } from "@/components/currency-account/initialize-budgets-dialog";
+import { TransactionsTable } from "@/components/currency-account/transactions-table";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 import {
   Tabs,
@@ -14,6 +18,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+
+const TRANSACTIONS_DEFAULT_LIMIT = 10;
 
 export default function CurrencyAccountsPage() {
   const { activeBusinessId } = useBusiness();
@@ -28,6 +34,32 @@ export default function CurrencyAccountsPage() {
   // Monedas seleccionables del negocio (CUP + las que tengan tasa configurada).
   const { data: exchangeRateData } = useExchangeRate(businessId);
   const availableCurrencies = getAvailableCurrencies(exchangeRateData?.data);
+
+  // Estado del listado de transacciones (paginación + filtro de moneda).
+  const [txPage, setTxPage] = useState(1);
+  const [txLimit, setTxLimit] = useState(TRANSACTIONS_DEFAULT_LIMIT);
+  const [txCurrency, setTxCurrency] = useState("");
+
+  const {
+    data: txData,
+    isFetching: txIsFetching,
+    isError: txIsError,
+  } = useTransactionsByBusiness({
+    businessId,
+    currency: txCurrency || undefined,
+    page: txPage,
+    limit: txLimit,
+  });
+
+  function handleTxCurrencyChange(next: string) {
+    setTxCurrency(next);
+    setTxPage(1);
+  }
+
+  function handleTxLimitChange(next: number) {
+    setTxLimit(next);
+    setTxPage(1);
+  }
 
   const initializedCurrencies = (accounts ?? []).map((a) => a.currency);
 
@@ -59,13 +91,13 @@ export default function CurrencyAccountsPage() {
       {showInitialSkeleton ? (
         <SimpleTableSkeleton />
       ) : (
-        // Las pestañas "Movimientos" y "Flujo por período" llegan en Fase 2:
-        // dependen de un endpoint de movimientos que el backend aún no expone.
-        // Ver docs/flujo-de-caja.md.
+        // La pestaña "Flujo por período" llega en una fase posterior. Ver
+        // docs/flujo-de-caja.md.
         <Tabs defaultValue="balances">
           <TabsList>
             <TabsTrigger value="balances">Saldos</TabsTrigger>
             <TabsTrigger value="consolidated">Consolidado</TabsTrigger>
+            <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           </TabsList>
           <TabsContent value="balances">
             <BalancesTable accounts={accounts ?? []} />
@@ -75,6 +107,31 @@ export default function CurrencyAccountsPage() {
               accounts={accounts ?? []}
               exchangeRate={exchangeRateData?.data}
             />
+          </TabsContent>
+          <TabsContent value="transactions">
+            {txIsError ? (
+              <div className="text-sm text-destructive">
+                Error al cargar las transacciones
+              </div>
+            ) : (
+              <TransactionsTable
+                transactions={txData?.data ?? []}
+                meta={
+                  txData?.meta ?? {
+                    total: 0,
+                    page: txPage,
+                    limit: txLimit,
+                    totalPages: 0,
+                  }
+                }
+                availableCurrencies={availableCurrencies}
+                currency={txCurrency}
+                onCurrencyChange={handleTxCurrencyChange}
+                isFetching={txIsFetching}
+                onPageChange={setTxPage}
+                onLimitChange={handleTxLimitChange}
+              />
+            )}
           </TabsContent>
         </Tabs>
       )}
