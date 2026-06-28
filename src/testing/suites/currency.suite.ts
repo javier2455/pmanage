@@ -3,13 +3,22 @@ import {
   BASE_CURRENCY,
   convertBetween,
   convertFromBase,
+  convertToBase,
   formatMoney,
   getAvailableCurrencies,
   getCurrencyRate,
 } from "@/lib/currency";
 
-// Tasas típicas: cuántos CUP vale 1 unidad de cada moneda.
-const rates = { USD: 400, EURO: 420, MLC: 250, CAD: 0, CLASICA: "120" };
+// Tasas típicas: cuántos CUP vale 1 unidad de cada moneda. CUP_TRANSFERENCIA es
+// la excepción: su valor (1.1) es un multiplicador de recargo en CUP, no CUP/unidad.
+const rates = {
+  USD: 400,
+  EURO: 420,
+  MLC: 250,
+  CAD: 0,
+  CLASICA: "120",
+  CUP_TRANSFERENCIA: 1.1,
+};
 
 export const currencySuite = defineSuite(
   "currency · moneda multimoneda",
@@ -86,6 +95,23 @@ export const currencySuite = defineSuite(
     );
 
     test(
+      "convertFromBase multiplica para CUP transferencia (recargo en CUP)",
+      () => {
+        expect(convertFromBase(3600, "CUP_TRANSFERENCIA", rates)).toBeCloseTo(3960, 6); // 3600 × 1.1
+      },
+      "CUP_TRANSFERENCIA no es moneda extranjera: su tasa (1.1) es un recargo del 10% sobre el precio en CUP. Un producto de 3600 CUP pagado por transferencia cuesta 3600 × 1.1 = 3960, no 3600 ÷ 1.1. Caso de la issue de cálculo incorrecto.",
+    );
+
+    test(
+      "convertToBase invierte convertFromBase según la moneda",
+      () => {
+        expect(convertToBase(2, "USD", rates)).toBe(800); // extranjera: 2 × 400
+        expect(convertToBase(3960, "CUP_TRANSFERENCIA", rates)).toBeCloseTo(3600, 6); // recargo: 3960 ÷ 1.1
+      },
+      "convertToBase es la inversa de convertFromBase. Extranjera multiplica (2 USD → 800 CUP); CUP con recargo divide (3960 transferencia → 3600 CUP base).",
+    );
+
+    test(
       "convertFromBase es defensivo (CUP, sin tasa)",
       () => {
         expect(convertFromBase(800, "CUP", rates)).toBe(800);
@@ -103,6 +129,16 @@ export const currencySuite = defineSuite(
         expect(convertBetween(800, "CUP", "USD", rates)).toBe(2);
       },
       "Convierte entre dos monedas pasando por CUP: equivalente = (monto × tasa_origen) ÷ tasa_destino. 1 USD→EURO ≈ 400/420; 2 USD→CUP = 800; 800 CUP→USD = 2.",
+    );
+
+    test(
+      "convertBetween respeta la dirección de CUP transferencia",
+      () => {
+        // CUP → transferencia: recargo (×1.1). Transferencia → CUP: ÷1.1.
+        expect(convertBetween(3600, "CUP", "CUP_TRANSFERENCIA", rates)).toBeCloseTo(3960, 6);
+        expect(convertBetween(3960, "CUP_TRANSFERENCIA", "CUP", rates)).toBeCloseTo(3600, 6);
+      },
+      "convertBetween se apoya en convertToBase/convertFromBase, así que respeta que CUP_TRANSFERENCIA multiplica al venir de CUP (3600 → 3960) y divide al volver a CUP (3960 → 3600), en vez de tratarla como extranjera.",
     );
 
     test(

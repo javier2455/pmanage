@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import {
   BASE_CURRENCY,
+  convertToBase,
   formatMoney,
   getCurrencyRate,
   type ExchangeRateLike,
@@ -87,7 +88,7 @@ export function EntryCostCurrency({
           <span>
             Se guardará como{" "}
             <span className="font-semibold text-card-foreground">
-              {formatMoney(entryPrice * rate, BASE_CURRENCY)}
+              {formatMoney(convertToBase(entryPrice, currency, exchangeRate), BASE_CURRENCY)}
             </span>{" "}
             (tasa {rate})
           </span>

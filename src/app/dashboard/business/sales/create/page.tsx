@@ -12,6 +12,7 @@ import { SaleType } from "@/lib/types/sales"
 import { isIntegerUnit } from "@/lib/units"
 import {
   BASE_CURRENCY,
+  convertFromBase,
   getAvailableCurrencies,
   getCurrencyRate,
 } from "@/lib/currency"
@@ -219,9 +220,11 @@ export default function CreateSalesPage() {
           idproducto: productId,
           quantity,
           // Los precios se guardan en CUP; los enviamos en la moneda de la venta.
+          // `convertFromBase` respeta la dirección de cada moneda (extranjera
+          // divide; CUP con recargo como transferencia multiplica).
           // TODO(backend): confirmar si `price` se espera en la moneda de la venta
-          // (asumido) o en CUP. De ser CUP, eliminar la división por `rate`.
-          price: currency === BASE_CURRENCY ? price : price / rate,
+          // (asumido) o en CUP. De ser CUP, enviar `price` sin convertir.
+          price: convertFromBase(price, currency, exchange),
         })),
       })
 

@@ -100,6 +100,18 @@ export function PaymentDialog({
   const estado = summary?.estado ?? "pending";
   const isClosed = estado === "paid" || estado === "cancelled";
 
+  // Una venta siempre se puede cobrar en su propia moneda, aunque su tasa ya no
+  // esté configurada en el negocio (p. ej. CUP_TRANSFERENCIA que se quitó tras
+  // crear la venta). Si no la incluimos, el selector aparece vacío y el botón de
+  // pago nunca se habilita. Por eso unimos `monedaBase` a las monedas operables.
+  const currencyOptions = React.useMemo(
+    () =>
+      availableCurrencies.includes(monedaBase)
+        ? availableCurrencies
+        : [monedaBase, ...availableCurrencies],
+    [availableCurrencies, monedaBase],
+  );
+
   const [rows, setRows] = React.useState<PaymentRow[]>([]);
 
   // Prefill al abrir: usa la `sugerencia` del backend o el pendiente en moneda base.
@@ -146,6 +158,9 @@ export function PaymentDialog({
   const equivalentes = rows.map((r) => {
     const monto = Number(r.monto);
     if (!Number.isFinite(monto) || monto <= 0) return 0;
+    // Pagar en la misma moneda de la venta es 1:1; no dependemos de la tasa
+    // (podría no estar configurada y dejaría el equivalente en 0 → botón muerto).
+    if (r.moneda === monedaBase) return monto;
     const eq = convertBetween(monto, r.moneda, monedaBase, exchange);
     return eq ?? 0;
   });
@@ -180,7 +195,7 @@ export function PaymentDialog({
       ...(r.referencia.trim() ? { referencia: r.referencia.trim() } : {}),
     }));
 
-    const parsed = makePaymentsSchema(availableCurrencies).safeParse({ pagos });
+    const parsed = makePaymentsSchema(currencyOptions).safeParse({ pagos });
     if (!parsed.success) {
       toastError({
         title: "Revisa los pagos",
@@ -325,7 +340,7 @@ export function PaymentDialog({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {availableCurrencies.map((c) => (
+                            {currencyOptions.map((c) => (
                               <SelectItem key={c} value={c}>
                                 {c}
                               </SelectItem>

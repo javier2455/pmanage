@@ -11,6 +11,21 @@
 export const BASE_CURRENCY = "CUP";
 
 /**
+ * Monedas que en realidad son CUP con recargo: el precio sigue denominado en CUP
+ * y su "tasa" es un multiplicador (p. ej. transferencia 1.1 = +10%), NO cuántos
+ * CUP vale 1 unidad. Por eso convierten al revés que una moneda extranjera:
+ * base → moneda multiplica (montoCUP × tasa) en vez de dividir.
+ * `CLASICA` NO entra aquí: se trata como moneda normal (divide). Decisión de
+ * producto, ver issue de cálculo de CUP transferencia.
+ */
+export const CUP_DENOMINATED_CURRENCIES = ["CUP_TRANSFERENCIA"] as const;
+
+/** ¿La moneda es CUP con recargo (multiplica) en vez de extranjera (divide)? */
+export function isCupDenominated(currency: string): boolean {
+  return (CUP_DENOMINATED_CURRENCIES as readonly string[]).includes(currency);
+}
+
+/**
  * Códigos de moneda que pueden venir como columnas en MonetaryExchange.
  * El usuario activa las que use dándoles una tasa > 0; las que queden en 0 no se
  * consideran operables. `CUP_TRANSFERENCIA` y `CLASICA` se tratan como monedas
@@ -83,7 +98,9 @@ export function getCurrencyRate(
 }
 
 /**
- * Convierte un precio guardado en CUP a la moneda de la venta: `montoCUP / tasa`.
+ * Convierte un precio guardado en CUP a la moneda de la venta.
+ * Moneda extranjera: `montoCUP / tasa`. Moneda CUP con recargo (transferencia):
+ * `montoCUP × tasa`, porque la tasa es un multiplicador, no CUP/unidad.
  * Si la moneda es CUP o no hay tasa, devuelve el monto sin convertir (defensivo).
  */
 export function convertFromBase(
@@ -94,14 +111,30 @@ export function convertFromBase(
   if (currency === BASE_CURRENCY) return montoCUP;
   const rate = getCurrencyRate(exchangeRate, currency);
   if (!rate) return montoCUP;
-  return montoCUP / rate;
+  return isCupDenominated(currency) ? montoCUP * rate : montoCUP / rate;
+}
+
+/**
+ * Convierte un monto en una moneda dada de vuelta a CUP (operación inversa de
+ * `convertFromBase`). Extranjera: `monto × tasa`. CUP con recargo: `monto / tasa`.
+ * Defensivo: CUP o sin tasa → devuelve el monto sin convertir.
+ */
+export function convertToBase(
+  monto: number,
+  currency: string,
+  exchangeRate: ExchangeRateLike,
+): number {
+  if (currency === BASE_CURRENCY) return monto;
+  const rate = getCurrencyRate(exchangeRate, currency);
+  if (!rate) return monto;
+  return isCupDenominated(currency) ? monto / rate : monto * rate;
 }
 
 /**
  * Convierte un monto de una moneda a otra usando CUP como puente.
- * Útil para previsualizar el `equivalente` de un pago a la moneda base de la venta:
- *   equivalente = (monto × tasa_origen) / tasa_destino
- * Devuelve `null` si falta alguna tasa.
+ * Útil para previsualizar el `equivalente` de un pago a la moneda base de la venta.
+ * Se apoya en `convertToBase`/`convertFromBase` para respetar la dirección de cada
+ * moneda (extranjera divide, CUP con recargo multiplica). `null` si falta tasa.
  */
 export function convertBetween(
   monto: number,
@@ -112,7 +145,7 @@ export function convertBetween(
   const fromRate = getCurrencyRate(exchangeRate, from);
   const toRate = getCurrencyRate(exchangeRate, to);
   if (fromRate == null || toRate == null) return null;
-  return (monto * fromRate) / toRate;
+  return convertFromBase(convertToBase(monto, from, exchangeRate), to, exchangeRate);
 }
 
 /**
