@@ -12,7 +12,8 @@
 > Documentos de referencia (estado actual): [docs/sdd/sdd-develop.md](../sdd/sdd-develop.md) ·
 > [docs/análisis-planes/spec-tecnicas.md](../análisis-planes/spec-tecnicas.md) ·
 > [docs/análisis-planes/backend-cambios.md](../análisis-planes/backend-cambios.md) ·
-> [docs/flujo-de-caja.md](../flujo-de-caja.md) · [docs/extra/pro-gating.md](../extra/pro-gating.md)
+> [docs/flujo-de-caja.md](../flujo-de-caja.md) · [docs/extra/pro-gating.md](../extra/pro-gating.md) ·
+> [docs/v3/backend-flujo-caja-mensual.md](./backend-flujo-caja-mensual.md) *(contrato BE de V3-039)*
 
 ---
 
@@ -114,6 +115,7 @@ Una fila por funcionalidad/cambio. **Toda nueva idea entra aquí.**
 | **V3-036** | Conciliación contra extracto | Caja | Enterprise | especificada | V3-030 | §7 |
 | **V3-037** | Múltiples cajas/cuentas (caja chica vs banco) | Caja | Enterprise | especificada | V3-030 | §7 |
 | **V3-038** | Estado de flujo de caja exportable | Caja | Enterprise | especificada | V3-033 | §7 |
+| **V3-039** | Resumen mensual de flujo de caja + salud (semáforo) exportable | Caja | Enterprise | especificada | V3-033, V3-038 | §7 |
 | **V3-090** | Portal/registro público de clientes | Sugerida | Enterprise | idea | V3-002 | §8 |
 | **V3-091** | Puntos canjeables por cupones | Sugerida | Enterprise | idea | V3-005, V3-012 | §8 |
 | **V3-092** | Recomendaciones de reabastecimiento | Sugerida | Pro | idea | — | §8 |
@@ -602,6 +604,7 @@ export interface Campaign {
 - **Conciliación (V3-036):** marcar movimientos como conciliados contra extracto.
 - **Múltiples cajas/cuentas (V3-037):** caja chica vs banco.
 - **Estado de flujo de caja exportable (V3-038).**
+- **Resumen mensual + salud del negocio (V3-039):** serie multi-mes comparable + semáforo de salud (ver §7.9).
 
 ### 7.2 Backend — entidades / campos
 **`CashMovement`** (registro persistente; hoy el saldo se recalcula por eventos sin listado)
@@ -692,6 +695,49 @@ Este módulo es el primer paso pragmático en **base caja**. Su evolución natur
 plan de cuentas, asientos automáticos y estados financieros formales. La v3 **no se
 solapa** con ese núcleo; lo prepara.
 
+### 7.9 Resumen mensual + salud del negocio (V3-039) · *Enterprise*
+
+> Extiende `V3-033` (flujo de **un** período) y `V3-038` (export) con una **serie
+> multi-mes comparable** y un **veredicto de salud**. Responde la pregunta del dueño:
+> *"¿es rentable, está vivo a futuro o va por mal camino?"*. **Contrato backend completo:**
+> [docs/v3/backend-flujo-caja-mensual.md](./backend-flujo-caja-mensual.md).
+
+**Qué resuelve.** Una tabla/serie de meses (entradas, salidas, neto, saldo acumulado),
+todo en moneda base (CUP), más un bloque de **salud** (semáforo verde/ámbar/rojo) con
+tendencia del neto, meses en positivo/negativo, *runway* y margen base-caja. Exportable a
+PDF y Excel.
+
+**Backend (resumen).** La materia prima ya existe: el ledger de transacciones financieras
+([src/lib/types/financial-transaction.ts](../../src/lib/types/financial-transaction.ts))
+clasifica cada evento por tipo y lo convierte a CUP (`convertedAmount`) con `transactionDate`.
+Endpoints nuevos:
+- `GET /currency-accounts/cashflow/monthly/{businessId}?from=&to=&currency=` → `months[]` + `totals` + `health`.
+- `GET .../cashflow/monthly/{businessId}/pdf` y `.../excel` → `Blob` (patrón `accounting-close`).
+
+**Frontend (cuando se priorice).**
+- Tipos `MonthlyCashflowResponse` / `MonthlyCashflowRow` / `CashHealth` en `src/lib/types/cash.ts`.
+- Ruta/API + hook `useMonthlyCashflow()` en `src/hooks/use-cashflow.ts`.
+- Vista en `src/app/dashboard/business/currency-accounts/`: gráfico de barras entrada/salida +
+  línea de neto (Recharts, patrón de
+  [src/components/analytics/sales-trend-chart.tsx](../../src/components/analytics/sales-trend-chart.tsx)),
+  **tarjeta de semáforo** con las señales de `health`, y botones **Export PDF/Excel**
+  (reutiliza `downloadBlob` de [src/lib/download.ts](../../src/lib/download.ts)).
+- `currentCashBase` del bloque `health` se cruza con `consolidateBalances`
+  ([src/lib/cash-flow.ts](../../src/lib/cash-flow.ts)) para el cálculo de *runway*.
+- Gating Enterprise.
+
+**Reglas del semáforo** (umbrales exactos en el contrato backend §5):
+- 🟢 **Sano:** neto positivo en la mayoría de los últimos meses y tendencia ↑; sin *runway* en riesgo.
+- 🟡 **Atención:** neto plano/declinante o meses mixtos; *runway* 3–6 meses.
+- 🔴 **Riesgo:** racha de meses con neto negativo y tendencia ↓; *runway* < 3 meses.
+
+#### 7.9.1 Contratos que el FE consume (V3-039)
+| Contrato | Dónde lo usa el FE |
+|---|---|
+| `GET /currency-accounts/cashflow/monthly/{id}` | vista de resumen mensual + tarjeta de salud (`useMonthlyCashflow`) |
+| `GET .../cashflow/monthly/{id}/pdf` | botón Export PDF |
+| `GET .../cashflow/monthly/{id}/excel` | botón Export Excel |
+
 ---
 
 <a name="8-sugeridas"></a>
@@ -719,3 +765,4 @@ Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproxima
 | Fecha | Cambio |
 |---|---|
 | 2026-06-24 | Creación del documento maestro v3 con las 4 áreas (CRM, Descuentos/Ofertas, Nóminas, Flujo de Caja Pro), tier Enterprise (V3-000), backlog maestro y funcionalidades sugeridas. Estado inicial: áreas `especificada`, sugeridas `idea`. |
+| 2026-06-28 | Alta de **V3-039** (resumen mensual de flujo de caja + semáforo de salud, exportable, tier Enterprise). Detalle en §7.9; contrato backend en [docs/v3/backend-flujo-caja-mensual.md](./backend-flujo-caja-mensual.md). |

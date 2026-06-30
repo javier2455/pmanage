@@ -5,8 +5,10 @@ import {
   convertFromBase,
   convertToBase,
   formatMoney,
+  fromBackendCurrency,
   getAvailableCurrencies,
   getCurrencyRate,
+  toBackendCurrency,
 } from "@/lib/currency";
 
 // Tasas típicas: cuántos CUP vale 1 unidad de cada moneda. CUP_TRANSFERENCIA es
@@ -148,6 +150,28 @@ export const currencySuite = defineSuite(
         expect(convertBetween(1, "CAD", "USD", rates)).toBeNull();
       },
       "Si falta la tasa de origen o de destino (CAD tiene tasa 0), no se puede calcular un equivalente fiable, así que devuelve null en ambas direcciones.",
+    );
+
+    test(
+      "toBackendCurrency traduce CUP_TRANSFERENCIA al enum del backend",
+      () => {
+        expect(toBackendCurrency("CUP_TRANSFERENCIA")).toBe("cup_transferencia");
+        expect(toBackendCurrency("USD")).toBe("USD");
+        expect(toBackendCurrency("CUP")).toBe("CUP");
+      },
+      "El backend modela la transferencia en CUP como el enum snake_case 'cup_transferencia' (no 'CUP_TRANSFERENCIA' ni 'cup_transfer'). Al enviar ventas/pagos se traduce solo esa moneda; el resto (USD, CUP…) viaja sin cambios. Caso de la issue 'Ventas con atributo cup_transfer'.",
+    );
+
+    test(
+      "fromBackendCurrency invierte el mapeo a la forma interna",
+      () => {
+        expect(fromBackendCurrency("cup_transferencia")).toBe("CUP_TRANSFERENCIA");
+        expect(fromBackendCurrency("USD")).toBe("USD");
+        expect(fromBackendCurrency(toBackendCurrency("CUP_TRANSFERENCIA"))).toBe(
+          "CUP_TRANSFERENCIA",
+        );
+      },
+      "Al leer respuestas del backend convertimos 'cup_transferencia' de vuelta a la clave interna 'CUP_TRANSFERENCIA' para que la UI (tasas, recargo, isCupDenominated) la reconozca. Es la inversa exacta de toBackendCurrency.",
     );
 
     test(

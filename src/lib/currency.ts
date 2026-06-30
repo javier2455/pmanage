@@ -26,6 +26,32 @@ export function isCupDenominated(currency: string): boolean {
 }
 
 /**
+ * Mapeo de moneda entre la forma interna y la que el backend espera en
+ * ventas/pagos. Internamente usamos la clave de columna de `MonetaryExchange`
+ * (`CUP_TRANSFERENCIA`, en mayúsculas) para buscar tasas; pero el backend modela
+ * la transferencia en CUP como el enum snake_case `cup_transferencia` (igual que
+ * el resto de enums: `cash`, `transfer`, `in_store`…). Para no acoplar la UI a
+ * esa diferencia traducimos solo en la frontera de la API (ver src/lib/api/sale).
+ * Las demás monedas (USD, EURO, MLC…) pasan sin cambios.
+ */
+const CURRENCY_WIRE_BY_INTERNAL: Record<string, string> = {
+  CUP_TRANSFERENCIA: "cup_transferencia",
+};
+const CURRENCY_INTERNAL_BY_WIRE: Record<string, string> = Object.fromEntries(
+  Object.entries(CURRENCY_WIRE_BY_INTERNAL).map(([internal, wire]) => [wire, internal]),
+);
+
+/** Código interno → valor de moneda que espera el backend (ventas/pagos). */
+export function toBackendCurrency(currency: string): string {
+  return CURRENCY_WIRE_BY_INTERNAL[currency] ?? currency;
+}
+
+/** Valor de moneda del backend → código interno canónico (mayúsculas). */
+export function fromBackendCurrency(currency: string): string {
+  return CURRENCY_INTERNAL_BY_WIRE[currency] ?? currency;
+}
+
+/**
  * Códigos de moneda que pueden venir como columnas en MonetaryExchange.
  * El usuario activa las que use dándoles una tasa > 0; las que queden en 0 no se
  * consideran operables. `CUP_TRANSFERENCIA` y `CLASICA` se tratan como monedas

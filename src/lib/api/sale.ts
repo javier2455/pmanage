@@ -10,6 +10,14 @@ import {
   SaleWithProductAndBusiness,
 } from "../types/sales";
 import { salesRoutes } from "../routes/sales";
+import { fromBackendCurrency, toBackendCurrency } from "../currency";
+
+/** Normaliza la moneda de una venta del backend a la forma interna (mayúsculas). */
+function normalizeSaleCurrency<T extends { currency?: string }>(sale: T): T {
+  return sale.currency
+    ? { ...sale, currency: fromBackendCurrency(sale.currency) }
+    : sale;
+}
 
 interface GetAllSalesByBusinessIdProps {
   businessId: string;
@@ -25,20 +33,25 @@ export async function getAllSalesByBusinessId({
     salesRoutes.getAllSalesByBusinessId(businessId),
     { params: { page, limit } },
   );
-  return data;
+  return { ...data, data: data.data.map(normalizeSaleCurrency) };
 }
 
 export async function getSaleById(
   saleId: string,
 ): Promise<SaleWithProductAndBusiness> {
   const { data } = await apiClient.get(salesRoutes.getSaleById(saleId));
-  return data;
+  return normalizeSaleCurrency(data);
 }
 
 export async function create(
   credentials: CreateSaleProps,
 ): Promise<BusinessWithProducts> {
-  const { data } = await apiClient.post(salesRoutes.createSale, credentials);
+  // La moneda viaja con el código que espera el backend (p. ej. CUP_TRANSFERENCIA
+  // → cup_transferencia); internamente seguimos usando la forma en mayúsculas.
+  const payload = credentials.currency
+    ? { ...credentials, currency: toBackendCurrency(credentials.currency) }
+    : credentials;
+  const { data } = await apiClient.post(salesRoutes.createSale, payload);
 
   return data;
 }
@@ -53,9 +66,16 @@ export async function registerPayments(
   saleId: string,
   dto: RegistrarPagoDto,
 ): Promise<{ resumen: PaymentsSummary }> {
+  // Cada pago viaja con la moneda en el código del backend (cup_transferencia).
+  const payload: RegistrarPagoDto = {
+    pagos: dto.pagos.map((pago) => ({
+      ...pago,
+      moneda: toBackendCurrency(pago.moneda),
+    })),
+  };
   const { data } = await apiClient.post(
     salesRoutes.registerPayments(saleId),
-    dto,
+    payload,
   );
   return data;
 }
@@ -63,15 +83,33 @@ export async function registerPayments(
 export async function getPaymentsSummary(
   saleId: string,
 ): Promise<PaymentsSummary> {
-  const { data } = await apiClient.get(salesRoutes.paymentsSummary(saleId));
-  return data;
+  const { data } = await apiClient.get<PaymentsSummary>(
+    salesRoutes.paymentsSummary(saleId),
+  );
+  // Normalizamos a la forma interna para que la UI (tasas, recargo) la reconozca.
+  return {
+    ...data,
+    monedaBase: fromBackendCurrency(data.monedaBase),
+    sugerencia: data.sugerencia
+      ? { ...data.sugerencia, moneda: fromBackendCurrency(data.sugerencia.moneda) }
+      : data.sugerencia,
+    pagos: data.pagos.map((pago) => ({
+      ...pago,
+      moneda: fromBackendCurrency(pago.moneda),
+    })),
+  };
 }
 
 export async function getPaymentsHistory(
   saleId: string,
 ): Promise<PaymentHistoryItem[]> {
-  const { data } = await apiClient.get(salesRoutes.paymentsHistory(saleId));
-  return data;
+  const { data } = await apiClient.get<PaymentHistoryItem[]>(
+    salesRoutes.paymentsHistory(saleId),
+  );
+  return data.map((item) => ({
+    ...item,
+    currency: fromBackendCurrency(item.currency),
+  }));
 }
 
 /* -------------------------------------------------------------------------- */
