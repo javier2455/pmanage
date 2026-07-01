@@ -2,6 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ExpenseInAccountingClose } from "@/lib/types/accounting-close";
+import { currencyLabel } from "@/lib/currency";
+import { normalizeCurrency } from "@/lib/accounting-close-currency";
 import { formatClosingCurrency } from "./format-closing-currency";
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header";
 
@@ -12,23 +14,30 @@ export type DailyCloseExpenseColumnMeta = {
 
 const titleCol = {
   headerClassName:
-    "min-w-0 w-[40%] max-w-[40%] whitespace-normal align-top [word-break:break-word]",
+    "min-w-0 w-[34%] max-w-[34%] whitespace-normal align-top [word-break:break-word]",
   cellClassName:
-    "min-w-0 w-[40%] max-w-[40%] whitespace-normal break-words align-top [overflow-wrap:anywhere]",
+    "min-w-0 w-[34%] max-w-[34%] whitespace-normal break-words align-top [overflow-wrap:anywhere]",
 } as const;
 
 const numHeaderRight =
   "whitespace-nowrap text-right [&_button]:justify-end [&_button]:w-full [&_button]:lg:pr-4";
 const numCellRight = "whitespace-nowrap text-right tabular-nums";
 
+const currencyCol = {
+  headerClassName:
+    "min-w-[5rem] w-[18%] whitespace-normal align-top [&_button]:justify-start",
+  cellClassName:
+    "min-w-[5rem] w-[18%] whitespace-normal break-words align-top [overflow-wrap:anywhere]",
+} as const;
+
 const amountCol = {
-  headerClassName: `min-w-[7rem] w-[30%] ${numHeaderRight}`,
-  cellClassName: `min-w-[7rem] w-[30%] ${numCellRight}`,
+  headerClassName: `min-w-[7rem] w-[24%] ${numHeaderRight}`,
+  cellClassName: `min-w-[7rem] w-[24%] ${numCellRight}`,
 } as const;
 
 const dateCol = {
-  headerClassName: `min-w-[8rem] w-[30%] ${numHeaderRight}`,
-  cellClassName: `min-w-[8rem] w-[30%] ${numCellRight}`,
+  headerClassName: `min-w-[8rem] w-[24%] ${numHeaderRight}`,
+  cellClassName: `min-w-[8rem] w-[24%] ${numCellRight}`,
 } as const;
 
 function formatDate(date: string) {
@@ -64,6 +73,26 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
     cell: ({ row }) => (
       <span className="block font-medium text-foreground">
         {row.original.title?.trim() || "-"}
+      </span>
+    ),
+  },
+  {
+    id: "moneda",
+    accessorFn: (row) => currencyLabel(normalizeCurrency(row.currency)),
+    meta: {
+      headerClassName: currencyCol.headerClassName,
+      cellClassName: currencyCol.cellClassName,
+    } satisfies DailyCloseExpenseColumnMeta,
+    header: ({ column }) => (
+      <DailyCloseSortableHeader
+        column={column}
+        label="Moneda"
+        className="-ml-2 h-8 justify-start px-2 lg:-ml-4"
+      />
+    ),
+    cell: ({ row }) => (
+      <span className="block text-muted-foreground">
+        {currencyLabel(normalizeCurrency(row.original.currency))}
       </span>
     ),
   },

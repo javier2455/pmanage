@@ -102,10 +102,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton size="lg" asChild className="group-data-[collapsible=icon]:justify-center">
               <Link href="/dashboard">
-                <NegoraLogo className="size-8 rounded-lg" />
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <NegoraLogo className="size-8 shrink-0 rounded-lg" />
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">Negora</span>
                   <span className="truncate text-xs">Sistema de Gestión</span>
                 </div>

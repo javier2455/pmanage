@@ -5,27 +5,24 @@ import { format } from "date-fns"
 import { useBusiness } from "@/context/business-context"
 import { useDailyAccountingClose, useExportToExcel, useExportToPdf } from "@/hooks/use-accounting-close"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
+import { useExchangeRate } from "@/hooks/use-exchange"
 import type { BusinessWithProducts } from "@/lib/types/business"
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Package, HandCoins, BarChart3, CalendarCheck, Download, FileSpreadsheet, FileText } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { ShoppingCart, Package, HandCoins, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DateFilter } from "@/components/accounting-close/date-filter"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
-import { formatClosingCurrency as formatCurrency } from "@/components/accounting-close/format-closing-currency"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
 import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-close-expense-table"
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
+import { ClosingFinancialSummary } from "@/components/accounting-close/closing-financial-summary"
 
 function DailyClosePageSkeleton() {
   return (
@@ -58,6 +55,8 @@ export default function DailyPage() {
     : undefined
 
   const { data, isLoading, isError } = useDailyAccountingClose(activeBusinessId ?? "", dateParams)
+  const { data: exchangeData } = useExchangeRate(activeBusinessId ?? "")
+  const exchangeRate = exchangeData?.data
   const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const { mutate: exportPdf, isPending: isExportingPdf } = useExportToPdf(activeBusinessId ?? "")
   const { mutate: exportExcel, isPending: isExportingExcel } = useExportToExcel(activeBusinessId ?? "")
@@ -107,10 +106,6 @@ export default function DailyPage() {
     () => (data?.sales ?? []).filter((s) => !s.isCancelled),
     [data?.sales],
   )
-  const totalSales = data?.totalIncome ?? 0
-  const totalExpenses = data?.totalExpense ?? 0
-  const balance = data?.total ?? totalSales - totalExpenses
-
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
   if (!mounted || isLoading) {
@@ -285,8 +280,10 @@ export default function DailyPage() {
         </Card>
       </div> */}
 
-      {/* Productos vendidos + ingresos de inventario */}
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+      {/* Ventas y gastos apilados a todo el ancho. Usamos flex-col (no grid) para
+          que cada card quede constreñida al ancho de la pantalla y el scroll
+          horizontal interno de la tabla funcione en móvil (igual que Stock). */}
+      <div className="flex flex-col gap-6">
         <Card className="gap-4 border-t-2 border-t-emerald-500/60 bg-emerald-500/3 py-4 dark:border-t-emerald-400/50 dark:bg-emerald-400/10">
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -305,7 +302,7 @@ export default function DailyPage() {
           </CardHeader>
           <DailyCloseSoldTable
             sales={activeSales}
-            totalIncome={totalSales}
+            exchangeRate={exchangeRate}
           />
         </Card>
 
@@ -327,7 +324,7 @@ export default function DailyPage() {
           </CardHeader>
           <DailyCloseExpenseTable
             expenses={expenses}
-            totalExpense={totalExpenses}
+            exchangeRate={exchangeRate}
             emptyTitle="Sin gastos este día"
             emptyDescription="No hay gastos registrados para la fecha seleccionada."
           />
@@ -356,96 +353,13 @@ export default function DailyPage() {
         />
       </Card>
 
-      {/* Financial summary */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-              <BarChart3 className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-card-foreground">
-                Resumen financiero del dia
-              </CardTitle>
-              <CardDescription>
-                Balance entre ventas y gastos del día
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-
-
-          {/* <Separator className="my-6" /> */}
-
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="text-sm font-medium text-card-foreground">
-                  Ventas
-                </span>
-              </div>
-              <span className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-                +${formatCurrency(totalSales)}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-destructive" />
-                <span className="text-sm font-medium text-card-foreground">
-                  Gastos
-                </span>
-              </div>
-              <span className="text-sm font-semibold tabular-nums text-destructive">
-                -${formatCurrency(totalExpenses)}
-              </span>
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "h-2.5 w-2.5 rounded-full",
-                    balance >= 0 ? "bg-emerald-500" : "bg-destructive"
-                  )}
-                />
-                <span className="text-base font-bold text-card-foreground">
-                  Balance
-                </span>
-              </div>
-              <span
-                className={cn(
-                  "text-xl font-bold tabular-nums",
-                  balance >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-destructive"
-                )}
-              >
-                {balance >= 0 ? "+" : "-"}${formatCurrency(Math.abs(balance))}
-              </span>
-            </div>
-
-            <div className="flex justify-end">
-              <Badge
-                variant="secondary"
-                className={cn(
-                  "text-xs",
-                  balance >= 0
-                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : "border-destructive/20 bg-destructive/10 text-destructive"
-                )}
-              >
-                <CalendarCheck className="mr-1 h-3 w-3" />
-                {balance >= 0 ? "Dia con ganancia" : "Dia con perdida"}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Financial summary — desglose por moneda + consolidado en CUP */}
+      <ClosingFinancialSummary
+        sales={activeSales}
+        expenses={expenses}
+        businessId={activeBusinessId}
+        period="daily"
+      />
     </div>
   )
 }

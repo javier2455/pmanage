@@ -34,12 +34,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import {
+  consolidateClosing,
+  groupClosingByCurrency,
+} from "@/lib/accounting-close-currency";
+import type { ExchangeRateLike } from "@/lib/currency";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
-import { formatClosingCurrency } from "./format-closing-currency";
 import {
   dailyCloseExpenseColumns,
   type DailyCloseExpenseColumnMeta,
 } from "./daily-close-expense-columns";
+import { ClosingCurrencyTotals } from "./closing-currency-totals";
 
 function columnMeta(column: {
   columnDef: { meta?: unknown };
@@ -53,17 +58,25 @@ function columnMeta(column: {
 
 interface DailyCloseExpenseTableProps {
   expenses: ExpenseInAccountingClose[];
-  totalExpense: number;
+  exchangeRate: ExchangeRateLike;
   emptyTitle?: string;
   emptyDescription?: string;
 }
 
 export function DailyCloseExpenseTable({
   expenses,
-  totalExpense,
+  exchangeRate,
   emptyTitle = "Sin gastos en este período",
   emptyDescription = "No hay gastos registrados para el rango seleccionado.",
 }: DailyCloseExpenseTableProps) {
+  // Subtotales de gastos por moneda + equivalente consolidado en CUP.
+  const { currencyRows, consolidated } = React.useMemo(() => {
+    const rows = groupClosingByCurrency([], expenses);
+    return {
+      currencyRows: rows.map((r) => ({ currency: r.currency, amount: r.expense })),
+      consolidated: consolidateClosing(rows, exchangeRate),
+    };
+  }, [expenses, exchangeRate]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -182,7 +195,7 @@ export function DailyCloseExpenseTable({
         <div className="max-w-full overflow-x-auto">
           <Table
             id="daily-close-expense-table"
-            className="w-full min-w-0 table-fixed"
+            className="w-full min-w-xl table-fixed"
           >
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -263,14 +276,13 @@ export function DailyCloseExpenseTable({
         ) : null}
       </div>
 
-      <div className="flex items-center justify-between border-t border-border px-4 py-4">
-        <span className="text-sm font-semibold text-card-foreground">
-          Total gastos
-        </span>
-        <span className="text-base font-bold tabular-nums text-destructive">
-          ${formatClosingCurrency(totalExpense)}
-        </span>
-      </div>
+      <ClosingCurrencyTotals
+        title="Total gastos"
+        rows={currencyRows}
+        consolidatedBase={consolidated.expenseBase}
+        hasUnconvertible={consolidated.hasUnconvertible}
+        tone="expense"
+      />
     </CardContent>
   );
 }

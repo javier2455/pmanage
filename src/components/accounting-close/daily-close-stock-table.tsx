@@ -180,7 +180,7 @@ export function DailyCloseStockTable({
         <div className="max-w-full overflow-x-auto">
           <Table
             id="daily-close-stock-table"
-            className="w-full min-w-0 table-fixed"
+            className="w-full min-w-xl table-fixed"
           >
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (

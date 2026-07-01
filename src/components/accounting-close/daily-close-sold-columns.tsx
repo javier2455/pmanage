@@ -2,13 +2,15 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
 import type { SalesProductInfoResponse } from "@/lib/types/product"
+import { currencyLabel } from "@/lib/currency"
 import { formatClosingCurrency } from "./format-closing-currency"
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header"
 import {
-  dailyCloseLineTotalCol,
-  dailyCloseProductCol,
-  dailyCloseQtyCol,
-  dailyCloseUnitPriceCol,
+  soldCurrencyCol,
+  soldLineTotalCol,
+  soldProductCol,
+  soldQtyCol,
+  soldUnitPriceCol,
 } from "./daily-close-table-layout"
 
 export type DailyCloseSoldColumnMeta = {
@@ -16,7 +18,14 @@ export type DailyCloseSoldColumnMeta = {
   cellClassName?: string
 }
 
-export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
+/**
+ * Item de venta aplanado con la moneda de su venta padre adjunta. El item
+ * (`SalesProductInfoResponse`) no lleva moneda: la moneda vive en la venta, así
+ * que la propagamos al aplanar para poder mostrarla y agrupar por ella.
+ */
+export type SoldRow = SalesProductInfoResponse & { currency: string }
+
+export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
   {
     id: "product",
     accessorFn: (row) => row.product?.name?.trim() || "-",
@@ -28,8 +37,8 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
       return name.includes(q)
     },
     meta: {
-      headerClassName: dailyCloseProductCol.headerClassName,
-      cellClassName: `${dailyCloseProductCol.cellClassName} font-medium`,
+      headerClassName: soldProductCol.headerClassName,
+      cellClassName: `${soldProductCol.cellClassName} font-medium`,
     } satisfies DailyCloseSoldColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
@@ -45,11 +54,31 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
     ),
   },
   {
+    id: "moneda",
+    accessorFn: (row) => currencyLabel(row.currency),
+    meta: {
+      headerClassName: soldCurrencyCol.headerClassName,
+      cellClassName: soldCurrencyCol.cellClassName,
+    } satisfies DailyCloseSoldColumnMeta,
+    header: ({ column }) => (
+      <DailyCloseSortableHeader
+        column={column}
+        label="Moneda"
+        className="-ml-2 h-8 justify-start px-2 lg:-ml-4"
+      />
+    ),
+    cell: ({ row }) => (
+      <span className="block text-muted-foreground">
+        {currencyLabel(row.original.currency)}
+      </span>
+    ),
+  },
+  {
     id: "cantidad",
     accessorFn: (row) => Number(row.quantity),
     meta: {
-      headerClassName: dailyCloseQtyCol.headerClassName,
-      cellClassName: dailyCloseQtyCol.cellClassName,
+      headerClassName: soldQtyCol.headerClassName,
+      cellClassName: soldQtyCol.cellClassName,
     } satisfies DailyCloseSoldColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
@@ -64,8 +93,8 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
     id: "precio",
     accessorFn: (row) => Number(row.price),
     meta: {
-      headerClassName: dailyCloseUnitPriceCol.headerClassName,
-      cellClassName: dailyCloseUnitPriceCol.cellClassName,
+      headerClassName: soldUnitPriceCol.headerClassName,
+      cellClassName: soldUnitPriceCol.cellClassName,
     } satisfies DailyCloseSoldColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
@@ -82,8 +111,8 @@ export const dailyCloseSoldColumns: ColumnDef<SalesProductInfoResponse>[] = [
     id: "lineTotal",
     accessorFn: (row) => Number(row.quantity) * Number(row.price),
     meta: {
-      headerClassName: dailyCloseLineTotalCol.headerClassName,
-      cellClassName: `${dailyCloseLineTotalCol.cellClassName} font-semibold`,
+      headerClassName: soldLineTotalCol.headerClassName,
+      cellClassName: `${soldLineTotalCol.cellClassName} font-semibold`,
     } satisfies DailyCloseSoldColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader

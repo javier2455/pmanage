@@ -11,6 +11,10 @@ export interface ExpenseInAccountingClose {
     amount: number;
     description: string;
     createdAt: string;
+    // Moneda del gasto. Opcional hasta que el backend la incluya en la respuesta
+    // del cierre (ver docs/backend/accounting-close-multicurrency.md). Mientras no
+    // llegue, la UI usa fallback a CUP. TODO(backend): poblar siempre este campo.
+    currency?: string;
 }
 
 export type AccountingCloseResponse = {

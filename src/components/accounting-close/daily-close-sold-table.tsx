@@ -14,7 +14,12 @@ import {
 } from "@tanstack/react-table"
 import { Receipt, Search } from "lucide-react"
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales"
-import type { SalesProductInfoResponse } from "@/lib/types/product"
+import {
+  consolidateClosing,
+  groupClosingByCurrency,
+  normalizeCurrency,
+} from "@/lib/accounting-close-currency"
+import type { ExchangeRateLike } from "@/lib/currency"
 import { CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,11 +41,12 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav"
-import { formatClosingCurrency } from "./format-closing-currency"
 import {
   dailyCloseSoldColumns,
   type DailyCloseSoldColumnMeta,
+  type SoldRow,
 } from "./daily-close-sold-columns"
+import { ClosingCurrencyTotals } from "./closing-currency-totals"
 
 function columnMeta(column: {
   columnDef: { meta?: unknown }
@@ -54,16 +60,31 @@ function columnMeta(column: {
 
 interface DailyCloseSoldTableProps {
   sales: SaleWithProductAndBusiness[]
-  totalIncome: number
+  exchangeRate: ExchangeRateLike
 }
 
 export function DailyCloseSoldTable({
   sales,
-  totalIncome,
+  exchangeRate,
 }: DailyCloseSoldTableProps) {
-  const flatItems = React.useMemo<SalesProductInfoResponse[]>(() => {
-    return sales.flatMap((sale) => sale.items)
+  const flatItems = React.useMemo<SoldRow[]>(() => {
+    return sales.flatMap((sale) =>
+      sale.items.map((item) => ({
+        ...item,
+        currency: normalizeCurrency(sale.currency),
+      })),
+    )
   }, [sales])
+
+  // Subtotales de ventas por moneda (a partir de `sale.total`) + equivalente
+  // consolidado en CUP. Ver src/lib/accounting-close-currency.ts.
+  const { currencyRows, consolidated } = React.useMemo(() => {
+    const rows = groupClosingByCurrency(sales, [])
+    return {
+      currencyRows: rows.map((r) => ({ currency: r.currency, amount: r.income })),
+      consolidated: consolidateClosing(rows, exchangeRate),
+    }
+  }, [sales, exchangeRate])
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -186,7 +207,7 @@ export function DailyCloseSoldTable({
         <div className="max-w-full overflow-x-auto">
           <Table
             id="daily-close-sold-table"
-            className="w-full min-w-0 table-fixed"
+            className="w-full min-w-3xl table-fixed"
           >
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -267,14 +288,13 @@ export function DailyCloseSoldTable({
         ) : null}
       </div>
 
-      <div className="flex items-center justify-between border-t border-border px-4 py-4">
-        <span className="text-sm font-semibold text-card-foreground">
-          Total ventas del día
-        </span>
-        <span className="text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-          ${formatClosingCurrency(totalIncome)}
-        </span>
-      </div>
+      <ClosingCurrencyTotals
+        title="Total ventas del día"
+        rows={currencyRows}
+        consolidatedBase={consolidated.incomeBase}
+        hasUnconvertible={consolidated.hasUnconvertible}
+        tone="income"
+      />
     </CardContent>
   )
 }
