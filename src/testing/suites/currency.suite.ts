@@ -4,6 +4,7 @@ import {
   convertBetween,
   convertFromBase,
   convertToBase,
+  currencyLabel,
   formatMoney,
   fromBackendCurrency,
   getAvailableCurrencies,
@@ -159,7 +160,7 @@ export const currencySuite = defineSuite(
         expect(toBackendCurrency("USD")).toBe("USD");
         expect(toBackendCurrency("CUP")).toBe("CUP");
       },
-      "El backend modela la transferencia en CUP como el enum snake_case 'cup_transferencia' (no 'CUP_TRANSFERENCIA' ni 'cup_transfer'). Al enviar ventas/pagos se traduce solo esa moneda; el resto (USD, CUP…) viaja sin cambios. Caso de la issue 'Ventas con atributo cup_transfer'.",
+      "El backend espera recibir la transferencia en CUP como el enum snake_case 'cup_transferencia'. La UI solo conoce la forma interna 'CUP_TRANSFERENCIA' (mostrada como 'CUP Transferencia'); al enviar ventas/pagos se traduce solo esa moneda a 'cup_transferencia'; el resto (USD, CUP…) viaja sin cambios.",
     );
 
     test(
@@ -175,12 +176,36 @@ export const currencySuite = defineSuite(
     );
 
     test(
+      "fromBackendCurrency normaliza la transferencia truncada por el backend",
+      () => {
+        expect(fromBackendCurrency("cup_transf")).toBe("CUP_TRANSFERENCIA");
+        expect(fromBackendCurrency("cup_transfer")).toBe("CUP_TRANSFERENCIA");
+        expect(fromBackendCurrency("CUP_TRANSF")).toBe("CUP_TRANSFERENCIA");
+      },
+      "El backend devuelve la transferencia en CUP TRUNCADA al largo de su columna: en la práctica vuelve como 'cup_transf' (10 chars), no 'cup_transferencia'. Sin normalizarla, la moneda base de la venta no coincide con la clave interna 'CUP_TRANSFERENCIA' del selector: se muestra cruda, aparece duplicada y su conversión queda en 0 (la tasa se indexa por la clave canónica), bloqueando el cobro. Por eso cualquier prefijo 'cup_transf…' colapsa a la misma forma interna.",
+    );
+
+    test(
+      "currencyLabel muestra 'CUP Transferencia' para cualquier forma de la moneda",
+      () => {
+        expect(currencyLabel("CUP_TRANSFERENCIA")).toBe("CUP Transferencia");
+        expect(currencyLabel("cup_transferencia")).toBe("CUP Transferencia");
+        expect(currencyLabel("cup_transfer")).toBe("CUP Transferencia");
+        expect(currencyLabel("cup_transf")).toBe("CUP Transferencia");
+        expect(currencyLabel("USD")).toBe("USD");
+        expect(currencyLabel("CUP")).toBe("CUP");
+      },
+      "La etiqueta normaliza primero a la clave interna, así una venta que vuelva con el enum del backend ('cup_transfer'/'cup_transferencia') se muestra como 'CUP Transferencia' aunque el código no se haya normalizado aguas arriba; nunca se enseña el enum crudo al usuario. El resto de monedas se muestran con su código.",
+    );
+
+    test(
       "formatMoney: 2 decimales + sufijo de moneda",
       () => {
         expect(formatMoney(1234.5, "USD")).toBe("1,234.50 USD");
         expect(formatMoney(1000)).toBe("1,000.00 CUP");
+        expect(formatMoney(1000, "cup_transfer")).toBe("1,000.00 CUP Transferencia");
       },
-      "Formatea con separador de miles y exactamente 2 decimales, añadiendo el código de moneda como sufijo. Sin moneda explícita usa CUP por defecto. No usa Intl currency porque EURO/MLC no son ISO 4217.",
+      "Formatea con separador de miles y exactamente 2 decimales, añadiendo la moneda como sufijo (vía currencyLabel, así el enum del backend nunca se filtra). Sin moneda explícita usa CUP por defecto. No usa Intl currency porque EURO/MLC no son ISO 4217.",
     );
 
     test(

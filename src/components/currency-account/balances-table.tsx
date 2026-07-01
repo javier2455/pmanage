@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatMoney } from "@/lib/currency";
+import { currencyLabel, formatMoney } from "@/lib/currency";
 import type { CurrencyAccount } from "@/lib/types/currency-account";
 
 /** Umbral relativo bajo el cual se considera el saldo "bajo" (10% del presupuesto). */
@@ -85,7 +85,7 @@ export function BalancesTable({ accounts }: BalancesTableProps) {
               return (
                 <TableRow key={account.id}>
                   <TableCell className="px-4 py-3 font-medium text-foreground">
-                    {account.currency}
+                    {currencyLabel(account.currency)}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right text-foreground">
                     {formatMoney(balance, account.currency)}

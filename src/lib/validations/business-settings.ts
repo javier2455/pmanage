@@ -15,8 +15,6 @@ export const updateBusinessSettingsSchema = z.object({
   monthlyClosingAlert: channelsSchema.optional(),
   lowStockAlert: channelsSchema.optional(),
   outOfStockAlert: channelsSchema.optional(),
-  deliveryOrderChannels: channelsSchema.optional(),
-  orderReadyChannels: channelsSchema.optional(),
 });
 
 export type UpdateBusinessSettingsFormData = z.infer<

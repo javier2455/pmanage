@@ -17,7 +17,7 @@ import { ProductImage } from "@/components/products/product-image"
 import { ShoppingCart, Minus, Plus, Trash2, X, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { isIntegerUnit, parseDecimalInput } from "@/lib/units"
-import { formatMoney, isCupDenominated } from "@/lib/currency"
+import { currencyLabel, formatMoney, isCupDenominated } from "@/lib/currency"
 import type { SaleType } from "@/lib/types/sales"
 
 /** Datos de contacto/entrega de la venta (solo se usan en `delivery`). */
@@ -148,7 +148,7 @@ export function SaleCartPanel({
                       <span className="truncate text-sm font-medium text-card-foreground">
                         {item.productName}
                       </span>
-                      <span className="text-xs text-muted-foreground tabular-nums">
+                      <span className="truncate text-xs text-muted-foreground tabular-nums">
                         {formatMoney(toCurrency(item.price), currency)} c/u
                       </span>
 
@@ -221,8 +221,8 @@ export function SaleCartPanel({
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-sm font-semibold tabular-nums text-card-foreground">
+                    <div className="flex min-w-0 flex-col items-end gap-1">
+                      <span className="text-right text-sm font-semibold tabular-nums text-card-foreground">
                         {formatMoney(toCurrency(item.subtotal), currency)}
                       </span>
                       <Button
@@ -345,7 +345,7 @@ export function SaleCartPanel({
                     >
                       Precio de la mensajería{" "}
                       <span className="text-xs font-normal text-muted-foreground">
-                        ({currency})
+                        ({currencyLabel(currency)})
                       </span>
                     </Label>
                     <Input
@@ -377,7 +377,7 @@ export function SaleCartPanel({
                 <SelectContent>
                   {availableCurrencies.map((c) => (
                     <SelectItem key={c} value={c}>
-                      {c}
+                      {currencyLabel(c)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -403,14 +403,14 @@ export function SaleCartPanel({
             )}
 
             {/* Total */}
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-0.5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-sm font-semibold text-card-foreground">Total</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {totalUnits} {totalUnits === 1 ? "unidad" : "unidades"}
                 </span>
               </div>
-              <span className="text-xl font-bold tabular-nums text-card-foreground">
+              <span className="min-w-0 text-right text-xl font-bold tabular-nums text-card-foreground">
                 {formatMoney(grandTotal, currency)}
               </span>
             </div>

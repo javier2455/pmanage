@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { useInitializeBudgetsMutation } from "@/hooks/use-currency-account";
+import { currencyLabel } from "@/lib/currency";
 import {
   InitializeBudgetsFormData,
   initializeBudgetsSchema,
@@ -141,7 +142,7 @@ export function InitializeBudgetsDialog({
                   htmlFor={`budget-${currency}`}
                   className="text-card-foreground"
                 >
-                  {currency}
+                  {currencyLabel(currency)}
                 </Label>
                 <input
                   type="hidden"

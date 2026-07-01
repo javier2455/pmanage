@@ -41,9 +41,7 @@ export type NotificationKey =
   | "dailyClose"
   | "monthlyClose"
   | "lowStock"
-  | "outOfStock"
-  | "deliveryOrder"
-  | "orderReady";
+  | "outOfStock";
 
 type ChannelMatrix = Record<NotificationKey, Record<NotificationChannel, boolean>>;
 
@@ -57,8 +55,6 @@ const FIELD_BY_KEY: Record<NotificationKey, keyof UpdateBusinessSettingsPayload>
   monthlyClose: "monthlyClosingAlert",
   lowStock: "lowStockAlert",
   outOfStock: "outOfStockAlert",
-  deliveryOrder: "deliveryOrderChannels",
-  orderReady: "orderReadyChannels",
 };
 
 const EMPTY_MATRIX: ChannelMatrix = {
@@ -66,8 +62,6 @@ const EMPTY_MATRIX: ChannelMatrix = {
   monthlyClose: { email: false, sms: false, whatsapp: false },
   lowStock: { email: false, sms: false, whatsapp: false },
   outOfStock: { email: false, sms: false, whatsapp: false },
-  deliveryOrder: { email: false, sms: false, whatsapp: false },
-  orderReady: { email: false, sms: false, whatsapp: false },
 };
 
 type ChannelConfig = {
@@ -143,23 +137,6 @@ const CATEGORIES: NotificationCategory[] = [
   },
 ];
 
-/** Categoría de delivery; solo se muestra si el negocio acepta delivery (`acceptsMessaging`). */
-const DELIVERY_CATEGORY: NotificationCategory = {
-  title: "Pedidos",
-  items: [
-    {
-      key: "deliveryOrder",
-      label: "Nueva orden de pedido",
-      description: "Aviso cuando llega un pedido a domicilio.",
-    },
-    {
-      key: "orderReady",
-      label: "Orden lista",
-      description: "Aviso cuando el pedido está listo para entregar.",
-    },
-  ],
-};
-
 /** Convierte la respuesta del backend (arrays por alerta) a la matriz de la UI. */
 function settingsToMatrix(settings: BusinessSettings): ChannelMatrix {
   const matrix: ChannelMatrix = structuredClone(EMPTY_MATRIX);
@@ -205,10 +182,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
 
   const [matrix, setMatrix] = useState<ChannelMatrix>(EMPTY_MATRIX);
 
-  // La sección de delivery solo aplica si el negocio acepta delivery.
-  const categories = business?.acceptsMessaging
-    ? [...CATEGORIES, DELIVERY_CATEGORY]
-    : CATEGORIES;
+  const categories = CATEGORIES;
   const activeKeys = categories.flatMap((c) => c.items.map((i) => i.key));
 
   // Sincroniza la matriz con la config que llega del backend.

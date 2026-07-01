@@ -13,6 +13,7 @@ import {
 import {
   BASE_CURRENCY,
   convertToBase,
+  currencyLabel,
   formatMoney,
   getCurrencyRate,
   type ExchangeRateLike,
@@ -59,7 +60,7 @@ export function EntryCostCurrency({
         <SelectContent>
           {availableCurrencies.map((c) => (
             <SelectItem key={c} value={c}>
-              {c}
+              {currencyLabel(c)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -70,7 +71,7 @@ export function EntryCostCurrency({
         <p className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
           <Info className="mt-0.5 h-3 w-3 shrink-0" />
           <span>
-            La moneda {currency} no tiene tasa configurada.{" "}
+            La moneda {currencyLabel(currency)} no tiene tasa configurada.{" "}
             <Link
               href="/dashboard/exchange-rate"
               className="font-medium underline-offset-2 hover:underline"

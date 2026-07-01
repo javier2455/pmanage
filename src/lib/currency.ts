@@ -27,28 +27,54 @@ export function isCupDenominated(currency: string): boolean {
 
 /**
  * Mapeo de moneda entre la forma interna y la que el backend espera en
- * ventas/pagos. Internamente usamos la clave de columna de `MonetaryExchange`
- * (`CUP_TRANSFERENCIA`, en mayúsculas) para buscar tasas; pero el backend modela
- * la transferencia en CUP como el enum snake_case `cup_transferencia` (igual que
- * el resto de enums: `cash`, `transfer`, `in_store`…). Para no acoplar la UI a
- * esa diferencia traducimos solo en la frontera de la API (ver src/lib/api/sale).
- * Las demás monedas (USD, EURO, MLC…) pasan sin cambios.
+ * ventas/pagos. Internamente (UI, tasas, recargo) usamos siempre la clave de
+ * columna de `MonetaryExchange` `CUP_TRANSFERENCIA` (mayúsculas) y la mostramos
+ * como "CUP Transferencia"; pero el backend espera recibir el enum snake_case
+ * `cup_transferencia`. Por eso traducimos a `cup_transferencia` SOLO en la
+ * frontera de la API al enviar (ver src/lib/api/sale), nunca en la UI. Las demás
+ * monedas (USD, EURO, MLC…) pasan sin cambios.
  */
 const CURRENCY_WIRE_BY_INTERNAL: Record<string, string> = {
   CUP_TRANSFERENCIA: "cup_transferencia",
 };
-const CURRENCY_INTERNAL_BY_WIRE: Record<string, string> = Object.fromEntries(
-  Object.entries(CURRENCY_WIRE_BY_INTERNAL).map(([internal, wire]) => [wire, internal]),
-);
+// Inversa para leer respuestas del backend. El backend devuelve la transferencia
+// en CUP TRUNCADA al largo de su columna: en la práctica vuelve como `cup_transf`
+// (10 chars), pero podría venir como `cup_transfer` o `cup_transferencia` según el
+// dato. Por eso, además del mapeo directo, `fromBackendCurrency` reconoce cualquier
+// prefijo `cup_transf…` como esta moneda. Si no se normaliza, la moneda aparece
+// cruda/duplicada en los selectores y su conversión se rompe (la tasa se indexa por
+// `CUP_TRANSFERENCIA`, así que un alias sin normalizar no la halla).
+const CURRENCY_INTERNAL_BY_WIRE: Record<string, string> = {
+  ...Object.fromEntries(
+    Object.entries(CURRENCY_WIRE_BY_INTERNAL).map(([internal, wire]) => [wire, internal]),
+  ),
+  cup_transf: "CUP_TRANSFERENCIA",
+  cup_transfer: "CUP_TRANSFERENCIA",
+};
+
+/** Prefijo con el que el backend nombra (posiblemente truncada) la transferencia en CUP. */
+const CUP_TRANSFER_WIRE_PREFIX = "cup_transf";
 
 /** Código interno → valor de moneda que espera el backend (ventas/pagos). */
 export function toBackendCurrency(currency: string): string {
   return CURRENCY_WIRE_BY_INTERNAL[currency] ?? currency;
 }
 
-/** Valor de moneda del backend → código interno canónico (mayúsculas). */
+/**
+ * Valor de moneda del backend → código interno canónico (mayúsculas).
+ * Tolerante a may/minúsculas y a truncación: los enums del backend son snake_case
+ * en minúsculas, y la transferencia en CUP vuelve recortada (`cup_transf`) o entera
+ * (`cup_transferencia`). Cualquier prefijo `cup_transf…` colapsa a
+ * `CUP_TRANSFERENCIA`. Las demás monedas ya vienen en su código canónico (USD,
+ * EURO, MLC…) y pasan sin cambios.
+ */
 export function fromBackendCurrency(currency: string): string {
-  return CURRENCY_INTERNAL_BY_WIRE[currency] ?? currency;
+  if (!currency) return currency;
+  const lower = currency.toLowerCase();
+  const direct = CURRENCY_INTERNAL_BY_WIRE[currency] ?? CURRENCY_INTERNAL_BY_WIRE[lower];
+  if (direct) return direct;
+  if (lower.startsWith(CUP_TRANSFER_WIRE_PREFIX)) return "CUP_TRANSFERENCIA";
+  return currency;
 }
 
 /**
@@ -175,13 +201,39 @@ export function convertBetween(
 }
 
 /**
- * Formatea un monto con el código de moneda como sufijo (ej. "1,234.50 USD").
- * No usamos `Intl` con `style: "currency"` porque `EURO`/`MLC` no son ISO 4217.
+ * Etiqueta legible de una moneda para selectores y sufijos de monto. Coincide con
+ * el código salvo `CUP_TRANSFERENCIA`, cuyo código (17 caracteres sin espacios)
+ * desborda y se solapa en layouts estrechos (carrito, diálogo de pago). Usamos su
+ * forma con espacio, que parte en dos líneas y además es más legible. El resto de
+ * monedas se muestran con su código (USD, EURO, MLC…).
  */
-export function formatMoney(value: number, currency: string = BASE_CURRENCY): string {
-  const formatted = (Number.isFinite(value) ? value : 0).toLocaleString("en-US", {
+const CURRENCY_DISPLAY: Record<string, string> = {
+  CUP_TRANSFERENCIA: "CUP Transferencia",
+};
+
+/**
+ * Nombre mostrable de una moneda (selectores, sufijo de `formatMoney`).
+ * Normaliza primero cualquier forma del backend a la clave interna, así una venta
+ * que vuelva con `cup_transfer`/`cup_transferencia` se muestra igualmente como
+ * "CUP Transferencia" aunque el código no se haya normalizado aguas arriba.
+ */
+export function currencyLabel(currency: string): string {
+  const internal = fromBackendCurrency(currency);
+  return CURRENCY_DISPLAY[internal] ?? internal;
+}
+
+/** Formatea un número a 2 decimales, sin sufijo de moneda. */
+export function formatAmount(value: number): string {
+  return (Number.isFinite(value) ? value : 0).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return `${formatted} ${currency}`;
+}
+
+/**
+ * Formatea un monto con la moneda como sufijo (ej. "1,234.50 USD").
+ * No usamos `Intl` con `style: "currency"` porque `EURO`/`MLC` no son ISO 4217.
+ */
+export function formatMoney(value: number, currency: string = BASE_CURRENCY): string {
+  return `${formatAmount(value)} ${currencyLabel(currency)}`;
 }

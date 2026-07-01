@@ -19,7 +19,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
+import { BASE_CURRENCY, currencyLabel, formatMoney } from "@/lib/currency";
 import type { ExchangeRateLike } from "@/lib/currency";
 import { consolidateBalances } from "@/lib/cash-flow";
 import type { CurrencyAccount } from "@/lib/types/currency-account";
@@ -86,7 +86,7 @@ export function ConsolidatedBalanceCard({
             >
               <div className="flex items-center gap-2">
                 <span className="font-medium text-foreground">
-                  {row.currency}
+                  {currencyLabel(row.currency)}
                 </span>
                 {!row.convertible && (
                   <Badge variant="secondary">Sin tasa</Badge>

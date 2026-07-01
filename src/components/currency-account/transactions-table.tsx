@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { currencyLabel } from "@/lib/currency";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 
@@ -116,7 +117,7 @@ export function TransactionsTable({
               <SelectItem value={ALL_CURRENCIES}>Todas</SelectItem>
               {availableCurrencies.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {c}
+                  {currencyLabel(c)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -133,7 +134,7 @@ export function TransactionsTable({
                 <EmptyTitle>Sin transacciones</EmptyTitle>
                 <EmptyDescription>
                   {hasFilter
-                    ? `No hay transacciones en ${currency}. Prueba con otra moneda.`
+                    ? `No hay transacciones en ${currencyLabel(currency)}. Prueba con otra moneda.`
                     : "Aún no se han registrado transacciones para este negocio."}
                 </EmptyDescription>
               </EmptyHeader>

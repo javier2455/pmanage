@@ -35,7 +35,9 @@ import {
 import {
   BASE_CURRENCY,
   convertBetween,
+  currencyLabel,
   formatMoney,
+  fromBackendCurrency,
   getAvailableCurrencies,
 } from "@/lib/currency";
 import { mapCurrencyError } from "@/lib/currency-errors";
@@ -93,7 +95,10 @@ export function PaymentDialog({
   const { data: summary, isLoading } = usePaymentsSummary(isOpen ? saleId : "");
   const registerMutation = useRegisterPaymentsMutation();
 
-  const monedaBase = summary?.monedaBase ?? BASE_CURRENCY;
+  // El summary ya normaliza la moneda en la API, pero lo reforzamos aquí por si
+  // una venta vuelve con una forma sin mapear (p. ej. `cup_transfer`): así nunca
+  // queda como código crudo en el selector ni rompe la conversión.
+  const monedaBase = fromBackendCurrency(summary?.monedaBase ?? BASE_CURRENCY);
   const totalVenta = summary?.totalVenta ?? 0;
   const totalPagado = summary?.totalPagado ?? 0;
   const pendiente = summary?.pendiente ?? 0;
@@ -104,13 +109,14 @@ export function PaymentDialog({
   // esté configurada en el negocio (p. ej. CUP_TRANSFERENCIA que se quitó tras
   // crear la venta). Si no la incluimos, el selector aparece vacío y el botón de
   // pago nunca se habilita. Por eso unimos `monedaBase` a las monedas operables.
-  const currencyOptions = React.useMemo(
-    () =>
-      availableCurrencies.includes(monedaBase)
-        ? availableCurrencies
-        : [monedaBase, ...availableCurrencies],
-    [availableCurrencies, monedaBase],
-  );
+  const currencyOptions = React.useMemo(() => {
+    const all = availableCurrencies.includes(monedaBase)
+      ? availableCurrencies
+      : [monedaBase, ...availableCurrencies];
+    // Dedupe defensivo: distintas formas de la misma moneda (p. ej. `cup_transfer`
+    // y `CUP_TRANSFERENCIA`) colapsan a una sola opción interna.
+    return Array.from(new Set(all.map(fromBackendCurrency)));
+  }, [availableCurrencies, monedaBase]);
 
   const [rows, setRows] = React.useState<PaymentRow[]>([]);
 
@@ -342,7 +348,7 @@ export function PaymentDialog({
                           <SelectContent>
                             {currencyOptions.map((c) => (
                               <SelectItem key={c} value={c}>
-                                {c}
+                                {currencyLabel(c)}
                               </SelectItem>
                             ))}
                           </SelectContent>
