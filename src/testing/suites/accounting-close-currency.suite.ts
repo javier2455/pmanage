@@ -7,9 +7,9 @@ import {
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import type { ExpenseInAccountingClose } from "@/lib/types/accounting-close";
 
-// Tasas: cuántos CUP vale 1 unidad (CUP base = 1 implícito). CUP_TRANSFERENCIA
-// es un multiplicador (recargo), convierte al revés que una extranjera.
-const rates = { USD: 400, EURO: 420, CUP_TRANSFERENCIA: 1.1 };
+// Tasas: cuántos CUP vale 1 unidad (CUP base = 1 implícito). CUP_TRANSFERENCIA se
+// trata como una moneda más: tasa 0.8 = 1 transferencia vale 0.8 CUP (recargo 25%).
+const rates = { USD: 400, EURO: 420, CUP_TRANSFERENCIA: 0.8 };
 
 /** Venta mínima para los tests: solo importan `total` y `currency`. */
 function sale(
@@ -130,14 +130,14 @@ export const accountingCloseCurrencySuite = defineSuite(
     );
 
     test(
-      "CUP_TRANSFERENCIA convierte dividiendo (recargo), no multiplicando",
+      "CUP_TRANSFERENCIA convierte multiplicando por la tasa como el resto",
       () => {
-        const rows = groupClosingByCurrency([sale(1100, "CUP_TRANSFERENCIA")], []);
+        const rows = groupClosingByCurrency([sale(1250, "CUP_TRANSFERENCIA")], []);
         const c = consolidateClosing(rows, rates);
-        // recargo: monto / tasa → 1100 / 1.1 = 1000 CUP reales
+        // monto × tasa → 1250 × 0.8 = 1000 CUP reales
         expect(c.incomeBase).toBeCloseTo(1000, 4);
       },
-      "CUP_TRANSFERENCIA es CUP con recargo: su tasa es un multiplicador, así que para volver a CUP se DIVIDE (1100 / 1.1 = 1000), no se multiplica. `convertToBase` respeta esa dirección.",
+      "CUP_TRANSFERENCIA se consolida como cualquier moneda: `convertToBase` multiplica por la tasa. Con tasa 0.8, 1250 cobrados por transferencia equivalen a 1250 × 0.8 = 1000 CUP reales (el recargo del 25% ya venía incluido en los 1250).",
     );
 
     test(

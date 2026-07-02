@@ -17,7 +17,7 @@ import { ProductImage } from "@/components/products/product-image"
 import { ShoppingCart, Minus, Plus, Trash2, X, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { isIntegerUnit, parseDecimalInput } from "@/lib/units"
-import { currencyLabel, formatMoney, isCupDenominated } from "@/lib/currency"
+import { currencyLabel, formatMoney } from "@/lib/currency"
 import type { SaleType } from "@/lib/types/sales"
 
 /** Datos de contacto/entrega de la venta (solo se usan en `delivery`). */
@@ -95,10 +95,10 @@ export function SaleCartPanel({
   className,
 }: SaleCartPanelProps) {
   const totalUnits = items.reduce((sum, i) => sum + i.quantity, 0)
-  // Los precios viven en CUP; los mostramos en la moneda elegida. Extranjera:
-  // precioCUP / tasa. CUP con recargo (transferencia): precioCUP × tasa.
-  const toCurrency = (cupValue: number) =>
-    isCupDenominated(currency) ? cupValue * (rate || 1) : cupValue / (rate || 1)
+  // Los precios viven en CUP; los mostramos en la moneda elegida dividiendo por la
+  // tasa (cuántas CUP vale 1 unidad). Transferencia va con tasa < 1 (0.8333 = +20%),
+  // así 100 CUP / 0.8333 ≈ 120 transferencia; misma fórmula que el resto.
+  const toCurrency = (cupValue: number) => cupValue / (rate || 1)
   // La tarifa se ingresa directamente en la moneda de la venta (no en CUP).
   const parsedFee = parseDecimalInput(delivery.fee)
   const deliveryFee =

@@ -35,26 +35,28 @@ interface ExchangeRateFormProps {
 const LABEL_BY_CODE = new Map(EXCHANGE_CURRENCIES.map((c) => [c.code, c.label]))
 
 /**
- * CUP_TRANSFERENCIA no es una moneda extranjera: su "tasa" es un multiplicador
- * de recargo en CUP (1.1 = +10%). Para que el usuario no tenga que calcular la
- * tasa a mano, en su lugar declara el % de recargo y lo traducimos a la tasa.
+ * CUP_TRANSFERENCIA se guarda como una moneda más: su tasa es cuántas CUP vale 1
+ * unidad, igual que USD o EURO. Un recargo del 20% equivale a una tasa < 1
+ * (0.8333 = 1 / 1.20), porque cobrar por transferencia da MENOS valor por CUP
+ * (100 CUP / 0.8333 ≈ 120 transferencia). Para que el usuario no calcule ese
+ * inverso a mano, declara el % de recargo y lo traducimos a la tasa.
  */
 const TRANSFER_CODE = "CUP_TRANSFERENCIA" as const
 const TRANSFER_QUICK_PERCENTS = [10, 20, 30] as const
 
-/** Tasa multiplicador (1.1) → texto de porcentaje ("10"). Vacío si no es válida. */
+/** Tasa (0.8333) → texto de porcentaje de recargo ("20"). Vacío si no es válida. */
 function rateToPercentText(rate: unknown): string {
     const r = Number(rate)
     if (!Number.isFinite(r) || r <= 0) return ""
-    // Redondeo a 2 decimales para evitar ruido binario (0.1 + 1 = 1.0999…).
-    return String(Math.round((r - 1) * 100 * 100) / 100)
+    // Redondeo a 2 decimales para evitar ruido binario al invertir la tasa.
+    return String(Math.round((1 / r - 1) * 100 * 100) / 100)
 }
 
-/** Texto de porcentaje ("10") → tasa multiplicador (1.1). `undefined` si inválido. */
+/** Texto de porcentaje ("20") → tasa inversa (0.8333). `undefined` si inválido. */
 function percentToRate(percentText: string): number | undefined {
     const pct = parseFloat(percentText)
     if (!Number.isFinite(pct) || pct < 0) return undefined
-    return Math.round((1 + pct / 100) * 10000) / 10000
+    return Math.round((1 / (1 + pct / 100)) * 10000) / 10000
 }
 
 /** Códigos con tasa > 0 en los datos actuales. */
@@ -267,11 +269,12 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                                             </InputGroup>
                                             {previewRate != null ? (
                                                 <p className="text-xs text-muted-foreground">
-                                                    El precio en CUP se multiplica ×{previewRate} (tasa guardada).
+                                                    100 CUP se cobran como {Math.round(100 / previewRate)} CUP
+                                                    Transferencia (tasa guardada {previewRate}).
                                                 </p>
                                             ) : (
                                                 <p className="text-xs text-muted-foreground">
-                                                    Elige un % o escríbelo: 10% equivale a una tasa de 1.10.
+                                                    Elige un % o escríbelo: 20% cobra 120 por cada 100 CUP.
                                                 </p>
                                             )}
                                             {currentValue > 0 && (

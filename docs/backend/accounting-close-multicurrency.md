@@ -69,14 +69,14 @@ Para que el consolidado sea **reproducible y auditable** (evita que el frontend
 use tasas "vivas" distintas a las del momento del cierre), devolver:
 
 ```jsonc
-"exchangeRateSnapshot": { "USD": 400, "EURO": 420, "CUP_TRANSFERENCIA": 1.1, "…": 0 },
+"exchangeRateSnapshot": { "USD": 400, "EURO": 420, "CUP_TRANSFERENCIA": 0.8333, "…": 0 },
 "consolidatedBase": { "income": 520000, "expense": 56000, "balance": 464000 }  // en CUP
 ```
 
 Reglas de conversión a CUP (deben coincidir con `convertToBase` del frontend):
-- Moneda **extranjera** (USD, EURO, MLC…): `montoBase = monto × tasa`.
-- **CUP_TRANSFERENCIA** (CUP con recargo): la tasa es un **multiplicador**, así que
-  se convierte **dividiendo**: `montoBase = monto / tasa`.
+- **Toda moneda** (USD, EURO, MLC… y CUP_TRANSFERENCIA): `montoBase = monto × tasa`,
+  donde la tasa es cuántas CUP vale 1 unidad. Para CUP_TRANSFERENCIA la tasa es < 1
+  (p. ej. 0.8333 = recargo del 20%): cobrar en transferencia da menos CUP por unidad.
 - **CUP**: tasa 1.
 - Moneda **sin tasa configurada** (tasa ≤ 0): se **excluye** del consolidado y se
   marca como no convertible (el frontend muestra un aviso "sin tasa configurada").

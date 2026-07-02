@@ -12,15 +12,16 @@ import {
   toBackendCurrency,
 } from "@/lib/currency";
 
-// Tasas típicas: cuántos CUP vale 1 unidad de cada moneda. CUP_TRANSFERENCIA es
-// la excepción: su valor (1.1) es un multiplicador de recargo en CUP, no CUP/unidad.
+// Tasas típicas: cuántos CUP vale 1 unidad de cada moneda. CUP_TRANSFERENCIA se
+// trata igual que el resto: su tasa 0.8 significa que 1 transferencia = 0.8 CUP,
+// es decir un recargo del 25% (100 CUP / 0.8 = 125 transferencia).
 const rates = {
   USD: 400,
   EURO: 420,
   MLC: 250,
   CAD: 0,
   CLASICA: "120",
-  CUP_TRANSFERENCIA: 1.1,
+  CUP_TRANSFERENCIA: 0.8,
 };
 
 export const currencySuite = defineSuite(
@@ -98,20 +99,20 @@ export const currencySuite = defineSuite(
     );
 
     test(
-      "convertFromBase multiplica para CUP transferencia (recargo en CUP)",
+      "convertFromBase divide para CUP transferencia igual que el resto",
       () => {
-        expect(convertFromBase(3600, "CUP_TRANSFERENCIA", rates)).toBeCloseTo(3960, 6); // 3600 × 1.1
+        expect(convertFromBase(100, "CUP_TRANSFERENCIA", rates)).toBeCloseTo(125, 6); // 100 / 0.8
       },
-      "CUP_TRANSFERENCIA no es moneda extranjera: su tasa (1.1) es un recargo del 10% sobre el precio en CUP. Un producto de 3600 CUP pagado por transferencia cuesta 3600 × 1.1 = 3960, no 3600 ÷ 1.1. Caso de la issue de cálculo incorrecto.",
+      "CUP_TRANSFERENCIA convierte como cualquier moneda: divide por la tasa. Con tasa 0.8 (1 transferencia = 0.8 CUP), un producto de 100 CUP se cobra 100 / 0.8 = 125 transferencia (recargo del 25%). Antes se multiplicaba por una tasa invertida; esta es la corrección de la issue del backend.",
     );
 
     test(
-      "convertToBase invierte convertFromBase según la moneda",
+      "convertToBase invierte convertFromBase multiplicando por la tasa",
       () => {
-        expect(convertToBase(2, "USD", rates)).toBe(800); // extranjera: 2 × 400
-        expect(convertToBase(3960, "CUP_TRANSFERENCIA", rates)).toBeCloseTo(3600, 6); // recargo: 3960 ÷ 1.1
+        expect(convertToBase(2, "USD", rates)).toBe(800); // 2 × 400
+        expect(convertToBase(125, "CUP_TRANSFERENCIA", rates)).toBeCloseTo(100, 6); // 125 × 0.8
       },
-      "convertToBase es la inversa de convertFromBase. Extranjera multiplica (2 USD → 800 CUP); CUP con recargo divide (3960 transferencia → 3600 CUP base).",
+      "convertToBase es la inversa de convertFromBase y multiplica por la tasa para toda moneda: 2 USD → 800 CUP; 125 transferencia → 125 × 0.8 = 100 CUP base.",
     );
 
     test(
@@ -135,13 +136,13 @@ export const currencySuite = defineSuite(
     );
 
     test(
-      "convertBetween respeta la dirección de CUP transferencia",
+      "convertBetween trata CUP transferencia como una moneda más",
       () => {
-        // CUP → transferencia: recargo (×1.1). Transferencia → CUP: ÷1.1.
-        expect(convertBetween(3600, "CUP", "CUP_TRANSFERENCIA", rates)).toBeCloseTo(3960, 6);
-        expect(convertBetween(3960, "CUP_TRANSFERENCIA", "CUP", rates)).toBeCloseTo(3600, 6);
+        // CUP → transferencia: 100 / 0.8 = 125. Transferencia → CUP: 125 × 0.8 = 100.
+        expect(convertBetween(100, "CUP", "CUP_TRANSFERENCIA", rates)).toBeCloseTo(125, 6);
+        expect(convertBetween(125, "CUP_TRANSFERENCIA", "CUP", rates)).toBeCloseTo(100, 6);
       },
-      "convertBetween se apoya en convertToBase/convertFromBase, así que respeta que CUP_TRANSFERENCIA multiplica al venir de CUP (3600 → 3960) y divide al volver a CUP (3960 → 3600), en vez de tratarla como extranjera.",
+      "convertBetween se apoya en convertToBase/convertFromBase, que ahora convierten toda moneda por igual vía CUP: 100 CUP → 125 transferencia (÷0.8) y 125 transferencia → 100 CUP (×0.8).",
     );
 
     test(
@@ -172,7 +173,7 @@ export const currencySuite = defineSuite(
           "CUP_TRANSFERENCIA",
         );
       },
-      "Al leer respuestas del backend convertimos 'cup_transferencia' de vuelta a la clave interna 'CUP_TRANSFERENCIA' para que la UI (tasas, recargo, isCupDenominated) la reconozca. Es la inversa exacta de toBackendCurrency.",
+      "Al leer respuestas del backend convertimos 'cup_transferencia' de vuelta a la clave interna 'CUP_TRANSFERENCIA' para que la UI (tasas, recargo, conversión) la reconozca. Es la inversa exacta de toBackendCurrency.",
     );
 
     test(
