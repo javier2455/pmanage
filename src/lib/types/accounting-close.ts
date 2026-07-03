@@ -24,4 +24,13 @@ export type AccountingCloseResponse = {
     totalIncome: number;
     totalExpense: number;
     total: number;
+    /**
+     * Monedas con movimientos en el período que NO tienen tasa configurada y
+     * quedaron fuera del consolidado del backend (disponible desde 2026-07-02).
+     * La UI ya muestra un aviso equivalente calculado client-side
+     * (`hasUnconvertible` en accounting-close-currency.ts, con las mismas
+     * tasas); este campo queda como fuente de verdad del servidor si en el
+     * futuro se elimina la re-consolidación local.
+     */
+    unconvertedCurrencies?: string[];
 }

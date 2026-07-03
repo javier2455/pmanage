@@ -24,6 +24,7 @@ import { FileText, Loader2, Wallet, XCircle } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { openPdfInNewTab } from "@/lib/download";
+import { mapCurrencyErrorFromBlob } from "@/lib/currency-errors";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { useBusiness } from "@/context/business-context";
 import axios from "axios";
@@ -81,11 +82,16 @@ export default function DetailsDialog({
   function handleVerFactura() {
     downloadFactura.mutate(saleId, {
       onSuccess: (blob) => openPdfInNewTab(blob, `factura-${saleId}.pdf`),
-      onError: () =>
+      // La respuesta es blob: el error 400 del backend (p. ej.
+      // MONEDA_NO_CONFIGURADA, o "venta no pagada") llega como Blob JSON y
+      // hay que parsearlo para mostrar el mensaje real.
+      onError: async (error) =>
         toastError({
           title: "No se pudo abrir la factura",
-          description:
+          description: await mapCurrencyErrorFromBlob(
+            error,
             "La venta debe estar completamente pagada para generar la factura.",
+          ),
         }),
     });
   }
