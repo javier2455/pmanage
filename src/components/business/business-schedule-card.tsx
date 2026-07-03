@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Loader2, Save } from "lucide-react";
+import { Clock, Info, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sileo } from "sileo";
 import {
@@ -141,6 +141,15 @@ export function BusinessScheduleCard({
               Define los días y horas en que el negocio abre al público.
             </CardDescription>
           </div>
+        </div>
+        <div className="mt-3 flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            La <strong>hora de cierre</strong> de cada día se usa también para
+            enviarte el <strong>cierre diario</strong> (y el mensual, el último
+            día del mes) por los canales que tengas activados en Notificaciones.
+            Si no defines horario, se envía a las 23:00.
+          </span>
         </div>
       </CardHeader>
       <CardContent>
