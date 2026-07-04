@@ -107,4 +107,17 @@ export type Plan = {
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
+  /** Tipo del plan (free/basic/premium/enterprise). */
+  type?: string;
+  /**
+   * Provistos por el backend en `/auth/me` (#21): evitan detectar el plan por
+   * substring del nombre y hardcodear los límites en el front. Opcionales por
+   * compatibilidad durante el despliegue (fallback a la lógica local).
+   */
+  isPro?: boolean;
+  limits?: {
+    maxBusinesses: number | null;
+    maxProducts: number | null;
+    maxWorkers: number | null;
+  };
 }

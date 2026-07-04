@@ -23,6 +23,13 @@ export function applySelectedPlanToSession(plan: {
           ...(plan.name ? { name: plan.name } : {}),
           ...(plan.expireDate !== undefined ? { expireDate: plan.expireDate } : {}),
         };
+        // El plan cambió: descartamos el `isPro`/`limits` del backend (que eran
+        // del plan anterior) para que el gating recaiga en la detección local
+        // por nombre hasta que el próximo /auth/me traiga los valores frescos.
+        if (plan.type || plan.name) {
+          delete parsed.plan.isPro;
+          delete parsed.plan.limits;
+        }
         sessionStorage.setItem("user", JSON.stringify(parsed));
       } catch {
         // sesión inválida: la corregirá el siguiente getMe()

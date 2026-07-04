@@ -27,14 +27,32 @@ function readRoleId(): string {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
+      /* Preferir el roleId numérico que ahora expone /auth/me (#21): así no
+         dependemos de la tabla local nombre->id (ROLE_ID_BY_NAME). */
+      if (parsed.roleId != null) return String(parsed.roleId);
       const role = parsed.role ?? parsed.rol;
-      /* getMe() entrega el rol como nombre (string): lo mapeamos al id que
-         usan las secciones del backend ("admin" -> "5"). */
+      /* Fallback: getMe() entregaba el rol como nombre; lo mapeamos al id. */
       if (typeof role === "string") return roleIdFromName(role);
       /* Compatibilidad por si el rol llegara como objeto { id, name }. */
       if (role && typeof role === "object" && role.id != null) {
         return String(role.id);
       }
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+/** "1"/"0" si el backend indicó plan.isPro; "" si no lo trae (fallback local). */
+function readPlanIsPro(): string {
+  if (typeof window === "undefined") return "";
+  const stored = sessionStorage.getItem("user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const isPro = parsed.plan?.isPro;
+      if (typeof isPro === "boolean") return isPro ? "1" : "0";
     } catch {
       return "";
     }
@@ -65,9 +83,13 @@ export function useUserRoleAndPlan() {
   const roleName = useSyncExternalStore(subscribe, readRoleName, () => "");
   const roleId = useSyncExternalStore(subscribe, readRoleId, () => "");
   const planType = useSyncExternalStore(subscribe, readPlanType, () => "");
+  const planIsProFlag = useSyncExternalStore(subscribe, readPlanIsPro, () => "");
 
   const isAdmin = roleName.toLowerCase() === "admin";
-  const isProPlan = checkProPlan(planType);
+  /* Preferir el flag isPro del backend (#21); si no viene, usar la detección
+     local por nombre de plan como fallback. */
+  const isProPlan =
+    planIsProFlag === "" ? checkProPlan(planType) : planIsProFlag === "1";
 
   return { roleName, roleId, planType, isAdmin, isProPlan };
 }

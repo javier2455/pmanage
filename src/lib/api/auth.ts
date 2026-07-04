@@ -28,6 +28,8 @@ interface AuthDataResponse {
   lastLogin: string;
   pageId: string;
   role: string;
+  /** roleId numérico expuesto por /auth/me (#21). */
+  roleId: number | null;
   active: number;
   deactivatedAt: string | null;
   twoFactorEnabled: boolean;
