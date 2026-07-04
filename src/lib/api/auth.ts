@@ -94,6 +94,13 @@ interface Plan {
   updatedAt: string;
   startDate: string;
   expireDate: string;
+  /** Enriquecidos por /auth/me (#21); opcionales por compatibilidad. */
+  isPro?: boolean;
+  limits?: {
+    maxBusinesses: number | null;
+    maxProducts: number | null;
+    maxWorkers: number | null;
+  };
 }
 
 

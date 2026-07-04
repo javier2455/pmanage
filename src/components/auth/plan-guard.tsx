@@ -47,18 +47,24 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Plan vigente: refrescar el plan real en sesión + cookie (limpia también la
-    // cookie de plan vencido) para que el gating Pro no quede obsoleto.
+    // cookie de plan vencido) para que el gating Pro no quede obsoleto. Pasamos
+    // los valores frescos del backend (isPro/limits) para que el hook los use.
     const planType = data.plan?.type ?? data.plan?.name ?? "";
     applySelectedPlanToSession({
       type: data.plan?.type,
       name: data.plan?.name,
       expireDate: data.plan?.expireDate,
+      isPro: data.plan?.isPro,
+      limits: data.plan?.limits,
     });
 
-    // Exceso de negocios para el plan: forzar la reconciliación.
+    // Exceso de negocios para el plan: el tope viene de limits.maxBusinesses del
+    // backend (con fallback local por tipo de plan).
     if (businesses) {
+      const maxBiz =
+        data.plan?.limits?.maxBusinesses ?? getMaxBusinesses(planType);
       const activeCount = businesses.filter((b) => b.status !== "archived").length;
-      if (activeCount > getMaxBusinesses(planType)) {
+      if (activeCount > maxBiz) {
         setNeedsReconciliationCookie(true);
         router.replace("/seleccionar-plan/reconciliar");
         return;

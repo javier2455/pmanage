@@ -10,7 +10,6 @@ import {
 import { useCreateBusinessMutation } from "@/hooks/use-business";
 import { useBusiness } from "@/context/business-context";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
-import { getMaxBusinesses } from "@/lib/pro-gates";
 import {
   useGetAllProvinces,
   useGetAllMunicipalitiesByProvinceId,
@@ -123,8 +122,7 @@ export default function CreateBusinessPage() {
   const router = useRouter();
   const createBusinessMutation = useCreateBusinessMutation();
   const { businesses, isLoading: isLoadingBusinesses } = useBusiness();
-  const { planType } = useUserRoleAndPlan();
-  const maxBusinesses = getMaxBusinesses(planType);
+  const { maxBusinesses } = useUserRoleAndPlan();
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
   const [step, setStep] = useState<Step>("info");
 

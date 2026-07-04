@@ -129,7 +129,12 @@ export default function LoginPage() {
             const activeBusiness = workerBusinesses[0];
             sessionStorage.setItem("activeBusinessId", activeBusiness.id);
             const sections = await getAllSections({ businessId: activeBusiness.id });
-            const allowedUrls = collectAllowedUrls(sections, roleIdFromName(user.role ?? ""));
+            /* Preferir el roleId numérico del backend (#21); fallback a la tabla local. */
+            const roleId =
+                user.roleId != null
+                    ? String(user.roleId)
+                    : roleIdFromName(user.role ?? "");
+            const allowedUrls = collectAllowedUrls(sections, roleId);
             router.push(allowedUrls.find(Boolean) ?? "/dashboard/no-access");
             return;
         }
@@ -148,7 +153,8 @@ export default function LoginPage() {
                antes de entrar al dashboard. Sembramos la cookie para que el
                middleware bloquee el dashboard hasta que reconcilie. */
             const planType = user.plan?.type ?? user.plan?.name ?? "";
-            if (activeBusinesses.length > getMaxBusinesses(planType)) {
+            const maxBiz = user.plan?.limits?.maxBusinesses ?? getMaxBusinesses(planType);
+            if (activeBusinesses.length > maxBiz) {
                 setNeedsReconciliationCookie(true);
                 router.push("/seleccionar-plan/reconciliar");
                 return;

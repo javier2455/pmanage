@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 import { getAuthCookies } from "@/lib/cookies";
-import { isProPlan as checkProPlan } from "@/lib/pro-gates";
+import {
+  isProPlan as checkProPlan,
+  getMaxBusinesses as fallbackMaxBusinesses,
+} from "@/lib/pro-gates";
 import { roleIdFromName } from "@/lib/roles";
 
 function readRoleName(): string {
@@ -60,6 +63,22 @@ function readPlanIsPro(): string {
   return "";
 }
 
+/** Nº de negocios permitido según `plan.limits` del backend; "" si no viene. */
+function readMaxBusinesses(): string {
+  if (typeof window === "undefined") return "";
+  const stored = sessionStorage.getItem("user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const max = parsed.plan?.limits?.maxBusinesses;
+      if (typeof max === "number" && max > 0) return String(max);
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
 function readPlanType(): string {
   if (typeof window === "undefined") return "";
   const stored = sessionStorage.getItem("user");
@@ -84,12 +103,23 @@ export function useUserRoleAndPlan() {
   const roleId = useSyncExternalStore(subscribe, readRoleId, () => "");
   const planType = useSyncExternalStore(subscribe, readPlanType, () => "");
   const planIsProFlag = useSyncExternalStore(subscribe, readPlanIsPro, () => "");
+  const maxBusinessesFlag = useSyncExternalStore(
+    subscribe,
+    readMaxBusinesses,
+    () => "",
+  );
 
   const isAdmin = roleName.toLowerCase() === "admin";
   /* Preferir el flag isPro del backend (#21); si no viene, usar la detección
      local por nombre de plan como fallback. */
   const isProPlan =
     planIsProFlag === "" ? checkProPlan(planType) : planIsProFlag === "1";
+  /* Igual con el tope de negocios: preferir plan.limits.maxBusinesses del
+     backend; si no viene, el cálculo local por tipo de plan. */
+  const maxBusinesses =
+    maxBusinessesFlag === ""
+      ? fallbackMaxBusinesses(planType)
+      : Number(maxBusinessesFlag);
 
-  return { roleName, roleId, planType, isAdmin, isProPlan };
+  return { roleName, roleId, planType, isAdmin, isProPlan, maxBusinesses };
 }

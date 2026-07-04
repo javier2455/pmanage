@@ -1,14 +1,15 @@
 /**
- * Mapeo entre el rol que entrega `getMe()` y el id con el que el backend
- * etiqueta las secciones/menús del sidebar.
+ * FALLBACK (#21): mapeo local nombre de rol -> id de sección.
  *
- * `getMe()` devuelve el rol como NOMBRE (p. ej. "admin"), pero el endpoint
- * `/api/v2/section` filtra cada sección/menú por su `roles` usando IDs
- * numéricos en formato string (p. ej. "5"). Aquí traducimos nombre -> id.
+ * Desde #21, `/auth/me` devuelve directamente `roleId` numérico y el front lo
+ * PREFIERE (ver `use-user-role-plan.ts` y `login/page.tsx`). Esta tabla queda
+ * SOLO como respaldo por si una respuesta vieja de `/auth/me` no trae `roleId`.
+ * Una vez desplegado y verificado el backend, se puede eliminar.
  *
- * Nota: los trabajadores de un negocio entran con rol `business_owner` igual
- * que el dueño; se distingue al trabajador por `isWorker: true` en `getMe()`,
- * NO por el rol. `client` queda reservado para uso futuro.
+ * Contexto: `/api/v2/section` filtra cada sección/menú por su `roles` usando IDs
+ * numéricos en formato string (p. ej. "5"). Los trabajadores entran con rol
+ * `business_owner` igual que el dueño; se distinguen por `isWorker: true` en
+ * `getMe()`, NO por el rol. `client` queda reservado para uso futuro.
  */
 export const ROLE_ID_BY_NAME: Record<string, string> = {
   business_owner: "4",

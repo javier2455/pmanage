@@ -1,5 +1,13 @@
 /**
- * Fuente única de verdad para la lógica de plan Pro.
+ * Lógica de plan Pro y topes.
+ *
+ * IMPORTANTE (#21): desde que `/auth/me` expone `plan.isPro` y
+ * `plan.limits.maxBusinesses`, el front PREFIERE esos valores del backend (ver
+ * `use-user-role-plan.ts`, `plan-guard.tsx`, `login/page.tsx`). Las funciones de
+ * este archivo (`isProPlan`, `getMaxBusinesses`, `PLAN_BUSINESS_LIMIT`) quedan
+ * como **FALLBACK** para respuestas viejas sin esos campos, y como respaldo del
+ * `middleware.ts` (que solo tiene el `planType` de una cookie). `PRO_ROUTES` /
+ * `isProRoute` siguen siendo la fuente de verdad de qué rutas son Pro.
  *
  * - Compatible con middleware (server) y hooks (client): sin React ni browser APIs.
  * - Agregar una ruta Pro = agregar 1 entrada a PRO_ROUTES.

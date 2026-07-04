@@ -11,6 +11,18 @@ export function applySelectedPlanToSession(plan: {
   type?: string | null;
   name?: string | null;
   expireDate?: string | null;
+  /**
+   * Cuando el caller tiene los valores frescos del backend (`/auth/me`), los
+   * pasa aquí y se persisten. Si NO los pasa (flujo self-service) y el plan
+   * cambió, se descartan los que hubiera guardados para que el gating recaiga
+   * en la detección local hasta el próximo `/auth/me`.
+   */
+  isPro?: boolean;
+  limits?: {
+    maxBusinesses: number | null;
+    maxProducts: number | null;
+    maxWorkers: number | null;
+  };
 }): void {
   if (typeof window !== "undefined") {
     const stored = sessionStorage.getItem("user");
@@ -23,10 +35,12 @@ export function applySelectedPlanToSession(plan: {
           ...(plan.name ? { name: plan.name } : {}),
           ...(plan.expireDate !== undefined ? { expireDate: plan.expireDate } : {}),
         };
-        // El plan cambió: descartamos el `isPro`/`limits` del backend (que eran
-        // del plan anterior) para que el gating recaiga en la detección local
-        // por nombre hasta que el próximo /auth/me traiga los valores frescos.
-        if (plan.type || plan.name) {
+        if (plan.isPro !== undefined || plan.limits !== undefined) {
+          // El caller trae los valores frescos del backend: persistirlos.
+          if (plan.isPro !== undefined) parsed.plan.isPro = plan.isPro;
+          if (plan.limits !== undefined) parsed.plan.limits = plan.limits;
+        } else if (plan.type || plan.name) {
+          // Cambió el plan sin valores frescos: descartar los obsoletos.
           delete parsed.plan.isPro;
           delete parsed.plan.limits;
         }
