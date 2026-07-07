@@ -9,7 +9,7 @@ on:
 jobs:
 
   ##############################################
-  # DEPLOY MAIN → psearch.dveloxsoft.com
+  # DEPLOY MAIN → negora.dveloxsoft.com/manager
   ##############################################
   deploy-main:
     if: github.ref == 'refs/heads/main'
@@ -35,8 +35,61 @@ jobs:
 
       - name: Build Next.js project
         run: pnpm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /manager
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
-      - name: Clean remote folder
+      # El .htaccess del repo (public/.htaccess) usa rutas absolutas desde la raíz
+      # del dominio y solo sirve cuando la app se despliega en la raíz. Bajo la
+      # subruta /manager hay que prefijar los destinos de rewrite con /manager
+      # (los patrones NO se prefijan: en un .htaccess por-directorio Apache ya
+      # elimina el prefijo /manager de la ruta evaluada). Regeneramos el archivo
+      # aquí, solo para el build de producción; develop mantiene el suyo.
+      - name: Adjust .htaccess for /manager subdirectory
+        run: |
+          cat > out/.htaccess <<'EOF'
+          Options -MultiViews
+          RewriteEngine On
+
+          # Never rewrite paths that already contain the placeholder
+          RewriteRule __dynamic__ - [L]
+
+          # Dynamic route rewrites (destinos prefijados con /manager):
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^dashboard/business/workers/([^/]+)/edit/?$ /manager/dashboard/business/workers/__dynamic__/edit/ [L]
+
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^dashboard/business/workers/([^/]+)/?$ /manager/dashboard/business/workers/__dynamic__/ [L]
+
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^dashboard/business/products/catalog/([^/]+)/edit/?$ /manager/dashboard/business/products/catalog/__dynamic__/edit/ [L]
+
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^dashboard/business/products/([^/]+)/edit/?$ /manager/dashboard/business/products/__dynamic__/edit/ [L]
+
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^dashboard/business/providers/([^/]+)/edit/?$ /manager/dashboard/business/providers/__dynamic__/edit/ [L]
+
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^dashboard/business/expenses/([^/]+)/edit/?$ /manager/dashboard/business/expenses/__dynamic__/edit/ [L]
+
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^reset-password/([^/]+)/?$ /manager/reset-password/__dynamic__/ [L]
+
+          # SPA fallback: serve index.html for any other non-existing path
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^ /manager/index.html [L]
+          EOF
+
+      - name: Clean remote /manager folder (safe — no toca la landing)
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -44,14 +97,13 @@ jobs:
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
           script: |
-            TARGET=~/psearch.dveloxsoft.com
-            cd $TARGET || exit 1
+            TARGET=~/negora.dveloxsoft.com/manager
+            mkdir -p "$TARGET"
+            cd "$TARGET" || exit 1
 
-            for item in *; do
-              if [ "$item" != ".htaccess" ] && [ "$item" != ".well-known" ] && [ "$item" != "api" ] && [ "$item" != "dev" ]; then
-                rm -rf "$item"
-              fi
-            done
+            # Elimina SOLO el contenido dentro de /manager (la landing vive en el
+            # directorio padre y no se toca). El .htaccess se re-sube desde el repo.
+            find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 
       - name: Upload static site (out/)
         uses: appleboy/scp-action@v0.1.7
@@ -60,8 +112,8 @@ jobs:
           username: ${{ secrets.CPANEL_USER }}
           key: ${{ secrets.CPANEL_KEY }}
           passphrase: ${{ secrets.CPANEL_PASSPHRASE }}
-          source: "out/**"
-          target: "~/psearch.dveloxsoft.com/"
+          source: "out/**,out/.htaccess"
+          target: "~/negora.dveloxsoft.com/manager/"
           overwrite: true
           rm: false
           strip_components: 1

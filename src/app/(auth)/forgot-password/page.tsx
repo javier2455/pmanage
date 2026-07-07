@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, KeyRound, Loader2, Mail, MailCheck } from "lucide-react";
 import { useRequestPasswordResetMutation } from "@/hooks/use-auth";
+import { withBasePath } from "@/lib/base-path";
 
 export default function ForgotPasswordPage() {
     const requestResetMutation = useRequestPasswordResetMutation();
@@ -38,7 +39,7 @@ export default function ForgotPasswordPage() {
 
     const onSubmit = async (data: RequestPasswordResetFormData) => {
         try {
-            const urlCallback = `${window.location.origin}/reset-password`;
+            const urlCallback = `${window.location.origin}${withBasePath("/reset-password")}`;
             await requestResetMutation.mutateAsync({
                 email: data.email,
                 urlCallback,
