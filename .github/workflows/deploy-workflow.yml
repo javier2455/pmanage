@@ -37,7 +37,7 @@ jobs:
         run: pnpm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /manager
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_API_URL: https://negora.dveloxsoft.com/api/v2
 
       # El .htaccess del repo (public/.htaccess) usa rutas absolutas desde la raíz
       # del dominio y solo sirve cuando la app se despliega en la raíz. Bajo la
