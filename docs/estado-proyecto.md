@@ -1,7 +1,10 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-06-24** (trial Pro de 15 días + **selección de plan self-service** y **reconciliación de negocios** al hacer downgrade; **desactivación/reactivación de cuenta** con gracia de 15 días; **módulo de Caja / cuentas en divisa** (flujo de caja Fase 1); cancelación de venta con **devolución parcial y merma**; **delivery/mensajería por negocio** (`acceptsMessaging`); **rebranding a Negora**; stats del dashboard agrupadas por moneda; `RouteGuard` cliente para rutas Pro/admin en build estático — ver features 34–41). Anterior — 2026-06-20: suite **Multimoneda** (ventas con moneda + pagos multimoneda con factura PDF, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33).
+> Última actualización: **2026-07-12** (migración de **producción** a la subruta
+> **`https://negora.dveloxsoft.com/manager/`** — ver [Promoción a producción v2](#promoción-a-producción-v2)
+> y [despliegue-negora-manager.md](despliegue-negora-manager.md); además, limpieza
+> de ESLint/TypeScript a **cero** errores y advertencias). Anterior — 2026-06-24: (trial Pro de 15 días + **selección de plan self-service** y **reconciliación de negocios** al hacer downgrade; **desactivación/reactivación de cuenta** con gracia de 15 días; **módulo de Caja / cuentas en divisa** (flujo de caja Fase 1); cancelación de venta con **devolución parcial y merma**; **delivery/mensajería por negocio** (`acceptsMessaging`); **rebranding a Negora**; stats del dashboard agrupadas por moneda; `RouteGuard` cliente para rutas Pro/admin en build estático — ver features 34–41). Anterior — 2026-06-20: suite **Multimoneda** (ventas con moneda + pagos multimoneda con factura PDF, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33).
 
 ---
 
@@ -399,32 +402,53 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
 Runbook para liberar la v2 (`develop` → `main`). Detalle de build/estático en
 [docs/conversion-a-estatico.md](conversion-a-estatico.md) y [docs/extra/build-output-config.md](extra/build-output-config.md).
 
-**Lo único que cambia para producción es `public/.htaccess`.** `next.config.ts` y el
-workflow ya son branch-aware: el `basePath`/`assetPrefix` se leen de
-`NEXT_PUBLIC_BASE_PATH`, que **solo** se inyecta en el job `deploy-dev`. En `main` la
-variable no existe → build a la raíz, sin `/dev`. No hay que tocarlos.
+> **Actualización 2026-07-12 — cambio de URL de producción.** Producción ya **no**
+> va a la raíz de `psearch.dveloxsoft.com`, sino a la subruta
+> **`https://negora.dveloxsoft.com/manager/`** (mismo dominio que la landing). El
+> job `deploy-main` del workflow **fue reescrito** para esto: construye con
+> `NEXT_PUBLIC_BASE_PATH=/manager` (+ `NEXT_PUBLIC_API_URL`), **regenera
+> `out/.htaccess`** con los destinos de rewrite prefijados a `/manager`, y despliega
+> **solo** a `~/negora.dveloxsoft.com/manager` **sin tocar la landing** del
+> directorio padre. `develop` sigue igual (`psearch.dveloxsoft.com/dev`). Guía
+> completa y tareas de backend/cPanel en
+> [despliegue-negora-manager.md](despliegue-negora-manager.md).
+
+`next.config.ts` sigue siendo branch-aware (lee `NEXT_PUBLIC_BASE_PATH`); lo que
+cambió es qué valor inyecta cada job.
 
 | Archivo | ¿Cambia para main? |
 |---|---|
 | `next.config.ts` | ❌ No — branch-aware vía `NEXT_PUBLIC_BASE_PATH` |
-| `.github/workflows/deploy-workflow.yml` | ❌ No — el job `deploy-main` ya es correcto |
-| **`public/.htaccess`** | ✅ **Sí — sin prefijos `/dev/`** (targets a `/...` y fallback a `/index.html`) |
+| `.github/workflows/deploy-workflow.yml` | ✅ **Ya cambiado** — job `deploy-main` reescrito para `/manager` (build + regenera `.htaccess` + destino `negora.dveloxsoft.com/manager`) |
+| `public/.htaccess` | ❌ No para main — el workflow **regenera** `out/.htaccess` con prefijos `/manager` en el build. (El del repo se usa tal cual en `develop`.) |
 | `package.json` | ✅ Sí — versión a `2.0.0` |
 
 **Rutas dinámicas y `.htaccess` (verificado):** las reglas cubren workers, products,
 products/catalog, providers, expenses y reset-password. `categories/[kind]` **no**
 necesita regla porque usa `generateStaticParams` con valores reales (`expenses`,
 `products`) y genera carpetas físicas en `out/`. Al añadir cualquier `[param]` nuevo,
-hay que añadir su regla aquí (sin `/dev/` en main, con `/dev/` en develop).
+hay que añadir su regla **en dos sitios**: en `public/.htaccess` (para `develop`, con
+`/dev/`) y en el heredoc del job `deploy-main` del workflow (para `main`, con `/manager/`).
 
 **Pasos:**
 
-1. `release/v2.0.0` desde `develop`: `.htaccess` sin `/dev/` + regla de `providers`, y `package.json` a `2.0.0`. *(Hecho en la rama.)*
-2. Build de producción local **sin** la env var (`pnpm run build`) y confirmar que `out/index.html` referencia `/_next/...` (no `/dev/_next/...`); `pnpm test` + `tsc --noEmit` en verde.
-3. PR `release/v2.0.0 → main`. Al resolver, asegurar que gana el `.htaccess` **sin** `/dev/`.
-4. Push a `main` → job `deploy-main` (build a la raíz, preserva `.htaccess`/`api`/`dev`/`.well-known`, sube `out/`).
-5. **Verificar el `.htaccess` de la raíz por SSH** en `~/psearch.dveloxsoft.com/`: el clean preserva el remoto y el `scp` de `out/**` puede no transferir dotfiles; confirmar que es el nuevo y completo. Subirlo a mano si hace falta.
-6. Smoke test en `https://psearch.dveloxsoft.com/`: chunks `/_next/...` con `Content-Type: application/javascript`; recarga dura sobre rutas dinámicas (no 404); login → venta multimoneda → cancelación parcial → gating Pro. Confirmar que `/dev/` sigue intacto.
+1. `release/v2.0.0` desde `develop`: `package.json` a `2.0.0`. (Para `main` no hay que
+   editar `public/.htaccess`: lo regenera el workflow con prefijos `/manager`.)
+2. **Backend (bloqueante):** `CORS_ORIGINS` debe incluir `https://negora.dveloxsoft.com`
+   (origen exacto, sin barra ni ruta) y reiniciar/redesplegar. Ver
+   [despliegue-negora-manager.md](despliegue-negora-manager.md) §5.
+3. Confirmar el `NEXT_PUBLIC_API_URL` del job `deploy-main` (apunta a la API de
+   producción); si la API aún no migró a `negora`, ajustar ese valor.
+4. Build local de producción con `NEXT_PUBLIC_BASE_PATH=/manager` y confirmar que
+   `out/index.html` referencia `/manager/_next/...`; `pnpm test` + `tsc --noEmit` +
+   `pnpm run lint` en verde.
+5. PR `release/v2.0.0 → main`. Push a `main` → job `deploy-main` (build `/manager`,
+   regenera `.htaccess`, sube `out/` a `negora.dveloxsoft.com/manager` sin tocar la
+   landing).
+6. Smoke test en `https://negora.dveloxsoft.com/manager/login`: assets `/manager/_next/...`
+   con `Content-Type: application/javascript`; login sin errores CORS; recarga dura
+   sobre rutas dinámicas (no 404); un 401 redirige a `.../manager/login`; correos de
+   reset e invitación llevan a `.../manager/...`; y la **landing** en `/` sigue intacta.
 7. Mover el bloque de features de `sdd-develop.md` a `sdd-main.md` y actualizar este snapshot.
 
 ---

@@ -9,7 +9,56 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+### Agregado
+
+#### Despliegue en subruta `/manager` (producción `main`)
+- La app pasa a servirse bajo `https://negora.dveloxsoft.com/manager/` (login en
+  `.../manager/login`, etc.) para colgar del mismo dominio que la landing. Se
+  controla con la variable de build **`NEXT_PUBLIC_BASE_PATH`** (`/manager` en
+  `main`, `/dev` en `develop`, vacío en local), que Next aplica como `basePath` +
+  `assetPrefix`.
+- Nuevo helper [base-path.ts](src/lib/base-path.ts) → `withBasePath()`, para
+  prefijar el basePath en navegaciones crudas que Next no reescribe solo
+  (`window.location`, URLs construidas a mano).
+- El workflow [deploy-workflow.yml](.github/workflows/deploy-workflow.yml)
+  (job `main`) construye con `NEXT_PUBLIC_BASE_PATH=/manager`, **regenera el
+  `.htaccess`** con destinos de rewrite prefijados a `/manager`, y despliega solo
+  a `~/negora.dveloxsoft.com/manager` **sin tocar la landing** del directorio
+  padre. El job `develop` queda igual.
+- Detalle completo y tareas de backend/cPanel en
+  [docs/despliegue-negora-manager.md](docs/despliegue-negora-manager.md).
+
+### Corregido
+
+#### Rutas con basePath
+- Las 3 redirecciones a login por 401 en [axios.ts](src/lib/axios.ts) usaban
+  `window.location.href = "/login"` (ignoraba el basePath y sacaba al usuario de
+  `/manager`). Ahora usan `withBasePath("/login")`; de paso queda correcto también
+  en `develop` (`/dev/login`).
+- El `urlCallback` del correo de recuperación en
+  [forgot-password/page.tsx](src/app/%28auth%29/forgot-password/page.tsx) ahora incluye
+  el basePath, para que el enlace apunte a `.../manager/reset-password`.
+
+#### Efectos con `setState` (React Compiler)
+- Reescritos 5 casos de `react-hooks/set-state-in-effect` al patrón oficial de
+  React de **ajustar estado durante el render** (condición idempotente o rastreo
+  de referencia previa) en vez de en un `useEffect`, evitando renders en cascada:
+  `assign-plans/page.tsx` (reset de página), `sales/create/page.tsx` (tipo de
+  venta sin delivery), `business-location-step.tsx`, `notification-settings-card.tsx`
+  y `worker-form.tsx`.
+
 ### Cambiado
+
+#### Calidad de código / linter
+- El proyecto queda **sin errores ni advertencias** de ESLint (`pnpm run lint`) y
+  de TypeScript (`tsc --noEmit`).
+- [eslint.config.mjs](eslint.config.mjs): se silencian de forma acotada avisos
+  inherentes de librería y de terceros — `react-hooks/incompatible-library`
+  (TanStack Table / React Hook Form no memoizables por el React Compiler), `require()`
+  solo en `server.js` (servidor Node CommonJS), y las reglas propias de los
+  componentes **vendored de shadcn** en `src/components/ui/**` (que no se modifican).
+- Correcciones reales en código propio: imports sin usar eliminados y
+  `provinces`/`plans` envueltos en `useMemo` (`react-hooks/exhaustive-deps`).
 
 #### Permisos de trabajadores
 - Los módulos exclusivos de administradores del sistema ya **no aparecen** entre
