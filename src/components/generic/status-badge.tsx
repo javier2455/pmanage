@@ -6,7 +6,7 @@ interface SaleStatusBadgeProps {
     className?: string
 }
 
-export function StatusBadge({ text, className }: SaleStatusBadgeProps) {
+export function StatusBadge({ text }: SaleStatusBadgeProps) {
     if (text.toLowerCase().includes("cancelada")) {
         return (
             <Badge variant="ghost" className="bg-destructive text-destructive-foreground border border-destructive/70">

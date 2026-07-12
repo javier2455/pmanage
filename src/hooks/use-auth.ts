@@ -10,7 +10,7 @@ import {
   requestPasswordReset,
   changePassword,
 } from "@/lib/api/auth";
-import type { LoginFormData, RegisterFormData, VerifyFormData } from "@/lib/validations/auth";
+import type { LoginFormData, RegisterFormData } from "@/lib/validations/auth";
 
 export function useLoginMutation() {
   return useMutation({

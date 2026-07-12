@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -112,8 +112,20 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
     [selected],
   );
 
-  useEffect(() => {
-    if (!isEdit || !worker || flatItems.length === 0) return;
+  // Sincroniza el mapa de permisos seleccionados con los del trabajador en
+  // edición. Se hace en render (rastreando las referencias previas de worker y
+  // flatItems) en vez de en un efecto, para evitar renders en cascada.
+  const [syncedFrom, setSyncedFrom] = useState<{
+    worker: typeof worker;
+    flatItems: typeof flatItems;
+  } | null>(null);
+  if (
+    isEdit &&
+    worker &&
+    flatItems.length > 0 &&
+    (syncedFrom?.worker !== worker || syncedFrom?.flatItems !== flatItems)
+  ) {
+    setSyncedFrom({ worker, flatItems });
     const permissionNames = new Set(worker.permissions);
     const next = new Map<string, SelectedPermItem>();
     for (const item of flatItems) {
@@ -122,7 +134,7 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
       }
     }
     setSelected(next);
-  }, [isEdit, worker, flatItems]);
+  }
 
   const createForm = useForm<WorkerFormData>({
     resolver: zodResolver(workerFormSchema),

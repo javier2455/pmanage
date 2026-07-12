@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -185,10 +185,14 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   const categories = CATEGORIES;
   const activeKeys = categories.flatMap((c) => c.items.map((i) => i.key));
 
-  // Sincroniza la matriz con la config que llega del backend.
-  useEffect(() => {
-    if (settings) setMatrix(settingsToMatrix(settings));
-  }, [settings]);
+  // Sincroniza la matriz con la config que llega del backend. Se hace en render
+  // (rastreando la referencia previa de `settings`) en vez de en un efecto, para
+  // evitar renders en cascada.
+  const [lastSyncedSettings, setLastSyncedSettings] = useState(settings);
+  if (settings && settings !== lastSyncedSettings) {
+    setLastSyncedSettings(settings);
+    setMatrix(settingsToMatrix(settings));
+  }
 
   // Gating por canal:
   // - email    → disponible en todos los planes.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -90,7 +90,7 @@ export function BusinessDetailsForm() {
   const { data: municipalitiesData, isLoading: isLoadingMunicipalities } =
     useGetAllMunicipalitiesByProvinceId(selectedProvinceId);
 
-  const provinces = provincesData?.data ?? [];
+  const provinces = useMemo(() => provincesData?.data ?? [], [provincesData]);
   const municipalities = municipalitiesData?.data ?? [];
 
   useEffect(() => {

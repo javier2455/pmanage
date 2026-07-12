@@ -1,7 +1,6 @@
 import {
   DollarSign,
   TrendingUp,
-  Receipt,
   XCircle,
   Warehouse,
 } from "lucide-react"

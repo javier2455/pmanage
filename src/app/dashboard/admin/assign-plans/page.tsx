@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import axios from "axios"
 import { sileo } from "sileo"
 import { useGetAllUsersData, useGetUserPlanStats } from "@/hooks/use-user"
@@ -56,10 +56,17 @@ export default function AssignPlansPage() {
     return () => window.clearTimeout(handle)
   }, [searchInput])
 
-  /** Reset a la primera página cuando cambia la búsqueda o el tamaño de página. */
-  useEffect(() => {
+  /**
+   * Reset a la primera página cuando cambia la búsqueda (ya debounced) o el
+   * tamaño de página. Se ajusta el estado durante el render (patrón recomendado
+   * por React) en vez de en un efecto, para evitar renders en cascada.
+   */
+  const pageResetKey = `${debouncedSearch}|${pageSize}`
+  const [lastPageResetKey, setLastPageResetKey] = useState(pageResetKey)
+  if (lastPageResetKey !== pageResetKey) {
+    setLastPageResetKey(pageResetKey)
     setPage(1)
-  }, [debouncedSearch, pageSize])
+  }
 
   const {
     data: usersData,
@@ -77,7 +84,7 @@ export default function AssignPlansPage() {
 
   const users: UserDataResponse[] = usersData?.data ?? []
   const usersMeta = usersData?.meta
-  const plans = plansData?.data ?? []
+  const plans = useMemo(() => plansData?.data ?? [], [plansData])
 
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean

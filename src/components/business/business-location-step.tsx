@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import {
   Dialog,
@@ -43,13 +43,15 @@ export function BusinessLocationStep({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
 
-  useEffect(() => {
-    if (!suggestedAddress) return;
-    if (normalize(suggestedAddress) === normalize(manualAddress)) {
-      setSuggestedAddress(null);
-      setIsDialogOpen(false);
-    }
-  }, [manualAddress, suggestedAddress]);
+  // Si la dirección sugerida coincide con la manual ya escrita, se descarta.
+  // Se ajusta en render (condición idempotente) en vez de en un efecto.
+  if (
+    suggestedAddress &&
+    normalize(suggestedAddress) === normalize(manualAddress)
+  ) {
+    setSuggestedAddress(null);
+    setIsDialogOpen(false);
+  }
 
   const handleMapInteraction = (newLat: number, newLng: number) => {
     onLocationChange(newLat, newLng);

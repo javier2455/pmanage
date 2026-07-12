@@ -70,9 +70,8 @@ export default function CreateSalesPage() {
   }, [search])
 
   // Si el negocio activo no acepta delivery, no dejamos la venta en "domicilio".
-  useEffect(() => {
-    if (!acceptsDelivery && saleType === "delivery") setSaleType("in_store")
-  }, [acceptsDelivery, saleType])
+  // Se ajusta en render (condición idempotente) en vez de en un efecto.
+  if (!acceptsDelivery && saleType === "delivery") setSaleType("in_store")
 
   const { data, isLoading } = useAllProductOfMyBusinesses(
     activeBusinessId ?? "",

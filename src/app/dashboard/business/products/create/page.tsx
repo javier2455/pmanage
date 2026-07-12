@@ -1,7 +1,6 @@
 import { NewProductForm } from "@/components/products/new-product-form";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Link2, PackagePlus } from "lucide-react";
+import { ArrowLeft, PackagePlus } from "lucide-react";
 import Link from "next/link";
 
 export default function CreateProductPage() {
