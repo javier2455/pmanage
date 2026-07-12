@@ -37,7 +37,11 @@ jobs:
         run: pnpm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /manager
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          # Usa el secret NEXT_PUBLIC_API_URL si está definido (p. ej. la API en
+          # negora cuando esté lista); si no, cae a la API viva actual para poder
+          # probar el frontend /manager desde ya. Recuerda que NEXT_PUBLIC_* NO es
+          # secreto real: se hornea en el bundle del cliente.
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://psearch.dveloxsoft.com/apiv1' }}
 
       # El .htaccess del repo (public/.htaccess) usa rutas absolutas desde la raíz
       # del dominio y solo sirve cuando la app se despliega en la raíz. Bajo la
