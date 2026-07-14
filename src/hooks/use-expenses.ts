@@ -15,6 +15,7 @@ import {
   CreateExpenseProps,
   UpdateExpenseProps,
 } from "@/lib/types/expenses";
+import { CURRENCY_BALANCES_KEY } from "@/hooks/use-currency-account";
 
 interface UseGetAllExpensesParams {
   page?: number;
@@ -49,9 +50,15 @@ export function useCreateExpenseMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (credentials: CreateExpenseProps) => createExpense(credentials),
-    onSuccess: () => {
+    onSuccess: (_, credentials) => {
       queryClient.invalidateQueries({ queryKey: ["all-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      // El gasto descuenta el saldo de la cuenta por moneda en el backend
+      // (evento "financial-transaction.created"). Refrescamos la caja para
+      // que la card del dashboard y la vista de flujo de caja lo reflejen.
+      queryClient.invalidateQueries({
+        queryKey: [CURRENCY_BALANCES_KEY, credentials.idbusiness],
+      });
     },
   });
 }
