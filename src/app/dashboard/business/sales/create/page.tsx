@@ -221,8 +221,9 @@ export default function CreateSalesPage() {
           // Los precios se guardan en CUP; los enviamos en la moneda de la venta.
           // `convertFromBase` divide por la tasa para toda moneda (incluida
           // transferencia, con tasa < 1): 100 CUP / 0.8333 ≈ 120 transferencia.
-          // TODO(backend): confirmar si `price` se espera en la moneda de la venta
-          // (asumido) o en CUP. De ser CUP, enviar `price` sin convertir.
+          // El backend espera `price` en la moneda de la venta: convierte el
+          // precio de catálogo (CUP) a esta moneda antes de validar, y el total
+          // de la venta queda denominado en ella (ver sale.service.ts PASO 2.5).
           price: convertFromBase(price, currency, exchange),
         })),
       })
