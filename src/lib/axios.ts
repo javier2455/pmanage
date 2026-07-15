@@ -96,7 +96,7 @@ apiClient.interceptors.response.use(
       try {
         // Call the refresh endpoint
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || "https://psearch.dveloxsoft.com/apiv1"}/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || "https://negora.dveloxsoft.com/apiv1"}/auth/refresh`,
           { refresh_token: refreshToken },
           {
             headers: {
