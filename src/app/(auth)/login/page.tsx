@@ -215,8 +215,14 @@ export default function LoginPage() {
         const left = window.screenX + (window.outerWidth - width) / 2;
         const top = window.screenY + (window.outerHeight - height) / 2;
 
+        // Pasamos el origen del frontend para que el backend lo reenvíe al
+        // Gateway DveloxSoft. El gateway lo necesita para saber a qué ventana
+        // opener devolver los tokens por postMessage; sin él responde 403
+        // "Origen no especificado" en el paso final del OAuth.
+        const googleAuthUrl = `${authRoutes.google}?origin=${encodeURIComponent(window.location.origin)}`;
+
         const popup = window.open(
-            authRoutes.google,
+            googleAuthUrl,
             'GoogleLogin',
             `width=${width},height=${height},left=${left},top=${top},popup=yes,resizable=yes,scrollbars=yes`
         );
@@ -231,6 +237,11 @@ export default function LoginPage() {
         let authResolved = false;
 
         const handleMessage = async (event: MessageEvent) => {
+            // El postMessage con los tokens lo emite el Gateway de DveloxSoft
+            // (ms.dveloxsoft.com), NO la API de la app: el endpoint /auth/google
+            // del backend redirige el popup a ese gateway, que resuelve el OAuth
+            // de Google y hace window.opener.postMessage. Por eso el origen
+            // esperado es el del gateway y no el de BASIC_ROUTE.
             if (!event.origin.includes('ms.dveloxsoft.com')) return;
 
             if (event.isTrusted) {

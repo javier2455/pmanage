@@ -1,10 +1,11 @@
 import axios from "axios";
 import { clearAuthCookies } from "@/lib/cookies";
 import { withBasePath } from "@/lib/base-path";
+import { BASIC_ROUTE } from "@/lib/routes";
 
 // Create axios instance with interceptors
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://psearch.dveloxsoft.com/apiv1",
+  baseURL: BASIC_ROUTE,
   headers: {
     "Content-Type": "application/json",
   },
@@ -96,7 +97,7 @@ apiClient.interceptors.response.use(
       try {
         // Call the refresh endpoint
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || "https://psearch.dveloxsoft.com/apiv1"}/auth/refresh`,
+          `${BASIC_ROUTE}/auth/refresh`,
           { refresh_token: refreshToken },
           {
             headers: {
