@@ -4,7 +4,7 @@ import { withBasePath } from "@/lib/base-path";
 
 // Create axios instance with interceptors
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://psearch.dveloxsoft.com/apiv1",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://negora.dveloxsoft.com/api/v2",
   headers: {
     "Content-Type": "application/json",
   },
