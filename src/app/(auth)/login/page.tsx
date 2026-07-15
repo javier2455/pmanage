@@ -207,7 +207,7 @@ export default function LoginPage() {
         }
     };
 
-    const handleGoogleLogin = () => {
+    const handleGoogleLogin = async () => {
         setIsGoogleLoading(true);
 
         const width = 500;
@@ -233,65 +233,59 @@ export default function LoginPage() {
             return;
         }
 
-        let checkPopupClosed: ReturnType<typeof setInterval> | null = null;
-        let authResolved = false;
+        return new Promise<void>((resolve, reject) => {
+            let authResolved = false;
 
-        const handleMessage = async (event: MessageEvent) => {
-            // El postMessage con los tokens lo emite el Gateway de DveloxSoft
-            // (ms.dveloxsoft.com), NO la API de la app: el endpoint /auth/google
-            // del backend redirige el popup a ese gateway, que resuelve el OAuth
-            // de Google y hace window.opener.postMessage. Por eso el origen
-            // esperado es el del gateway y no el de BASIC_ROUTE.
-            if (!event.origin.includes('ms.dveloxsoft.com')) return;
-
-            if (event.isTrusted) {
-                const { accessToken, refreshToken } = event.data;
-
-                try {
-                    authResolved = true;
-                    if (checkPopupClosed) clearInterval(checkPopupClosed);
-                    sessionStorage.setItem("token", accessToken);
-                    const user = await getMe();
-
-                    window.removeEventListener('message', handleMessage);
-
-                    if (popup && !popup.closed) {
-                        popup.close();
-                    }
-
-                    await routeAfterGetMe({ accessToken, refreshToken, user });
-
-                } catch {
-                    if (popup && !popup.closed) {
-                        popup.close();
-                    }
-                    window.removeEventListener('message', handleMessage);
-                    setIsGoogleLoading(false);
-                    setError("root", { message: "Error al obtener los datos del usuario" });
-                }
-            } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
-                authResolved = true;
-                if (checkPopupClosed) clearInterval(checkPopupClosed);
+            const cleanup = () => {
+                window.removeEventListener('message', handleMessage);
                 if (popup && !popup.closed) {
                     popup.close();
                 }
-                window.removeEventListener('message', handleMessage);
-                setIsGoogleLoading(false);
-                setError("root", { message: event.data.message || "Error al iniciar sesión con Google" });
-            }
-        };
+            };
 
-        window.addEventListener('message', handleMessage);
+            const handleMessage = (event: MessageEvent) => {
+                if (authResolved) return;
 
-        checkPopupClosed = setInterval(() => {
-            if (popup && popup.closed) {
-                if (checkPopupClosed) clearInterval(checkPopupClosed);
-                window.removeEventListener('message', handleMessage);
-                if (!authResolved) {
+                const origin = window.location.origin;
+                if (!event.origin.includes('ms.dveloxsoft.com') && event.origin !== origin) return;
+
+                if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+                    authResolved = true;
+                    cleanup();
                     setIsGoogleLoading(false);
+                    setError("root", { message: event.data.message || "Error al iniciar sesión con Google" });
+                    reject(new Error(event.data.message || "Error al iniciar sesión con Google"));
+                    return;
                 }
-            }
-        }, 500);
+
+                const { accessToken, refreshToken } = event.data || {};
+                if (!accessToken) return;
+
+                (async () => {
+                    authResolved = true;
+                    cleanup();
+                    try {
+                        sessionStorage.setItem("token", accessToken);
+                        const user = await getMe();
+                        await routeAfterGetMe({ accessToken, refreshToken, user });
+                        resolve();
+                    } catch {
+                        setIsGoogleLoading(false);
+                        setError("root", { message: "Error al obtener los datos del usuario" });
+                        reject(new Error("Error al obtener los datos del usuario"));
+                    }
+                })();
+            };
+
+            window.addEventListener('message', handleMessage);
+
+            popup.addEventListener('unload', () => {
+                if (authResolved) return;
+                cleanup();
+                setIsGoogleLoading(false);
+                reject(new Error("La ventana de autenticación se cerró sin completar el proceso."));
+            });
+        });
     };
 
     const onSubmit = async (data: LoginFormData) => {
@@ -445,7 +439,13 @@ export default function LoginPage() {
                         type="button"
                         variant="outline"
                         className="w-full cursor-pointer"
-                        onClick={handleGoogleLogin}
+                        onClick={async () => {
+                            try {
+                                await handleGoogleLogin();
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        }}
                         disabled={isAnyAuthBusy}
                         aria-busy={isGoogleBusy}
                     >

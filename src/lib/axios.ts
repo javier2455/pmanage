@@ -5,7 +5,7 @@ import { BASIC_ROUTE } from "@/lib/routes";
 
 // Create axios instance with interceptors
 const apiClient = axios.create({
-  baseURL: BASIC_ROUTE,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://negora.dveloxsoft.com/api/v2",
   headers: {
     "Content-Type": "application/json",
   },
@@ -97,7 +97,7 @@ apiClient.interceptors.response.use(
       try {
         // Call the refresh endpoint
         const response = await axios.post(
-          `${BASIC_ROUTE}/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || "https://negora.dveloxsoft.com/apiv1"}/auth/refresh`,
           { refresh_token: refreshToken },
           {
             headers: {
