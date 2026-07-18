@@ -219,7 +219,7 @@ export default function LoginPage() {
         // Gateway DveloxSoft. El gateway lo necesita para saber a qué ventana
         // opener devolver los tokens por postMessage; sin él responde 403
         // "Origen no especificado" en el paso final del OAuth.
-        const googleAuthUrl = `'https://ms.dveloxsoft.com/auth/google?state=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYWdlSWQiOiIxMGFhNGZmOS0zYzVlLTQ3YTAtODY3MS0zY2E0ZTI0ZWFmMzMiLCJjb21wYW55SWQiOiJhZjNiZWZlYi03YmQyLTQ2ZWQtYjgzNy0yZTQyZTA0ZDZkODkiLCJpYXQiOjE3ODI5NDY0NjEsImV4cCI6MTc4Mjk1MDA2MX0.c15vcUMzUUahF20poq5Xo_p7_AcTSlt4RttlrJ7UV_1G0YDBKujjv_UzEst7t_g6tZbS_GX-1KmM1dnpwGMiQ28-XpaLUCefHwMQqO8ZvjjKPqSr-pPsVoGudbqWgGVGZ2BoypvaD7yiCX41Y8XH1wDRq-EjmYRjArW1TXsKHIyCdkXPp0dih5-lF450f9AhODpEWLHvFTeRVxpZtOb67MqjJGTHLjXQxtYR5oLSm7p4XlksaVVBqfXQ20e93Se_bBwLtG6cSxpl99fMdFSrN8aOcc1jKGNHtyPQVWrWz1vDlvmKZ1BSdhJeSHTjgd_Z2FaxdaIxaJfo76CaehaSBg&rolId=4'`;
+        const googleAuthUrl = `https://ms.dveloxsoft.com/auth/google?state=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYWdlSWQiOiIxMGFhNGZmOS0zYzVlLTQ3YTAtODY3MS0zY2E0ZTI0ZWFmMzMiLCJjb21wYW55SWQiOiJhZjNiZWZlYi03YmQyLTQ2ZWQtYjgzNy0yZTQyZTA0ZDZkODkiLCJpYXQiOjE3ODI5NDY0NjEsImV4cCI6MTc4Mjk1MDA2MX0.c15vcUMzUUahF20poq5Xo_p7_AcTSlt4RttlrJ7UV_1G0YDBKujjv_UzEst7t_g6tZbS_GX-1KmM1dnpwGMiQ28-XpaLUCefHwMQqO8ZvjjKPqSr-pPsVoGudbqWgGVGZ2BoypvaD7yiCX41Y8XH1wDRq-EjmYRjArW1TXsKHIyCdkXPp0dih5-lF450f9AhODpEWLHvFTeRVxpZtOb67MqjJGTHLjXQxtYR5oLSm7p4XlksaVVBqfXQ20e93Se_bBwLtG6cSxpl99fMdFSrN8aOcc1jKGNHtyPQVWrWz1vDlvmKZ1BSdhJeSHTjgd_Z2FaxdaIxaJfo76CaehaSBg&rolId=4`;
 
         const popup = window.open(
             googleAuthUrl,
