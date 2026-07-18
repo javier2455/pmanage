@@ -41,8 +41,6 @@ interface SectionFormDialogProps {
   sectionId?: string;
   /** Defaults para el modo edición. */
   defaultValues?: Partial<UpdateSectionFormData>;
-  /** Próximo `order` sugerido (para create). Default 1 si no se pasa. */
-  nextOrder?: number;
 }
 
 export function SectionFormDialog(props: SectionFormDialogProps) {
@@ -55,11 +53,7 @@ export function SectionFormDialog(props: SectionFormDialogProps) {
 
 // ===== Create =====
 
-function CreateSectionDialog({
-  open,
-  onOpenChange,
-  nextOrder = 1,
-}: SectionFormDialogProps) {
+function CreateSectionDialog({ open, onOpenChange }: SectionFormDialogProps) {
   const createMutation = useCreateSectionMutation();
 
   const emptyDefaults: CreateSectionFormData = React.useMemo(
@@ -68,11 +62,10 @@ function CreateSectionDialog({
       icon: "",
       badge: null,
       active: true,
-      order: nextOrder,
       roles: [],
       plans: null,
     }),
-    [nextOrder],
+    [],
   );
 
   const {
@@ -103,7 +96,6 @@ function CreateSectionDialog({
         name: data.name,
         badge: data.badge ?? null,
         active: data.active,
-        order: data.order,
         roles: data.roles,
         plans: data.plans ?? null,
       });
@@ -170,42 +162,22 @@ function CreateSectionDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="section-badge">
-                Badge{" "}
-                <span className="text-xs text-muted-foreground">(opcional)</span>
-              </Label>
-              <Input
-                id="section-badge"
-                placeholder="Ej: Pro"
-                {...register("badge", {
-                  setValueAs: (v) =>
-                    typeof v === "string" && v.trim() === "" ? null : v,
-                })}
-              />
-              {errors.badge && (
-                <p className="text-xs text-destructive">{errors.badge.message}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="section-order">
-                Orden <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="section-order"
-                type="number"
-                min={1}
-                {...register("order", { valueAsNumber: true })}
-                aria-invalid={errors.order ? "true" : "false"}
-              />
-              <p className="text-xs text-muted-foreground">
-                Sugerido: {nextOrder}. Debe ser mayor que 0.
-              </p>
-              {errors.order && (
-                <p className="text-xs text-destructive">{errors.order.message}</p>
-              )}
-            </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="section-badge">
+              Badge{" "}
+              <span className="text-xs text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              id="section-badge"
+              placeholder="Ej: Pro"
+              {...register("badge", {
+                setValueAs: (v) =>
+                  typeof v === "string" && v.trim() === "" ? null : v,
+              })}
+            />
+            {errors.badge && (
+              <p className="text-xs text-destructive">{errors.badge.message}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -226,6 +198,11 @@ function CreateSectionDialog({
               </p>
             )}
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            La posición en el sidebar se ajusta arrastrando las secciones en la
+            lista.
+          </p>
 
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
@@ -284,7 +261,6 @@ function EditSectionDialog({
       icon: defaultValues?.icon ?? "",
       badge: defaultValues?.badge ?? null,
       active: defaultValues?.active ?? true,
-      order: defaultValues?.order ?? 1,
       roles: defaultValues?.roles ?? [],
       plans: defaultValues?.plans ?? null,
     }),
@@ -374,35 +350,18 @@ function EditSectionDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="section-badge-edit">
-                Badge{" "}
-                <span className="text-xs text-muted-foreground">(opcional)</span>
-              </Label>
-              <Input
-                id="section-badge-edit"
-                {...register("badge", {
-                  setValueAs: (v) =>
-                    typeof v === "string" && v.trim() === "" ? null : v,
-                })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="section-order-edit">
-                Orden <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="section-order-edit"
-                type="number"
-                min={1}
-                {...register("order", { valueAsNumber: true })}
-                aria-invalid={errors.order ? "true" : "false"}
-              />
-              {errors.order && (
-                <p className="text-xs text-destructive">{errors.order.message}</p>
-              )}
-            </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="section-badge-edit">
+              Badge{" "}
+              <span className="text-xs text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              id="section-badge-edit"
+              {...register("badge", {
+                setValueAs: (v) =>
+                  typeof v === "string" && v.trim() === "" ? null : v,
+              })}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -423,6 +382,11 @@ function EditSectionDialog({
               </p>
             )}
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            La posición en el sidebar se ajusta arrastrando las secciones en la
+            lista.
+          </p>
 
           <label className="flex items-center gap-2 text-sm">
             <Checkbox

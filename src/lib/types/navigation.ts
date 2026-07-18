@@ -135,14 +135,15 @@ export type GetAllSubmenusResponse = Submenu[];
 
 /**
  * Body que pide POST /api/v2/section.
- * `order` debe ser > 0 (Navegación reserva el 0 en la BD).
+ * `order` es opcional: si no se envía, el backend asigna la última posición.
+ * El orden final se ajusta con drag & drop.
  */
 export interface CreateSectionProps {
   icon: string;
   name: string;
   badge: string | null;
   active: boolean;
-  order: number;
+  order?: number;
   roles: string[];
   plans: string[] | null;
 }
@@ -192,6 +193,25 @@ export interface CreateSubmenuProps {
  * por ahora la UI no expone el cambio de padre.
  */
 export type UpdateSubmenuProps = Partial<CreateSubmenuProps>;
+
+// ===== Reordenamiento (drag & drop) =====
+
+/** Body de PATCH /section/reorder. Lista completa de secciones en el nuevo orden. */
+export interface ReorderSectionsProps {
+  orderedIds: string[];
+}
+
+/** Body de PATCH /menu/reorder. Menús de una sección en el nuevo orden. */
+export interface ReorderMenusProps {
+  sectionId: string;
+  orderedIds: string[];
+}
+
+/** Body de PATCH /submenu/reorder. Submenús de un menú en el nuevo orden. */
+export interface ReorderSubmenusProps {
+  menuId: string;
+  orderedIds: string[];
+}
 
 // ===== Discriminador para el árbol =====
 

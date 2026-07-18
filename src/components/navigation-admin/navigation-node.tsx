@@ -44,8 +44,20 @@ interface NavigationNodeProps {
   depth: 0 | 1 | 2;
   /** Slot opcional para chips/badges (roles, plan, etc.) renderizados al lado del título. */
   badges?: React.ReactNode;
-  /** Valor de `order` que devuelve el backend; se muestra como chip si está definido. */
-  order?: number | null;
+  /** Posición (1..N) dentro de su contenedor. Se muestra como chip. */
+  position?: number;
+  /** Total de hermanos, para el subtítulo "Posición N de M". */
+  siblingCount?: number;
+
+  // ===== Integración con @dnd-kit (opcional) =====
+  /** Ref al nodo sortable (contenedor externo). */
+  containerRef?: (el: HTMLElement | null) => void;
+  /** Estilo de transform/transition del nodo sortable. */
+  containerStyle?: React.CSSProperties;
+  /** True mientras se arrastra este nodo. */
+  isDragging?: boolean;
+  /** Botón "asa" de arrastre ya renderizado por el wrapper sortable. */
+  dragHandle?: React.ReactNode;
 }
 
 export function NavigationNode({
@@ -59,7 +71,12 @@ export function NavigationNode({
   onDelete,
   depth,
   badges,
-  order,
+  position,
+  siblingCount,
+  containerRef,
+  containerStyle,
+  isDragging,
+  dragHandle,
 }: NavigationNodeProps) {
   const config = NAV_NODE_CONFIG[kind];
   const hasChildren = childCount !== null && childCount > 0;
@@ -74,20 +91,28 @@ export function NavigationNode({
         ? `Sin ${config.childLabel}`
         : `${childCount} ${config.childLabel}`;
 
-  const orderLabel =
-    typeof order === "number" ? `Orden ${order}` : "Orden sin definir";
-  const subtitle = `${orderLabel} · ${childSubtitle}`;
+  const positionLabel =
+    typeof position === "number"
+      ? typeof siblingCount === "number"
+        ? `Posición ${position} de ${siblingCount}`
+        : `Posición ${position}`
+      : "Sin posición";
+  const subtitle = `${positionLabel} · ${childSubtitle}`;
 
   const Row = (
     <div
       className={cn(
-        "group flex items-center gap-3 rounded-md border px-3 py-2 transition-all duration-200",
+        "group flex items-center gap-2 rounded-md border px-3 py-2 transition-all duration-200",
         depth === 0 &&
           "border-border/60 bg-card hover:border-border hover:bg-card/80",
         depth > 0 &&
           "border-border/40 bg-transparent hover:border-primary hover:shadow-sm hover:shadow-primary/40",
+        isDragging &&
+          "border-primary bg-card shadow-lg shadow-primary/20 ring-1 ring-primary/40",
       )}
     >
+      {dragHandle}
+
       {hasChildren ? (
         <CollapsibleTrigger asChild>
           <button
@@ -119,13 +144,13 @@ export function NavigationNode({
           <span
             className={cn(
               "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
-              typeof order === "number"
+              typeof position === "number"
                 ? "bg-primary/10 text-primary"
                 : "bg-muted text-muted-foreground",
             )}
-            title="Valor de orden enviado por el backend"
+            title="Posición dentro de su contenedor"
           >
-            {typeof order === "number" ? `#${order}` : "#—"}
+            {typeof position === "number" ? `#${position}` : "#—"}
           </span>
           {badges && <div className="hidden md:block">{badges}</div>}
         </div>
@@ -168,17 +193,13 @@ export function NavigationNode({
     </div>
   );
 
-  if (!canHaveChildren) {
-    return Row;
-  }
-
-  return (
+  const inner = canHaveChildren ? (
     <Collapsible open={open} onOpenChange={setOpen}>
       {Row}
       <CollapsibleContent>
         <div
           className={cn(
-            "mt-1.5 flex flex-col gap-1.5 border-l border-dashed border-border/70 pl-4",
+            "mt-1.5 border-l border-dashed border-border/70 pl-4",
             depth === 0 && "ml-5",
             depth === 1 && "ml-5",
           )}
@@ -187,5 +208,13 @@ export function NavigationNode({
         </div>
       </CollapsibleContent>
     </Collapsible>
+  ) : (
+    Row
+  );
+
+  return (
+    <div ref={containerRef} style={containerStyle} className="relative">
+      {inner}
+    </div>
   );
 }

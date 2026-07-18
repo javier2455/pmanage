@@ -14,6 +14,7 @@ export const navigationRoutes = {
   createSection: `${BASIC_ROUTE}/section`,
   updateSection: (id: string) => `${BASIC_ROUTE}/section/${id}`,
   deleteSection: (id: string) => `${BASIC_ROUTE}/section/${id}`,
+  reorderSections: `${BASIC_ROUTE}/section/reorder`,
 
   // ===== Menu (admin) =====
   getAllAdminMenus: `${BASIC_ROUTE}/menu`,
@@ -21,6 +22,7 @@ export const navigationRoutes = {
   createAdminMenu: `${BASIC_ROUTE}/menu/`,
   updateAdminMenu: (id: string) => `${BASIC_ROUTE}/menu/${id}`,
   deleteAdminMenu: (id: string) => `${BASIC_ROUTE}/menu/${id}`,
+  reorderAdminMenus: `${BASIC_ROUTE}/menu/reorder`,
 
   // ===== Submenu =====
   getAllSubmenus: `${BASIC_ROUTE}/submenu`,
@@ -30,4 +32,5 @@ export const navigationRoutes = {
   createSubmenu: `${BASIC_ROUTE}/submenu`,
   updateSubmenu: (id: string) => `${BASIC_ROUTE}/submenu/${id}`,
   deleteSubmenu: (id: string) => `${BASIC_ROUTE}/submenu/${id}`,
+  reorderSubmenus: `${BASIC_ROUTE}/submenu/reorder`,
 };

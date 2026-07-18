@@ -15,8 +15,14 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBusiness } from "@/context/business-context";
-import { useGetAllSectionsQuery } from "@/hooks/use-navigation";
+import {
+  useGetAllSectionsQuery,
+  useReorderAdminMenusMutation,
+  useReorderSectionsMutation,
+  useReorderSubmenusMutation,
+} from "@/hooks/use-navigation";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
+import { toastError } from "@/lib/toast";
 
 import { DeleteNodeDialog } from "@/components/navigation-admin/delete-node-dialog";
 import { MenuFormDialog } from "@/components/navigation-admin/menu-form-dialog";
@@ -73,6 +79,37 @@ export function MenusClient() {
   const { data, isLoading, isError, error, refetch, isRefetching } =
     useGetAllSectionsQuery({ businessId, enabled: isAdmin });
 
+  const reorderSectionsMutation = useReorderSectionsMutation();
+  const reorderMenusMutation = useReorderAdminMenusMutation();
+  const reorderSubmenusMutation = useReorderSubmenusMutation();
+
+  const reorderErrorToast = () =>
+    toastError({
+      title: "No se pudo reordenar",
+      description: "Se restauró el orden anterior. Intenta nuevamente.",
+    });
+
+  function handleReorderSections(orderedIds: string[]) {
+    reorderSectionsMutation.mutate(
+      { orderedIds },
+      { onError: reorderErrorToast },
+    );
+  }
+
+  function handleReorderMenus(sectionId: string, orderedIds: string[]) {
+    reorderMenusMutation.mutate(
+      { sectionId, orderedIds },
+      { onError: reorderErrorToast },
+    );
+  }
+
+  function handleReorderSubmenus(menuId: string, orderedIds: string[]) {
+    reorderSubmenusMutation.mutate(
+      { menuId, orderedIds },
+      { onError: reorderErrorToast },
+    );
+  }
+
   function handleAction(action: NavigationAction) {
     switch (action.type) {
       case "edit-section":
@@ -119,16 +156,6 @@ export function MenusClient() {
   }
 
   const close = () => setDialog(null);
-
-  const nextOrder = React.useMemo(() => {
-    const list = data ?? [];
-    if (list.length === 0) return 1;
-    const maxOrder = list.reduce(
-      (max, s) => (typeof s.order === "number" && s.order > max ? s.order : max),
-      0,
-    );
-    return maxOrder + 1;
-  }, [data]);
 
   if (!roleName) {
     return (
@@ -192,19 +219,20 @@ export function MenusClient() {
               </Button>
             </Empty>
           ) : (
-            <NavigationTree sections={sections} onAction={handleAction} />
+            <NavigationTree
+              sections={sections}
+              onAction={handleAction}
+              onReorderSections={handleReorderSections}
+              onReorderMenus={handleReorderMenus}
+              onReorderSubmenus={handleReorderSubmenus}
+            />
           )}
         </CardContent>
       </Card>
 
       {/* === Dialogs === */}
       {dialog?.kind === "section-create" && (
-        <SectionFormDialog
-          open
-          mode="create"
-          onOpenChange={close}
-          nextOrder={nextOrder}
-        />
+        <SectionFormDialog open mode="create" onOpenChange={close} />
       )}
       {dialog?.kind === "section-edit" && (
         <SectionFormDialog
@@ -217,7 +245,6 @@ export function MenusClient() {
             icon: dialog.node.icon,
             badge: dialog.node.badge,
             active: dialog.node.active,
-            order: dialog.node.order ?? 1,
             roles: dialog.node.roles,
             plans: dialog.node.plans,
           }}
@@ -261,7 +288,6 @@ export function MenusClient() {
             url: dialog.node.url,
             active: dialog.node.active,
             roles: dialog.node.roles,
-            order: dialog.node.order ?? 1,
           }}
         />
       )}
@@ -299,7 +325,6 @@ export function MenusClient() {
             url: dialog.node.url,
             active: dialog.node.active,
             roles: dialog.node.roles,
-            order: dialog.node.order ?? 1,
           }}
         />
       )}
@@ -334,8 +359,9 @@ function PageHeader({
             Gestionar Menús
           </h1>
           <p className="text-sm text-muted-foreground">
-            Administra las secciones, menús y submenús que componen el sidebar
-            del sistema.
+            Administra las secciones, menús y submenús del sidebar. Arrastra
+            cada elemento por el asa <span aria-hidden>⠿</span> para reordenarlo
+            dentro de su contenedor.
           </p>
         </div>
       </div>

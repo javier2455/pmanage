@@ -10,6 +10,9 @@ import {
   GetAllSectionsResponse,
   GetAllSubmenusResponse,
   GetSectionListResponse,
+  ReorderMenusProps,
+  ReorderSectionsProps,
+  ReorderSubmenusProps,
   Section,
   SectionApiNode,
   Submenu,
@@ -111,6 +114,12 @@ export async function deleteSection(id: string) {
   return data;
 }
 
+export async function reorderSections(
+  credentials: ReorderSectionsProps,
+): Promise<void> {
+  await apiClient.patch(navigationRoutes.reorderSections, credentials);
+}
+
 // ===== Admin Menus =====
 
 export async function getAllAdminMenus(): Promise<GetAllAdminMenusResponse> {
@@ -155,6 +164,12 @@ export async function deleteAdminMenu(id: string) {
     navigationRoutes.deleteAdminMenu(id),
   );
   return data;
+}
+
+export async function reorderAdminMenus(
+  credentials: ReorderMenusProps,
+): Promise<void> {
+  await apiClient.patch(navigationRoutes.reorderAdminMenus, credentials);
 }
 
 // ===== Submenus =====
@@ -204,4 +219,10 @@ export async function updateSubmenu(
 export async function deleteSubmenu(id: string) {
   const { data } = await apiClient.delete(navigationRoutes.deleteSubmenu(id));
   return data;
+}
+
+export async function reorderSubmenus(
+  credentials: ReorderSubmenusProps,
+): Promise<void> {
+  await apiClient.patch(navigationRoutes.reorderSubmenus, credentials);
 }

@@ -31,12 +31,6 @@ export const createAdminMenuSchema = z.object({
     .min(1, "Indica la URL")
     .max(120, "La URL no debe exceder 120 caracteres"),
   active: z.boolean(),
-  /** Solo se usa en PATCH; en create lo asigna el backend. */
-  order: z
-    .number({ message: "El orden debe ser un número" })
-    .int("El orden debe ser entero")
-    .min(1, "El orden debe ser mayor que 0")
-    .optional(),
 });
 
 export const updateAdminMenuSchema = createAdminMenuSchema
@@ -59,12 +53,6 @@ export const createSubmenuSchema = z.object({
     .min(1, "Indica la URL")
     .max(120, "La URL no debe exceder 120 caracteres"),
   active: z.boolean(),
-  /** Solo se usa en PATCH; en create lo asigna el backend. */
-  order: z
-    .number({ message: "El orden debe ser un número" })
-    .int("El orden debe ser entero")
-    .min(1, "El orden debe ser mayor que 0")
-    .optional(),
 });
 
 /**
@@ -75,8 +63,8 @@ export const updateSubmenuSchema = createSubmenuSchema.partial();
 /**
  * Body de POST /api/v2/section.
  *
- * - `order` debe ser entero > 0 (Navegación reserva el 0 en la BD).
- *   El formulario lo precarga con `max(existingOrders) + 1`.
+ * - El `order` lo asigna el backend al crear; la posición se ajusta después
+ *   con drag & drop, así que ya no se pide en el formulario.
  * - `badge` y `plans` son opcionales (se envían como `null`/`[]` si vacíos).
  */
 export const createSectionSchema = z.object({
@@ -87,10 +75,6 @@ export const createSectionSchema = z.object({
     .nullable()
     .optional(),
   active: z.boolean(),
-  order: z
-    .number({ message: "El orden debe ser un número" })
-    .int("El orden debe ser entero")
-    .min(1, "El orden debe ser mayor que 0"),
   plans: z.array(z.string()).nullable().optional(),
 });
 

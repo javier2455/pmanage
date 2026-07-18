@@ -18,6 +18,9 @@ import {
   getSectionList,
   getSubmenuById,
   getSubmenusByMenu,
+  reorderAdminMenus,
+  reorderSections,
+  reorderSubmenus,
   updateAdminMenu,
   updateSection,
   updateSubmenu,
@@ -26,6 +29,10 @@ import {
   CreateAdminMenuProps,
   CreateSectionProps,
   CreateSubmenuProps,
+  ReorderMenusProps,
+  ReorderSectionsProps,
+  ReorderSubmenusProps,
+  SectionApiNode,
   UpdateAdminMenuProps,
   UpdateSectionProps,
   UpdateSubmenuProps,
@@ -34,6 +41,31 @@ import {
 const NAV_BASE_KEY = "navigation" as const;
 const SECTIONS_KEY = [NAV_BASE_KEY, "sections"] as const;
 const SECTION_LIST_KEY = [NAV_BASE_KEY, "section-list"] as const;
+
+/**
+ * Reordena `items` para que aparezcan en el orden de `orderedIds`. Los ítems
+ * que no estén en `orderedIds` (caso defensivo) se conservan al final en su
+ * orden original. No muta la lista de entrada.
+ */
+function applyOrder<T>(
+  items: T[],
+  orderedIds: string[],
+  getId: (item: T) => string,
+): T[] {
+  const byId = new Map(items.map((item) => [getId(item), item]));
+  const ordered: T[] = [];
+  for (const id of orderedIds) {
+    const item = byId.get(id);
+    if (item) {
+      ordered.push(item);
+      byId.delete(id);
+    }
+  }
+  for (const item of items) {
+    if (byId.has(getId(item))) ordered.push(item);
+  }
+  return ordered;
+}
 
 /**
  * Tras cualquier mutación administrativa invalidamos el árbol completo
@@ -116,6 +148,43 @@ export function useDeleteSectionMutation() {
   });
 }
 
+/**
+ * Reordena las secciones. Aplica una actualización optimista sobre todos los
+ * árboles cacheados (`["navigation","sections", *]`) para que el arrastre se
+ * sienta instantáneo, y revierte si el backend falla.
+ */
+export function useReorderSectionsMutation() {
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidateNavigation();
+  return useMutation({
+    mutationFn: (credentials: ReorderSectionsProps) =>
+      reorderSections(credentials),
+    onMutate: async ({ orderedIds }) => {
+      await queryClient.cancelQueries({ queryKey: SECTIONS_KEY });
+      const previous = queryClient.getQueriesData<SectionApiNode[]>({
+        queryKey: SECTIONS_KEY,
+      });
+      queryClient.setQueriesData<SectionApiNode[]>(
+        { queryKey: SECTIONS_KEY },
+        (old) =>
+          old
+            ? applyOrder(old, orderedIds, (s) => s.id).map((s, i) => ({
+                ...s,
+                order: i + 1,
+              }))
+            : old,
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      context?.previous?.forEach(([key, data]) =>
+        queryClient.setQueryData(key, data),
+      );
+    },
+    onSettled: invalidate,
+  });
+}
+
 // ===== ADMIN MENUS =====
 
 export function useGetAllAdminMenusQuery(enabled = true) {
@@ -162,6 +231,50 @@ export function useDeleteAdminMenuMutation() {
   return useMutation({
     mutationFn: (id: string) => deleteAdminMenu(id),
     onSuccess: invalidate,
+  });
+}
+
+/**
+ * Reordena los menús dentro de una sección con actualización optimista sobre
+ * el árbol cacheado.
+ */
+export function useReorderAdminMenusMutation() {
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidateNavigation();
+  return useMutation({
+    mutationFn: (credentials: ReorderMenusProps) =>
+      reorderAdminMenus(credentials),
+    onMutate: async ({ sectionId, orderedIds }) => {
+      await queryClient.cancelQueries({ queryKey: SECTIONS_KEY });
+      const previous = queryClient.getQueriesData<SectionApiNode[]>({
+        queryKey: SECTIONS_KEY,
+      });
+      queryClient.setQueriesData<SectionApiNode[]>(
+        { queryKey: SECTIONS_KEY },
+        (old) =>
+          old
+            ? old.map((section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      menus: applyOrder(
+                        section.menus ?? [],
+                        orderedIds,
+                        (m) => m.id,
+                      ).map((m, i) => ({ ...m, order: i + 1 })),
+                    }
+                  : section,
+              )
+            : old,
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      context?.previous?.forEach(([key, data]) =>
+        queryClient.setQueryData(key, data),
+      );
+    },
+    onSettled: invalidate,
   });
 }
 
@@ -218,5 +331,52 @@ export function useDeleteSubmenuMutation() {
   return useMutation({
     mutationFn: (id: string) => deleteSubmenu(id),
     onSuccess: invalidate,
+  });
+}
+
+/**
+ * Reordena los submenús dentro de un menú con actualización optimista sobre
+ * el árbol cacheado.
+ */
+export function useReorderSubmenusMutation() {
+  const queryClient = useQueryClient();
+  const invalidate = useInvalidateNavigation();
+  return useMutation({
+    mutationFn: (credentials: ReorderSubmenusProps) =>
+      reorderSubmenus(credentials),
+    onMutate: async ({ menuId, orderedIds }) => {
+      await queryClient.cancelQueries({ queryKey: SECTIONS_KEY });
+      const previous = queryClient.getQueriesData<SectionApiNode[]>({
+        queryKey: SECTIONS_KEY,
+      });
+      queryClient.setQueriesData<SectionApiNode[]>(
+        { queryKey: SECTIONS_KEY },
+        (old) =>
+          old
+            ? old.map((section) => ({
+                ...section,
+                menus: (section.menus ?? []).map((menu) =>
+                  menu.id === menuId
+                    ? {
+                        ...menu,
+                        submenus: applyOrder(
+                          menu.submenus ?? [],
+                          orderedIds,
+                          (s) => s.id,
+                        ).map((s, i) => ({ ...s, order: i + 1 })),
+                      }
+                    : menu,
+                ),
+              }))
+            : old,
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      context?.previous?.forEach(([key, data]) =>
+        queryClient.setQueryData(key, data),
+      );
+    },
+    onSettled: invalidate,
   });
 }

@@ -105,7 +105,6 @@ export function SubmenuFormDialog({
             url: data.url,
             active: data.active,
             roles: data.roles,
-            order: data.order,
           },
         });
         toastSuccess({
@@ -121,8 +120,7 @@ export function SubmenuFormDialog({
           url: data.url,
           active: data.active,
           roles: data.roles,
-          // Si se deja vacío va `undefined` y el backend asigna el orden.
-          order: data.order,
+          // El backend asigna la última posición dentro del menú.
         });
         toastSuccess({
           title: "Submenú creado",
@@ -229,38 +227,6 @@ export function SubmenuFormDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="submenu-order">
-              Orden{" "}
-              {isEdit ? (
-                <span className="text-destructive">*</span>
-              ) : (
-                <span className="text-xs text-muted-foreground">(opcional)</span>
-              )}
-            </Label>
-            <Input
-              id="submenu-order"
-              type="number"
-              min={1}
-              placeholder={isEdit ? undefined : "Lo asigna el backend si lo dejas vacío"}
-              {...register("order", {
-                setValueAs: (v) =>
-                  v === "" || v === null || v === undefined
-                    ? undefined
-                    : Number(v),
-              })}
-              aria-invalid={errors.order ? "true" : "false"}
-            />
-            <p className="text-xs text-muted-foreground">
-              {isEdit
-                ? "Define la posición del submenú dentro del menú."
-                : "Posición del submenú dentro del menú. Si lo dejas vacío, el backend asigna el siguiente."}
-            </p>
-            {errors.order && (
-              <p className="text-xs text-destructive">{errors.order.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
             <Label>
               Roles con acceso{" "}
               <span className="text-xs text-muted-foreground">(opcional)</span>
@@ -278,6 +244,11 @@ export function SubmenuFormDialog({
               </p>
             )}
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            La posición del submenú dentro del menú se ajusta arrastrándolo en
+            la lista.
+          </p>
 
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
