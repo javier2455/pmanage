@@ -19,6 +19,7 @@ import {
   getSubmenuById,
   getSubmenusByMenu,
   reorderAdminMenus,
+  reorderNavigationTree,
   reorderSections,
   reorderSubmenus,
   updateAdminMenu,
@@ -32,6 +33,7 @@ import {
   ReorderMenusProps,
   ReorderSectionsProps,
   ReorderSubmenusProps,
+  ReorderTreeProps,
   SectionApiNode,
   UpdateAdminMenuProps,
   UpdateSectionProps,
@@ -47,7 +49,7 @@ const SECTION_LIST_KEY = [NAV_BASE_KEY, "section-list"] as const;
  * que no estén en `orderedIds` (caso defensivo) se conservan al final en su
  * orden original. No muta la lista de entrada.
  */
-function applyOrder<T>(
+export function applyOrder<T>(
   items: T[],
   orderedIds: string[],
   getId: (item: T) => string,
@@ -182,6 +184,20 @@ export function useReorderSectionsMutation() {
       );
     },
     onSettled: invalidate,
+  });
+}
+
+/**
+ * Persiste TODO el árbol reordenado en una sola llamada atómica. Se usa en el
+ * flujo por lotes: el usuario acumula movimientos en un borrador local y al
+ * pulsar "Guardar cambios" se envía el árbol completo. En éxito invalida para
+ * resincronizar con el servidor; en error, la página conserva el borrador.
+ */
+export function useReorderNavigationTreeMutation() {
+  const invalidate = useInvalidateNavigation();
+  return useMutation({
+    mutationFn: (payload: ReorderTreeProps) => reorderNavigationTree(payload),
+    onSuccess: invalidate,
   });
 }
 

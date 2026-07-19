@@ -213,6 +213,28 @@ export interface ReorderSubmenusProps {
   orderedIds: string[];
 }
 
+/** Menú dentro del árbol atómico de reordenamiento: su id y el orden de sus submenús. */
+export interface ReorderTreeMenuInput {
+  id: string;
+  submenuIds: string[];
+}
+
+/** Sección dentro del árbol atómico: su id y el orden de sus menús. */
+export interface ReorderTreeSectionInput {
+  id: string;
+  menus: ReorderTreeMenuInput[];
+}
+
+/**
+ * Body de PATCH /section/reorder-tree. Árbol COMPLETO en el orden deseado.
+ * Se persiste todo en una sola transacción (Guardar cambios) o nada. Permite
+ * acumular varios movimientos y confirmarlos juntos en vez de guardar en cada
+ * arrastre.
+ */
+export interface ReorderTreeProps {
+  sections: ReorderTreeSectionInput[];
+}
+
 // ===== Discriminador para el árbol =====
 
 export type NavigationNodeKind = "section" | "menu" | "submenu";

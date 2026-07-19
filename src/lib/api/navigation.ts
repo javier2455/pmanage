@@ -13,6 +13,7 @@ import {
   ReorderMenusProps,
   ReorderSectionsProps,
   ReorderSubmenusProps,
+  ReorderTreeProps,
   Section,
   SectionApiNode,
   Submenu,
@@ -118,6 +119,16 @@ export async function reorderSections(
   credentials: ReorderSectionsProps,
 ): Promise<void> {
   await apiClient.patch(navigationRoutes.reorderSections, credentials);
+}
+
+/**
+ * Persiste TODO el árbol reordenado (secciones + menús + submenús) en una
+ * sola llamada atómica. Es el "Guardar cambios" del flujo por lotes.
+ */
+export async function reorderNavigationTree(
+  payload: ReorderTreeProps,
+): Promise<void> {
+  await apiClient.patch(navigationRoutes.reorderTree, payload);
 }
 
 // ===== Admin Menus =====

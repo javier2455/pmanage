@@ -15,6 +15,8 @@ export const navigationRoutes = {
   updateSection: (id: string) => `${BASIC_ROUTE}/section/${id}`,
   deleteSection: (id: string) => `${BASIC_ROUTE}/section/${id}`,
   reorderSections: `${BASIC_ROUTE}/section/reorder`,
+  /** Reordena TODO el árbol (secciones + menús + submenús) en una transacción. */
+  reorderTree: `${BASIC_ROUTE}/section/reorder-tree`,
 
   // ===== Menu (admin) =====
   getAllAdminMenus: `${BASIC_ROUTE}/menu`,
