@@ -17,6 +17,7 @@ import { Check, ChevronsUpDown, Store, Plus, Truck, Lock } from "lucide-react"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Badge } from "@/components/ui/badge"
+import { PRO_STYLE } from "@/components/assign-plans/utils"
 
 export function BusinessSwitcher() {
   const router = useRouter()
@@ -99,12 +100,12 @@ export function BusinessSwitcher() {
                     <Lock className="size-3" />
                   </div>
                   <span className="flex-1 truncate text-sm">{business.name}</span>
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 px-1.5 py-0 text-[10px] font-medium"
-                  >
+                  {/* Estilo Pro unificado (PRO_STYLE, mismo que ProBadge del
+                      sidebar), conservando el texto informativo. */}
+                  <span className={cn(PRO_STYLE.className, "shrink-0 whitespace-nowrap")}>
+                    <PRO_STYLE.icon className="size-2.5 shrink-0" />
                     Recupéralo con Pro
-                  </Badge>
+                  </span>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
