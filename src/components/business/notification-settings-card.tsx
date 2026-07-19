@@ -188,7 +188,14 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   // Sincroniza la matriz con la config que llega del backend. Se hace en render
   // (rastreando la referencia previa de `settings`) en vez de en un efecto, para
   // evitar renders en cascada.
-  const [lastSyncedSettings, setLastSyncedSettings] = useState(settings);
+  //
+  // Debe iniciar en `undefined` (no en `settings`): al remontar con el caché de
+  // React Query ya caliente, `settings` llega definido en el primer render. Si
+  // inicializáramos con ese mismo valor, la comparación daría igual y la matriz
+  // nunca se poblaría — quedando en `EMPTY_MATRIX` como si no se hubiera guardado.
+  const [lastSyncedSettings, setLastSyncedSettings] = useState<
+    BusinessSettings | undefined
+  >(undefined);
   if (settings && settings !== lastSyncedSettings) {
     setLastSyncedSettings(settings);
     setMatrix(settingsToMatrix(settings));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Tabs,
   TabsContent,
@@ -32,8 +32,6 @@ function isTabValue(value: string | null): value is TabValue {
  */
 export function BusinessDetailsTabs() {
   const { activeBusiness } = useBusiness();
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get("tab");
@@ -43,9 +41,13 @@ export function BusinessDetailsTabs() {
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("tab", value);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      // Con `trailingSlash: true` + `output: export`, un `router.replace` hacia
+      // una ruta sin barra final dispara un redirect 308 que provoca una
+      // navegación dura y recarga toda la vista (efecto "F5"). La History API
+      // nativa actualiza `?tab=` y se sincroniza con useSearchParams sin navegar.
+      window.history.replaceState(null, "", `?${params.toString()}`);
     },
-    [router, pathname, searchParams],
+    [searchParams],
   );
 
   return (

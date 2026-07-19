@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Info, Loader2, Save } from "lucide-react";
+import { Clock, Eraser, Info, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sileo } from "sileo";
 import {
@@ -50,6 +50,20 @@ const DAYS: { dayOfWeek: number; label: string }[] = [
   { dayOfWeek: 0, label: "Domingo" },
 ];
 
+/**
+ * Recorta una hora del backend a "HH:mm". Las columnas son MySQL `TIME`, que el
+ * driver devuelve como "HH:mm:ss" (con segundos), mientras que el `<input
+ * type="time">` y la validación trabajan en "HH:mm". Sin este recorte, un valor
+ * como "08:00:00" se muestra bien en el input pero falla la validación
+ * (`"Indica la hora de apertura (HH:mm)"`) tras recargar el horario guardado.
+ * Idempotente: "08:00" → "08:00".
+ */
+function toHHmm(time: string | null | undefined): string {
+  if (!time) return "";
+  const match = /^(\d{2}):(\d{2})/.exec(time);
+  return match ? `${match[1]}:${match[2]}` : "";
+}
+
 /** Construye las filas del formulario a partir de la respuesta del backend. */
 function buildFormDays(
   schedule: BusinessSchedule[] | undefined,
@@ -63,8 +77,8 @@ function buildFormDays(
     return {
       dayOfWeek,
       isClosed: record.isClosed,
-      openTime: record.openTime ?? "",
-      closeTime: record.closeTime ?? "",
+      openTime: toHHmm(record.openTime),
+      closeTime: toHHmm(record.closeTime),
     };
   });
 }
@@ -97,7 +111,6 @@ export function BusinessScheduleCard({
 
   const {
     control,
-    register,
     handleSubmit,
     reset,
     watch,
@@ -124,6 +137,13 @@ export function BusinessScheduleCard({
           sileo.error({ title: "No se pudo guardar el horario" }),
       },
     );
+  }
+
+  // Deja los 7 días como cerrados y sin horas (mismo estado que un negocio sin
+  // horario). Solo limpia el formulario: los cambios no se persisten hasta
+  // "Guardar horario", así que si fue un clic accidental basta con recargar.
+  function handleClear() {
+    reset({ days: buildFormDays(undefined) });
   }
 
   return (
@@ -200,21 +220,41 @@ export function BusinessScheduleCard({
                       <span className="text-sm text-muted-foreground">Cerrado</span>
                     ) : (
                       <div className="flex flex-col gap-1.5">
+                        {/* Inputs CONTROLADOS (Controller), no `register`. Estos
+                            campos se montan/desmontan según `isClosed`, y
+                            useFieldArray rastrea los valores por el ciclo de
+                            montaje de inputs no controlados: con `register` los
+                            valores se pierden internamente al alternar días
+                            (el DOM los conserva pero RHF los lee vacíos → error
+                            de validación en todas las cards). Con Controller el
+                            valor vive en el estado de RHF y no puede divergir. */}
                         <div className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            className="min-w-0 flex-1"
-                            aria-label={`Hora de apertura ${DAYS[index].label}`}
-                            aria-invalid={dayErrors?.openTime ? "true" : "false"}
-                            {...register(`days.${index}.openTime`)}
+                          <Controller
+                            control={control}
+                            name={`days.${index}.openTime`}
+                            render={({ field: ctl }) => (
+                              <Input
+                                type="time"
+                                className="min-w-0 flex-1"
+                                aria-label={`Hora de apertura ${DAYS[index].label}`}
+                                aria-invalid={dayErrors?.openTime ? "true" : "false"}
+                                {...ctl}
+                              />
+                            )}
                           />
                           <span className="text-sm text-muted-foreground">–</span>
-                          <Input
-                            type="time"
-                            className="min-w-0 flex-1"
-                            aria-label={`Hora de cierre ${DAYS[index].label}`}
-                            aria-invalid={dayErrors?.closeTime ? "true" : "false"}
-                            {...register(`days.${index}.closeTime`)}
+                          <Controller
+                            control={control}
+                            name={`days.${index}.closeTime`}
+                            render={({ field: ctl }) => (
+                              <Input
+                                type="time"
+                                className="min-w-0 flex-1"
+                                aria-label={`Hora de cierre ${DAYS[index].label}`}
+                                aria-invalid={dayErrors?.closeTime ? "true" : "false"}
+                                {...ctl}
+                              />
+                            )}
                           />
                         </div>
                         {errorMessage && (
@@ -227,7 +267,16 @@ export function BusinessScheduleCard({
               })}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClear}
+                disabled={isPending}
+              >
+                <Eraser className="h-4 w-4" />
+                Limpiar
+              </Button>
               <Button type="submit" disabled={isPending || !businessId}>
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
