@@ -1,5 +1,5 @@
 import { defineSuite, expect } from "@/testing/harness";
-import { consolidateBalances } from "@/lib/cash-flow";
+import { consolidateBalances, mergeAccountsByCurrency } from "@/lib/cash-flow";
 import type { CurrencyAccount } from "@/lib/types/currency-account";
 
 // Tasas: cuántos CUP vale 1 unidad. CUP es base (=1) implícito.
@@ -104,6 +104,60 @@ export const cashFlowSuite = defineSuite(
         expect(result.totalBase).toBe(4000);
       },
       "Algunos endpoints monetarios devuelven el saldo como string ('10'). La función lo coerciona con Number() antes de calcular: '10' USD × 400 = 4000.",
+    );
+
+    test(
+      "transferencia truncada/minúsculas se normaliza y sí convierte",
+      () => {
+        const ratesConTransf = { ...rates, CUP_TRANSFERENCIA: 700 };
+        const result = consolidateBalances(
+          [account("cup_transf", 100)],
+          ratesConTransf,
+        );
+        // 100 × 700 = 70000 CUP. No debe quedar como "sin tasa".
+        expect(result.totalBase).toBe(70000);
+        expect(result.hasUnconvertible).toBe(false);
+        const row = result.rows[0];
+        expect(row.currency).toBe("CUP_TRANSFERENCIA");
+        expect(row.convertible).toBe(true);
+        expect(row.rate).toBe(700);
+        expect(row.baseEquivalent).toBe(70000);
+      },
+      "La cuenta de transferencia puede llegar con la moneda truncada/en minúsculas ('cup_transf') mientras la tasa se indexa por la clave canónica 'CUP_TRANSFERENCIA'. La consolidación normaliza el código antes de buscar la tasa, así que la moneda SÍ convierte (100 × 700 = 70000) y no se marca como 'sin tasa'. Regresión del bug del consolidado.",
+    );
+
+    test(
+      "funde cuentas duplicadas de la misma moneda en una sola fila",
+      () => {
+        const ratesConTransf = { ...rates, CUP_TRANSFERENCIA: 700 };
+        const result = consolidateBalances(
+          [account("cup_transf", 100), account("CUP_TRANSFERENCIA", 50)],
+          ratesConTransf,
+        );
+        // Una sola fila canónica con el saldo sumado: (100 + 50) × 700.
+        expect(result.rows.length).toBe(1);
+        expect(result.rows[0].currency).toBe("CUP_TRANSFERENCIA");
+        expect(result.rows[0].balance).toBe(150);
+        expect(result.totalBase).toBe(105000);
+      },
+      "El backend puede tener dos cuentas para la misma moneda con el código en variantes distintas ('cup_transf' truncada y 'CUP_TRANSFERENCIA' completa). La consolidación las funde en una sola fila canónica con el saldo sumado (150 × 700 = 105000), evitando la fila duplicada y la colisión de key de React.",
+    );
+
+    test(
+      "mergeAccountsByCurrency suma saldo y presupuesto de duplicados",
+      () => {
+        const merged = mergeAccountsByCurrency([
+          account("cup_transf", 100),
+          account("cup_transferencia", 50),
+          account("USD", 10),
+        ]);
+        expect(merged.length).toBe(2);
+        const transfer = merged.find((a) => a.currency === "CUP_TRANSFERENCIA");
+        expect(Number(transfer?.currentBalance)).toBe(150);
+        const usd = merged.find((a) => a.currency === "USD");
+        expect(Number(usd?.currentBalance)).toBe(10);
+      },
+      "mergeAccountsByCurrency agrupa por moneda canónica: 'cup_transf' y 'cup_transferencia' se funden en una CUP_TRANSFERENCIA con los saldos sumados (150); las demás monedas (USD) quedan intactas.",
     );
   },
   { description: "Convierte saldos por moneda a un total único en CUP." },

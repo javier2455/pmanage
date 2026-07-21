@@ -34,6 +34,27 @@ interface ExchangeRateFormProps {
 
 const LABEL_BY_CODE = new Map(EXCHANGE_CURRENCIES.map((c) => [c.code, c.label]))
 
+/**
+ * CUP Transferencia es el mismo CUP pero pagado por transferencia bancaria, que cuesta
+ * un % extra frente al efectivo (poca disponibilidad de efectivo). Se captura como
+ * RECARGO % en la UI, pero el backend guarda —igual que el resto de monedas— un factor
+ * "cuántos CUP (efectivo) vale 1 unidad": factor = 1 / (1 + recargo). Estas dos
+ * funciones traducen entre ambas formas SOLO en la frontera del formulario, para no
+ * tocar la lógica de conversión (pagos, ventas, consolidado) que ya usa el factor.
+ */
+const TRANSFER_CODE: ExchangeCurrencyCode = "CUP_TRANSFERENCIA"
+
+/** Factor guardado (CUP por 1 transferencia) → recargo % que ve el usuario (1 decimal). */
+function factorToRecargo(factor: number): number {
+    if (!(factor > 0)) return 0
+    return Math.round((1 / factor - 1) * 1000) / 10
+}
+
+/** Recargo % → factor que guarda el backend, redondeado a los 4 decimales de la columna. */
+function recargoToFactor(recargoPct: number): number {
+    return Math.round((1 / (1 + recargoPct / 100)) * 10000) / 10000
+}
+
 /** Códigos con tasa > 0 en los datos actuales. */
 function activeCodesFromData(data: ExchangeRateTypeOne | null): ExchangeCurrencyCode[] {
     if (!data) return []
@@ -46,7 +67,10 @@ function formValuesFromData(data: ExchangeRateTypeOne | null): ExchangeRateFormD
     if (!data) return values
     for (const code of KNOWN_CURRENCY_CODES) {
         const value = Number(data[code])
-        if (value > 0) values[code] = value
+        if (value > 0) {
+            // El campo de transferencia muestra el recargo %, no el factor crudo.
+            values[code] = code === TRANSFER_CODE ? factorToRecargo(value) : value
+        }
     }
     return values
 }
@@ -96,12 +120,23 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
         for (const code of KNOWN_CURRENCY_CODES) {
             if (activeCodes.includes(code)) {
                 const value = formData[code]
-                if (value == null || !(value > 0)) {
-                    setError(code, { message: "Ingresa un valor mayor a 0" })
-                    hasError = true
-                    continue
+                if (code === TRANSFER_CODE) {
+                    // El valor tecleado es el recargo %; se admite 0 (sin recargo) y se
+                    // guarda convertido al factor que espera el backend.
+                    if (value == null || value < 0) {
+                        setError(code, { message: "Ingresa un recargo válido (0 o mayor)" })
+                        hasError = true
+                        continue
+                    }
+                    payload[code] = recargoToFactor(value)
+                } else {
+                    if (value == null || !(value > 0)) {
+                        setError(code, { message: "Ingresa un valor mayor a 0" })
+                        hasError = true
+                        continue
+                    }
+                    payload[code] = value
                 }
-                payload[code] = value
             } else {
                 payload[code] = 0
             }
@@ -159,12 +194,14 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                             {activeCodes.map((code) => {
                                 const currentValue = currentData ? Number(currentData[code]) : 0
+                                const isTransfer = code === TRANSFER_CODE
+                                const label = LABEL_BY_CODE.get(code) ?? code
 
                                 return (
                                     <div key={code} className="flex flex-col gap-2">
                                         <div className="flex items-center justify-between">
                                             <Label htmlFor={code} className="text-card-foreground">
-                                                {LABEL_BY_CODE.get(code) ?? code} a CUP
+                                                {isTransfer ? "Recargo por transferencia" : `${label} a CUP`}
                                             </Label>
                                             <Button
                                                 type="button"
@@ -172,7 +209,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                                                 size="icon"
                                                 className="size-6 text-muted-foreground hover:text-destructive"
                                                 onClick={() => removeCurrency(code)}
-                                                aria-label={`Quitar ${LABEL_BY_CODE.get(code) ?? code}`}
+                                                aria-label={`Quitar ${label}`}
                                             >
                                                 <X className="size-4" />
                                             </Button>
@@ -184,17 +221,29 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                                             <InputGroupInput
                                                 id={code}
                                                 type="number"
-                                                step="0.01"
+                                                step={isTransfer ? "0.1" : "0.01"}
                                                 min="0"
-                                                placeholder="0.00"
+                                                placeholder={isTransfer ? "12" : "0.00"}
                                                 aria-invalid={errors[code] ? "true" : "false"}
                                                 {...register(code, { valueAsNumber: true })}
                                             />
+                                            {isTransfer && (
+                                                <InputGroupAddon align="inline-end">%</InputGroupAddon>
+                                            )}
                                         </InputGroup>
-                                        {currentValue > 0 && (
+                                        {isTransfer ? (
                                             <p className="text-xs text-muted-foreground">
-                                                Valor actual: {currentValue} CUP
+                                                % extra que cuesta pagar por transferencia frente al efectivo. Ej.: 12
+                                                = pagas 1.12 en transferencia por cada 1 CUP en efectivo.
+                                                {currentValue > 0 &&
+                                                    ` Recargo actual: ${factorToRecargo(currentValue)}%.`}
                                             </p>
+                                        ) : (
+                                            currentValue > 0 && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Valor actual: {currentValue} CUP
+                                                </p>
+                                            )
                                         )}
                                         {errors[code] && (
                                             <p className="text-xs text-destructive">{errors[code]?.message}</p>

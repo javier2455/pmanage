@@ -7,6 +7,7 @@ import { useCurrencyBalances } from "@/hooks/use-currency-account";
 import { useExchangeRate } from "@/hooks/use-exchange";
 import { useTransactionsByBusiness } from "@/hooks/use-financial-transactions";
 import { getAvailableCurrencies } from "@/lib/currency";
+import { mergeAccountsByCurrency } from "@/lib/cash-flow";
 import { BalancesTable } from "@/components/currency-account/balances-table";
 import { ConsolidatedBalanceCard } from "@/components/currency-account/consolidated-balance-card";
 import { InitializeBudgetsDialog } from "@/components/currency-account/initialize-budgets-dialog";
@@ -61,7 +62,12 @@ export default function CurrencyAccountsPage() {
     setTxPage(1);
   }
 
-  const initializedCurrencies = (accounts ?? []).map((a) => a.currency);
+  // Fundimos cuentas duplicadas por moneda canónica (p. ej. `cup_transf` +
+  // `cup_transferencia` → una sola CUP Transferencia). Evita filas repetidas y la
+  // colisión de `key` en el consolidado. La causa raíz (código de moneda sin
+  // unificar al escribir) se corrige en el backend.
+  const mergedAccounts = mergeAccountsByCurrency(accounts ?? []);
+  const initializedCurrencies = mergedAccounts.map((a) => a.currency);
 
   if (isError) return <div>Error al cargar los saldos por moneda</div>;
 
@@ -100,11 +106,11 @@ export default function CurrencyAccountsPage() {
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
           </TabsList>
           <TabsContent value="balances">
-            <BalancesTable accounts={accounts ?? []} />
+            <BalancesTable accounts={mergedAccounts} />
           </TabsContent>
           <TabsContent value="consolidated">
             <ConsolidatedBalanceCard
-              accounts={accounts ?? []}
+              accounts={mergedAccounts}
               exchangeRate={exchangeRateData?.data}
             />
           </TabsContent>

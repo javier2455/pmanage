@@ -10,6 +10,7 @@
 import {
   BASE_CURRENCY,
   ExchangeRateLike,
+  fromBackendCurrency,
   getCurrencyRate,
 } from "@/lib/currency";
 import type { CurrencyAccount } from "@/lib/types/currency-account";
@@ -35,9 +36,47 @@ export interface ConsolidatedBalances {
 }
 
 /**
+ * Agrupa las cuentas por su moneda CANÓNICA, sumando los saldos.
+ *
+ * El backend puede tener más de una cuenta para la MISMA moneda cuando el código
+ * de moneda quedó guardado en variantes distintas (p. ej. la transferencia como
+ * `cup_transf` truncada y `cup_transferencia` completa): son la misma moneda pero
+ * en filas separadas. Sin agrupar, la UI muestra la moneda duplicada y, al usar la
+ * moneda como clave de React, dos filas colisionan en la misma `key`. Aquí las
+ * fundimos en una sola entrada canónica con el saldo sumado. Es defensivo: la causa
+ * de fondo (que no se unifique el código al escribir) se arregla en el backend.
+ */
+export function mergeAccountsByCurrency(
+  accounts: CurrencyAccount[],
+): CurrencyAccount[] {
+  const byCurrency = new Map<string, CurrencyAccount>();
+
+  for (const account of accounts) {
+    const currency = fromBackendCurrency(account.currency);
+    const existing = byCurrency.get(currency);
+    if (existing) {
+      existing.currentBalance =
+        Number(existing.currentBalance) + (Number(account.currentBalance) || 0);
+      existing.initialBudget =
+        Number(existing.initialBudget) + (Number(account.initialBudget) || 0);
+    } else {
+      byCurrency.set(currency, {
+        ...account,
+        currency,
+        currentBalance: Number(account.currentBalance) || 0,
+        initialBudget: Number(account.initialBudget) || 0,
+      });
+    }
+  }
+
+  return Array.from(byCurrency.values());
+}
+
+/**
  * Consolida los saldos por moneda a un total en moneda base (CUP).
- * Las monedas sin tasa configurada quedan marcadas como no convertibles y se
- * excluyen del total para no reportar cifras incorrectas.
+ * Primero funde las cuentas duplicadas por moneda canónica (ver
+ * `mergeAccountsByCurrency`). Las monedas sin tasa configurada quedan marcadas como
+ * no convertibles y se excluyen del total para no reportar cifras incorrectas.
  */
 export function consolidateBalances(
   accounts: CurrencyAccount[],
@@ -46,21 +85,26 @@ export function consolidateBalances(
   let totalBase = 0;
   let hasUnconvertible = false;
 
-  const rows: ConsolidatedRow[] = accounts.map((account) => {
-    const balance = Number(account.currentBalance) || 0;
-    const rate = getCurrencyRate(exchangeRate, account.currency);
-    const convertible = rate != null;
-    const baseEquivalent = convertible ? balance * rate : null;
+  const rows: ConsolidatedRow[] = mergeAccountsByCurrency(accounts).map(
+    (account) => {
+      const balance = Number(account.currentBalance) || 0;
+      // La moneda ya viene canónica del merge; las tasas se indexan por esa clave
+      // (`CUP_TRANSFERENCIA`), no por variantes truncadas/en minúsculas.
+      const currency = account.currency;
+      const rate = getCurrencyRate(exchangeRate, currency);
+      const convertible = rate != null;
+      const baseEquivalent = convertible ? balance * rate : null;
 
-    if (convertible && baseEquivalent != null) {
-      totalBase += baseEquivalent;
-    } else if (balance !== 0) {
-      // Solo avisamos si la moneda sin tasa realmente tiene saldo.
-      hasUnconvertible = true;
-    }
+      if (convertible && baseEquivalent != null) {
+        totalBase += baseEquivalent;
+      } else if (balance !== 0) {
+        // Solo avisamos si la moneda sin tasa realmente tiene saldo.
+        hasUnconvertible = true;
+      }
 
-    return { currency: account.currency, balance, baseEquivalent, rate, convertible };
-  });
+      return { currency, balance, baseEquivalent, rate, convertible };
+    },
+  );
 
   return { totalBase, rows, hasUnconvertible };
 }
