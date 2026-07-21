@@ -50,8 +50,15 @@ export function toBackendCurrency(currency: string): string {
  * Tolerante a may/minúsculas y a truncación: los enums del backend son snake_case
  * en minúsculas, y la transferencia en CUP vuelve recortada (`cup_transf`) o entera
  * (`cup_transferencia`). Cualquier prefijo `cup_transf…` colapsa a
- * `CUP_TRANSFERENCIA`. Las demás monedas ya vienen en su código canónico (USD,
- * EURO, MLC…) y pasan sin cambios.
+ * `CUP_TRANSFERENCIA`.
+ *
+ * El resto de monedas se pasan a mayúsculas SIEMPRE. No basta con devolverlas tal
+ * cual: el cierre diario/mensual las normaliza a minúsculas antes de responder
+ * (`normalizeCurrency` en sale.service.ts), así que llegan como `cup`/`usd`/`euro`.
+ * Sin este toUpperCase, `getCurrencyRate` compara `"cup" === "CUP"` (falso) e indexa
+ * `exchangeRate["usd"]` (las tasas van en mayúsculas), de modo que NINGUNA moneda
+ * resultaba convertible: el equivalente en CUP salía 0 y se disparaba el aviso de
+ * "sin tasa configurada" aunque las tasas estuvieran bien configuradas.
  */
 export function fromBackendCurrency(currency: string): string {
   if (!currency) return currency;
@@ -59,7 +66,7 @@ export function fromBackendCurrency(currency: string): string {
   const direct = CURRENCY_INTERNAL_BY_WIRE[currency] ?? CURRENCY_INTERNAL_BY_WIRE[lower];
   if (direct) return direct;
   if (lower.startsWith(CUP_TRANSFER_WIRE_PREFIX)) return "CUP_TRANSFERENCIA";
-  return currency;
+  return currency.toUpperCase();
 }
 
 /**

@@ -163,4 +163,112 @@ export function consolidateClosing(
   };
 }
 
+/**
+ * Cifras que el backend ya calculó y que la UI prefiere sobre su re-consolidación
+ * local. Todo opcional: si la respuesta no las trae (cierres antiguos, otros
+ * endpoints), los helpers caen al cálculo client-side. Ver
+ * docs/backend/accounting-close-multicurrency.md §3-§4.
+ */
+export interface ClosingServerTotals {
+  /** Subtotales por moneda (claves en minúsculas: `cup`, `usd`…). */
+  totalsByCurrency?: Record<string, ClosingConsolidatedBase> | null;
+  /** Tasas del snapshot del cierre (solo monedas con tasa > 0, claves minúsculas). */
+  exchangeRateSnapshot?: Record<string, number> | null;
+  /** Consolidado en CUP de todo el cierre (ventas + gastos). */
+  consolidatedBase?: ClosingConsolidatedBase | null;
+  /** Monedas con movimiento sin tasa (aviso GLOBAL: ventas + gastos). */
+  unconvertedCurrencies?: string[] | null;
+}
+
+/** Consolidado en CUP tal como lo espera la UI, con el origen de las cifras. */
+export interface ResolvedConsolidation {
+  incomeBase: number;
+  expenseBase: number;
+  balanceBase: number;
+  hasUnconvertible: boolean;
+  /** `"server"` si las cifras vienen del backend; `"client"` si se recalcularon. */
+  source: "server" | "client";
+}
+
+/** Espejo local de ClosingConsolidatedBase (types/accounting-close) para no acoplar el lib al tipo de la API. */
+interface ClosingConsolidatedBase {
+  income: number;
+  expense: number;
+  balance: number;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+/** `true` solo si el objeto trae income/expense/balance numéricos y finitos. */
+function isValidConsolidatedBase(
+  base: ClosingConsolidatedBase | null | undefined,
+): base is ClosingConsolidatedBase {
+  return (
+    !!base &&
+    isFiniteNumber(base.income) &&
+    isFiniteNumber(base.expense) &&
+    isFiniteNumber(base.balance)
+  );
+}
+
+/**
+ * Prefiere el consolidado en CUP del backend (reproducible y coincidente con
+ * PDF/Excel) y cae al cálculo client-side con tasas vivas cuando la respuesta no
+ * lo trae. El `hasUnconvertible` que devuelve es el GLOBAL del backend
+ * (ventas + gastos): correcto para el resumen. Para una tabla de una sola cara
+ * usa `hasUnconvertibleFor` en su lugar, que distingue ventas de gastos.
+ */
+export function resolveConsolidation(
+  clientConsolidation: ClosingConsolidation,
+  server?: ClosingServerTotals | null,
+): ResolvedConsolidation {
+  const base = server?.consolidatedBase;
+  if (isValidConsolidatedBase(base)) {
+    return {
+      incomeBase: base.income,
+      expenseBase: base.expense,
+      balanceBase: base.balance,
+      hasUnconvertible: (server?.unconvertedCurrencies?.length ?? 0) > 0,
+      source: "server",
+    };
+  }
+  return {
+    incomeBase: clientConsolidation.incomeBase,
+    expenseBase: clientConsolidation.expenseBase,
+    balanceBase: clientConsolidation.balanceBase,
+    hasUnconvertible: clientConsolidation.hasUnconvertible,
+    source: "client",
+  };
+}
+
+/**
+ * Deriva, solo con datos del backend, si UNA cara del cierre (ventas o gastos)
+ * tiene alguna moneda con movimiento sin tasa configurada. Preciso por tabla:
+ * a diferencia de `unconvertedCurrencies` (global), no marca la tabla de ventas
+ * por un gasto sin tasa ni viceversa.
+ *
+ * Devuelve `null` cuando faltan los datos del backend (`totalsByCurrency`), para
+ * que el llamador use su flag client-side por tabla como respaldo. Una moneda
+ * cuenta como no convertible si movió en esa cara y su tasa en el snapshot no es
+ * > 0 (el snapshot solo incluye monedas con tasa, así que ausencia = sin tasa).
+ */
+export function hasUnconvertibleFor(
+  side: "income" | "expense",
+  server?: ClosingServerTotals | null,
+): boolean | null {
+  const totals = server?.totalsByCurrency;
+  if (!totals) return null;
+  const snapshot = server?.exchangeRateSnapshot ?? {};
+  for (const [currency, row] of Object.entries(totals)) {
+    if (currency === "cup") continue;
+    const moved = side === "income" ? row?.income : row?.expense;
+    if (!moved) continue;
+    const rate = snapshot[currency];
+    if (!(isFiniteNumber(rate) && rate > 0)) return true;
+  }
+  return false;
+}
+
 export { BASE_CURRENCY };

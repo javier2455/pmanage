@@ -117,7 +117,15 @@ Los exports los genera el backend. Deben alinearse con la UI:
 El frontend es **defensivo**: si falta `currency` en una transacción la agrupa
 bajo **CUP** (fallback), así que la vista no se rompe antes del deploy del
 backend. Una vez cumplidos §1 y §2, el desglose por moneda será correcto sin más
-cambios de frontend. §3 y §4 son mejoras de fidelidad/auditoría (hoy el frontend
-consolida con las tasas vivas de `useExchangeRate`). La lógica de agrupación y
-consolidación del frontend vive en
+cambios de frontend. La lógica de agrupación y consolidación del frontend vive en
 `src/lib/accounting-close-currency.ts`.
+
+**Estado actual del consolidado (§4):** el frontend **ya prefiere** el
+`consolidatedBase` y el `unconvertedCurrencies` del backend para el equivalente en
+CUP y el aviso de monedas sin tasa (`resolveConsolidation` / `hasUnconvertibleFor`).
+Solo cae a consolidar con las tasas vivas de `useExchangeRate` cuando la respuesta
+**no** trae `consolidatedBase` (cierres antiguos u otros endpoints). Los
+**subtotales por moneda** (`currencyRows`) todavía se calculan client-side desde
+`sale.total`/`expense.amount`; migrarlos a `totalsByCurrency` (§3) es la siguiente
+mejora pendiente para que subtotales y consolidado compartan exactamente la misma
+fuente (relevante solo si `sale.total` difiere de `Σ cantidad×precio`).

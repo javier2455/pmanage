@@ -187,6 +187,28 @@ export const currencySuite = defineSuite(
     );
 
     test(
+      "fromBackendCurrency pasa a mayúsculas las monedas en minúsculas del cierre",
+      () => {
+        expect(fromBackendCurrency("cup")).toBe("CUP");
+        expect(fromBackendCurrency("usd")).toBe("USD");
+        expect(fromBackendCurrency("euro")).toBe("EURO");
+        expect(fromBackendCurrency("mlc")).toBe("MLC");
+      },
+      "El cierre diario/mensual normaliza toda moneda a minúsculas antes de responder (normalizeCurrency en sale.service.ts), así que llegan como 'cup'/'usd'/'euro'. Cuando fromBackendCurrency las devolvía sin tocar, getCurrencyRate comparaba 'cup' === 'CUP' (falso) e indexaba exchangeRate['usd'] cuando las tasas van en mayúsculas: ninguna moneda resultaba convertible, el equivalente en CUP salía 0 y aparecía el aviso de 'sin tasa configurada' con las tasas bien puestas.",
+    );
+
+    test(
+      "getCurrencyRate resuelve la tasa partiendo de la forma del backend",
+      () => {
+        expect(getCurrencyRate(rates, fromBackendCurrency("cup"))).toBe(1);
+        expect(getCurrencyRate(rates, fromBackendCurrency("usd"))).toBe(
+          getCurrencyRate(rates, "USD"),
+        );
+      },
+      "Cierra el bucle del bug anterior: normalizar la moneda del backend debe bastar para que la tasa se encuentre. 'cup' tiene que resolver a la tasa base 1 y 'usd' a la misma tasa que 'USD'; si alguna devolviera null, la moneda quedaría fuera del consolidado en CUP.",
+    );
+
+    test(
       "currencyLabel muestra 'CUP Transferencia' para cualquier forma de la moneda",
       () => {
         expect(currencyLabel("CUP_TRANSFERENCIA")).toBe("CUP Transferencia");

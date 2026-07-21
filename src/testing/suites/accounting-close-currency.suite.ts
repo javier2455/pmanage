@@ -2,7 +2,10 @@ import { defineSuite, expect } from "@/testing/harness";
 import {
   consolidateClosing,
   groupClosingByCurrency,
+  hasUnconvertibleFor,
   normalizeCurrency,
+  resolveConsolidation,
+  type ClosingServerTotals,
 } from "@/lib/accounting-close-currency";
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales";
 import type { ExpenseInAccountingClose } from "@/lib/types/accounting-close";
@@ -167,6 +170,119 @@ export const accountingCloseCurrencySuite = defineSuite(
         expect(c.balanceBase).toBe(0);
       },
       "Sin transacciones no hay nada que consolidar ni avisos falsos: balance 0 y sin monedas no convertibles.",
+    );
+
+    // --- resolveConsolidation: prefiere el consolidado del backend, cae al client ---
+
+    test(
+      "resolveConsolidation usa el consolidado del backend cuando llega",
+      () => {
+        const rows = groupClosingByCurrency([sale(1000, "CUP"), sale(10, "USD")], []);
+        const client = consolidateClosing(rows, rates); // incomeBase = 5000
+        const server: ClosingServerTotals = {
+          consolidatedBase: { income: 5123, expense: 40, balance: 5083 },
+          unconvertedCurrencies: [],
+        };
+        const r = resolveConsolidation(client, server);
+        expect(r.source).toBe("server");
+        expect(r.incomeBase).toBe(5123); // gana el backend, no el 5000 local
+        expect(r.expenseBase).toBe(40);
+        expect(r.balanceBase).toBe(5083);
+        expect(r.hasUnconvertible).toBe(false);
+      },
+      "El backend es la fuente de verdad (coincide con PDF/Excel y usa las tasas del snapshot del cierre). Cuando trae consolidatedBase válido, resolveConsolidation devuelve esas cifras aunque difieran del cálculo local con tasas vivas.",
+    );
+
+    test(
+      "resolveConsolidation cae al cálculo client si el backend no trae consolidatedBase",
+      () => {
+        const rows = groupClosingByCurrency([sale(1000, "CUP"), sale(10, "USD")], []);
+        const client = consolidateClosing(rows, rates);
+        expect(resolveConsolidation(client, undefined).source).toBe("client");
+        expect(resolveConsolidation(client, {}).source).toBe("client");
+        expect(resolveConsolidation(client, undefined).incomeBase).toBe(5000);
+      },
+      "Compatibilidad hacia atrás: cierres antiguos u otros endpoints pueden no enviar consolidatedBase. Sin él, la UI no se queda sin cifras: reusa el cálculo client-side (5000) en vez de mostrar ceros.",
+    );
+
+    test(
+      "resolveConsolidation ignora un consolidatedBase inválido (NaN/incompleto)",
+      () => {
+        const rows = groupClosingByCurrency([sale(1000, "CUP")], []);
+        const client = consolidateClosing(rows, rates);
+        const bad = { income: Number.NaN, expense: 0, balance: 0 };
+        // @ts-expect-error probamos a propósito un objeto incompleto del backend
+        const worse: ClosingServerTotals = { consolidatedBase: { income: 5 } };
+        expect(resolveConsolidation(client, { consolidatedBase: bad }).source).toBe("client");
+        expect(resolveConsolidation(client, worse).source).toBe("client");
+      },
+      "Si el backend manda un consolidado corrupto (NaN o sin todos los campos), no lo usamos: caemos al cálculo local para no mostrar cifras rotas.",
+    );
+
+    test(
+      "resolveConsolidation deriva hasUnconvertible de unconvertedCurrencies (global)",
+      () => {
+        const rows = groupClosingByCurrency([sale(1000, "CUP")], []);
+        const client = consolidateClosing(rows, rates);
+        const server: ClosingServerTotals = {
+          consolidatedBase: { income: 1000, expense: 0, balance: 1000 },
+          unconvertedCurrencies: ["mlc"],
+        };
+        expect(resolveConsolidation(client, server).hasUnconvertible).toBe(true);
+      },
+      "Con datos del backend, el aviso sale de unconvertedCurrencies (lista global ventas+gastos): si trae alguna moneda, hasUnconvertible es true. Es el aviso correcto para el resumen financiero.",
+    );
+
+    // --- hasUnconvertibleFor: aviso preciso por tabla (solo ventas o solo gastos) ---
+
+    test(
+      "hasUnconvertibleFor distingue la cara de ventas de la de gastos",
+      () => {
+        const server: ClosingServerTotals = {
+          totalsByCurrency: {
+            cup: { income: 1000, expense: 100, balance: 900 },
+            usd: { income: 50, expense: 0, balance: 50 }, // venta USD sin tasa
+            mlc: { income: 0, expense: 30, balance: -30 }, // gasto MLC sin tasa
+          },
+          exchangeRateSnapshot: { cup: 1 }, // ni USD ni MLC tienen tasa
+        };
+        // La tabla de ventas solo debe avisar por USD (movió en ventas); MLC no.
+        expect(hasUnconvertibleFor("income", server)).toBe(true);
+        // La tabla de gastos solo debe avisar por MLC (movió en gastos); USD no.
+        expect(hasUnconvertibleFor("expense", server)).toBe(true);
+      },
+      "unconvertedCurrencies del backend es global y marcaría ambas tablas por igual. hasUnconvertibleFor mira totalsByCurrency por cara: una moneda solo cuenta si movió en esa cara y no tiene tasa en el snapshot, evitando avisar en la tabla de ventas por un gasto (o al revés).",
+    );
+
+    test(
+      "hasUnconvertibleFor no marca si la moneda movida sí tiene tasa",
+      () => {
+        const server: ClosingServerTotals = {
+          totalsByCurrency: {
+            cup: { income: 1000, expense: 0, balance: 1000 },
+            usd: { income: 50, expense: 0, balance: 50 },
+          },
+          exchangeRateSnapshot: { cup: 1, usd: 400 },
+        };
+        expect(hasUnconvertibleFor("income", server)).toBe(false);
+        // CUP nunca cuenta como no convertible (es la base).
+        expect(
+          hasUnconvertibleFor("income", {
+            totalsByCurrency: { cup: { income: 1, expense: 0, balance: 1 } },
+            exchangeRateSnapshot: {},
+          }),
+        ).toBe(false);
+      },
+      "Si toda moneda con ventas tiene tasa en el snapshot, no hay aviso. CUP se ignora siempre porque es la base (tasa 1 implícita), aunque no aparezca en el snapshot.",
+    );
+
+    test(
+      "hasUnconvertibleFor devuelve null sin totalsByCurrency (deja decidir al client)",
+      () => {
+        expect(hasUnconvertibleFor("income", undefined)).toBeNull();
+        expect(hasUnconvertibleFor("income", {})).toBeNull();
+      },
+      "Sin datos del backend no puede afirmar nada: devuelve null para que el componente use su flag client-side por tabla como respaldo (?? clientConsolidation.hasUnconvertible).",
     );
   },
   { description: "Agrupa el cierre por moneda y consolida a CUP con la tasa." },

@@ -37,6 +37,9 @@ import { cn } from "@/lib/utils";
 import {
   consolidateClosing,
   groupClosingByCurrency,
+  hasUnconvertibleFor,
+  resolveConsolidation,
+  type ClosingServerTotals,
 } from "@/lib/accounting-close-currency";
 import type { ExchangeRateLike } from "@/lib/currency";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
@@ -61,6 +64,9 @@ interface DailyCloseExpenseTableProps {
   exchangeRate: ExchangeRateLike;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Consolidado en CUP calculado por el backend; se prefiere sobre el cálculo
+   * local con tasas vivas. Ausente → se recalcula client-side (fallback). */
+  serverTotals?: ClosingServerTotals | null;
 }
 
 export function DailyCloseExpenseTable({
@@ -68,15 +74,23 @@ export function DailyCloseExpenseTable({
   exchangeRate,
   emptyTitle = "Sin gastos en este período",
   emptyDescription = "No hay gastos registrados para el rango seleccionado.",
+  serverTotals,
 }: DailyCloseExpenseTableProps) {
-  // Subtotales de gastos por moneda + equivalente consolidado en CUP.
-  const { currencyRows, consolidated } = React.useMemo(() => {
+  // Subtotales de gastos por moneda + equivalente consolidado en CUP. El
+  // consolidado se prefiere del backend y cae al cálculo local si no llega.
+  const { currencyRows, expenseBase, hasUnconvertible } = React.useMemo(() => {
     const rows = groupClosingByCurrency([], expenses);
+    const clientConsolidation = consolidateClosing(rows, exchangeRate);
+    const resolved = resolveConsolidation(clientConsolidation, serverTotals);
     return {
       currencyRows: rows.map((r) => ({ currency: r.currency, amount: r.expense })),
-      consolidated: consolidateClosing(rows, exchangeRate),
+      expenseBase: resolved.expenseBase,
+      // Aviso por tabla (solo gastos): backend si aporta datos, si no el client.
+      hasUnconvertible:
+        hasUnconvertibleFor("expense", serverTotals) ??
+        clientConsolidation.hasUnconvertible,
     };
-  }, [expenses, exchangeRate]);
+  }, [expenses, exchangeRate, serverTotals]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -279,8 +293,8 @@ export function DailyCloseExpenseTable({
       <ClosingCurrencyTotals
         title="Total gastos"
         rows={currencyRows}
-        consolidatedBase={consolidated.expenseBase}
-        hasUnconvertible={consolidated.hasUnconvertible}
+        consolidatedBase={expenseBase}
+        hasUnconvertible={hasUnconvertible}
         tone="expense"
       />
     </CardContent>

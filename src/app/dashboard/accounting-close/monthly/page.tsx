@@ -23,6 +23,7 @@ import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-s
 import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-close-expense-table"
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
 import { ClosingFinancialSummary } from "@/components/accounting-close/closing-financial-summary"
+import type { ClosingServerTotals } from "@/lib/accounting-close-currency"
 
 function MonthlyClosePageSkeleton() {
   return (
@@ -115,6 +116,18 @@ export default function MonthlyPage() {
   const activeSales = useMemo(
     () => (data?.sales ?? []).filter((s) => !s.isCancelled),
     [data?.sales],
+  )
+  // Cifras ya consolidadas por el backend (fuente de verdad, coinciden con
+  // PDF/Excel). Las tablas y el resumen las prefieren y caen al cálculo local
+  // solo si la respuesta no las trae.
+  const serverTotals = useMemo<ClosingServerTotals>(
+    () => ({
+      totalsByCurrency: data?.totalsByCurrency,
+      exchangeRateSnapshot: data?.exchangeRateSnapshot,
+      consolidatedBase: data?.consolidatedBase,
+      unconvertedCurrencies: data?.unconvertedCurrencies,
+    }),
+    [data],
   )
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
@@ -223,6 +236,8 @@ export default function MonthlyPage() {
           <DailyCloseSoldTable
             sales={activeSales}
             exchangeRate={exchangeRate}
+            totalTitle="Total ventas del mes"
+            serverTotals={serverTotals}
           />
         </Card>
 
@@ -247,6 +262,7 @@ export default function MonthlyPage() {
             exchangeRate={exchangeRate}
             emptyTitle="Sin gastos este mes"
             emptyDescription="No hay gastos registrados para el mes seleccionado."
+            serverTotals={serverTotals}
           />
         </Card>
       </div>
@@ -279,6 +295,7 @@ export default function MonthlyPage() {
         expenses={expenses}
         businessId={activeBusinessId}
         period="monthly"
+        serverTotals={serverTotals}
       />
     </div>
   )

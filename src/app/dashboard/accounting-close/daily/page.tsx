@@ -23,6 +23,7 @@ import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-s
 import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-close-expense-table"
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
 import { ClosingFinancialSummary } from "@/components/accounting-close/closing-financial-summary"
+import type { ClosingServerTotals } from "@/lib/accounting-close-currency"
 
 function DailyClosePageSkeleton() {
   return (
@@ -105,6 +106,18 @@ export default function DailyPage() {
   const activeSales = useMemo(
     () => (data?.sales ?? []).filter((s) => !s.isCancelled),
     [data?.sales],
+  )
+  // Cifras ya consolidadas por el backend (fuente de verdad, coinciden con
+  // PDF/Excel). Las tablas y el resumen las prefieren y caen al cálculo local
+  // solo si la respuesta no las trae.
+  const serverTotals = useMemo<ClosingServerTotals>(
+    () => ({
+      totalsByCurrency: data?.totalsByCurrency,
+      exchangeRateSnapshot: data?.exchangeRateSnapshot,
+      consolidatedBase: data?.consolidatedBase,
+      unconvertedCurrencies: data?.unconvertedCurrencies,
+    }),
+    [data],
   )
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
@@ -303,6 +316,7 @@ export default function DailyPage() {
           <DailyCloseSoldTable
             sales={activeSales}
             exchangeRate={exchangeRate}
+            serverTotals={serverTotals}
           />
         </Card>
 
@@ -327,6 +341,7 @@ export default function DailyPage() {
             exchangeRate={exchangeRate}
             emptyTitle="Sin gastos este día"
             emptyDescription="No hay gastos registrados para la fecha seleccionada."
+            serverTotals={serverTotals}
           />
         </Card>
       </div>
@@ -359,6 +374,7 @@ export default function DailyPage() {
         expenses={expenses}
         businessId={activeBusinessId}
         period="daily"
+        serverTotals={serverTotals}
       />
     </div>
   )

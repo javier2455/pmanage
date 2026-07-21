@@ -17,7 +17,10 @@ import type { SaleWithProductAndBusiness } from "@/lib/types/sales"
 import {
   consolidateClosing,
   groupClosingByCurrency,
+  hasUnconvertibleFor,
   normalizeCurrency,
+  resolveConsolidation,
+  type ClosingServerTotals,
 } from "@/lib/accounting-close-currency"
 import type { ExchangeRateLike } from "@/lib/currency"
 import { CardContent } from "@/components/ui/card"
@@ -61,11 +64,19 @@ function columnMeta(column: {
 interface DailyCloseSoldTableProps {
   sales: SaleWithProductAndBusiness[]
   exchangeRate: ExchangeRateLike
+  /** Título del pie de totales. La tabla se reutiliza en el cierre mensual, que
+   * debe decir "del mes" en vez del "del día" por defecto. */
+  totalTitle?: string
+  /** Consolidado en CUP calculado por el backend; se prefiere sobre el cálculo
+   * local con tasas vivas. Ausente → se recalcula client-side (fallback). */
+  serverTotals?: ClosingServerTotals | null
 }
 
 export function DailyCloseSoldTable({
   sales,
   exchangeRate,
+  totalTitle = "Total ventas del día",
+  serverTotals,
 }: DailyCloseSoldTableProps) {
   const flatItems = React.useMemo<SoldRow[]>(() => {
     return sales.flatMap((sale) =>
@@ -77,14 +88,22 @@ export function DailyCloseSoldTable({
   }, [sales])
 
   // Subtotales de ventas por moneda (a partir de `sale.total`) + equivalente
-  // consolidado en CUP. Ver src/lib/accounting-close-currency.ts.
-  const { currencyRows, consolidated } = React.useMemo(() => {
+  // consolidado en CUP. El consolidado se prefiere del backend (reproducible,
+  // igual que PDF/Excel) y cae al cálculo local si no llega.
+  // Ver src/lib/accounting-close-currency.ts.
+  const { currencyRows, incomeBase, hasUnconvertible } = React.useMemo(() => {
     const rows = groupClosingByCurrency(sales, [])
+    const clientConsolidation = consolidateClosing(rows, exchangeRate)
+    const resolved = resolveConsolidation(clientConsolidation, serverTotals)
     return {
       currencyRows: rows.map((r) => ({ currency: r.currency, amount: r.income })),
-      consolidated: consolidateClosing(rows, exchangeRate),
+      incomeBase: resolved.incomeBase,
+      // Aviso por tabla (solo ventas): backend si aporta datos, si no el client.
+      hasUnconvertible:
+        hasUnconvertibleFor("income", serverTotals) ??
+        clientConsolidation.hasUnconvertible,
     }
-  }, [sales, exchangeRate])
+  }, [sales, exchangeRate, serverTotals])
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -289,10 +308,10 @@ export function DailyCloseSoldTable({
       </div>
 
       <ClosingCurrencyTotals
-        title="Total ventas del día"
+        title={totalTitle}
         rows={currencyRows}
-        consolidatedBase={consolidated.incomeBase}
-        hasUnconvertible={consolidated.hasUnconvertible}
+        consolidatedBase={incomeBase}
+        hasUnconvertible={hasUnconvertible}
         tone="income"
       />
     </CardContent>

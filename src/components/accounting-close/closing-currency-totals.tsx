@@ -1,6 +1,7 @@
 "use client"
 
 import { AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 import { BASE_CURRENCY, currencyLabel, formatMoney } from "@/lib/currency"
 import { cn } from "@/lib/utils"
@@ -85,7 +86,14 @@ export function ClosingCurrencyTotals({
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             Hay monedas sin tasa configurada; no se incluyen en el equivalente en{" "}
-            {BASE_CURRENCY}.
+            {BASE_CURRENCY}. Configúralo en{" "}
+            <Link
+              href="/dashboard/exchange-rate"
+              className="underline-offset-2 hover:underline"
+            >
+              Tipo de cambio
+            </Link>
+            .
           </span>
         </div>
       ) : null}
