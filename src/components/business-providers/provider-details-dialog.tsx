@@ -23,6 +23,8 @@ interface ProviderDetailsDialogProps {
   providerId: string
   tooltip?: string
   trigger?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -48,12 +50,18 @@ export function ProviderDetailsDialog({
   providerId,
   tooltip,
   trigger,
+  open,
+  onOpenChange,
 }: ProviderDetailsDialogProps) {
-  const [open, setOpen] = React.useState(false)
+  const isControlled = open !== undefined
+  const [internalOpen, setInternalOpen] = React.useState(false)
+  const dialogOpen = isControlled ? open : internalOpen
+  const setDialogOpen = isControlled ? onOpenChange : setInternalOpen
 
-  const { data, isLoading } = useGetProviderByIdQuery(providerId, {
-    refetchOnMount: "always",
-  })
+  const { data, isLoading } = useGetProviderByIdQuery(
+    dialogOpen ? providerId : "",
+    { refetchOnMount: "always" },
+  )
 
   const provider = data?.data
   const products = provider?.providerProducts ?? []
@@ -62,19 +70,21 @@ export function ProviderDetailsDialog({
   )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {tooltip ? (
-          <span className="inline-flex">
-            <Tooltip>
-              <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
-              <TooltipContent>{tooltip}</TooltipContent>
-            </Tooltip>
-          </span>
-        ) : (
-          triggerContent
-        )}
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {isControlled ? null : (
+        <DialogTrigger asChild>
+          {tooltip ? (
+            <span className="inline-flex">
+              <Tooltip>
+                <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+              </Tooltip>
+            </span>
+          ) : (
+            triggerContent
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[480px] md:max-w-[560px] shadow-lg shadow-cyan-300/30">
         <DialogHeader>
           <DialogTitle className="text-card-foreground">

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/popover";
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { ExpenseCategory } from "@/lib/types/expense-category";
-import { CategoryDetailsDialog } from "./category-details-dialog";
-import type { CategoryKind } from "./kind-config";
 
 export type CategoriesColumnMeta = {
   headerClassName?: string;
@@ -52,13 +50,11 @@ function CategoriesSortableHeader({
 }
 
 interface CreateColumnsParams {
-  kind: CategoryKind;
   onEditCategory: (category: ExpenseCategory) => void;
   onDeleteCategory: (categoryId: string) => void | Promise<void>;
 }
 
 export function createCategoriesColumns({
-  kind,
   onEditCategory,
   onDeleteCategory,
 }: CreateColumnsParams): ColumnDef<ExpenseCategory>[] {
@@ -135,19 +131,6 @@ export function createCategoriesColumns({
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-52 p-1">
-              <CategoryDetailsDialog
-                kind={kind}
-                categoryId={row.original.id}
-                trigger={
-                  <button
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-                  >
-                    <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                    Ver detalles
-                  </button>
-                }
-              />
               <button
                 type="button"
                 onClick={() => onEditCategory(row.original)}

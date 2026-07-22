@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import type { Column, ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -138,13 +138,6 @@ export function createProvidersColumns(
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-48 p-1">
-              <Link
-                href={`/dashboard/business/providers/details?id=${row.original.id}`}
-                className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"
-              >
-                <Eye className="size-4 text-blue-500 dark:text-blue-400" />
-                Ver detalles
-              </Link>
               <Link
                 href={`/dashboard/business/providers/edit?id=${row.original.id}`}
                 className="flex w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-muted"

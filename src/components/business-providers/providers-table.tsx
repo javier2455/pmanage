@@ -38,6 +38,7 @@ import {
   createProvidersColumns,
   type ProvidersColumnMeta,
 } from "./providers-table-columns"
+import { ProviderDetailsDialog } from "./provider-details-dialog"
 
 function columnMeta(column: {
   columnDef: { meta?: unknown }
@@ -117,6 +118,15 @@ export function ProvidersTable({
   )
 
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [detailsProviderId, setDetailsProviderId] = React.useState<
+    string | null
+  >(null)
+  const [detailsOpen, setDetailsOpen] = React.useState(false)
+
+  const handleRowClick = React.useCallback((providerId: string) => {
+    setDetailsProviderId(providerId)
+    setDetailsOpen(true)
+  }, [])
 
   const table = useReactTable({
     data: providers,
@@ -219,10 +229,19 @@ export function ProvidersTable({
                       </TableRow>
                     ) : (
                       table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
+                        <TableRow
+                          key={row.id}
+                          onClick={() => handleRowClick(row.original.id)}
+                          className="cursor-pointer transition-colors hover:bg-muted/60"
+                        >
                           {row.getVisibleCells().map((cell) => (
                             <TableCell
                               key={cell.id}
+                              onClick={
+                                cell.column.id === "actions"
+                                  ? (e) => e.stopPropagation()
+                                  : undefined
+                              }
                               className={cn(
                                 "px-4 py-3 text-foreground",
                                 columnMeta(cell.column).cellClassName,
@@ -281,6 +300,13 @@ export function ProvidersTable({
           </div>
         </CardContent>
       </Card>
+      {detailsProviderId ? (
+        <ProviderDetailsDialog
+          providerId={detailsProviderId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
     </TooltipProvider>
   )
 }

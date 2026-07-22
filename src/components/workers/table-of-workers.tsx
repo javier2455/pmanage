@@ -44,6 +44,7 @@ import {
   createWorkersColumns,
   type WorkersColumnMeta,
 } from "./workers-table-columns";
+import WorkerDetailsDialog from "./worker-details-dialog";
 
 function columnMeta(column: {
   columnDef: { meta?: unknown };
@@ -114,6 +115,15 @@ export default function TableOfWorkers({
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [detailsWorkerId, setDetailsWorkerId] = React.useState<string | null>(
+    null,
+  );
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+
+  const handleRowClick = React.useCallback((workerId: string) => {
+    setDetailsWorkerId(workerId);
+    setDetailsOpen(true);
+  }, []);
 
   const table = useReactTable({
     data: workers,
@@ -213,10 +223,19 @@ export default function TableOfWorkers({
                   </TableHeader>
                   <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow
+                        key={row.id}
+                        onClick={() => handleRowClick(row.original.id)}
+                        className="cursor-pointer transition-colors hover:bg-muted/60"
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
+                            onClick={
+                              cell.column.id === "actions"
+                                ? (e) => e.stopPropagation()
+                                : undefined
+                            }
                             className={cn(
                               "px-4 py-3 text-foreground",
                               columnMeta(cell.column).cellClassName,
@@ -277,6 +296,13 @@ export default function TableOfWorkers({
           </div>
         </CardContent>
       </Card>
+      {detailsWorkerId ? (
+        <WorkerDetailsDialog
+          workerId={detailsWorkerId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }

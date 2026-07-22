@@ -41,6 +41,7 @@ import {
   createExpensesColumns,
   type ExpensesColumnMeta,
 } from "./expenses-table-columns";
+import ExpenseDetailsDialog from "./expense-details-dialog";
 
 function columnMeta(column: {
   columnDef: { meta?: unknown };
@@ -111,6 +112,15 @@ export default function TableOfExpenses({
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [detailsExpenseId, setDetailsExpenseId] = React.useState<string | null>(
+    null,
+  );
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+
+  const handleRowClick = React.useCallback((expenseId: string) => {
+    setDetailsExpenseId(expenseId);
+    setDetailsOpen(true);
+  }, []);
 
   const table = useReactTable({
     data: expenses,
@@ -211,10 +221,19 @@ export default function TableOfExpenses({
                   </TableHeader>
                   <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow
+                        key={row.id}
+                        onClick={() => handleRowClick(row.original.id)}
+                        className="cursor-pointer transition-colors hover:bg-muted/60"
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
+                            onClick={
+                              cell.column.id === "actions"
+                                ? (e) => e.stopPropagation()
+                                : undefined
+                            }
                             className={cn(
                               "px-4 py-3 text-foreground",
                               columnMeta(cell.column).cellClassName,
@@ -273,6 +292,13 @@ export default function TableOfExpenses({
           </div>
         </CardContent>
       </Card>
+      {detailsExpenseId ? (
+        <ExpenseDetailsDialog
+          expenseId={detailsExpenseId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
     </TooltipProvider>
   );
 }

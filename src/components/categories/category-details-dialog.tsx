@@ -31,7 +31,7 @@ interface CategoryDetailsDialogProps {
   kind: CategoryKind;
   categoryId: string;
   tooltip?: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -49,20 +49,24 @@ export function CategoryDetailsDialog({
     open === false ? "" : categoryId,
   );
 
+  const isControlled = open !== undefined;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {tooltip ? (
-          <span className="inline-flex">
-            <Tooltip>
-              <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-              <TooltipContent>{tooltip}</TooltipContent>
-            </Tooltip>
-          </span>
-        ) : (
-          trigger
-        )}
-      </DialogTrigger>
+      {isControlled ? null : (
+        <DialogTrigger asChild>
+          {tooltip ? (
+            <span className="inline-flex">
+              <Tooltip>
+                <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+              </Tooltip>
+            </span>
+          ) : (
+            trigger
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] md:max-w-[520px] overflow-hidden shadow-lg shadow-cyan-300/30">
         <DialogHeader>
           <DialogTitle className="text-card-foreground">

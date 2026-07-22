@@ -42,6 +42,7 @@ import {
   createCategoriesColumns,
   type CategoriesColumnMeta,
 } from "./categories-table-columns";
+import { CategoryDetailsDialog } from "./category-details-dialog";
 import { CategoryFormDialog } from "./category-form-dialog";
 import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
 
@@ -117,14 +118,22 @@ export function CategoriesTable({
   const columns = React.useMemo(
     () =>
       createCategoriesColumns({
-        kind,
         onEditCategory: (category) => setEditingCategory(category),
         onDeleteCategory: handleDelete,
       }),
-    [kind, handleDelete],
+    [handleDelete],
   );
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [detailsCategoryId, setDetailsCategoryId] = React.useState<
+    string | null
+  >(null);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+
+  const handleRowClick = React.useCallback((categoryId: string) => {
+    setDetailsCategoryId(categoryId);
+    setDetailsOpen(true);
+  }, []);
 
   const table = useReactTable({
     data: categories,
@@ -221,10 +230,19 @@ export function CategoriesTable({
                   </TableHeader>
                   <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
+                      <TableRow
+                        key={row.id}
+                        onClick={() => handleRowClick(row.original.id)}
+                        className="cursor-pointer transition-colors hover:bg-muted/60"
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
                             key={cell.id}
+                            onClick={
+                              cell.column.id === "actions"
+                                ? (e) => e.stopPropagation()
+                                : undefined
+                            }
                             className={cn(
                               "px-4 py-3 text-foreground",
                               columnMeta(cell.column).cellClassName,
@@ -286,6 +304,15 @@ export function CategoriesTable({
           </div>
         </CardContent>
       </Card>
+
+      {detailsCategoryId ? (
+        <CategoryDetailsDialog
+          kind={kind}
+          categoryId={detailsCategoryId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      ) : null}
 
       <CategoryFormDialog
         kind={kind}

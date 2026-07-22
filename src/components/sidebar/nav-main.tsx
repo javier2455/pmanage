@@ -107,8 +107,10 @@ export function NavMain({ sections }: { sections: NavSection[] }) {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {item.items.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
+                        {item.items.map((subItem, subIndex) => (
+                          <SidebarMenuSubItem
+                            key={`${section.id}-${item.title}-${subItem.title}-${subIndex}`}
+                          >
                             <SidebarMenuSubButton
                               asChild={!subItem.disabled}
                               isActive={isPathActive(subItem.url) && !subItem.disabled}

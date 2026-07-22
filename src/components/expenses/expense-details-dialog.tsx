@@ -47,6 +47,7 @@ export default function ExpenseDetailsDialog({
     open === false ? "" : expenseId,
   );
 
+  const isControlled = open !== undefined;
   const categoryName = data?.expenseCategoryName ?? null;
 
   const triggerContent = trigger ?? (
@@ -55,18 +56,20 @@ export default function ExpenseDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {tooltip ? (
-          <span className="inline-flex">
-            <Tooltip>
-              <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
-              <TooltipContent>{tooltip}</TooltipContent>
-            </Tooltip>
-          </span>
-        ) : (
-          triggerContent
-        )}
-      </DialogTrigger>
+      {isControlled ? null : (
+        <DialogTrigger asChild>
+          {tooltip ? (
+            <span className="inline-flex">
+              <Tooltip>
+                <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+              </Tooltip>
+            </span>
+          ) : (
+            triggerContent
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] md:max-w-[520px] overflow-hidden shadow-lg shadow-cyan-300/30">
         <DialogHeader>
           <DialogTitle className="text-card-foreground">

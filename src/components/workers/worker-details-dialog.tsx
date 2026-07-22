@@ -65,24 +65,28 @@ export default function WorkerDetailsDialog({
 
   const worker = data?.data;
 
+  const isControlled = open !== undefined;
+
   const triggerContent = trigger ?? (
     <Button variant="outline">Ver detalles</Button>
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {tooltip ? (
-          <span className="inline-flex">
-            <Tooltip>
-              <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
-              <TooltipContent>{tooltip}</TooltipContent>
-            </Tooltip>
-          </span>
-        ) : (
-          triggerContent
-        )}
-      </DialogTrigger>
+      {isControlled ? null : (
+        <DialogTrigger asChild>
+          {tooltip ? (
+            <span className="inline-flex">
+              <Tooltip>
+                <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
+                <TooltipContent>{tooltip}</TooltipContent>
+              </Tooltip>
+            </span>
+          ) : (
+            triggerContent
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] md:max-w-[520px] overflow-hidden shadow-lg shadow-cyan-300/30">
         <DialogHeader>
           <DialogTitle className="text-card-foreground">
