@@ -75,6 +75,15 @@ interface TableOfOtherProductsProps {
   onSearchChange: (value: string) => void;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
+  /**
+   * Datos del `BusinessProduct` del negocio activo por productId (categoría y
+   * última actualización). El catálogo (`Product`) no los trae, así que el
+   * diálogo de detalles necesita este mapa para mostrarlos. Ver docs/category.md.
+   */
+  businessInfoByProductId?: Record<
+    string,
+    { categoryName: string | null; updatedAt: string | Date | null }
+  >;
 }
 
 export default function TableOfOtherProducts({
@@ -85,6 +94,7 @@ export default function TableOfOtherProducts({
   onSearchChange,
   onPageChange,
   onLimitChange,
+  businessInfoByProductId = {},
 }: TableOfOtherProductsProps) {
   const deleteProductMutation = useDeleteProductMutation();
 
@@ -420,6 +430,11 @@ export default function TableOfOtherProducts({
       {detailsProductId ? (
         <ProductDetailsDialog
           productId={detailsProductId}
+          // La categoría y la última actualización viven en el BusinessProduct
+          // (negocio activo); el catálogo no las trae, así que las pasamos desde
+          // el mapa. Ver docs/category.md.
+          categoryName={businessInfoByProductId[detailsProductId]?.categoryName ?? null}
+          updatedAt={businessInfoByProductId[detailsProductId]?.updatedAt ?? null}
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
         />

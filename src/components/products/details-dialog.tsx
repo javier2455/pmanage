@@ -25,13 +25,19 @@ interface ProductDetailsDialogProps {
      * docs/category.md.
      */
     categoryName?: string | null
+    /**
+     * Fecha de última actualización del BusinessProduct (por negocio). El
+     * catálogo (`Product`) no la trae, así que se pasa desde la lista para
+     * mostrarla en los detalles. Ver docs/category.md.
+     */
+    updatedAt?: string | Date | null
     tooltip?: string
     trigger?: React.ReactNode
     open?: boolean
     onOpenChange?: (open: boolean) => void
 }
 
-export default function ProductDetailsDialog({ productId, categoryName: categoryNameProp, tooltip, trigger, open, onOpenChange }: ProductDetailsDialogProps) {
+export default function ProductDetailsDialog({ productId, categoryName: categoryNameProp, updatedAt: updatedAtProp, tooltip, trigger, open, onOpenChange }: ProductDetailsDialogProps) {
     const isControlled = open !== undefined
     const { data, isLoading } = useGetProductByIdQuery(productId, {
         refetchOnMount: "always",
@@ -52,6 +58,9 @@ export default function ProductDetailsDialog({ productId, categoryName: category
     )
     const categoryName =
         categoryNameProp ?? inlineCategoryName ?? fetchedCategory?.name ?? null
+    // El catálogo no trae `businesses`, así que preferimos la fecha que nos pasa
+    // el llamador (BusinessProduct del negocio activo) y caemos al del producto.
+    const lastUpdatedAt = updatedAtProp ?? business?.updatedAt ?? null
 
     const triggerContent = trigger ?? <Button variant="outline">Ver detalles</Button>
 
@@ -147,8 +156,8 @@ export default function ProductDetailsDialog({ productId, categoryName: category
                         <div className="flex items-center justify-between py-4">
                             <span className="text-sm text-muted-foreground">Última actualización</span>
                             <span className="text-sm font-medium text-card-foreground tabular-nums">
-                                {business?.updatedAt
-                                    ? new Date(business.updatedAt).toLocaleDateString("es-CO", {
+                                {lastUpdatedAt
+                                    ? new Date(lastUpdatedAt).toLocaleDateString("es-CO", {
                                         day: "2-digit",
                                         month: "long",
                                         year: "numeric",

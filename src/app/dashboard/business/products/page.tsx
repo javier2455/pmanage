@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TableOfProducts from "@/components/products/table";
 import TableOfOtherProducts from "@/components/products/table-of-other-products";
 import { useBusiness } from "@/context/business-context";
@@ -67,6 +67,24 @@ export default function ProductsPage() {
   const businessProducts = data?.data;
   const catalogProducts = allProductsData?.data ?? [];
 
+  // La categoría y la última actualización viven en el `BusinessProduct` (por
+  // negocio), no en el catálogo (`Product`). Mapeamos productId -> datos del
+  // negocio activo para mostrarlos en los detalles del catálogo. Ver
+  // docs/category.md.
+  const catalogBusinessInfoByProductId = useMemo(() => {
+    const map: Record<
+      string,
+      { categoryName: string | null; updatedAt: string | Date | null }
+    > = {};
+    for (const bp of businessProducts ?? []) {
+      map[bp.product.id] = {
+        categoryName: bp.category?.name ?? bp.product.category?.name ?? null,
+        updatedAt: bp.updatedAt ?? null,
+      };
+    }
+    return map;
+  }, [businessProducts]);
+
   const showBusinessInitialSkeleton = isLoading && !data;
   const showCatalogInitialSkeleton = allProductsLoading && !allProductsData;
 
@@ -107,6 +125,7 @@ export default function ProductsPage() {
             ) : (
               <TableOfOtherProducts
                 products={catalogProducts}
+                businessInfoByProductId={catalogBusinessInfoByProductId}
                 meta={
                   allProductsData?.meta ?? {
                     total: 0,
