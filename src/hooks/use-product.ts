@@ -12,6 +12,7 @@ import {
   edit,
   getAllProducts,
   getProductById,
+  importProducts,
   updateBusinessProductCategory,
   updateBusinessProductPrice,
 } from "@/lib/api/product";
@@ -19,6 +20,7 @@ import {
   CreateProductInBusinessProps,
   CreateProductProps,
   EditProductProps,
+  ImportProductsPayload,
 } from "@/lib/types/product";
 
 interface UseGetAllProductsParams {
@@ -115,6 +117,39 @@ export function useCreateProductInBusinessMutation() {
       queryClient.invalidateQueries({
         queryKey: ["stock-alerts", variables.businessId],
       });
+    },
+  });
+}
+
+/**
+ * Importación masiva de productos a un negocio. Invalida las mismas keys que la
+ * asignación individual para que catálogo, ventas, inventario y alertas se
+ * refresquen sin recargar. `dryRun` NO invalida (no persiste).
+ */
+export function useImportProductsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      businessId,
+      payload,
+      dryRun,
+    }: {
+      businessId: string;
+      payload: ImportProductsPayload;
+      dryRun?: boolean;
+    }) => importProducts(businessId, payload, dryRun),
+    onSuccess: (response, variables) => {
+      if (response.data.dryRun) return;
+      queryClient.invalidateQueries({
+        queryKey: ["all-product-of-my-businesses", variables.businessId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["current-inventory-by-business-id", variables.businessId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["stock-alerts", variables.businessId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["all-products"] });
     },
   });
 }
