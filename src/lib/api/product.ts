@@ -6,6 +6,8 @@ import {
   CreateProductResponse,
   EditProductProps,
   GetAllProductsResponse,
+  ImportProductsPayload,
+  ImportProductsResponse,
 } from "../types/product";
 import { businessRoutes } from "../routes/business";
 
@@ -103,6 +105,24 @@ export async function createInBusiness(
     },
   );
 
+  return data;
+}
+
+/**
+ * Importación masiva de productos a un negocio. Con `dryRun` el backend valida
+ * (categorías, duplicados, límite de plan) y devuelve los conteos proyectados
+ * sin persistir nada.
+ */
+export async function importProducts(
+  businessId: string,
+  payload: ImportProductsPayload,
+  dryRun = false,
+): Promise<ImportProductsResponse> {
+  const { data } = await apiClient.post<ImportProductsResponse>(
+    productRoutes.importProductsInBusiness(businessId),
+    payload,
+    { params: dryRun ? { dryRun: 1 } : undefined },
+  );
   return data;
 }
 

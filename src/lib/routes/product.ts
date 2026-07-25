@@ -6,6 +6,9 @@ export const productRoutes = {
   createProduct: `${BASIC_ROUTE}/product`,
   createProductInBusiness: (businessId: string) =>
     `${BASIC_ROUTE}/businesses/${businessId}/products`,
+  // Importación masiva de productos a un negocio (catálogo + a la venta).
+  importProductsInBusiness: (businessId: string) =>
+    `${BASIC_ROUTE}/businesses/${businessId}/products/bulk`,
   editProduct: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
   deleteProduct: (productId: string) => `${BASIC_ROUTE}/product/${productId}`,
   updateBusinessProductPrice: (businessProductId: string) =>
