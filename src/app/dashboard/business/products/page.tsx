@@ -7,7 +7,7 @@ import { useBusiness } from "@/context/business-context";
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
 import { useGetAllProductsQuery } from "@/hooks/use-product";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 import PriceHistoryButton from "@/components/products/price-history-button";
@@ -106,7 +106,13 @@ export default function ProductsPage() {
         <p className="text-muted-foreground">
           Consulta, actualiza, añade y elimina productos de tu negocio
         </p>
-        <div className="mt-4 mb-4 flex items-center justify-end">
+        <div className="mt-4 mb-4 flex items-center justify-end gap-2">
+          <Button asChild variant="outline">
+            <Link href="/dashboard/business/products/import">
+              <Upload data-icon="inline-start" />
+              Importar
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/dashboard/business/products/create">
               <Plus data-icon="inline-start" />

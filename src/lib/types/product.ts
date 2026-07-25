@@ -144,6 +144,64 @@ export type BusinessResponseForGetProductById = {
 
 }
 
+/* ── Importación masiva de productos ─────────────────────────────────────── */
+
+export type ImportTarget = "catalog" | "catalog+sale";
+
+/** Qué hacer con productos que ya están a la venta en el negocio. */
+export type ImportDuplicateStrategy = "skip" | "update";
+
+/** Una fila ya validada y lista para enviar al backend. */
+export type ImportProductItem = {
+    productName: string;
+    productDescription?: string;
+    productUnit: ProductUnit;
+    categoryName?: string;
+    price?: number;
+    entryPrice?: number;
+    /**
+     * Moneda del `entryPrice` (costo). `CUP` o ausente = sin conversión. El backend
+     * convierte a CUP con la tasa configurada del negocio. Ver docs/importacion-masiva-productos.md.
+     */
+    currency?: string;
+    stock?: number;
+    stockAlertThreshold?: number;
+};
+
+export type ImportProductsPayload = {
+    items: ImportProductItem[];
+    target: ImportTarget;
+    mode?: "strict" | "tolerant";
+    duplicateStrategy?: ImportDuplicateStrategy;
+    /** Registra la entrada de cada producto nuevo (costo × stock) como gasto. */
+    registerAsExpense?: boolean;
+};
+
+export type ImportSkippedRow = { row: number; productName: string; reason: string };
+export type ImportErrorRow = { row: number; productName: string; reason: string };
+
+export type ImportResult = {
+    dryRun: boolean;
+    target: ImportTarget;
+    totalRows: number;
+    productsCreated: number;
+    productsReused: number;
+    businessProductsCreated: number;
+    businessProductsUpdated: number;
+    businessProductsSkipped: number;
+    categoriesCreated: number;
+    expensesCreated: number;
+    planLimit: number | null;
+    remainingQuota: number | null;
+    skipped: ImportSkippedRow[];
+    errors: ImportErrorRow[];
+};
+
+export type ImportProductsResponse = {
+    message: string;
+    data: ImportResult;
+};
+
 export interface SalesProductInfoResponse {
     id: string;
     idsale?: string;
