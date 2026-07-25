@@ -49,8 +49,8 @@ export function ConsolidatedBalanceCard({
               </EmptyMedia>
               <EmptyTitle>Nada que consolidar</EmptyTitle>
               <EmptyDescription>
-                Inicializa los presupuestos de tus monedas para ver el total de
-                caja consolidado.
+                Cuando registres movimientos en alguna moneda verás aquí el total
+                de caja convertido a {BASE_CURRENCY}.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

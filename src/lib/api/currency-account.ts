@@ -3,7 +3,6 @@ import { currencyAccountRoutes } from "../routes/currency-account";
 import {
   CurrencyAccount,
   CurrencyBalanceResponse,
-  InitializeBudgetsProps,
 } from "../types/currency-account";
 
 export async function getCurrencyBalances(
@@ -21,16 +20,6 @@ export async function getCurrencyBalance(
 ): Promise<CurrencyBalanceResponse> {
   const { data } = await apiClient.get<CurrencyBalanceResponse>(
     currencyAccountRoutes.balance(businessId, currency),
-  );
-  return data;
-}
-
-export async function initializeBudgets(
-  props: InitializeBudgetsProps,
-): Promise<CurrencyAccount[]> {
-  const { data } = await apiClient.post<CurrencyAccount[]>(
-    currencyAccountRoutes.initialize,
-    props,
   );
   return data;
 }

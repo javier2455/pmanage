@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import type { DashboardSummaryExpense } from "@/lib/types/business";
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { RecentListSkeleton } from "./recent-list-skeleton";
 
 function formatRelativeTime(iso: string) {
     try {
@@ -16,9 +17,14 @@ function formatRelativeTime(iso: string) {
 
 type RecentExpensesTableProps = {
     expenses?: DashboardSummaryExpense[];
+    /**
+     * Sin esto, `expenses` indefinido durante la carga cae en la rama de estado
+     * vacío y la tarjeta afirma que no hay gastos antes de saberlo.
+     */
+    isLoading?: boolean;
 };
 
-export default function RecentExpensesTable({ expenses }: RecentExpensesTableProps) {
+export default function RecentExpensesTable({ expenses, isLoading = false }: RecentExpensesTableProps) {
     const rows = expenses ?? [];
 
     return (
@@ -34,7 +40,9 @@ export default function RecentExpensesTable({ expenses }: RecentExpensesTablePro
                 </Link>
             </CardHeader>
             <CardContent>
-                {rows.length === 0 ? (
+                {isLoading ? (
+                    <RecentListSkeleton />
+                ) : rows.length === 0 ? (
                     <p className="text-sm text-muted-foreground py-2">
                         Aún no hay datos que mostrar.
                     </p>

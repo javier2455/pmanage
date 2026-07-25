@@ -10,7 +10,15 @@ import { useDashboardSummary } from "@/hooks/use-business";
 export default function DashboardPage() {
 
   const { activeBusinessId } = useBusiness();
-  const { data: dashboardSummary } = useDashboardSummary(activeBusinessId ?? "");
+  const { data: dashboardSummary, isPending } = useDashboardSummary(
+    activeBusinessId ?? "",
+  );
+
+  // `useDashboardSummary` lleva `enabled: !!businessId`, y una query deshabilitada
+  // reporta `isLoading === false`. Mientras el contexto resuelve el negocio activo
+  // no hay ni datos ni carga en curso, así que hay que cubrir esa ventana a mano o
+  // las tarjetas se pintarían vacías (que es como decir "cero") antes de consultar.
+  const isLoadingSummary = isPending || !activeBusinessId;
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -31,6 +39,7 @@ export default function DashboardPage() {
           yesterday={dashboardSummary?.sales?.yesterday ?? []}
           percentageChange={dashboardSummary?.sales?.percentageChange ?? 0}
           count={dashboardSummary?.sales?.totalTransactions}
+          isLoading={isLoadingSummary}
         />
         <StatsCard
           variant="expenses"
@@ -39,13 +48,20 @@ export default function DashboardPage() {
           yesterday={dashboardSummary?.expenses?.yesterday ?? []}
           percentageChange={dashboardSummary?.expenses?.percentageChange ?? 0}
           count={dashboardSummary?.expenses?.totalCount}
+          isLoading={isLoadingSummary}
         />
         <CashBalanceWidget />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <RecentSalesTable sales={dashboardSummary?.lastFiveSales} />
-        <RecentExpensesTable expenses={dashboardSummary?.lastFiveExpenses} />
+        <RecentSalesTable
+          sales={dashboardSummary?.lastFiveSales}
+          isLoading={isLoadingSummary}
+        />
+        <RecentExpensesTable
+          expenses={dashboardSummary?.lastFiveExpenses}
+          isLoading={isLoadingSummary}
+        />
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { StatusBadge } from "@/components/generic/status-badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { RecentListSkeleton } from "./recent-list-skeleton";
 
 function formatRelativeTime(iso: string) {
     try {
@@ -18,9 +19,14 @@ function formatRelativeTime(iso: string) {
 
 type RecentSalesTableProps = {
     sales?: DashboardSummarySale[];
+    /**
+     * Sin esto, `sales` indefinido durante la carga cae en la rama de estado
+     * vacío y la tarjeta afirma que no hay ventas antes de saberlo.
+     */
+    isLoading?: boolean;
 };
 
-export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
+export default function RecentSalesTable({ sales, isLoading = false }: RecentSalesTableProps) {
     const rows = sales ?? [];
 
     return (
@@ -36,7 +42,9 @@ export default function RecentSalesTable({ sales }: RecentSalesTableProps) {
                 </Link>
             </CardHeader>
             <CardContent>
-                {rows.length === 0 ? (
+                {isLoading ? (
+                    <RecentListSkeleton />
+                ) : rows.length === 0 ? (
                     <p className="text-sm text-muted-foreground py-2">
                         Aún no hay datos que mostrar.
                     </p>

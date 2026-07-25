@@ -15,8 +15,14 @@ export default function CashBalanceWidget() {
   const { activeBusinessId } = useBusiness();
   const businessId = activeBusinessId ?? "";
 
-  const { data: accounts, isLoading } = useCurrencyBalances(businessId);
+  const { data: accounts, isPending } = useCurrencyBalances(businessId);
   const { data: exchangeRateData } = useExchangeRate(businessId);
+
+  // `useCurrencyBalances` lleva `enabled: !!businessId`, y una query deshabilitada
+  // reporta `isLoading === false`. Mientras el contexto resuelve el negocio activo
+  // había un instante en que se mostraba el estado vacío ("aún no hay cuentas")
+  // sin haber consultado todavía.
+  const isLoadingBalances = isPending || !businessId;
 
   const { totalBase, rows, hasUnconvertible } = consolidateBalances(
     accounts ?? [],
@@ -34,8 +40,11 @@ export default function CashBalanceWidget() {
         <Wallet className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        {isLoading && !accounts ? (
-          <Skeleton className="h-8 w-32" />
+        {isLoadingBalances && !accounts ? (
+          <>
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="mt-2 h-3 w-24" />
+          </>
         ) : hasAccounts ? (
           <>
             <div className="text-2xl font-bold text-card-foreground">
@@ -48,13 +57,14 @@ export default function CashBalanceWidget() {
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
+            Aún no hay movimientos en caja. Consulta tus{" "}
             <Link
               href="/dashboard/business/currency-accounts"
               className="underline-offset-2 hover:underline"
             >
-              Inicializa tus presupuestos
-            </Link>{" "}
-            para ver tu caja.
+              saldos por moneda
+            </Link>
+            .
           </p>
         )}
       </CardContent>

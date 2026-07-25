@@ -1,5 +1,6 @@
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Skeleton } from '../ui/skeleton'
 import { ArrowDownRight, ArrowUpRight, DollarSign, Minus, Receipt } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BASE_CURRENCY, formatMoney } from '@/lib/currency'
@@ -14,6 +15,12 @@ interface StatsCardProps {
   yesterday: DashboardCurrencyTotal[]
   percentageChange: number
   count?: number
+  /**
+   * Mientras la consulta no ha resuelto, `today`/`yesterday` llegan vacíos y son
+   * indistinguibles de "no hubo movimientos". Sin esta bandera la tarjeta pinta
+   * `0,00 CUP` y un `0.00%` de tendencia como si fueran datos reales.
+   */
+  isLoading?: boolean
 }
 
 function trendDirection(change: number, variant: StatsCardVariant) {
@@ -30,6 +37,7 @@ export default function StatsCard({
   yesterday,
   percentageChange,
   count,
+  isLoading = false,
 }: StatsCardProps) {
   const direction = trendDirection(percentageChange, variant)
   const isGood = direction === 'up-good' || direction === 'down-good'
@@ -56,7 +64,9 @@ export default function StatsCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Hoy</p>
-            {today.length === 0 ? (
+            {isLoading ? (
+              <Skeleton className="mt-1.5 h-7 w-32" />
+            ) : today.length === 0 ? (
               <div className="text-2xl font-bold text-card-foreground">
                 {formatMoney(0, BASE_CURRENCY)}
               </div>
@@ -73,20 +83,26 @@ export default function StatsCard({
               </div>
             )}
           </div>
-          <div
-            className={cn(
-              'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
-              trendClass,
-            )}
-          >
-            <TrendIcon className="h-3.5 w-3.5" />
-            <span>{formattedChange}</span>
-          </div>
+          {isLoading ? (
+            <Skeleton className="h-6 w-16 shrink-0 rounded-full" />
+          ) : (
+            <div
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-medium',
+                trendClass,
+              )}
+            >
+              <TrendIcon className="h-3.5 w-3.5" />
+              <span>{formattedChange}</span>
+            </div>
+          )}
         </div>
         <div className="mt-3 flex items-start justify-between border-t border-border pt-2">
           <span className="text-xs text-muted-foreground">Ayer</span>
           <div className="flex flex-col items-end gap-0.5">
-            {yesterday.length === 0 ? (
+            {isLoading ? (
+              <Skeleton className="h-5 w-24" />
+            ) : yesterday.length === 0 ? (
               <span className="text-sm font-medium text-card-foreground">
                 {formatMoney(0, BASE_CURRENCY)}
               </span>
@@ -102,7 +118,9 @@ export default function StatsCard({
             )}
           </div>
         </div>
-        {typeof count === 'number' ? (
+        {isLoading ? (
+          <Skeleton className="mt-2 h-4 w-24" />
+        ) : typeof count === 'number' ? (
           <p className="mt-2 text-xs text-muted-foreground">
             {count} {count === 1 ? 'transacción' : 'transacciones'}
           </p>

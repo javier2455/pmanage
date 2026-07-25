@@ -10,7 +10,6 @@ import { getAvailableCurrencies } from "@/lib/currency";
 import { mergeAccountsByCurrency } from "@/lib/cash-flow";
 import { BalancesTable } from "@/components/currency-account/balances-table";
 import { ConsolidatedBalanceCard } from "@/components/currency-account/consolidated-balance-card";
-import { InitializeBudgetsDialog } from "@/components/currency-account/initialize-budgets-dialog";
 import { TransactionsTable } from "@/components/currency-account/transactions-table";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 import {
@@ -67,7 +66,6 @@ export default function CurrencyAccountsPage() {
   // colisión de `key` en el consolidado. La causa raíz (código de moneda sin
   // unificar al escribir) se corrige en el backend.
   const mergedAccounts = mergeAccountsByCurrency(accounts ?? []);
-  const initializedCurrencies = mergedAccounts.map((a) => a.currency);
 
   if (isError) return <div>Error al cargar los saldos por moneda</div>;
 
@@ -81,17 +79,9 @@ export default function CurrencyAccountsPage() {
             Saldos por moneda
           </h1>
           <p className="text-muted-foreground">
-            Consulta el saldo disponible de cada moneda y establece sus
-            presupuestos iniciales
+            Consulta el saldo disponible de cada moneda y el movimiento de tu caja
           </p>
         </div>
-        {!!businessId && (
-          <InitializeBudgetsDialog
-            businessId={businessId}
-            availableCurrencies={availableCurrencies}
-            initializedCurrencies={initializedCurrencies}
-          />
-        )}
       </div>
 
       {showInitialSkeleton ? (

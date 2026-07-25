@@ -22,15 +22,14 @@ import {
 import { currencyLabel, formatMoney } from "@/lib/currency";
 import type { CurrencyAccount } from "@/lib/types/currency-account";
 
-/** Umbral relativo bajo el cual se considera el saldo "bajo" (10% del presupuesto). */
-const LOW_BALANCE_RATIO = 0.1;
-
-function balanceStatus(balance: number, budget: number) {
+/**
+ * El estado depende solo del saldo. Antes existía un tercer nivel ("Saldo bajo")
+ * calculado contra el presupuesto inicial; al retirarse esa columna de la vista,
+ * ese estado quedaba justificado por un dato que el usuario ya no puede ver.
+ */
+function balanceStatus(balance: number) {
   if (balance <= 0) {
     return { label: "Sin saldo", variant: "destructive" as const };
-  }
-  if (budget > 0 && balance < budget * LOW_BALANCE_RATIO) {
-    return { label: "Saldo bajo", variant: "secondary" as const };
   }
   return { label: "Disponible", variant: "outline" as const };
 }
@@ -51,8 +50,8 @@ export function BalancesTable({ accounts }: BalancesTableProps) {
               </EmptyMedia>
               <EmptyTitle>Sin cuentas por moneda</EmptyTitle>
               <EmptyDescription>
-                Aún no has inicializado presupuestos. Usa “Inicializar
-                presupuestos” para establecer el saldo de cada moneda.
+                La cuenta de cada moneda se crea sola con el primer movimiento
+                que la use: una venta, un gasto o una entrada de inventario.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -64,15 +63,12 @@ export function BalancesTable({ accounts }: BalancesTableProps) {
   return (
     <Card>
       <CardContent className="p-0">
-        <Table className="min-w-[560px]">
+        <Table className="min-w-100">
           <TableHeader>
             <TableRow>
               <TableHead className="px-4 py-3 text-foreground">Moneda</TableHead>
               <TableHead className="px-4 py-3 text-right text-foreground">
                 Saldo actual
-              </TableHead>
-              <TableHead className="px-4 py-3 text-right text-foreground">
-                Presupuesto inicial
               </TableHead>
               <TableHead className="px-4 py-3 text-foreground">Estado</TableHead>
             </TableRow>
@@ -80,8 +76,7 @@ export function BalancesTable({ accounts }: BalancesTableProps) {
           <TableBody>
             {accounts.map((account) => {
               const balance = Number(account.currentBalance);
-              const budget = Number(account.initialBudget);
-              const status = balanceStatus(balance, budget);
+              const status = balanceStatus(balance);
               return (
                 <TableRow key={account.id}>
                   <TableCell className="px-4 py-3 font-medium text-foreground">
@@ -89,9 +84,6 @@ export function BalancesTable({ accounts }: BalancesTableProps) {
                   </TableCell>
                   <TableCell className="px-4 py-3 text-right text-foreground">
                     {formatMoney(balance, account.currency)}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-right text-muted-foreground">
-                    {formatMoney(budget, account.currency)}
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     <Badge variant={status.variant}>{status.label}</Badge>
