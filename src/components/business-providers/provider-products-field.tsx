@@ -40,8 +40,8 @@ export function ProviderProductsField({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <Label className="text-card-foreground">Productos suministrados</Label>
           <p className="text-xs text-muted-foreground">
             Opcional. Asocia los productos que este proveedor suministra y su precio de compra.
@@ -51,6 +51,7 @@ export function ProviderProductsField({
           type="button"
           size="sm"
           variant="outline"
+          className="self-start sm:self-auto"
           onClick={() => append({ productId: "", price: undefined })}
         >
           <Plus className="mr-1.5 h-4 w-4" />
@@ -71,9 +72,9 @@ export function ProviderProductsField({
             return (
               <div
                 key={field.id}
-                className="grid grid-cols-1 gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-[1fr_160px_auto]"
+                className="grid grid-cols-1 gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_160px_auto]"
               >
-                <div className="flex flex-col gap-1.5">
+                <div className="flex min-w-0 flex-col gap-1.5">
                   <Label
                     htmlFor={`provider-product-${index}`}
                     className="text-xs text-muted-foreground"
@@ -130,7 +131,7 @@ export function ProviderProductsField({
                   )}
                 </div>
 
-                <div className="flex flex-col gap-1.5">
+                <div className="flex min-w-0 flex-col gap-1.5">
                   <Label
                     htmlFor={`provider-product-price-${index}`}
                     className="text-xs text-muted-foreground"

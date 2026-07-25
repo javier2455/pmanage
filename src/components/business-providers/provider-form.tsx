@@ -179,8 +179,12 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
         })
       })}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2 sm:col-span-2">
+      {/* `grid-cols-1` explícito: sin él la columna implícita es `auto` y se
+          estira al ancho intrínseco del campo más grande, sacando todos los
+          inputs fuera de la card en móvil. `min-w-0` deja que cada campo se
+          encoja hasta el ancho real disponible. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-2 sm:col-span-2">
           <Label htmlFor="provider-name" className="text-card-foreground">
             Nombre del proveedor <span className="text-destructive">*</span>
           </Label>
@@ -195,7 +199,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 sm:col-span-2">
+        <div className="flex min-w-0 flex-col gap-2 sm:col-span-2">
           <Label htmlFor="provider-description" className="text-card-foreground">
             Descripción
           </Label>
@@ -214,7 +218,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="provider-contact" className="text-card-foreground">
             Persona de contacto
           </Label>
@@ -231,7 +235,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="provider-phone" className="text-card-foreground">
             Teléfono
           </Label>
@@ -252,7 +256,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 sm:col-span-2">
+        <div className="flex min-w-0 flex-col gap-2 sm:col-span-2">
           <Label htmlFor="provider-email" className="text-card-foreground">
             Email
           </Label>

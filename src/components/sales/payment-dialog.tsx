@@ -259,7 +259,9 @@ export function PaymentDialog({
       <DialogContent className="flex max-h-[min(90vh,100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[480px] md:max-w-[560px]">
         {/* Cabecera fija: estado + resumen */}
         <DialogHeader className="shrink-0 gap-3 border-b border-border p-6">
-          <div className="flex items-center justify-between gap-3">
+          {/* `pr-8` reserva el espacio del botón de cerrar (absolute top-4
+              right-4) para que el badge de estado no quede debajo. */}
+          <div className="flex items-center justify-between gap-3 pr-8">
             <DialogTitle className="text-card-foreground">
               Registrar pago
             </DialogTitle>

@@ -11,18 +11,38 @@ import {
 } from "@/components/ui/tooltip";
 import { ProBadge } from "@/components/ui/pro-badge";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
+import { cn } from "@/lib/utils";
 
 const PRICE_HISTORY_HREF = "/dashboard/business/products/price-history";
 
-export default function PriceHistoryButton() {
+/**
+ * En móvil el botón comparte fila con "Asignar producto", así que la etiqueta se
+ * acorta para que quepa sin desbordar ni truncarse.
+ */
+function PriceHistoryLabel() {
+  return (
+    <>
+      <span className="min-w-0 truncate sm:hidden">Historial</span>
+      <span className="hidden sm:inline">Historial de precios</span>
+    </>
+  );
+}
+
+interface PriceHistoryButtonProps {
+  className?: string;
+}
+
+export default function PriceHistoryButton({
+  className,
+}: PriceHistoryButtonProps) {
   const { isProPlan } = useUserRoleAndPlan();
 
   if (isProPlan) {
     return (
-      <Button asChild variant="outline">
+      <Button asChild variant="outline" className={className}>
         <Link href={PRICE_HISTORY_HREF}>
           <History data-icon="inline-start" />
-          Historial de precios
+          <PriceHistoryLabel />
         </Link>
       </Button>
     );
@@ -32,16 +52,16 @@ export default function PriceHistoryButton() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex">
+          <span className={cn("inline-flex", className)}>
             <Button
               type="button"
               variant="outline"
               disabled
               aria-disabled="true"
-              className="cursor-not-allowed"
+              className="w-full cursor-not-allowed"
             >
               <History data-icon="inline-start" />
-              Historial de precios
+              <PriceHistoryLabel />
               <ProBadge className="ml-2" />
             </Button>
           </span>

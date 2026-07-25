@@ -125,7 +125,7 @@ const CATEGORIES: NotificationCategory[] = [
     items: [
       {
         key: "lowStock",
-        label: "Inevntario bajo",
+        label: "Inventario bajo",
         description: "Aviso cuando un producto se acerca a su umbral.",
       },
       {
@@ -279,15 +279,16 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                     {category.title}
                   </p>
 
-                  {/* Column headers */}
-                  <div className="flex items-center gap-3">
+                  {/* Column headers (solo sm+: en móvil cada canal lleva su
+                      propia etiqueta junto al check) */}
+                  <div className="hidden items-center gap-3 sm:flex">
                     <div className="flex-1" />
                     {CHANNELS.map((channel) => {
                       const Icon = channel.icon;
                       return (
                         <span
                           key={channel.key}
-                          className="flex w-20 flex-col items-center justify-center gap-1 text-xs font-medium text-foreground"
+                          className="flex w-20 shrink-0 flex-col items-center justify-center gap-1 text-xs font-medium text-foreground"
                         >
                           <span className="flex items-center gap-1">
                             <Icon className="h-3.5 w-3.5" />
@@ -309,11 +310,14 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                     })}
                   </div>
 
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-4 sm:gap-3">
                     {category.items.map((item) => (
                       <div key={item.key} className="flex flex-col gap-1">
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-1 flex-col">
+                        {/* Móvil: nombre y descripción a todo el ancho y los
+                            canales debajo, cada uno con su etiqueta. sm+:
+                            `contents` devuelve los checks a la matriz. */}
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                          <div className="flex min-w-0 flex-1 flex-col">
                             <span className="text-sm font-medium text-card-foreground">
                               {item.label}
                             </span>
@@ -321,27 +325,53 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                               {item.description}
                             </span>
                           </div>
-                          {CHANNELS.map((channel) => {
-                            const disabled = isChannelDisabled(channel);
-                            return (
-                              <div
-                                key={channel.key}
-                                className={`flex w-20 justify-center ${
-                                  disabled ? "opacity-60" : ""
-                                }`}
-                              >
-                                <Checkbox
-                                  className={CHECKBOX_DARK}
-                                  aria-label={`${item.label} por ${channel.label}`}
-                                  checked={matrix[item.key][channel.key]}
-                                  disabled={disabled}
-                                  onCheckedChange={() =>
-                                    toggleChannel(item.key, channel.key)
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
+                          <div className="flex flex-wrap items-center gap-2 sm:contents">
+                            {CHANNELS.map((channel) => {
+                              const Icon = channel.icon;
+                              const disabled = isChannelDisabled(channel);
+                              const checkboxId = `${item.key}-${channel.key}`;
+                              return (
+                                <label
+                                  key={channel.key}
+                                  htmlFor={checkboxId}
+                                  className={cn(
+                                    "flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground",
+                                    "sm:w-20 sm:shrink-0 sm:justify-center sm:border-0 sm:px-0 sm:py-0",
+                                    disabled && "opacity-60",
+                                  )}
+                                >
+                                  <Checkbox
+                                    id={checkboxId}
+                                    className={CHECKBOX_DARK}
+                                    aria-label={`${item.label} por ${channel.label}`}
+                                    checked={matrix[item.key][channel.key]}
+                                    disabled={disabled}
+                                    onCheckedChange={() =>
+                                      toggleChannel(item.key, channel.key)
+                                    }
+                                  />
+                                  <span className="flex items-center gap-1 sm:hidden">
+                                    <Icon className="h-3.5 w-3.5" />
+                                    {channel.label}
+                                    {channel.pro &&
+                                      !channel.comingSoon &&
+                                      !isProPlan && <ProBadge className="ml-0" />}
+                                    {channel.comingSoon && (
+                                      <span
+                                        className={cn(
+                                          PRO_STYLE.className,
+                                          "whitespace-nowrap",
+                                        )}
+                                      >
+                                        <Clock className="size-2.5 shrink-0" />
+                                        Próximamente
+                                      </span>
+                                    )}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
                         {item.key === "lowStock" &&
                           CHANNELS.some(

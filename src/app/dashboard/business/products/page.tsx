@@ -106,7 +106,7 @@ export default function ProductsPage() {
         <p className="text-muted-foreground">
           Consulta, actualiza, añade y elimina productos de tu negocio
         </p>
-        <div className="mb-4 flex items-center justify-end">
+        <div className="mt-4 mb-4 flex items-center justify-end">
           <Button asChild>
             <Link href="/dashboard/business/products/create">
               <Plus data-icon="inline-start" />
@@ -150,9 +150,11 @@ export default function ProductsPage() {
             <p className="text-muted-foreground">
               Consulta, actualiza, añade y elimina productos de tu negocio
             </p>
-            <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-              <PriceHistoryButton />
-              <Button asChild>
+            {/* En móvil los dos botones comparten fila (mitad y mitad) en vez
+                de apilarse; en sm+ vuelven a alinearse a la derecha. */}
+            <div className="mt-4 mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+              <PriceHistoryButton className="w-full sm:w-auto" />
+              <Button asChild className="w-full sm:w-auto">
                 <Link href="/dashboard/business/products/asign-to-business">
                   <Plus data-icon="inline-start" />
                   Asignar producto

@@ -99,7 +99,10 @@ export default function WorkersPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
+        {/* En móvil la lista se limita al ancho disponible y scrollea en
+            horizontal (mismo patrón que los tabs de detalles de negocio): con
+            `w-fit` los tres tabs se salían de la pantalla. */}
+        <TabsList className="w-full max-w-full justify-start overflow-x-auto overflow-y-hidden sm:w-fit">
           <TabsTrigger value="workers" className="cursor-pointer">
             Trabajadores
           </TabsTrigger>
@@ -115,7 +118,10 @@ export default function WorkersPage() {
             ) : null}
           </TabsTrigger>
           <TabsTrigger value="metrics" className="cursor-pointer">
-            Desempeño de ventas
+            {/* Etiqueta corta en móvil: el nombre completo hacía que los tres
+                tabs no cupieran en pantalla. */}
+            <span className="sm:hidden">Desempeño</span>
+            <span className="hidden sm:inline">Desempeño de ventas</span>
           </TabsTrigger>
         </TabsList>
 
