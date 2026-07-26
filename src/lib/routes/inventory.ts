@@ -11,6 +11,16 @@ export const inventoryRoutes = {
     `${BASIC_ROUTE}/inventory/business/${businessId}/history`,
   getProductInventoryHistory: (businessId: string, productId: string) =>
     `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/history`,
+  /**
+   * Exportaciones del historial (plan Pro, validado en el servidor).
+   *
+   * Un único par de endpoints cubre las dos vistas: el filtro por producto va
+   * como query param, no en la ruta.
+   */
+  exportInventoryHistoryToPdf: (businessId: string) =>
+    `${BASIC_ROUTE}/inventory/business/${businessId}/history/pdf`,
+  exportInventoryHistoryToExcel: (businessId: string) =>
+    `${BASIC_ROUTE}/inventory/business/${businessId}/history/excel`,
 };
 
 /**

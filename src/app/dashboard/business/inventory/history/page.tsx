@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useBusiness } from "@/context/business-context";
 import {
+  exportInventoryHistoryToExcel,
+  exportInventoryHistoryToPdf,
   getInventoryHistoryByBusinessId,
   getProductInventoryHistory,
 } from "@/lib/api/inventory";
@@ -12,6 +14,7 @@ import {
   useInventoryHistoryByBusinessId,
   useProductInventoryHistory,
 } from "@/hooks/use-inventory";
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import InventoryHistoryTimeline from "@/components/inventory/inventory-history-timeline";
 import InventoryHistoryFilters, {
   ALL_ACTION_TYPES,
@@ -19,9 +22,13 @@ import InventoryHistoryFilters, {
 } from "@/components/inventory/inventory-history-filters";
 import { TimelineSkeleton } from "@/components/inventory/timeline-skeleton";
 import {
+  EXPORT_FILE_EXTENSION,
   EXPORT_ROW_LIMIT,
   downloadInventoryHistoryCsv,
+  type InventoryHistoryExportFormat,
 } from "@/lib/inventory-history-export";
+import { downloadBlob } from "@/lib/download";
+import { mapCurrencyErrorFromBlob } from "@/lib/currency-errors";
 import { toastError, toastSuccess } from "@/lib/toast";
 import type { BusinessWithProducts } from "@/lib/types/business";
 
@@ -29,6 +36,7 @@ const DEFAULT_LIMIT = 10;
 
 export default function InventoryHistoryPage() {
   const { activeBusinessId } = useBusiness();
+  const { isProPlan } = useUserRoleAndPlan();
   const businessId = activeBusinessId ?? "";
 
   const [page, setPage] = useState(1);
@@ -91,55 +99,114 @@ export default function InventoryHistoryPage() {
     resetToFirstPage();
   }
 
-  async function handleExport() {
+  /** Nombre de archivo, con el producto cuando la vista está acotada a uno. */
+  function exportFilename(format: InventoryHistoryExportFormat) {
+    const suffix = isProductView
+      ? `-${selectedProduct.product.name.replace(/\s+/g, "-").toLowerCase()}`
+      : "";
+    return `historial-inventario${suffix}.${EXPORT_FILE_EXTENSION[format]}`;
+  }
+
+  /**
+   * El CSV se arma en el navegador con los movimientos ya paginados: la vista
+   * los reconsulta con un límite alto y `papaparse` hace el resto.
+   */
+  async function exportCsv() {
+    const response = isProductView
+      ? await getProductInventoryHistory({
+          businessId,
+          productId,
+          page: 1,
+          limit: EXPORT_ROW_LIMIT,
+          include: "all",
+          ...queryFilters,
+        })
+      : await getInventoryHistoryByBusinessId({
+          businessId,
+          page: 1,
+          limit: EXPORT_ROW_LIMIT,
+          ...queryFilters,
+        });
+
+    const entries = response.data ?? [];
+    if (entries.length === 0) {
+      toastError({
+        title: "Nada que exportar",
+        description: "Ningún movimiento coincide con los filtros aplicados.",
+      });
+      return;
+    }
+
+    downloadInventoryHistoryCsv(entries, exportFilename("csv"));
+
+    // El export está acotado: decirlo explícitamente evita que un archivo
+    // recortado se lea como el historial completo.
+    const total = response.meta?.total ?? entries.length;
+    toastSuccess({
+      title: "Historial exportado",
+      description:
+        total > entries.length
+          ? `Se exportaron los ${entries.length} movimientos más recientes de ${total}. Acota el rango de fechas para incluir el resto.`
+          : `${entries.length} ${entries.length === 1 ? "movimiento exportado" : "movimientos exportados"}.`,
+    });
+  }
+
+  /**
+   * Excel y PDF los genera el backend, que aplica el branding de Negora y
+   * comprueba el plan Pro en servidor. El archivo indica en su cabecera si
+   * quedó recortado, así que aquí basta con descargarlo.
+   */
+  async function exportServerFile(format: "xlsx" | "pdf") {
+    const params = {
+      businessId,
+      ...(isProductView ? { productId } : {}),
+      ...queryFilters,
+    };
+
+    const blob =
+      format === "pdf"
+        ? await exportInventoryHistoryToPdf(params)
+        : await exportInventoryHistoryToExcel(params);
+
+    downloadBlob(blob, exportFilename(format));
+
+    toastSuccess({
+      title: "Historial exportado",
+      description:
+        format === "pdf"
+          ? "El PDF se ha descargado."
+          : "El archivo de Excel se ha descargado.",
+    });
+  }
+
+  async function handleExport(format: InventoryHistoryExportFormat) {
+    // El servidor es quien decide, pero comprobarlo aquí evita una petición
+    // condenada al 403 y da un mensaje más claro que el del guard.
+    if (format !== "csv" && !isProPlan) {
+      toastError({
+        title: "Disponible en plan Pro",
+        description:
+          "Mejora tu plan para exportar el historial a Excel o PDF. El CSV sigue disponible.",
+      });
+      return;
+    }
+
     setIsExporting(true);
     try {
-      // La vista está paginada, así que se reconsulta con los mismos filtros y
-      // un límite alto en vez de exportar solo la página visible.
-      const response = isProductView
-        ? await getProductInventoryHistory({
-            businessId,
-            productId,
-            page: 1,
-            limit: EXPORT_ROW_LIMIT,
-            include: "all",
-            ...queryFilters,
-          })
-        : await getInventoryHistoryByBusinessId({
-            businessId,
-            page: 1,
-            limit: EXPORT_ROW_LIMIT,
-            ...queryFilters,
-          });
-
-      const entries = response.data ?? [];
-      if (entries.length === 0) {
-        toastError({
-          title: "Nada que exportar",
-          description: "Ningún movimiento coincide con los filtros aplicados.",
-        });
-        return;
+      if (format === "csv") {
+        await exportCsv();
+      } else {
+        await exportServerFile(format);
       }
-
-      const suffix = isProductView
-        ? `-${selectedProduct.product.name.replace(/\s+/g, "-").toLowerCase()}`
-        : "";
-      downloadInventoryHistoryCsv(entries, `historial-inventario${suffix}.csv`);
-
-      // El export está acotado: decirlo explícitamente evita que un archivo
-      // recortado se lea como el historial completo.
-      const total = response.meta?.total ?? entries.length;
-      toastSuccess({
-        title: "Historial exportado",
-        description:
-          total > entries.length
-            ? `Se exportaron los ${entries.length} movimientos más recientes de ${total}. Acota el rango de fechas para incluir el resto.`
-            : `${entries.length} ${entries.length === 1 ? "movimiento exportado" : "movimientos exportados"}.`,
-      });
-    } catch {
+    } catch (error) {
+      // Los exports viajan como Blob, así que un error JSON del backend (403 de
+      // plan, 404 de producto) llega sin parsear y hay que abrirlo a mano.
       toastError({
         title: "No se pudo exportar",
-        description: "Vuelve a intentarlo en unos segundos.",
+        description: await mapCurrencyErrorFromBlob(
+          error,
+          "Vuelve a intentarlo en unos segundos.",
+        ),
       });
     } finally {
       setIsExporting(false);

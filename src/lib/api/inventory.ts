@@ -92,6 +92,50 @@ export async function getProductInventoryHistory({
     return data;
 }
 
+interface InventoryHistoryExportParams extends InventoryHistoryFilters {
+    businessId: string;
+    /** Acota la exportación a un producto; se omite para todo el negocio. */
+    productId?: string;
+}
+
+/** Params comunes a las dos exportaciones. */
+function exportParams({ productId, ...filters }: Omit<InventoryHistoryExportParams, "businessId">) {
+    return {
+        ...(productId ? { productId } : {}),
+        ...historyFilterParams(filters),
+    };
+}
+
+/**
+ * PDF del historial generado por el backend.
+ *
+ * Devuelve el binario tal cual: el servidor es quien decide el formato y quien
+ * comprueba el plan Pro, así que un usuario Free recibe un 403 aquí en vez de
+ * un archivo.
+ */
+export async function exportInventoryHistoryToPdf({
+    businessId,
+    ...rest
+}: InventoryHistoryExportParams): Promise<Blob> {
+    const { data } = await apiClient.get<Blob>(
+        inventoryRoutes.exportInventoryHistoryToPdf(businessId),
+        { params: exportParams(rest), responseType: "blob" },
+    );
+    return data;
+}
+
+/** Excel (.xlsx) del historial generado por el backend. Mismas condiciones. */
+export async function exportInventoryHistoryToExcel({
+    businessId,
+    ...rest
+}: InventoryHistoryExportParams): Promise<Blob> {
+    const { data } = await apiClient.get<Blob>(
+        inventoryRoutes.exportInventoryHistoryToExcel(businessId),
+        { params: exportParams(rest), responseType: "blob" },
+    );
+    return data;
+}
+
 export async function addStock(credentials: AddStockToProductProps): Promise<{ message: string }> {
     const { quantity, entryPrice, description, providerId, currency, exchangeRateApplied, registerAsExpense } =
         credentials;

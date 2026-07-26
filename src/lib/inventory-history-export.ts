@@ -9,13 +9,28 @@ import {
 } from "@/lib/types/inventory";
 
 /**
- * Tope de filas de una exportación. El endpoint pagina, así que exportar
- * significa volver a pedirlo con un límite alto; este número acota la petición
- * para no traerse un historial de años enteros de una vez. Cuando se alcanza,
- * la interfaz avisa de que el archivo va recortado en vez de dar a entender que
- * contiene todo.
+ * Tope de filas del CSV. El endpoint pagina, así que exportar significa volver
+ * a pedirlo con un límite alto; este número acota la petición para no traerse
+ * un historial de años enteros de una vez. Cuando se alcanza, la interfaz avisa
+ * de que el archivo va recortado en vez de dar a entender que contiene todo.
+ *
+ * El PDF y el Excel no pasan por aquí: los genera el backend, que aplica su
+ * propio tope (`INVENTORY_HISTORY_EXPORT_LIMIT`).
  */
 export const EXPORT_ROW_LIMIT = 1000;
+
+/** Formatos ofrecidos por el menú "Exportar". */
+export type InventoryHistoryExportFormat = "csv" | "xlsx" | "pdf";
+
+/** Extensión (y sufijo de nombre de archivo) de cada formato. */
+export const EXPORT_FILE_EXTENSION: Record<
+  InventoryHistoryExportFormat,
+  string
+> = {
+  csv: "csv",
+  xlsx: "xlsx",
+  pdf: "pdf",
+};
 
 /** Fecha y hora locales en columnas separadas, para poder ordenar en Excel. */
 function splitTimestamp(iso: string): { date: string; time: string } {

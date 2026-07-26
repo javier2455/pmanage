@@ -1,9 +1,16 @@
 "use client";
 
-import { Download } from "lucide-react";
+import {
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  FileType2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { ProBadge } from "@/components/ui/pro-badge";
 import {
   Combobox,
   ComboboxCollection,
@@ -14,6 +21,14 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,8 +37,10 @@ import {
 } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/analytics/date-range-picker";
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
+import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import { fromLocalDateString, toLocalDateString } from "@/lib/date-range";
 import type { BusinessWithProducts } from "@/lib/types/business";
+import type { InventoryHistoryExportFormat } from "@/lib/inventory-history-export";
 import {
   INVENTORY_ACTION_TYPE_OPTIONS,
   inventoryActionTypeLabels,
@@ -47,7 +64,7 @@ interface InventoryHistoryFiltersProps {
   onProductChange: (product: BusinessWithProducts | null) => void;
   filters: InventoryHistoryFilterState;
   onFiltersChange: (filters: InventoryHistoryFilterState) => void;
-  onExport: () => void;
+  onExport: (format: InventoryHistoryExportFormat) => void;
   isExporting: boolean;
   canExport: boolean;
 }
@@ -63,6 +80,7 @@ export default function InventoryHistoryFilters({
   canExport,
 }: InventoryHistoryFiltersProps) {
   const { data, isLoading } = useAllProductOfMyBusinesses(businessId);
+  const { isProPlan } = useUserRoleAndPlan();
   const products: BusinessWithProducts[] = data?.data ?? [];
 
   const productPlaceholder = isLoading
@@ -187,17 +205,56 @@ export default function InventoryHistoryFilters({
           />
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onExport}
-          disabled={isExporting || !canExport}
-          className="w-fit"
-        >
-          <Download data-icon="inline-start" />
-          {isExporting ? "Exportando…" : "Exportar CSV"}
-        </Button>
+        {/* CSV sigue abierto a todos los planes: era la exportación que ya
+            existía y quitarla sería una regresión. Excel y PDF, que son los
+            formatos nuevos, quedan reservados al plan Pro. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isExporting || !canExport}
+              className="w-fit"
+            >
+              <Download data-icon="inline-start" />
+              {isExporting ? "Exportando…" : "Exportar"}
+              <ChevronDown className="opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuItem onSelect={() => onExport("csv")}>
+              <FileText />
+              CSV (.csv)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!isProPlan}
+              onSelect={() => onExport("xlsx")}
+            >
+              <FileSpreadsheet className="text-emerald-600 dark:text-emerald-500" />
+              Excel (.xlsx)
+              {!isProPlan && <ProBadge />}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!isProPlan}
+              onSelect={() => onExport("pdf")}
+            >
+              <FileType2 className="text-red-600 dark:text-red-500" />
+              PDF (.pdf)
+              {!isProPlan && <ProBadge />}
+            </DropdownMenuItem>
+            {/* Un item deshabilitado no dispara hover, así que el motivo no
+                cabe en un tooltip: va como nota al pie del menú. */}
+            {!isProPlan && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  Excel y PDF están disponibles en el plan Pro.
+                </DropdownMenuLabel>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
