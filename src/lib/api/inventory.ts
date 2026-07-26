@@ -13,9 +13,33 @@ interface PaginatedByBusiness {
     limit?: number;
 }
 
-interface ProductInventoryHistoryParams extends PaginatedByBusiness {
+interface InventoryHistoryFilters {
+    /** Fecha de inicio en formato `yyyy-MM-dd` (día local completo). */
+    startDate?: string;
+    /** Fecha de fin en formato `yyyy-MM-dd`, inclusive. */
+    endDate?: string;
+    /** Uno o varios tipos de movimiento separados por comas. */
+    actionType?: string;
+}
+
+interface BusinessInventoryHistoryParams
+    extends PaginatedByBusiness,
+        InventoryHistoryFilters {}
+
+interface ProductInventoryHistoryParams
+    extends PaginatedByBusiness,
+        InventoryHistoryFilters {
     productId: string;
     include?: InventoryHistoryInclude;
+}
+
+/** Omite las claves vacías para no mandar `?startDate=` sin valor. */
+function historyFilterParams(filters: InventoryHistoryFilters) {
+    return {
+        ...(filters.startDate ? { startDate: filters.startDate } : {}),
+        ...(filters.endDate ? { endDate: filters.endDate } : {}),
+        ...(filters.actionType ? { actionType: filters.actionType } : {}),
+    };
 }
 
 export async function getCurrentInventoryByBusinessId({
@@ -34,10 +58,14 @@ export async function getInventoryHistoryByBusinessId({
     businessId,
     page,
     limit,
-}: PaginatedByBusiness): Promise<InventoryHistoryResponse> {
+    ...filters
+}: BusinessInventoryHistoryParams): Promise<InventoryHistoryResponse> {
+    // Antes esta llamada mandaba `stockIncrease: true` fijo, así que la vista de
+    // negocio solo podía enseñar entradas: las ventas, mermas y ajustes existían
+    // en la base de datos pero eran inalcanzables sin elegir un producto.
     const { data } = await apiClient.get<InventoryHistoryResponse>(
         inventoryRoutes.getInventoryByBusinessId(businessId),
-        { params: { page, limit, stockIncrease: true } },
+        { params: { page, limit, ...historyFilterParams(filters) } },
     );
     return data;
 }
@@ -48,10 +76,18 @@ export async function getProductInventoryHistory({
     page,
     limit,
     include,
+    ...filters
 }: ProductInventoryHistoryParams): Promise<InventoryHistoryResponse> {
     const { data } = await apiClient.get<InventoryHistoryResponse>(
         inventoryRoutes.getProductInventoryHistory(businessId, productId),
-        { params: { page, limit, ...(include ? { include } : {}) } },
+        {
+            params: {
+                page,
+                limit,
+                ...(include ? { include } : {}),
+                ...historyFilterParams(filters),
+            },
+        },
     );
     return data;
 }

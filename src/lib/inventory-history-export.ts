@@ -1,0 +1,77 @@
+import Papa from "papaparse";
+
+import { downloadBlob } from "@/lib/download";
+import { formatAmount, currencyLabel } from "@/lib/currency";
+import {
+  inventoryActionTypeLabels,
+  type InventoryActionType,
+  type InventoryEntry,
+} from "@/lib/types/inventory";
+
+/**
+ * Tope de filas de una exportación. El endpoint pagina, así que exportar
+ * significa volver a pedirlo con un límite alto; este número acota la petición
+ * para no traerse un historial de años enteros de una vez. Cuando se alcanza,
+ * la interfaz avisa de que el archivo va recortado en vez de dar a entender que
+ * contiene todo.
+ */
+export const EXPORT_ROW_LIMIT = 1000;
+
+/** Fecha y hora locales en columnas separadas, para poder ordenar en Excel. */
+function splitTimestamp(iso: string): { date: string; time: string } {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return { date: iso, time: "" };
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const hours = String(parsed.getHours()).padStart(2, "0");
+  const minutes = String(parsed.getMinutes()).padStart(2, "0");
+
+  return { date: `${year}-${month}-${day}`, time: `${hours}:${minutes}` };
+}
+
+function actionTypeLabel(actionType: string): string {
+  return (
+    inventoryActionTypeLabels[actionType as InventoryActionType] ?? actionType
+  );
+}
+
+/** Convierte los movimientos a las filas del CSV, ya con cabeceras legibles. */
+export function toInventoryHistoryRows(entries: InventoryEntry[]) {
+  return entries.map((entry) => {
+    const { date, time } = splitTimestamp(entry.createdAt);
+    return {
+      Fecha: date,
+      Hora: time,
+      Producto: entry.product?.name ?? "",
+      Movimiento: actionTypeLabel(entry.actionType),
+      Cantidad: entry.quantity ?? "",
+      "Stock anterior": entry.previousStock ?? "",
+      "Stock nuevo": entry.newStock ?? "",
+      "Precio de adquisición": entry.entryPrice
+        ? formatAmount(Number(entry.entryPrice))
+        : "",
+      Moneda: entry.currency ? currencyLabel(entry.currency) : "",
+      Proveedor: entry.supplier ?? "",
+      Descripción: entry.description ?? "",
+    };
+  });
+}
+
+/**
+ * Genera y descarga el CSV del historial.
+ *
+ * Se antepone un BOM porque Excel, sin él, abre el archivo en la codificación
+ * del sistema y destroza los acentos y la ñ de los nombres de producto.
+ */
+export function downloadInventoryHistoryCsv(
+  entries: InventoryEntry[],
+  filename: string,
+) {
+  const csv = Papa.unparse(toInventoryHistoryRows(entries));
+  const blob = new Blob([`﻿${csv}`], {
+    type: "text/csv;charset=utf-8;",
+  });
+  downloadBlob(blob, filename);
+}

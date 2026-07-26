@@ -37,6 +37,18 @@ export const inventoryActionTypeStyle: Record<
     badgeClassName:
       "border border-destructive/40 bg-destructive/10 text-destructive dark:text-red-400",
   },
+  [InventoryActionType.SELL]: {
+    label: inventoryActionTypeLabels[InventoryActionType.SELL],
+    dotClassName: "bg-sky-500 ring-sky-500/25",
+    badgeClassName:
+      "border border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-300 dark:border-sky-400/40",
+  },
+  [InventoryActionType.ADJUSTMENT]: {
+    label: inventoryActionTypeLabels[InventoryActionType.ADJUSTMENT],
+    dotClassName: "bg-violet-500 ring-violet-500/25",
+    badgeClassName:
+      "border border-violet-500/40 bg-violet-500/15 text-violet-700 dark:text-violet-300 dark:border-violet-400/40",
+  },
 };
 
 export const defaultInventoryActionTypeStyle: InventoryActionTypeStyle = {

@@ -7,6 +7,7 @@ import {
 import {
     AddStockToProductProps,
     InventoryHistoryInclude,
+    InventoryHistoryParameters,
 } from "@/lib/types/inventory";
 import {
     keepPreviousData,
@@ -20,7 +21,7 @@ interface PaginationParams {
     limit?: number;
 }
 
-interface ProductHistoryParams extends PaginationParams {
+interface ProductHistoryParams extends InventoryHistoryParameters {
     include?: InventoryHistoryInclude;
 }
 
@@ -38,7 +39,7 @@ export function useCurrentInventoryByBusinessId(
 
 export function useInventoryHistoryByBusinessId(
     businessId: string,
-    params: PaginationParams = {},
+    params: InventoryHistoryParameters = {},
 ) {
     return useQuery({
         queryKey: ["inventory-history-by-business-id", businessId, params],

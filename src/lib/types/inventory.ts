@@ -44,6 +44,12 @@ export type InventoryEntry = {
     newStock: string;
     unitPrice: string;
     entryPrice: string;
+    /**
+     * Moneda del movimiento. El backend siempre la devuelve (la columna tiene
+     * default `CUP`), pero el tipo no la declaraba y la vista formateaba todos
+     * los importes como pesos colombianos.
+     */
+    currency?: string;
     supplier: string;
     description: string;
     idbusinessProduct: string;
@@ -104,13 +110,44 @@ export interface InventoryHistoryResponse {
  */
 export type InventoryHistoryInclude = "increases" | "all";
 
+/** Los seis tipos de movimiento que registra el backend. */
 export enum InventoryActionType {
     PURCHASE = "purchase",
     CANCEL_SALE = "cancel_sale",
     INITIAL_STOCK = "initial_stock",
     /** Merma: unidades de una venta cancelada que NO vuelven al stock (dañadas). */
     LOSS = "loss",
+    /** Corrección manual del stock. */
+    ADJUSTMENT = "adjustment",
+    /** Salida por venta. */
+    SELL = "sell",
 }
+
+/**
+ * Orden en que se ofrecen los tipos en el filtro: primero los que suman stock,
+ * después los que lo restan, y el ajuste al final porque puede ir en ambos
+ * sentidos.
+ */
+export const INVENTORY_ACTION_TYPE_OPTIONS: InventoryActionType[] = [
+    InventoryActionType.PURCHASE,
+    InventoryActionType.INITIAL_STOCK,
+    InventoryActionType.CANCEL_SALE,
+    InventoryActionType.SELL,
+    InventoryActionType.LOSS,
+    InventoryActionType.ADJUSTMENT,
+];
+
+/** Parámetros de consulta del historial de inventario. */
+export type InventoryHistoryParameters = {
+    page?: number;
+    limit?: number;
+    /** Fecha de inicio en formato `yyyy-MM-dd` (día local completo). */
+    startDate?: string;
+    /** Fecha de fin en formato `yyyy-MM-dd`, inclusive. */
+    endDate?: string;
+    /** Uno o varios tipos separados por comas. */
+    actionType?: string;
+};
 
 export type InventoryActionTypeLabels = {
     [key in InventoryActionType]: string;
@@ -121,6 +158,8 @@ export const inventoryActionTypeLabels: InventoryActionTypeLabels = {
     [InventoryActionType.CANCEL_SALE]: "Cancelación de venta",
     [InventoryActionType.INITIAL_STOCK]: "Stock inicial",
     [InventoryActionType.LOSS]: "Pérdida",
+    [InventoryActionType.ADJUSTMENT]: "Ajuste",
+    [InventoryActionType.SELL]: "Venta",
 };
 
 /* -------------------------------------------------------------------------- */

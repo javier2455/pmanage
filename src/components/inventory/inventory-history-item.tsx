@@ -5,6 +5,7 @@ import type { InventoryEntry } from "@/lib/types/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { useInView } from "@/hooks/use-in-view";
 import { getInventoryActionTypeStyle } from "./inventory-action-type-style";
 
@@ -20,13 +21,16 @@ function formatTimeOnly(dateStr: string) {
   }
 }
 
-function formatCurrency(value: string | number) {
+/**
+ * Antes esto formateaba TODO importe como pesos colombianos
+ * (`Intl.NumberFormat("es-CO", { currency: "COP" })`), pese a que cada
+ * movimiento trae su propia moneda. Ahora usa el formateador compartido, que es
+ * el mismo que el resto de la aplicación.
+ */
+function formatEntryAmount(value: string | number, currency?: string) {
   const num = Number(value);
   if (Number.isNaN(num)) return String(value);
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(num);
+  return formatMoney(num, currency ?? BASE_CURRENCY);
 }
 
 function productInitials(name: string | undefined) {
@@ -96,7 +100,7 @@ export default function InventoryHistoryItem({
                 <span>
                   Precio de adquisición:{" "}
                   <span className="text-foreground tabular-nums">
-                    {formatCurrency(entry.entryPrice)}
+                    {formatEntryAmount(entry.entryPrice, entry.currency)}
                   </span>
                 </span>
               ) : null}
