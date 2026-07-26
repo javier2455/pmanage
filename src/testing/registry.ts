@@ -3,6 +3,7 @@ import { accountingCloseCurrencySuite } from "./suites/accounting-close-currency
 import { cashFlowSuite } from "./suites/cash-flow.suite";
 import { currencyErrorsSuite } from "./suites/currency-errors.suite";
 import { currencySuite } from "./suites/currency.suite";
+import { dateRangeSuite } from "./suites/date-range.suite";
 import { formatClosingCurrencySuite } from "./suites/format-closing-currency.suite";
 import { iconMapSuite } from "./suites/icon-map.suite";
 import { navigationAccessSuite } from "./suites/navigation-access.suite";
@@ -27,6 +28,7 @@ export const allSuites: Suite[] = [
   unitsSuite,
   proGatesSuite,
   cashFlowSuite,
+  dateRangeSuite,
   accountingCloseCurrencySuite,
   navigationAccessSuite,
   validationsSuite,

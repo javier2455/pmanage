@@ -10,7 +10,7 @@ import {
   SalesTrendParameters,
   TopProductsParameters,
 } from "@/lib/types/analytics";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 export function useAnalyticsKPIs(
   businessId: string,
@@ -53,5 +53,9 @@ export function useAnalyticsSalesByWorker(
     queryKey: ["analytics-sales-by-worker", businessId, params],
     queryFn: () => getSalesByWorker(businessId, params),
     enabled: !!businessId,
+    // El rango de fechas forma parte de la key, así que cada cambio de período
+    // es una query nueva. Sin esto la tabla se vacía y vuelve entre filtro y
+    // filtro; conservando los datos previos solo se atenúa mientras refresca.
+    placeholderData: keepPreviousData,
   });
 }

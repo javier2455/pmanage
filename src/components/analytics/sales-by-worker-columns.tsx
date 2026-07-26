@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import type { WorkerSalesItem } from "@/lib/types/analytics";
 
 export type SalesByWorkerColumnMeta = {
@@ -21,13 +22,6 @@ const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap text-right",
   cellClassName: "w-[1%] whitespace-nowrap text-right",
 } satisfies SalesByWorkerColumnMeta;
-
-function formatCurrency(value: number) {
-  return `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
 
 function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
@@ -129,14 +123,34 @@ export function createSalesByWorkerColumns(): ColumnDef<WorkerSalesItem>[] {
           column={column}
           label="Ventas totales"
           align="right"
-          tooltip="Suma del monto de todas las ventas completadas por el trabajador en el período seleccionado."
+          tooltip={`Ventas completadas por el trabajador en el período, convertidas a ${BASE_CURRENCY} con las tasas del negocio. Debajo se detalla cuánto se vendió en cada moneda.`}
         />
       ),
-      cell: ({ row }) => (
-        <span className="text-sm font-medium tabular-nums text-foreground">
-          {formatCurrency(row.original.totalSales)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const { totalSales, totalsByCurrency } = row.original;
+        const breakdown = totalsByCurrency ?? [];
+        // Con una sola moneda el desglose repetiría el consolidado, así que
+        // solo se muestra cuando aporta información.
+        const showBreakdown = breakdown.length > 1;
+
+        return (
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-sm font-medium tabular-nums text-foreground">
+              {formatMoney(totalSales, BASE_CURRENCY)}
+            </span>
+            {showBreakdown
+              ? breakdown.map((item) => (
+                  <span
+                    key={item.currency}
+                    className="text-xs tabular-nums text-muted-foreground"
+                  >
+                    {formatMoney(item.total, item.currency)}
+                  </span>
+                ))
+              : null}
+          </div>
+        );
+      },
     },
     {
       id: "transactionCount",
@@ -165,12 +179,12 @@ export function createSalesByWorkerColumns(): ColumnDef<WorkerSalesItem>[] {
           column={column}
           label="Ticket promedio"
           align="right"
-          tooltip="Monto promedio por venta: ventas totales dividido entre el número de transacciones."
+          tooltip={`Monto promedio por venta en ${BASE_CURRENCY}: las ventas totales consolidadas divididas entre el número de transacciones.`}
         />
       ),
       cell: ({ row }) => (
         <span className="text-sm tabular-nums text-foreground">
-          {formatCurrency(row.original.avgTicket)}
+          {formatMoney(row.original.avgTicket, BASE_CURRENCY)}
         </span>
       ),
     },

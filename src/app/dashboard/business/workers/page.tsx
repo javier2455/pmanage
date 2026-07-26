@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { useBusiness } from "@/context/business-context";
 import { useAllWorkersByBusinessId } from "@/hooks/use-workers";
 import {
@@ -11,7 +13,7 @@ import { useAnalyticsSalesByWorker } from "@/hooks/use-analytics";
 import TableOfWorkers from "@/components/workers/table-of-workers";
 import TableOfInvitations from "@/components/invitations/table-of-invitations";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
-import { PeriodFilter } from "@/components/analytics/period-filter";
+import { DateRangeFilter } from "@/components/analytics/date-range-filter";
 import { SalesByWorkerTable } from "@/components/analytics/sales-by-worker-table";
 import {
   Tabs,
@@ -20,7 +22,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import type { AnalyticsPeriod } from "@/lib/types/analytics";
+import { currencyLabel } from "@/lib/currency";
+import {
+  resolvePresetRange,
+  type DateRangePreset,
+  type DateRangeValue,
+} from "@/lib/date-range";
 
 const DEFAULT_LIMIT = 5;
 const VALID_TABS = ["workers", "invitations", "metrics"] as const;
@@ -37,7 +44,12 @@ export default function WorkersPage() {
   const [workersLimit, setWorkersLimit] = useState(DEFAULT_LIMIT);
   const [invitationsPage, setInvitationsPage] = useState(1);
   const [invitationsLimit, setInvitationsLimit] = useState(DEFAULT_LIMIT);
-  const [metricsPeriod, setMetricsPeriod] = useState<AnalyticsPeriod>("month");
+  // Por defecto, la semana en curso (lunes a domingo): es el período que el
+  // usuario espera ver al entrar, y el rótulo del filtro dice cuál es.
+  const [metricsPreset, setMetricsPreset] = useState<DateRangePreset>("week");
+  const [metricsRange, setMetricsRange] = useState<DateRangeValue>(() =>
+    resolvePresetRange("week"),
+  );
 
   const businessId = activeBusinessId ?? "";
 
@@ -68,11 +80,24 @@ export default function WorkersPage() {
     isLoading: salesByWorkerLoading,
     isFetching: salesByWorkerFetching,
     isError: salesByWorkerError,
-  } = useAnalyticsSalesByWorker(businessId, { period: metricsPeriod });
+  } = useAnalyticsSalesByWorker(businessId, {
+    // Se mandan fechas explícitas en vez de `period` para que lo consultado sea
+    // exactamente lo que el filtro muestra rotulado.
+    startDate: metricsRange.startDate,
+    endDate: metricsRange.endDate,
+  });
 
   const handleTabChange = useCallback((next: string) => {
     if (isTabValue(next)) setActiveTab(next);
   }, []);
+
+  const handleMetricsRangeChange = useCallback(
+    (nextPreset: DateRangePreset, nextRange: DateRangeValue) => {
+      setMetricsPreset(nextPreset);
+      setMetricsRange(nextRange);
+    },
+    [],
+  );
 
   const handleWorkersLimitChange = useCallback((nextLimit: number) => {
     setWorkersLimit(nextLimit);
@@ -86,6 +111,7 @@ export default function WorkersPage() {
 
   const showWorkersSkeleton = workersLoading && !workersData;
   const showInvitationsSkeleton = invitationsLoading && !invitationsData;
+  const unconvertedCurrencies = salesByWorkerData?.unconvertedCurrencies ?? [];
 
   return (
     <section className="flex flex-col gap-6">
@@ -176,13 +202,37 @@ export default function WorkersPage() {
         </TabsContent>
 
         <TabsContent value="metrics" className="flex flex-col gap-4 ">
-          <div className="flex flex-col gap-1 mt-4">
+          <div className="mt-4 flex flex-col gap-2">
             <p className="text-sm text-muted-foreground">
               Desempeño de ventas de cada trabajador en el período
               seleccionado.
             </p>
-            <PeriodFilter value={metricsPeriod} onChange={setMetricsPeriod} />
+            <DateRangeFilter
+              preset={metricsPreset}
+              range={metricsRange}
+              onChange={handleMetricsRangeChange}
+              effectiveRange={salesByWorkerData?.period}
+            />
           </div>
+
+          {unconvertedCurrencies.length > 0 ? (
+            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Hay ventas en{" "}
+                {unconvertedCurrencies.map(currencyLabel).join(", ")} sin tipo de
+                cambio configurado, así que no entran en las ventas totales.
+                Configúralo en{" "}
+                <Link
+                  href="/dashboard/exchange-rate"
+                  className="underline-offset-2 hover:underline"
+                >
+                  Tipo de cambio
+                </Link>
+                .
+              </span>
+            </div>
+          ) : null}
 
           {salesByWorkerError ? (
             <div className="text-sm text-destructive">
