@@ -24,6 +24,7 @@ import { DataTablePaginationNav } from "@/components/data-table/data-table-pagin
 import { PageSizeSelect } from "@/components/data-table/page-size-select"
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 import { useGetProviderProductsQuery } from "@/hooks/use-provider"
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency"
 
 interface ProviderProductsTableProps {
   providerId: string
@@ -31,14 +32,18 @@ interface ProviderProductsTableProps {
 
 const DEFAULT_LIMIT = 10
 
-function formatPrice(value: number | string): string {
+/**
+ * Precio con su moneda.
+ *
+ * Antes formateaba con `Intl` y `currency: "COP"` — pesos colombianos — así que
+ * un precio pactado en dólares salía con el símbolo del peso. `formatMoney`
+ * pone la moneda real como sufijo y no depende de ISO 4217, que no cubre
+ * `EURO` ni `MLC`.
+ */
+function formatPrice(value: number | string, currency?: string): string {
   const n = typeof value === "number" ? value : Number(value)
   if (Number.isNaN(n)) return "--"
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 2,
-  }).format(n)
+  return formatMoney(n, currency || BASE_CURRENCY)
 }
 
 export function ProviderProductsTable({ providerId }: ProviderProductsTableProps) {
@@ -182,7 +187,7 @@ export function ProviderProductsTable({ providerId }: ProviderProductsTableProps
                           {pp.unit ?? "—"}
                         </TableCell>
                         <TableCell className="px-4 py-3 text-right font-semibold tabular-nums text-card-foreground">
-                          {formatPrice(pp.price)}
+                          {formatPrice(pp.price, pp.currency)}
                         </TableCell>
                       </TableRow>
                     ))

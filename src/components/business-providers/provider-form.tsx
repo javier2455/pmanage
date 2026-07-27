@@ -27,6 +27,7 @@ import type {
   ProviderWithRelations,
 } from "@/lib/types/provider"
 import { useBusiness } from "@/context/business-context"
+import { BASE_CURRENCY } from "@/lib/currency"
 import { ProviderProductsField } from "./provider-products-field"
 
 type Mode = "create" | "edit"
@@ -49,6 +50,7 @@ function toFormDefaults(
       provider?.providerProducts?.map((pp) => ({
         productId: pp.product.id,
         price: Number(pp.price),
+        currency: pp.currency ?? BASE_CURRENCY,
       })) ?? [],
   }
 }
@@ -94,6 +96,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
       data.providerProducts?.map((pp) => ({
         productId: pp.productId,
         price: pp.price,
+        currency: pp.currency ?? BASE_CURRENCY,
       }))
 
     try {

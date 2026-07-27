@@ -14,9 +14,30 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useGetAllProductsQuery } from "@/hooks/use-product"
+import {
+  BASE_CURRENCY,
+  KNOWN_CURRENCY_CODES,
+  currencyLabel,
+} from "@/lib/currency"
 import type { Product } from "@/lib/types/product"
 import type { ProviderFormData } from "@/lib/validations/providers"
+
+/**
+ * Monedas ofrecidas para el precio del proveedor.
+ *
+ * A diferencia del costo de entrada, aquí no se deriva de las tasas del
+ * negocio: el precio del proveedor se guarda sin convertir, así que no hace
+ * falta que la moneda tenga tasa configurada para poder registrarla.
+ */
+const PROVIDER_PRICE_CURRENCIES = [BASE_CURRENCY, ...KNOWN_CURRENCY_CODES]
 
 interface ProviderProductsFieldProps {
   control: Control<ProviderFormData>
@@ -52,7 +73,13 @@ export function ProviderProductsField({
           size="sm"
           variant="outline"
           className="self-start sm:self-auto"
-          onClick={() => append({ productId: "", price: undefined })}
+          onClick={() =>
+            append({
+              productId: "",
+              price: undefined,
+              currency: BASE_CURRENCY,
+            })
+          }
         >
           <Plus className="mr-1.5 h-4 w-4" />
           Agregar producto
@@ -72,7 +99,7 @@ export function ProviderProductsField({
             return (
               <div
                 key={field.id}
-                className="grid grid-cols-1 gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_160px_auto]"
+                className="grid grid-cols-1 gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_140px_150px_auto]"
               >
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <Label
@@ -157,6 +184,39 @@ export function ProviderProductsField({
                       {priceError.message}
                     </p>
                   )}
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <Label
+                    htmlFor={`provider-product-currency-${index}`}
+                    className="text-xs text-muted-foreground"
+                  >
+                    Moneda
+                  </Label>
+                  <Controller
+                    control={control}
+                    name={`providerProducts.${index}.currency`}
+                    render={({ field: ctl }) => (
+                      <Select
+                        value={ctl.value ?? BASE_CURRENCY}
+                        onValueChange={ctl.onChange}
+                      >
+                        <SelectTrigger
+                          id={`provider-product-currency-${index}`}
+                          className="w-full"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROVIDER_PRICE_CURRENCIES.map((code) => (
+                            <SelectItem key={code} value={code}>
+                              {currencyLabel(code)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div className="flex items-end justify-end">

@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useGetProviderByIdQuery } from "@/hooks/use-provider"
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency"
 
 interface ProviderDetailsDialogProps {
   providerId: string
@@ -36,14 +37,11 @@ function formatDate(value: string | null | undefined): string {
   })
 }
 
-function formatPrice(value: number | string): string {
+/** Precio con su moneda; ver la nota en `provider-products-table.tsx`. */
+function formatPrice(value: number | string, currency?: string): string {
   const n = typeof value === "number" ? value : Number(value)
   if (Number.isNaN(n)) return "--"
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 2,
-  }).format(n)
+  return formatMoney(n, currency || BASE_CURRENCY)
 }
 
 export function ProviderDetailsDialog({
@@ -216,7 +214,7 @@ export function ProviderDetailsDialog({
                         )}
                       </div>
                       <span className="shrink-0 text-sm font-semibold tabular-nums text-card-foreground">
-                        {formatPrice(pp.price)}
+                        {formatPrice(pp.price, pp.currency)}
                       </span>
                     </li>
                   ))}

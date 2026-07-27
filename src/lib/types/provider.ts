@@ -15,6 +15,13 @@ export type Provider = {
 export type ProviderProduct = {
   id: string;
   price: number;
+  /**
+   * Moneda de `price` (`CUP`, `USD`…). El backend guarda el precio tal y como
+   * lo factura el proveedor, sin convertir, así que sin este campo la vista no
+   * puede saber la unidad y daba todo por pesos. Opcional por compatibilidad
+   * con respuestas anteriores a la migración.
+   */
+  currency?: string;
   product: Product;
 };
 
@@ -31,6 +38,8 @@ export type ProviderWithRelations = Provider & {
 export type ProviderProductInput = {
   productId: string;
   price?: number;
+  /** Moneda de `price`; el backend asume CUP si se omite. */
+  currency?: string;
 };
 
 export type CreateProviderProps = {
@@ -84,6 +93,8 @@ export type ProviderProductItem = {
   unit: ProductUnit;
   imageUrl: string | null;
   price: number;
+  /** Moneda de `price`; ausente en respuestas anteriores a la migración. */
+  currency?: string;
   createdAt: string;
   updatedAt: string;
 };

@@ -14,6 +14,11 @@ export const providerProductSchema = z.object({
     .number({ error: "Ingresa un precio válido" })
     .min(0, "El precio no puede ser negativo")
     .optional(),
+  /**
+   * Moneda en la que factura el proveedor. El precio se guarda sin convertir,
+   * así que sin este dato el backend lo daría por CUP.
+   */
+  currency: z.string().optional(),
 });
 
 export const createProviderSchema = z.object({
