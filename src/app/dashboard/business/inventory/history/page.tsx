@@ -21,6 +21,7 @@ import InventoryHistoryFilters, {
   type InventoryHistoryFilterState,
 } from "@/components/inventory/inventory-history-filters";
 import { TimelineSkeleton } from "@/components/inventory/timeline-skeleton";
+import { ProductCostLayers } from "@/components/inventory/product-cost-layers";
 import {
   EXPORT_FILE_EXTENSION,
   EXPORT_ROW_LIMIT,
@@ -266,6 +267,16 @@ export default function InventoryHistoryPage() {
         isExporting={isExporting}
         canExport={hasRows}
       />
+
+      {/* Los lotes vivos solo tienen sentido mirando un producto concreto: es
+          donde se ve cuántas unidades quedan de cada compra y a qué costo. */}
+      {isProductView && (
+        <ProductCostLayers
+          businessId={businessId}
+          productId={productId}
+          className="my-4"
+        />
+      )}
 
       {showInitialSkeleton ? (
         <TimelineSkeleton />

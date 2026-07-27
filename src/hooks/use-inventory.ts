@@ -2,6 +2,7 @@ import {
     addStock,
     getCurrentInventoryByBusinessId,
     getInventoryHistoryByBusinessId,
+    getProductCostLayers,
     getProductInventoryHistory,
 } from "@/lib/api/inventory";
 import {
@@ -49,6 +50,18 @@ export function useInventoryHistoryByBusinessId(
     });
 }
 
+/**
+ * Capas de costo vivas de un producto: cuántas unidades quedan de cada lote y a
+ * qué costo entró cada uno.
+ */
+export function useProductCostLayers(businessId: string, productId: string) {
+    return useQuery({
+        queryKey: ["product-cost-layers", businessId, productId],
+        queryFn: () => getProductCostLayers({ businessId, productId }),
+        enabled: !!businessId && !!productId,
+    });
+}
+
 export function useProductInventoryHistory(
     businessId: string,
     productId: string,
@@ -74,6 +87,10 @@ export function useAddStockToProductMutation() {
             queryClient.invalidateQueries({ queryKey: ["inventory-history-by-business-id", variables.businessId] });
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", variables.businessId] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", variables.businessId] });
+            // La compra abre una capa nueva, así que la vista de lotes cambia.
+            queryClient.invalidateQueries({
+                queryKey: ["product-cost-layers", variables.businessId, variables.productId],
+            });
         },
     });
 }

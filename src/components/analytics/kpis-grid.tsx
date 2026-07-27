@@ -3,6 +3,8 @@ import {
   TrendingUp,
   XCircle,
   Warehouse,
+  PackageMinus,
+  Info,
 } from "lucide-react"
 
 import { KpiCard } from "./kpi-card"
@@ -21,8 +23,13 @@ const PERIOD_LABEL: Record<AnalyticsPeriod, string> = {
 
 export function KpisGrid({ data, period }: KpisGridProps) {
   const periodLabel = PERIOD_LABEL[period]
+  // Ventas del período sin costo conocido: las anteriores al costeo por capas.
+  // Se excluyen del costo en vez de contarse como cero, así que mientras haya
+  // alguna la ganancia mostrada se queda corta y hay que decirlo.
+  const uncostedItems = data.costCoverage?.uncostedItems ?? 0
 
   return (
+    <>
     <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4 3xl:grid-cols-5">
       <KpiCard
         title="Ingresos"
@@ -34,13 +41,23 @@ export function KpisGrid({ data, period }: KpisGridProps) {
         tooltip="Suma del total de todas las ventas realizadas en el período, sin incluir ventas canceladas. Indica cuánto dinero ha facturado el negocio."
       />
       <KpiCard
-        title="Ganancia neta"
+        title="Ganancia bruta"
         value={data.profit.value}
         change={data.profit.change}
         icon={TrendingUp}
         format="currency"
         description={periodLabel}
-        tooltip="Ingresos menos los costos de inventario (precios de entrada). Representa la rentabilidad real del negocio en el período."
+        tooltip="Ingresos menos el costo real de la mercancía vendida, tomado del costo con el que entró cada unidad al almacén. No incluye gastos operativos."
+      />
+      <KpiCard
+        title="Costo de lo vendido"
+        value={data.costOfGoodsSold.value}
+        change={data.costOfGoodsSold.change}
+        icon={PackageMinus}
+        format="currency"
+        variant="inverse"
+        description={periodLabel}
+        tooltip="Lo que costó comprar la mercancía que salió del almacén en el período. Se calcula con el costo del lote del que salió cada unidad, no con el último precio de compra."
       />
       {/* <KpiCard
         title="Ticket promedio"
@@ -68,8 +85,21 @@ export function KpisGrid({ data, period }: KpisGridProps) {
         icon={Warehouse}
         format="currency"
         description={periodLabel}
-        tooltip="Capital total invertido actualmente en stock (suma de stock × precio de entrada de cada producto). Ayuda a dimensionar el dinero inmovilizado en inventario."
+        tooltip="Capital invertido en el stock actual, valorando cada unidad al costo del lote del que proviene. Ayuda a dimensionar el dinero inmovilizado en inventario."
       />
     </div>
+
+    {uncostedItems > 0 && (
+      <p className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
+        <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <span>
+          {uncostedItems === 1
+            ? "1 venta del período no tiene costo registrado y queda fuera del cálculo."
+            : `${uncostedItems} ventas del período no tienen costo registrado y quedan fuera del cálculo.`}{" "}
+          La ganancia mostrada es mayor que la real.
+        </span>
+      </p>
+    )}
+    </>
   )
 }

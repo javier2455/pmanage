@@ -205,3 +205,52 @@ export interface SetStockAlertResponse {
 
 /** Estado visual derivado del stock vs. su umbral. */
 export type StockAlertStatus = "out" | "low" | "ok";
+
+/* -------------------------------------------------------------------------- */
+/*  Capas de costo (FIFO)                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Un lote comprado a un costo concreto, con las unidades que le quedan vivas.
+ *
+ * El stock se consume en orden de llegada, así que las capas llegan ordenadas de
+ * la más antigua a la más reciente: la primera es la que alimentará la próxima
+ * venta.
+ */
+export type InventoryCostLayer = {
+    id: string;
+    /** Unidades que quedan de este lote. */
+    remainingQuantity: number;
+    /** Unidades con las que entró. */
+    originalQuantity: number;
+    /** Costo unitario en la moneda en que se compró. */
+    unitCost: number;
+    /** Moneda de `unitCost`. */
+    currency: string;
+    /** Tasa CUP por unidad de `currency` el día de la compra. */
+    exchangeRateApplied: number;
+    /** Costo unitario en CUP. Es el que usan valor de inventario y margen. */
+    unitCostBase: number;
+    providerName: string | null;
+    acquiredAt: string;
+};
+
+export type ProductCostLayersData = {
+    businessProductId: string;
+    /** Stock total del producto, según `business_products`. */
+    stock: number;
+    /** Suma de `remainingQuantity × unitCostBase` de las capas vivas, en CUP. */
+    totalValue: number;
+    layers: InventoryCostLayer[];
+    /**
+     * Unidades en stock sin capa que las respalde, y por tanto sin costo
+     * conocido. Solo debería ser > 0 con stock anterior al costeo por capas cuyo
+     * costo no se pudo reconstruir. No entra en `totalValue`.
+     */
+    uncostedQuantity: number;
+};
+
+export interface ProductCostLayersResponse {
+    message: string;
+    data: ProductCostLayersData;
+}

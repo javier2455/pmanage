@@ -1,9 +1,28 @@
 export interface KPIsResponse {
   revenue: SimpleValuesResponse;
+  /**
+   * Utilidad bruta: ingresos menos el costo de lo vendido.
+   *
+   * Hasta el costeo por capas este valor era una copia de `revenue`, así que la
+   * tarjeta "Ganancia" mostraba las ventas brutas.
+   */
   profit: SimpleValuesResponse;
   avgTicket: SimpleValuesResponse;
   cancellationRate: SimpleValuesResponse;
   inventoryValue: SimpleValuesResponse;
+  /** Costo de la mercancía vendida en el período, en CUP. */
+  costOfGoodsSold: SimpleValuesResponse;
+  /**
+   * Cuántas líneas del período tienen costo conocido y cuántas no.
+   *
+   * Las ventas anteriores al costeo por capas no lo tienen y se excluyen del
+   * cálculo; si `uncostedItems` es > 0 la ganancia mostrada no cubre todo el
+   * período y conviene advertirlo en vez de darla por exacta.
+   */
+  costCoverage: {
+    costedItems: number;
+    uncostedItems: number;
+  };
 }
 
 export interface SalesTrendResponse {

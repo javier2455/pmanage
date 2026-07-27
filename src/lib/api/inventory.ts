@@ -5,6 +5,7 @@ import {
     CurrentInventoryResponse,
     InventoryHistoryInclude,
     InventoryHistoryResponse,
+    ProductCostLayersResponse,
 } from "../types/inventory";
 
 interface PaginatedByBusiness {
@@ -132,6 +133,26 @@ export async function exportInventoryHistoryToExcel({
     const { data } = await apiClient.get<Blob>(
         inventoryRoutes.exportInventoryHistoryToExcel(businessId),
         { params: exportParams(rest), responseType: "blob" },
+    );
+    return data;
+}
+
+/**
+ * Capas de costo vivas de un producto, de la más antigua a la más reciente.
+ *
+ * Responde cuántas unidades quedan de cada compra y a qué costo entró cada una
+ * — lo que `entryPrice` no puede decir, porque cada compra lo sobrescribe con el
+ * último precio pagado.
+ */
+export async function getProductCostLayers({
+    businessId,
+    productId,
+}: {
+    businessId: string;
+    productId: string;
+}): Promise<ProductCostLayersResponse> {
+    const { data } = await apiClient.get<ProductCostLayersResponse>(
+        inventoryRoutes.getProductCostLayers(businessId, productId),
     );
     return data;
 }

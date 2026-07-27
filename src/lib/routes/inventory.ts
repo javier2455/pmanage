@@ -12,6 +12,13 @@ export const inventoryRoutes = {
   getProductInventoryHistory: (businessId: string, productId: string) =>
     `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/history`,
   /**
+   * Capas de costo vivas: cuántas unidades quedan de cada lote y a qué costo
+   * entró cada uno. Es lo que `entryPrice` no puede responder, porque solo
+   * guarda el último costo pagado.
+   */
+  getProductCostLayers: (businessId: string, productId: string) =>
+    `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/cost-layers`,
+  /**
    * Exportaciones del historial (plan Pro, validado en el servidor).
    *
    * Un único par de endpoints cubre las dos vistas: el filtro por producto va
