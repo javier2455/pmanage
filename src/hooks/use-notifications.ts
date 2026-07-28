@@ -52,11 +52,12 @@ export function useMarkNotificationAsRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
+      businessId,
       notificationId,
     }: {
       businessId: string;
       notificationId: string;
-    }) => markAsRead(notificationId),
+    }) => markAsRead(notificationId, businessId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: [LIST_KEY, variables.businessId],

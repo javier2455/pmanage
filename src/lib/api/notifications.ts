@@ -36,8 +36,15 @@ export async function getUnreadCount(
 }
 
 /** Marca una notificación como leída. */
-export async function markAsRead(notificationId: string): Promise<void> {
-  await apiClient.patch(notificationRoutes.markRead(notificationId));
+export async function markAsRead(
+  notificationId: string,
+  businessId: string,
+): Promise<void> {
+  await apiClient.patch(
+    notificationRoutes.markRead(notificationId),
+    {},
+    { params: { businessId } },
+  );
 }
 
 /** Marca todas las notificaciones del negocio como leídas. */

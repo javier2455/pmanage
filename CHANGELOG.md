@@ -11,6 +11,54 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Costeo de inventario FIFO por capas y su cascada
+- El costo de un producto deja de ser un único `entryPrice` que **cada compra
+  sobrescribe** y pasa a ser una lista de **lotes** (`InventoryCostLayer`) con lo
+  que queda vivo de cada uno. Cada venta consume lotes en orden de llegada (FIFO)
+  y registra qué consumió (`SaleItemCostConsumption`), **congelando** el costo de
+  esa venta: aunque después cambie la tasa o el precio de compra, el margen
+  histórico no se mueve.
+- El cierre contable **diario y mensual** incorpora **costo de la mercancía
+  vendida** y **ganancia bruta**. De paso se corrigió el **valor de inventario**,
+  que se calculaba a precio de venta e inflaba el activo.
+- El listado de stock actual gana **costo medio** y **margen** por producto, y los
+  exports (PDF y Excel) del cierre incluyen el costo.
+- Nueva vista de **rentabilidad lote a lote**: por cada compra, cuántas unidades se
+  vendieron, qué costaron, qué se cobró y el margen resultante.
+- Backend: `migration_doc/143`, `145`, `146`, `147`.
+
+#### Importación masiva de productos
+- Alta de productos en bloque desde **Excel (`.xlsx`) o CSV** a partir de una
+  plantilla fija, con validación **previa** a la confirmación y reporte accionable
+  fila por fila. Página en `/dashboard/business/products/import`.
+- Fuente de la verdad (plantilla, contrato, reglas y pendientes del MVP):
+  [docs/importacion-masiva-productos.md](docs/importacion-masiva-productos.md).
+  Rama `feat-upload-products`.
+
+#### Gestión de navegación (admin)
+- CRUD de la jerarquía **Sección → Menú → Submenú** desde `/dashboard/admin/menus`,
+  con reordenado **drag-and-drop**. Modelo, reglas y mapa de archivos en
+  [docs/extra/NAVIGATION_MANAGEMENT_GUIDE.md](docs/extra/NAVIGATION_MANAGEMENT_GUIDE.md).
+- **Pendiente de backend:** los endpoints `/reorder` (batch por grupo) siguen en la
+  rama `feat-menus-management` del backend, sin mergear a `main`.
+
+#### Motor de tablas para PDF
+- Nuevos `pdf-table.ts` + `pdf-report.ts` en el backend: los anchos de columna se
+  **calculan** en vez de ir fijos, así que los importes grandes dejan de partirse en
+  dos líneas e invadir la columna vecina. Se reescribe el PDF de cierre contable y
+  se **migra la factura** al mismo motor (arrastraba el defecto por ser una copia
+  literal). Backend: `migration_doc/141`, `142`.
+
+#### Desglose por moneda en los cierres
+- Los endpoints de cierre (`daily`, `monthly`, `range`) exponen el desglose por
+  moneda, y pantalla, PDF y Excel quedan alineados. Backend: `migration_doc/138`.
+
+#### Cron de cierres
+- Envío automático del cierre diario y mensual según la **hora de cierre del horario
+  de cada negocio** (zona `APP_TIMEZONE`, por defecto `America/Havana`), idempotente
+  vía `lastDailyClosingSentAt` / `lastMonthlyClosingSentAt`. El correo de cierre va
+  con datos enriquecidos. Backend: `migration_doc/087`, `088`.
+
 #### Despliegue en subruta `/manager` (producción `main`)
 - La app pasa a servirse bajo `https://negora.dveloxsoft.com/manager/` (login en
   `.../manager/login`, etc.) para colgar del mismo dominio que la landing. Se
@@ -29,6 +77,60 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   [docs/despliegue-negora-manager.md](docs/despliegue-negora-manager.md).
 
 ### Corregido
+
+#### Notificaciones: el estado de "leída" no se guardaba
+- La ruta para marcar **una** notificación como leída estaba declarada
+  `@Patch("{id}/read")` en vez de `@Patch(":id/read")`. Con NestJS 11 → Express 5 →
+  path-to-regexp 8, `{...}` ya **no** es un parámetro sino un grupo opcional
+  literal, así que `PATCH /notifications/<uuid>/read` compilaba a una ruta literal
+  y devolvía **404**: al pulsar una notificación su `readAt` nunca se guardaba y al
+  volver a entrar reaparecía como no leída.
+- El frontend tampoco enviaba el `businessId` que ese endpoint exige como query
+  param ([lib/api/notifications.ts](src/lib/api/notifications.ts) y
+  [hooks/use-notifications.ts](src/hooks/use-notifications.ts)).
+- Dos filtros usaban `readAt: null` en vez de `IsNull()`. En TypeORM 0.3 la opción
+  por defecto `invalidWhereValuesBehavior.null = "ignore"` **descarta la condición
+  entera** del WHERE, así que `?unreadOnly=true` devolvía todo y `markAllAsRead`
+  seleccionaba **todas** las notificaciones del negocio —las ya leídas incluidas— y
+  les reescribía la fecha de lectura.
+- **Requiere redesplegar el backend** para que surta efecto en producción.
+
+#### Resúmenes semanal y mensual con cifras reales
+- `buildSummary()` devolvía `revenue: 0` fijo (placeholder). Ahora calcula ingresos
+  reales delegando en `SaleService.getClosingByDateRange`, **la misma fuente que los
+  cierres contables**, así que resumen y cierre nunca discrepan: excluye ventas
+  canceladas y consolida las monedas a CUP.
+- Compara el tramo transcurrido contra el **mismo tramo** del periodo anterior
+  (semana natural desde el lunes; mes desde el día 1, recortando si el mes anterior
+  es más corto), con las fechas delimitadas en `APP_TIMEZONE` y la aritmética en UTC
+  para que no la afecte el horario de verano. Nuevo `summary-period.util.ts` con
+  suite de tests.
+- `GET /notifications/summaries/weekly|monthly` devuelve ahora también `revenue`,
+  `previousRevenue`, `revenueChange`, `period` y `previousPeriod` además de `content`.
+- **Estos resúmenes todavía no se ven en la app**: nada dispara la notificación y los
+  tipos están excluidos de la UI. Activarlos está planificado como **V3-040..043** en
+  [docs/v3/V3-MASTER.md](docs/v3/V3-MASTER.md) §8.
+
+#### Revisión de julio 2026 — cinco fases
+- **Panel principal:** estados de carga que faltaban.
+- **Saldos por moneda:** se retira el concepto de presupuestos.
+- **Desempeño de ventas:** el total por trabajador sumaba monedas distintas como si
+  fueran la misma unidad, y el rango de fechas personalizado **perdía el último día**
+  por mezclar parseo UTC con día local. Backend: `migration_doc/139`.
+- **Historial de inventario:** filtros por rango de fechas y por tipo de movimiento,
+  más exportación. El parseo de días locales se extrae a `common/date-range.util.ts`.
+  Backend: `migration_doc/140`.
+- **PDF de cierre:** rediseño de la maquetación (ver "Motor de tablas para PDF").
+- Detalle fase por fase en
+  [docs/revision-2026-07-correcciones.md](docs/revision-2026-07-correcciones.md).
+
+#### Transacciones financieras
+- Refactor a **4 tipos** (gastos, pagos de venta, cancelaciones de venta, pagos a
+  proveedores) guardando monto y moneda **originales** más las tasas aplicadas.
+- Cancelar una venta con pagos multimoneda emitía transacciones **duplicadas** (una
+  por moneda de pago **y** otra por el total). Corregido, junto con el cálculo de
+  `convertedAmount` en EUR y la emisión de la transacción por mercancía perdida o
+  dañada en cancelaciones parciales. Backend: `migration_doc/136`, `137`.
 
 #### Decimales en cantidades de productos por unidades
 - El historial de inventario pintaba `quantity`, `previousStock` y `newStock` tal

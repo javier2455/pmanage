@@ -27,8 +27,9 @@
 5. [Área 2 — Descuentos, ofertas y mensajería](#5-descuentos) · *Pro*
 6. [Área 3 — Nóminas y compensación](#6-nominas) · *Enterprise*
 7. [Área 4 — Flujo de caja profesional](#7-caja) · *Pro / Enterprise*
-8. [Funcionalidades sugeridas](#8-sugeridas)
-9. [Bitácora de cambios](#9-changelog)
+8. [Área 5 — Resúmenes automáticos de negocio](#8-resumenes) · *Base (canales SMS/WhatsApp = Pro)*
+9. [Funcionalidades sugeridas](#9-sugeridas)
+10. [Bitácora de cambios](#10-changelog)
 
 ---
 
@@ -43,7 +44,7 @@ Este maestro es el registro central de la v3. Reglas de uso:
 3. **Define su tier** (Pro / Enterprise) y sus **dependencias** (otros IDs que debe esperar).
 4. **Desarrolla el detalle** en la sección del área correspondiente (bloques Backend y Frontend).
 5. **Mantén el estado** en la columna correspondiente del backlog.
-6. **Anota el cambio** en la bitácora (§9) con fecha.
+6. **Anota el cambio** en la bitácora (§10) con fecha.
 
 ### Estados de una funcionalidad
 `idea` → `especificada` → `en implementación` → `hecho`
@@ -116,13 +117,17 @@ Una fila por funcionalidad/cambio. **Toda nueva idea entra aquí.**
 | **V3-037** | Múltiples cajas/cuentas (caja chica vs banco) | Caja | Enterprise | especificada | V3-030 | §7 |
 | **V3-038** | Estado de flujo de caja exportable | Caja | Enterprise | especificada | V3-033 | §7 |
 | **V3-039** | Resumen mensual de flujo de caja + salud (semáforo) exportable | Caja | Enterprise | especificada | V3-033, V3-038 | §7 |
-| **V3-090** | Portal/registro público de clientes | Sugerida | Enterprise | idea | V3-002 | §8 |
-| **V3-091** | Puntos canjeables por cupones | Sugerida | Enterprise | idea | V3-005, V3-012 | §8 |
-| **V3-092** | Recomendaciones de reabastecimiento | Sugerida | Pro | idea | — | §8 |
-| **V3-093** | Recordatorios de cobro (AR) por WhatsApp | Sugerida | Enterprise | idea | V3-004, V3-034 | §8 |
-| **V3-094** | Metas de equipo y ranking (gamificación) | Sugerida | Enterprise | idea | V3-021 | §8 |
-| **V3-095** | Costos de envío por zona (MapLibre) | Sugerida | Pro | idea | V3-013 | §8 |
-| **V3-096** | Reportes financieros (P&L caja vs devengo) | Sugerida | Enterprise | idea | V3-033 | §8 |
+| **V3-040** | Cálculo de resúmenes de ingresos semanal/mensual | Resúmenes | — | **hecho** (2026-07-28) | — | §8 |
+| **V3-041** | Disparador automático de los resúmenes (cron + idempotencia) | Resúmenes | — | especificada | V3-040 | §8 |
+| **V3-042** | Visibilidad de los resúmenes en la UI de notificaciones | Resúmenes | — | especificada | V3-041 | §8 |
+| **V3-043** | Toggles de canal para los resúmenes en Ajustes del negocio | Resúmenes | — | especificada | V3-041 | §8 |
+| **V3-090** | Portal/registro público de clientes | Sugerida | Enterprise | idea | V3-002 | §9 |
+| **V3-091** | Puntos canjeables por cupones | Sugerida | Enterprise | idea | V3-005, V3-012 | §9 |
+| **V3-092** | Recomendaciones de reabastecimiento | Sugerida | Pro | idea | — | §9 |
+| **V3-093** | Recordatorios de cobro (AR) por WhatsApp | Sugerida | Enterprise | idea | V3-004, V3-034 | §9 |
+| **V3-094** | Metas de equipo y ranking (gamificación) | Sugerida | Enterprise | idea | V3-021 | §9 |
+| **V3-095** | Costos de envío por zona (MapLibre) | Sugerida | Pro | idea | V3-013 | §9 |
+| **V3-096** | Reportes financieros (P&L caja vs devengo) | Sugerida | Enterprise | idea | V3-033 | §9 |
 
 ---
 
@@ -740,8 +745,226 @@ Endpoints nuevos:
 
 ---
 
-<a name="8-sugeridas"></a>
-## 8. Funcionalidades sugeridas (candidatas, fuera del alcance comprometido)
+<a name="8-resumenes"></a>
+## 8. Área 5 — Resúmenes automáticos de negocio · *Base (canales SMS/WhatsApp = Pro)*
+
+> IDs: V3-040..043. Activa de punta a punta los tipos de notificación
+> `weekly_summary` y `monthly_summary`, que hoy están **modelados pero dormidos**.
+> Reutiliza el motor de notificaciones existente
+> (`psearch-back/src/v2/notifications/`), el cron de cierres
+> (`psearch-back/src/v2/cron-closing/`) y la campana del frontend
+> ([src/components/notifications/](../../src/components/notifications/)).
+
+### 8.1 Contexto — por qué está dormido
+
+El tipo de notificación existe en el enum del backend (`NotificationType`), en los
+tipos del frontend ([src/lib/types/notification.ts](../../src/lib/types/notification.ts))
+y en `BusinessSetting` (`weeklySummaryAlert`, `monthlySummaryAlert`), pero **nunca
+llega al usuario**. Hay cuatro bloqueos encadenados; el primero ya se resolvió:
+
+| # | Bloqueo | Estado |
+|---|---|---|
+| 1 | `buildSummary()` devolvía `revenue: 0` fijo (placeholder) | ✅ resuelto 2026-07-28 (V3-040) |
+| 2 | Nada llama a `notificationService.create()` con estos tipos → no se inserta fila ni sale email/SMS/WhatsApp | ⬜ V3-041 |
+| 3 | `DEFAULT_NOTIFICATION_TYPES` (backend) y `VISIBLE_NOTIFICATION_TYPES` (frontend) excluyen ambos tipos | ⬜ V3-042 |
+| 4 | La tarjeta de ajustes no expone los toggles de canal de estos dos tipos | ⬜ V3-043 |
+
+### 8.2 V3-040 — Cálculo de los resúmenes · **hecho (2026-07-28)**
+
+Queda documentado aquí porque es la base de V3-041..043 y **ya está en `main`**.
+
+`NotificationService.buildSummary(type, businessId)` calcula ingresos reales
+delegando en `SaleService.getClosingByDateRange`, **la misma fuente que los cierres
+contables**, para que resumen y cierre nunca discrepen: excluye ventas canceladas y
+consolida las monedas a CUP con la tasa del negocio.
+
+**Criterio de periodos** — se compara el tramo transcurrido contra el **mismo tramo**
+del periodo anterior, de modo que el porcentaje sea justo aunque se pida a mitad de
+periodo, y equivalga a "semana/mes completo vs anterior completo" si se pide al cierre:
+
+| Tipo | Periodo actual | Comparación |
+|---|---|---|
+| `weekly_summary` | lunes de la semana en curso → hoy | mismo tramo de la semana anterior |
+| `monthly_summary` | día 1 del mes en curso → hoy | mismo tramo del mes anterior (recortado si es más corto) |
+
+Las fechas se delimitan con `APP_TIMEZONE` (`America/Havana`) igual que el cron de
+cierres, y la aritmética de fechas va en UTC para que no la afecte el horario de verano.
+
+**Endpoints (solo generan el contenido, no crean la notificación):**
+`GET /api/v2/notifications/summaries/weekly?businessId=` y `.../monthly?businessId=`
+
+```jsonc
+// response 200
+{
+  "content": "Resumen semanal: Ingresos $12500.00 (+15.5% vs semana anterior).",
+  "revenue": 12500,
+  "previousRevenue": 10822.51,
+  "revenueChange": 15.5,
+  "period":         { "start": "2026-07-27", "end": "2026-07-28" },
+  "previousPeriod": { "start": "2026-07-20", "end": "2026-07-21" }
+}
+```
+
+Sin base de comparación (periodo anterior en 0) se reporta `+100%` si hubo ingresos y
+`0%` si tampoco los hubo, para no devolver `Infinity`/`NaN`.
+
+**Archivos:** `psearch-back/src/v2/notifications/summary-period.util.ts` (+ `.spec.ts`,
+lógica pura de periodos), `notification.service.ts` (`buildSummary`),
+`notifications.module.ts` (importa `SaleModule`), `notification.controller.ts`.
+
+> ⚠️ **Coste a vigilar en V3-041:** `getClosingByDateRange` carga ventas con items y
+> productos, gastos y snapshot de tasas, y `buildSummary` lo llama **dos veces**
+> (periodo actual + anterior). Es el mismo coste que el endpoint de cierre mensual,
+> pero al meterlo en un cron que recorre **todos** los negocios hay que medirlo y, si
+> hace falta, añadir un método ligero en `SaleService` que solo agregue `totalIncome`
+> sin materializar ventas ni items.
+
+### 8.3 V3-041 — Disparador automático (cron + idempotencia)
+
+Replica el patrón ya probado de `daily_closing` / `monthly_closing`
+([cron-closing.service.ts](../../../psearch-back/src/v2/cron-closing/cron-closing.service.ts)).
+
+**Backend — migración sobre `BusinessSetting`** (tabla `business_settings`), análoga a
+`lastDailyClosingSentAt` / `lastMonthlyClosingSentAt`:
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `lastWeeklySummarySentAt` | datetime \| null | idempotencia semanal |
+| `lastMonthlySummarySentAt` | datetime \| null | idempotencia mensual |
+
+**Backend — servicio.** En `BusinessSettingService`, siguiendo los existentes:
+- `findBusinessesWithWeeklySummaryAlert()` / `findBusinessesWithMonthlySummaryAlert()` — negocios con el canal configurado.
+- `markWeeklySummarySent(settingId, when)` / `markMonthlySummarySent(settingId, when)`.
+
+**Backend — lógica de "toca enviar".** Añadir a
+[closing-schedule.util.ts](../../../psearch-back/src/v2/cron-closing/closing-schedule.util.ts)
+(funciones puras, con spec, igual que `isDailyClosingDue`):
+
+```ts
+isWeeklySummaryDue({ dayOfWeek, minutesOfDay, closeMinutes, weekStr, lastSentWeekStr })
+// dispara el ÚLTIMO día de la semana (domingo, dayOfWeek === 0) pasada la hora de
+// cierre del negocio, una sola vez por semana ISO.
+
+isMonthlySummaryDue({ isLastDayOfMonth, minutesOfDay, closeMinutes, monthStr, lastSentMonthStr })
+// mismo criterio que isMonthlyClosingDue.
+```
+
+`getLocalTimeParts` debe devolver además `weekStr` (año-semana ISO, p. ej. `2026-W31`)
+para la clave de idempotencia semanal.
+
+**Backend — proceso.** En `CronClosingService`, dos métodos nuevos que reutilizan
+`resolveCloseMinutesForToday` y el mismo bloque `processed/skipped/failed/errors`:
+
+```ts
+processWeeklySummary(token?)  // → { processed, skipped, failed, errors }
+processMonthlySummary(token?)
+```
+
+Cada uno llama a `notificationService.buildSummary(...)` y luego:
+
+```ts
+await this.notificationService.create({
+  businessId,
+  type: "weekly_summary",
+  metadata: {
+    revenue, previousRevenue, revenueChange,
+    periodStart: period.start, periodEnd: period.end,
+  },
+});
+```
+
+`create()` ya inserta la fila `in_app` y entrega por los canales configurados en
+`weeklySummaryAlert` / `monthlySummaryAlert` (el mapeo `resolveChannels` ya existe).
+
+**Backend — endpoints de cron.** En `CronClosingController`, junto a los actuales, con
+el mismo `CRON_CLOSING_TOKEN`:
+- `POST /api/v2/cron/weekly-summary`
+- `POST /api/v2/cron/monthly-summary`
+
+**Programación recomendada:** cada hora, como los cierres. La combinación de
+"último día del periodo + pasada la hora de cierre + no enviado aún" hace que solo
+dispare una vez.
+
+> **Decisión pendiente de confirmar:** el mensual de `monthly_summary` (ingresos vs mes
+> anterior) y el `monthly_closing` (cierre contable del mes) se dispararían el mismo día
+> a la misma hora. Opciones: (a) mantener ambos, son mensajes distintos; (b) fusionar el
+> resumen dentro del cierre mensual. Recomendación: **(a)**, porque el cierre es
+> contable y el resumen es comparativo, pero conviene validarlo con negocio antes de
+> implementar.
+
+### 8.4 V3-042 — Visibilidad en la UI de notificaciones
+
+**Backend.** Añadir ambos tipos a `DEFAULT_NOTIFICATION_TYPES` en
+[notification.controller.ts](../../../psearch-back/src/v2/notifications/notification.controller.ts)
+para que `GET /notifications` los devuelva sin necesidad de pasar `?type=`.
+
+**Frontend.** Añadir `"weekly_summary"` y `"monthly_summary"` a
+`VISIBLE_NOTIFICATION_TYPES` en
+[notification-type-meta.ts](../../src/components/notifications/notification-type-meta.ts).
+**No hace falta nada más de presentación**: el meta de ambos tipos ya está definido y se
+renderizarían con el `NotificationItem` estándar (icono + label + `content` + tiempo
+relativo, fondo `bg-primary/5` y punto azul mientras no estén leídas):
+
+| Tipo | Label | Icono | Severidad | Deep-link |
+|---|---|---|---|---|
+| `weekly_summary` | Resumen semanal | `CalendarRange` | `info` (icono gris) | `/dashboard/analytics` |
+| `monthly_summary` | Resumen mensual | `CalendarCheck` | `info` (icono gris) | `/dashboard/accounting-close/monthly` |
+
+**Mejora opcional (a decidir).** Como estas notificaciones son informativas y no
+accionables, considerar un contador aparte o excluirlas del badge de "no leídas" para
+que no compitan con las alertas de stock, que sí requieren acción.
+
+### 8.5 V3-043 — Toggles de canal en Ajustes del negocio
+
+En [notification-settings-card.tsx](../../src/components/business/notification-settings-card.tsx),
+añadir una categoría nueva junto a "Cierres" e "Inventario":
+
+```ts
+// NotificationKey
+| "weeklySummary" | "monthlySummary"
+
+// FIELD_BY_KEY
+weeklySummary:  "weeklySummaryAlert",
+monthlySummary: "monthlySummaryAlert",
+
+// CATEGORIES
+{
+  title: "Resúmenes",
+  items: [
+    { key: "weeklySummary",  label: "Resumen semanal",
+      description: "Ingresos de la semana y variación frente a la anterior." },
+    { key: "monthlySummary", label: "Resumen mensual",
+      description: "Ingresos del mes y variación frente al anterior." },
+  ],
+}
+```
+
+Hay que añadir las dos claves también a `EMPTY_MATRIX`. El gating **por canal** ya
+existe y se hereda solo: correo libre, SMS y WhatsApp con `<ProBadge>` (y WhatsApp
+sigue en `comingSoon`). El tipo de alerta en sí no se gatea, igual que los cierres.
+
+### 8.6 Criterios de aceptación
+
+- Un negocio con `weeklySummaryAlert: ["email"]` recibe **una sola** notificación el domingo tras su hora de cierre, con ingresos reales y el % correcto frente a la semana anterior.
+- Reejecutar el cron el mismo día **no** genera una segunda notificación (idempotencia por `lastWeeklySummarySentAt`).
+- Un negocio sin canales configurados no recibe nada, pero la fila `in_app` sí se crea (comportamiento actual de `create()`).
+- El resumen aparece en la campana y en `/dashboard/notifications` con su icono y label, y al pulsarlo navega a analytics / cierre mensual.
+- Los toggles de Ajustes guardan y reflejan el estado; SMS/WhatsApp muestran `ProBadge` para planes no Pro.
+- Los ingresos del resumen **coinciden** con los del cierre contable del mismo rango.
+- Un negocio sin ventas en ninguno de los dos periodos recibe `$0.00 (+0.0%)` sin errores.
+
+### 8.7 Contratos que el FE consume (Resúmenes)
+
+| Contrato | Dónde lo usa el FE |
+|---|---|
+| `GET /notifications` con `weekly_summary` / `monthly_summary` en los tipos por defecto | campana + `/dashboard/notifications` |
+| `weeklySummaryAlert` / `monthlySummaryAlert` en `BusinessSettings` | `notification-settings-card.tsx` |
+| `GET /notifications/summaries/weekly\|monthly` | *(no consumido por el FE; queda como endpoint de diagnóstico/preview)* |
+
+---
+
+<a name="9-sugeridas"></a>
+## 9. Funcionalidades sugeridas (candidatas, fuera del alcance comprometido)
 
 Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproximado y dependencia. Ya están en el backlog (§2).
 
@@ -759,10 +982,11 @@ Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproxima
 
 ---
 
-<a name="9-changelog"></a>
-## 9. Bitácora de cambios del plan v3
+<a name="10-changelog"></a>
+## 10. Bitácora de cambios del plan v3
 
 | Fecha | Cambio |
 |---|---|
 | 2026-06-24 | Creación del documento maestro v3 con las 4 áreas (CRM, Descuentos/Ofertas, Nóminas, Flujo de Caja Pro), tier Enterprise (V3-000), backlog maestro y funcionalidades sugeridas. Estado inicial: áreas `especificada`, sugeridas `idea`. |
 | 2026-06-28 | Alta de **V3-039** (resumen mensual de flujo de caja + semáforo de salud, exportable, tier Enterprise). Detalle en §7.9; contrato backend en [docs/v3/backend-flujo-caja-mensual.md](./backend-flujo-caja-mensual.md). |
+| 2026-07-28 | Nueva **Área 5 — Resúmenes automáticos de negocio** (§8) con **V3-040..043**: activar de punta a punta los tipos `weekly_summary` / `monthly_summary`. **V3-040 marcado `hecho`** (cálculo real de ingresos ya en `main`); V3-041 (cron + idempotencia), V3-042 (visibilidad en la UI) y V3-043 (toggles en Ajustes) quedan `especificada` para implementar en v3. Renumeradas §8→§9 (sugeridas) y §9→§10 (bitácora); la columna *Sección* de V3-090..096 pasa de §8 a §9. Los IDs no cambian. |

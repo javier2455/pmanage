@@ -1,7 +1,14 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-07-12** (migración de **producción** a la subruta
+> Última actualización: **2026-07-28** — bloque de **costeo e inteligencia de inventario**
+> (costeo **FIFO por capas**, ganancia bruta y costo de lo vendido en los cierres, margen por
+> producto y **rentabilidad lote a lote**), **importación masiva de productos** desde Excel/CSV,
+> **gestión de navegación** (secciones/menús/submenús con reordenado), **motor de tablas PDF**
+> reescrito (cierre + factura), la **revisión de julio** (5 fases de correcciones) y el
+> **arreglo del estado de leída de las notificaciones** + resúmenes de ingresos con cifras
+> reales. Ver [features 42–52](#implementado-en-develop--pendiente-de-promover-a-producción).
+> Anterior — 2026-07-12: (migración de **producción** a la subruta
 > **`https://negora.dveloxsoft.com/manager/`** — ver [Promoción a producción v2](#promoción-a-producción-v2)
 > y [despliegue-negora-manager.md](despliegue-negora-manager.md); además, limpieza
 > de ESLint/TypeScript a **cero** errores y advertencias). Anterior — 2026-06-24: (trial Pro de 15 días + **selección de plan self-service** y **reconciliación de negocios** al hacer downgrade; **desactivación/reactivación de cuenta** con gracia de 15 días; **módulo de Caja / cuentas en divisa** (flujo de caja Fase 1); cancelación de venta con **devolución parcial y merma**; **delivery/mensajería por negocio** (`acceptsMessaging`); **rebranding a Negora**; stats del dashboard agrupadas por moneda; `RouteGuard` cliente para rutas Pro/admin en build estático — ver features 34–41). Anterior — 2026-06-20: suite **Multimoneda** (ventas con moneda + pagos multimoneda con factura PDF, compras de inventario y asignación de producto con costo en divisa, tipo de venta + entrega, y gastos con moneda; ver feature 33).
@@ -12,11 +19,11 @@
 
 | | |
 |---|---|
-| **Versión actual** | `1.28.1-alpha` (rama `develop`) → `2.0.0` en `release/v2.0.0` |
-| **Versión en producción** | `1.0.0` (rama `main`) — pendiente de promover a `2.0.0` |
-| **Último commit** | `5bc8fe8` — 2026-06-27 |
+| **Versión actual** | `2.1.4` (`package.json`) |
+| **Versión en producción** | `1.0.0` (rama `main`) — pendiente de promover a `2.x` |
+| **Último commit** | `5bc8fe8` — 2026-06-27 *(el trabajo de julio no está reflejado aquí; el repo local no es un checkout de git, así que las features 42–52 se documentan desde las fuentes citadas en cada fila)* |
 | **PR `develop → main`** | **En preparación** — rama `release/v2.0.0` lista (ver [Promoción a producción v2](#promoción-a-producción-v2)) |
-| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId`); (2) contrato de **notificaciones in-app** (canal `in_app` + `readAt` + endpoints) — ver `docs/notificaciones-internas.md`; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27); (4) **multimoneda — backend**: bug de conversión de pagos con base ≠ CUP y `currency` no aceptado en gastos (ver feature 33); (5) **selección de plan self-service / trial Pro**: contrato `POST /plans/select`, campos `Business.status`/`archivedReason`, suspensión de trabajadores y enforcement server-side aún por entregar (ver feature 39 y [análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)) |
+| **Bloqueadores para promover** | (1) Backend con bug al guardar gasto con `expenseCategoryId` (error SQL `:categoryId`); (2) ~~contrato de **notificaciones in-app**~~ ✅ **resuelto** (2026-07-28) — **requiere redesplegar el backend**; (3) **migración de categorías** a nivel de `BusinessProduct` en backend (ver feature 27); (4) **multimoneda — backend**: bug de conversión de pagos con base ≠ CUP y `currency` no aceptado en gastos (ver feature 33); (5) **selección de plan self-service / trial Pro**: contrato `POST /plans/select`, campos `Business.status`/`archivedReason`, suspensión de trabajadores y enforcement server-side aún por entregar (ver feature 39 y [análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)) |
 
 ---
 
@@ -91,6 +98,17 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 39 | **Selección de plan self-service + trial Pro de 15 días + reconciliación de negocios** (`/seleccionar-plan`, `/seleccionar-plan/reconciliar`, `PlanGuard`, `plan-session`) | `8311d4d` (1.23.0), `1b4a255` (1.24.0) | **Backend**: `POST /plans/select`, `Business.status`/`archivedReason`, suspensión de trabajadores y enforcement (ver detalle y [análisis-planes/backend-cambios.md](análisis-planes/backend-cambios.md)) |
 | 40 | **Stats del dashboard agrupadas por moneda** (`DashboardCurrencyTotal`, total por divisa + contador de transacciones) | `1b4a255` (1.24.0) | — |
 | 41 | **`RouteGuard` cliente** para rutas Pro/admin (barrera real en build estático donde el middleware está inerte) | `1b4a255` (1.24.0) | — |
+| 42 | **Costeo de inventario FIFO por capas** — el costo deja de ser un número que cada compra sobrescribe y pasa a ser lotes con lo vivo de cada uno; cada venta congela el costo de lo que consumió | BE `143` | — |
+| 43 | **Ganancia bruta y costo de lo vendido en los cierres** (diario y mensual) + corrección del **valor de inventario**, que se calculaba a precio de venta | BE `145` | — |
+| 44 | **Exports de cierre con costo** (PDF y Excel) + **costo medio y margen por producto** en el listado de stock actual | BE `146` | — |
+| 45 | **Rentabilidad lote a lote** — por cada compra: unidades vendidas, qué costaron, qué se cobró y su margen | BE `147` | — |
+| 46 | **Importación masiva de productos** desde Excel/CSV con plantilla fija, validación previa y reporte accionable de errores | rama `feat-upload-products` | Ver [importacion-masiva-productos.md](importacion-masiva-productos.md) (MVP; pendientes listados ahí) |
+| 47 | **Gestión de navegación** — CRUD de secciones/menús/submenús desde `/dashboard/admin/menus`, con reordenado drag-and-drop | rama `feat-menus-management` | **Backend**: los endpoints `/reorder` (batch por grupo) están en la rama del backend, **sin mergear a `main`** |
+| 48 | **Motor de tablas para PDF** (`pdf-table.ts` + `pdf-report.ts`) — anchos calculados en vez de fijos; se reescribe el PDF de cierre y se migra la factura al mismo motor | BE `141`, `142` | — |
+| 49 | **Desglose por moneda en los cierres** (`daily`, `monthly`, `range`) alineado en pantalla, PDF y Excel | BE `138` | — |
+| 50 | **Revisión de julio 2026 — 5 fases de correcciones**: estados de carga del panel, retirada de presupuestos en saldos por moneda, desempeño de ventas por período y multimoneda, filtros de fecha/tipo + exportación en historial de inventario, y maquetación del PDF de cierre | BE `139`, `140`, `141` | — · detalle en [revision-2026-07-correcciones.md](revision-2026-07-correcciones.md) |
+| 51 | **Refactor de transacciones financieras** a 4 tipos con monto y moneda originales + fix de duplicados en cancelación multimoneda | BE `136`, `137` | — |
+| 52 | **Cron de cierres** (diario/mensual por hora de cierre del negocio, idempotente) + **datos enriquecidos** en el correo de cierre | BE `087`, `088` | — |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
 >
@@ -304,6 +322,78 @@ Antes, la página de Gastos llamaba a `getAllExpenses` **sin `businessId`**, mez
 
 **Sin bloqueador de backend** — el contrato del query param ya está disponible.
 
+### Detalle: Costeo FIFO por capas y su cascada (features 42–45) — BE `143`, `145`, `146`, `147`
+
+Es el bloque de trabajo más grande de julio y responde a una sola pregunta del dueño:
+**"¿cuánto gané de verdad con esto?"**. Antes el costo de un producto era un único
+`entryPrice` que **cada compra sobrescribía**, así que una compra más cara borraba el
+costo real de lo que aún quedaba de la compra anterior y el margen salía mal.
+
+- **Capas de costo (42).** Cada entrada de inventario crea un lote (`InventoryCostLayer`)
+  con su cantidad y su costo. Cada venta consume lotes en orden de llegada (**FIFO**) y
+  registra qué consumió (`SaleItemCostConsumption`), congelando el costo de esa venta.
+  Aunque la tasa de cambio o el precio de compra cambien después, el margen histórico
+  no se mueve.
+- **Cierres con ganancia bruta (43).** El cierre diario y el mensual pasan a mostrar
+  **costo de la mercancía vendida** y **ganancia bruta**. De paso se corrigió el **valor
+  de inventario**, que se calculaba a precio de venta (inflaba el activo).
+- **Exports y margen por producto (44).** El PDF y el Excel del cierre incluyen el costo;
+  el listado de stock actual gana **costo medio** y **margen** por producto.
+- **Rentabilidad por lote (45).** Por cada compra: unidades vendidas, qué costaron, qué se
+  cobró y el margen resultante. Es la vista que cierra la línea de trabajo.
+
+> **Nota de moneda** (ver [multimoneda-productos.md](../../psearch-back/docs/multimoneda-productos.md)):
+> `businessProduct.entryPrice` se guarda **convertido a CUP** porque de él dependen margen,
+> valor de inventario y consolidados. En cambio `inventoryHistory`, `providerProduct.price`
+> y `expense.amount` conservan la **moneda original** + la tasa aplicada, que es el dato que
+> el usuario reconoce. Al leer estos datos hay que mirar siempre a qué importe describe el
+> campo `currency`.
+
+### Detalle: Importación masiva de productos (feature 46) — rama `feat-upload-products`
+
+Un negocio con 100+ productos no puede darlos de alta de uno en uno. Se carga un
+**Excel (`.xlsx`) o CSV** a partir de una **plantilla fija**; el sistema valida la
+estructura **antes** de confirmar y devuelve qué está mal y cómo arreglarlo, fila por fila.
+Página en `/dashboard/business/products/import`.
+
+Fuente de la verdad (plantilla, contrato de API, reglas y pendientes del MVP):
+[importacion-masiva-productos.md](importacion-masiva-productos.md).
+
+### Detalle: Gestión de navegación (feature 47) — rama `feat-menus-management`
+
+CRUD completo de la jerarquía **Sección → Menú → Submenú** (tres niveles fijos) desde
+`/dashboard/admin/menus`, con reordenado **drag-and-drop**. Modelo de datos, reglas y mapa
+de archivos en [extra/NAVIGATION_MANAGEMENT_GUIDE.md](extra/NAVIGATION_MANAGEMENT_GUIDE.md).
+
+> ⚠️ **Bloqueador:** los endpoints `/reorder` (batch por grupo) viven en la rama
+> `feat-menus-management` del **backend** y **no están mergeados a `main`**. El reordenado
+> no funcionará contra un backend de producción hasta que se mergeen.
+
+### Detalle: Notificaciones — estado de leída y resúmenes (2026-07-28)
+
+Tres defectos reales del módulo de notificaciones, corregidos hoy:
+
+1. **La ruta de "marcar una notificación como leída" no existía.** Estaba declarada como
+   `@Patch("{id}/read")` en vez de `@Patch(":id/read")`. Con NestJS 11 → Express 5 →
+   path-to-regexp 8, `{...}` ya **no** es un parámetro sino un grupo opcional literal, así
+   que `PATCH /notifications/<uuid>/read` devolvía **404**: al pulsar una notificación su
+   `readAt` nunca se guardaba y al reabrir sesión volvía a salir como no leída. Además el
+   frontend no enviaba el `businessId` que el backend exige — también corregido.
+2. **Filtros `readAt: null` que TypeORM descartaba.** En TypeORM 0.3 la opción por defecto
+   `invalidWhereValuesBehavior.null = "ignore"` **elimina la condición entera** del WHERE
+   (hay que usar `IsNull()`). Consecuencia: `?unreadOnly=true` devolvía todo, y
+   `markAllAsRead` seleccionaba **todas** las notificaciones del negocio —leídas incluidas—
+   y les reescribía la fecha de lectura.
+3. **Resúmenes semanal/mensual con cifras reales.** `buildSummary` devolvía `revenue: 0`
+   fijo. Ahora calcula ingresos delegando en `SaleService.getClosingByDateRange`, la misma
+   fuente que los cierres contables, comparando el tramo transcurrido contra el mismo tramo
+   del periodo anterior.
+
+> Los resúmenes **siguen sin verse en la UI**: nada dispara la notificación, y los tipos
+> `weekly_summary` / `monthly_summary` están excluidos de `DEFAULT_NOTIFICATION_TYPES`
+> (backend) y `VISIBLE_NOTIFICATION_TYPES` (frontend). Activarlos de punta a punta está
+> planificado como **V3-040..043** en [v3/V3-MASTER.md](v3/V3-MASTER.md) §8.
+
 ---
 
 ## Reversiones — implementado y revertido a la espera de backend
@@ -323,6 +413,8 @@ Trabajo de frontend completado pero **revertido en `develop`** porque depende de
 |---|---|---|
 | `feature/auth-google` | OAuth con Google (popup) | Endpoint backend `/auth/google` |
 | `move-to-spa` | Migración a SPA (conversión a estático) | Ver [docs/conversion-a-estatico.md](conversion-a-estatico.md) |
+| `feat-upload-products` | Importación masiva de productos (feature 46) | MVP funcional; pendientes en [importacion-masiva-productos.md](importacion-masiva-productos.md) |
+| `feat-menus-management` | Gestión de navegación (feature 47) | **Los `/reorder` del backend siguen en su rama, sin mergear a `main`** |
 
 > `fix/cors-error` ya está mergeado: `src/app/api/` fue eliminado y el problema de CORS al deployar está resuelto.
 
@@ -337,10 +429,10 @@ No requiere entidades nuevas. Todo es agregación sobre datos ya capturados.
 | Feature | Estado frontend | Endpoint backend necesario |
 |---|---|---|
 | Alertas de stock bajo/agotado | ✅ Implementado · emisión multi-canal entregada | Pendiente: `GET /businesses/:id/stock-alerts` + `PATCH .../stock-alert` |
-| Notificaciones in-app (bandeja) | ✅ Scaffolding listo | Pendiente: canal `in_app` + `readAt` + endpoints (listar/contar/marcar) |
-| Rentabilidad por producto (margen = venta − costo entrada × cantidad) | Por hacer | `GET /products/profitability?from=&to=` |
-| Comparativas de periodos (este mes vs. anterior) | Por hacer | `GET /analytics/period-compare?range=` |
-| Métricas de ventas por trabajador | Por hacer | `GET /sales/by-worker` |
+| Notificaciones in-app (bandeja) | ✅ **Completo y en funcionamiento** — contrato entregado; estado de leída corregido 2026-07-28 | — |
+| Rentabilidad por producto (margen real, costeo FIFO) | ✅ **Hecho** — features 42–45 (margen por producto y rentabilidad por lote) | — (BE `143`, `146`, `147`) |
+| Comparativas de periodos (este mes vs. anterior) | ⚠️ **Parcial** — el cálculo existe en los resúmenes semanal/mensual (`/notifications/summaries/*`), pero **no hay pantalla** que lo consuma | Planificado como V3-040..043 |
+| Métricas de ventas por trabajador | ✅ **Hecho** — `GET /analytics/sales-by-worker/:businessId` con multimoneda y rango de fechas | — (BE `139`) |
 
 Spec técnica detallada: [docs/extra/análisis-planes/spec-tecnicas.md](extra/análisis-planes/spec-tecnicas.md).
 
@@ -391,7 +483,9 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
 
 | Problema | Impacto | Prioridad |
 |---|---|---|
-| Sin tests automatizados (ni unitarios ni e2e) | Regresiones no detectadas en CI | Alta |
+| **Frontend sin tests automatizados** (ni unitarios ni e2e) — el backend sí tiene suite Jest sobre la lógica pura (`money.util`, `pdf-table`, `closing-schedule.util`, `summary-period.util`, guards…) | Regresiones no detectadas en CI del lado del cliente | Alta |
+| **Errores de TypeScript en `psearch-back/src/v1/menu/menu.service.spec.ts`** — falta `@jest/globals` y hay `as` sobre tipos que ya no encajan (`order`, `permissions`) | `tsc --noEmit` no está limpio en el backend; enmascara errores nuevos | Media |
+| **Entidad `Notification` desalineada con su tabla** — `isSent`, `sendError` y `sentAt` no declaran `name`, así que TypeORM espera `isSent`/`sendError`/`sentAt` mientras la migración creó `is_sent`/`send_error`/`sent_at` (y `findUnsent` consulta las snake_case en SQL crudo). Funciona solo si `synchronize` creó las columnas duplicadas | Columnas duplicadas y datos que pueden divergir según por dónde se lean | Media |
 | Sin Prettier configurado | Inconsistencia de estilo entre archivos | Baja |
 | Query keys no centralizados en un archivo de constantes | Renombrar una key requiere buscar en todos los hooks | Baja |
 
@@ -457,9 +551,14 @@ hay que añadir su regla **en dos sitios**: en `public/.htaccess` (para `develop
 
 **Orden sugerido:**
 
+0. **Desplegar el backend** con el arreglo de notificaciones del 2026-07-28 (la ruta
+   `:id/read` es un cambio de servidor: hasta que no se redespliegue, marcar una
+   notificación como leída seguirá devolviendo 404 en producción). Y **mergear los
+   `/reorder`** de `feat-menus-management` en el backend, o el reordenado del sidebar
+   no funcionará (feature 47).
 1. **Coordinar con backend** los contratos que bloquean la promoción:
    - **Corregir el bug SQL de `expenseCategoryId`** en `POST/PATCH /expenses` (parámetro `:categoryId` sin enlazar) — ver detalle arriba.
-   - **Notificaciones in-app** — Parte 2 del contrato: canal `in_app`, `readAt`, y endpoints para listar/contar/marcar ([docs/notificaciones-internas.md](notificaciones-internas.md)).
+   - ~~**Notificaciones in-app** — Parte 2 del contrato~~ ✅ **Entregado y en funcionamiento** (2026-07-28).
    - Endpoints de alertas de stock: `GET /businesses/:id/stock-alerts` + `PATCH .../stock-alert` ([docs/backend-alertas-stock.md](backend-alertas-stock.md)).
    - **Migración de categorías** a nivel de `BusinessProduct` y paginación de `GET /category` ([docs/category.md](category.md), feature 27).
    - **Decimales en `add-stock`**: confirmar que el backend persiste cantidades fraccionarias para unidades de peso/volumen (feature 30).
@@ -468,7 +567,8 @@ hay que añadir su regla **en dos sitios**: en `public/.htaccess` (para `develop
    - **Desactivación de cuenta (feature 38)**: confirmar `deactivatedAt` en `getMe`, endpoint de reactivación dentro de la gracia y borrado definitivo al expirar el plazo.
 2. **Crear PR `develop → main`** con los commits acumulados — la deuda de promoción sigue creciendo. Mover bloques del `sdd-develop.md` al `sdd-main.md` en el mismo PR.
 3. **Re-aplicar la reversión** de categorías globales cuando backend confirme el modelo (el diff está conservado en el historial). La reversión de "divisas" quedó superada por la Suite Multimoneda (feature 33) y ya no requiere re-aplicación.
-4. Continuar con Variante A del roadmap (rentabilidad, comparativas, métricas por worker).
+4. ~~Continuar con Variante A del roadmap~~ — **prácticamente cerrada**: rentabilidad (features 42–45) y métricas por trabajador (BE `139`) están hechas. Queda solo **comparativas de periodos**, que ya tiene el cálculo hecho en los resúmenes pero **sin pantalla** (V3-040..043).
+5. Arrancar la **v3** por el orden acordado en [v3/V3-MASTER.md](v3/V3-MASTER.md) §3: Caja N1 → Descuentos → CRM → Nóminas → Caja N2, con **V3-041..043** (resúmenes automáticos) como entrada de bajo riesgo para estrenar el ciclo.
 
 ---
 
