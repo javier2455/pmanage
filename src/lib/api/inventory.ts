@@ -5,6 +5,7 @@ import {
     CurrentInventoryResponse,
     InventoryHistoryInclude,
     InventoryHistoryResponse,
+    LotProfitabilityResponse,
     ProductCostLayersResponse,
 } from "../types/inventory";
 
@@ -153,6 +154,23 @@ export async function getProductCostLayers({
 }): Promise<ProductCostLayersResponse> {
     const { data } = await apiClient.get<ProductCostLayersResponse>(
         inventoryRoutes.getProductCostLayers(businessId, productId),
+    );
+    return data;
+}
+
+/**
+ * Rentabilidad lote a lote: qué costó cada compra y qué se cobró por lo que
+ * salió de ella, incluidos los lotes ya agotados.
+ */
+export async function getProductLotProfitability({
+    businessId,
+    productId,
+}: {
+    businessId: string;
+    productId: string;
+}): Promise<LotProfitabilityResponse> {
+    const { data } = await apiClient.get<LotProfitabilityResponse>(
+        inventoryRoutes.getProductLotProfitability(businessId, productId),
     );
     return data;
 }

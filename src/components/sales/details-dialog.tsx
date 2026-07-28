@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -142,6 +143,12 @@ export default function DetailsDialog({
             </DialogTitle>
             <PaymentStatusBadge status={status} />
           </div>
+          {/* El diseño del encabezado no admite una línea más, pero Radix exige
+              una descripción para anunciar el diálogo a los lectores de
+              pantalla; sin ella avisa por consola en cada apertura. */}
+          <DialogDescription className="sr-only">
+            Detalle de los productos, importes y estado de cobro de la venta.
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (

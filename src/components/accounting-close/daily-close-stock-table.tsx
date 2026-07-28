@@ -53,7 +53,13 @@ function columnMeta(column: {
 
 interface DailyCloseStockTableProps {
   lines: BusinessWithProducts[]
-  totalStockValue: number
+  /**
+   * Valor del inventario al costo de entrada, en CUP, calculado por el backend.
+   * `null` cuando la respuesta no lo trae: se muestra un guion en vez de una
+   * cifra, porque el dato no es derivable en el cliente (aquí solo llega el
+   * precio de venta, y valorar el almacén con él lo infla por el margen).
+   */
+  totalStockValue: number | null
 }
 
 export function DailyCloseStockTable({
@@ -262,11 +268,18 @@ export function DailyCloseStockTable({
       </div>
 
       <div className="flex items-center justify-between border-t border-border px-4 py-4">
-        <span className="text-sm font-semibold text-card-foreground">
-          Valor total del inventario
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-card-foreground">
+            Valor total del inventario
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Al costo con el que entró la mercancía
+          </span>
+        </div>
         <span className="text-base font-bold tabular-nums text-card-foreground">
-          ${formatClosingCurrency(totalStockValue)}
+          {totalStockValue === null
+            ? "—"
+            : `$${formatClosingCurrency(totalStockValue)}`}
         </span>
       </div>
     </CardContent>

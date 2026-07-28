@@ -50,6 +50,10 @@ export function useCreateSaleMutation() {
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
+            // La venta consume capas por FIFO: cambian tanto los lotes vivos
+            // como lo vendido de cada uno.
+            queryClient.invalidateQueries({ queryKey: ["product-cost-layers", bid] });
+            queryClient.invalidateQueries({ queryKey: ["product-lot-profitability", bid] });
             // Una venta puede cruzar el umbral mínimo de stock y generar
             // notificaciones en el backend; refrescamos lista y conteo del badge.
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
@@ -113,6 +117,12 @@ export function useCancelSaleMutation() {
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
+            // Cancelar devuelve las unidades a sus capas y descuenta lo vendido
+            // de cada lote, así que las dos vistas de costeo quedan obsoletas.
+            // Se invalidan por prefijo de negocio porque la cancelación puede
+            // tocar varios productos y aquí solo se conoce la venta.
+            queryClient.invalidateQueries({ queryKey: ["product-cost-layers", bid] });
+            queryClient.invalidateQueries({ queryKey: ["product-lot-profitability", bid] });
             // Cancelar repone stock: puede resolver/generar avisos de umbral.
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });

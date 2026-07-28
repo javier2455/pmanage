@@ -19,6 +19,13 @@ export const inventoryRoutes = {
   getProductCostLayers: (businessId: string, productId: string) =>
     `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/cost-layers`,
   /**
+   * Rentabilidad lote a lote: qué costó cada compra y qué se cobró por lo que
+   * salió de ella. Incluye los lotes agotados, que son los que ya han vendido
+   * todo lo que tenían que vender.
+   */
+  getProductLotProfitability: (businessId: string, productId: string) =>
+    `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/lot-profitability`,
+  /**
    * Exportaciones del historial (plan Pro, validado en el servidor).
    *
    * Un único par de endpoints cubre las dos vistas: el filtro por producto va

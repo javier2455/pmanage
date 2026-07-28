@@ -137,10 +137,12 @@ export default function DailyPage() {
       </div>
     )
   }
-  const totalStockValue = inventory.reduce(
-    (acc: number, i: BusinessWithProducts) => acc + i.stock * Number(i.price),
-    0,
-  )
+  // Valor del inventario al COSTO con el que entró, calculado por el backend a
+  // partir de las capas. Antes se calculaba aquí como `stock × price`, es decir
+  // al precio de VENTA, lo que inflaba el almacén por el margen completo de
+  // mercancía que todavía no se ha vendido. `null` si el backend no lo trae:
+  // preferimos no mostrar cifra a mostrar la inflada.
+  const totalStockValue = data?.costSummary?.inventoryValue ?? null
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -375,6 +377,7 @@ export default function DailyPage() {
         businessId={activeBusinessId}
         period="daily"
         serverTotals={serverTotals}
+        costSummary={data?.costSummary}
       />
     </div>
   )

@@ -191,7 +191,7 @@ export function UpdateStockForm() {
               <ComboboxList className="max-h-64">
                 <ComboboxCollection>
                   {(item: BusinessWithProducts) => (
-                    <ComboboxItem value={item}>
+                    <ComboboxItem key={item.id} value={item}>
                       {item.product.name}
                     </ComboboxItem>
                   )}

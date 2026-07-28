@@ -34,6 +34,30 @@ export interface ClosingConsolidatedBase {
     balance: number;
 }
 
+/**
+ * Cuántas líneas del período tienen costo registrado y cuántas no. Las ventas
+ * anteriores al costeo por capas no lo tienen, y se excluyen del cálculo en vez
+ * de contarse como costo cero.
+ */
+export interface ClosingCostCoverage {
+    withCost: number;
+    withoutCost: number;
+}
+
+/** Cara de costos del cierre, toda en CUP. Calculada por el backend. */
+export interface ClosingCostSummary {
+    /** Costo de la mercancía vendida en el período. */
+    costOfGoodsSold: number;
+    /** Ingresos menos costo de lo vendido. NO descuenta gastos operativos. */
+    grossProfit: number;
+    costCoverage: ClosingCostCoverage;
+    /**
+     * Valor del inventario vivo al costo con el que entró. Es una foto de ahora
+     * mismo, no del período del cierre.
+     */
+    inventoryValue: number;
+}
+
 export type AccountingCloseResponse = {
     date: string;
     sales: SaleWithProductAndBusiness[];
@@ -60,6 +84,12 @@ export type AccountingCloseResponse = {
      * Opcional por compatibilidad con respuestas que aún no lo incluyan.
      */
     consolidatedBase?: ClosingConsolidatedBase;
+    /**
+     * Costo de lo vendido, ganancia bruta y valor del inventario a costo.
+     * Opcional: los despliegues anteriores al costeo por capas no lo traen, y en
+     * ese caso la UI omite el bloque en vez de mostrar ceros.
+     */
+    costSummary?: ClosingCostSummary;
     /**
      * Monedas con movimientos en el período que NO tienen tasa configurada y
      * quedaron fuera del consolidado del backend (disponible desde 2026-07-02).

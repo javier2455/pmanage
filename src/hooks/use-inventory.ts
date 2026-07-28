@@ -4,6 +4,7 @@ import {
     getInventoryHistoryByBusinessId,
     getProductCostLayers,
     getProductInventoryHistory,
+    getProductLotProfitability,
 } from "@/lib/api/inventory";
 import {
     AddStockToProductProps,
@@ -62,6 +63,21 @@ export function useProductCostLayers(businessId: string, productId: string) {
     });
 }
 
+/**
+ * Rentabilidad lote a lote de un producto: qué costó cada compra y qué se cobró
+ * por lo que salió de ella.
+ */
+export function useProductLotProfitability(
+    businessId: string,
+    productId: string,
+) {
+    return useQuery({
+        queryKey: ["product-lot-profitability", businessId, productId],
+        queryFn: () => getProductLotProfitability({ businessId, productId }),
+        enabled: !!businessId && !!productId,
+    });
+}
+
 export function useProductInventoryHistory(
     businessId: string,
     productId: string,
@@ -90,6 +106,11 @@ export function useAddStockToProductMutation() {
             // La compra abre una capa nueva, así que la vista de lotes cambia.
             queryClient.invalidateQueries({
                 queryKey: ["product-cost-layers", variables.businessId, variables.productId],
+            });
+            // Y con ella la lista de lotes de la vista de rentabilidad, que
+            // incluye los que todavía no han vendido nada.
+            queryClient.invalidateQueries({
+                queryKey: ["product-lot-profitability", variables.businessId, variables.productId],
             });
         },
     });

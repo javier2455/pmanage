@@ -22,6 +22,7 @@ import InventoryHistoryFilters, {
 } from "@/components/inventory/inventory-history-filters";
 import { TimelineSkeleton } from "@/components/inventory/timeline-skeleton";
 import { ProductCostLayers } from "@/components/inventory/product-cost-layers";
+import { ProductLotProfitability } from "@/components/inventory/product-lot-profitability";
 import {
   EXPORT_FILE_EXTENSION,
   EXPORT_ROW_LIMIT,
@@ -272,6 +273,17 @@ export default function InventoryHistoryPage() {
           donde se ve cuántas unidades quedan de cada compra y a qué costo. */}
       {isProductView && (
         <ProductCostLayers
+          businessId={businessId}
+          productId={productId}
+          unit={selectedProduct.product.unit}
+          className="my-4"
+        />
+      )}
+
+      {/* Y qué dejó cada lote ya vendido: el reverso de la tarjeta anterior,
+          que solo mira el stock vivo. */}
+      {isProductView && (
+        <ProductLotProfitability
           businessId={businessId}
           productId={productId}
           unit={selectedProduct.product.unit}

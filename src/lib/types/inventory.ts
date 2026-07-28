@@ -89,6 +89,32 @@ export type CurrentInventoryEntry = {
      * (ver `useStockAlerts`). Spec: docs/extra/análisis-planes/spec-tecnicas.md.
      */
     stockAlertThreshold?: number | null;
+    /**
+     * Costo y margen calculados desde las capas de costo del producto.
+     * Opcional: una respuesta anterior al costeo por lotes no lo trae y la tabla
+     * muestra un guion en esas columnas.
+     */
+    costing?: CurrentInventoryCosting;
+};
+
+/**
+ * Cara de costo de una línea del inventario.
+ *
+ * No confundir `averageCost` con `entryPrice`: el primero es el costo medio
+ * ponderado de las unidades que quedan en el almacén; el segundo, el último
+ * precio pagado al proveedor. Si el proveedor subió el precio y todavía queda
+ * mercancía del lote anterior, no coinciden — y el que describe el margen real
+ * del stock es el primero.
+ */
+export type CurrentInventoryCosting = {
+    /** Costo medio ponderado en CUP. `null` si el stock no tiene capas. */
+    averageCost: number | null;
+    /** Lo que costó el stock vivo, en CUP. */
+    inventoryValue: number;
+    /** Margen sobre el precio de venta efectivo, en porcentaje. */
+    marginPct: number | null;
+    /** Unidades en stock cuyo costo no se conoce. */
+    uncostedQuantity: number;
 };
 
 export interface CurrentInventoryResponse {
@@ -253,4 +279,53 @@ export type ProductCostLayersData = {
 export interface ProductCostLayersResponse {
     message: string;
     data: ProductCostLayersData;
+}
+
+/**
+ * Rentabilidad de un lote: lo que costó frente a lo que se cobró por él.
+ *
+ * Dos lotes pueden dejar la misma ganancia por unidad y distinto margen — 100
+ * sobre 500 es un 20 %, los mismos 100 sobre 520 son un 19,2 % — y esa
+ * diferencia es la que el precio de entrada único no podía mostrar.
+ */
+export type LotProfitability = {
+    layerId: string;
+    acquiredAt: string;
+    providerName: string | null;
+    /** Costo unitario en la moneda de compra. */
+    unitCost: number;
+    currency: string;
+    /** Costo unitario en CUP. */
+    unitCostBase: number;
+    originalQuantity: number;
+    remainingQuantity: number;
+    /** Unidades de este lote que ya se vendieron. */
+    soldQuantity: number;
+    /** Costo en CUP de las unidades vendidas. */
+    costBase: number;
+    /** Ingreso en CUP de esas unidades. */
+    revenueBase: number;
+    grossProfitBase: number;
+    /** Margen sobre el ingreso, en porcentaje. `null` si aún no se ha vendido nada. */
+    marginPct: number | null;
+    /** Ingreso por moneda de venta, sin convertir. */
+    revenueByCurrency: Record<string, number>;
+};
+
+export type LotProfitabilityData = {
+    businessProductId: string;
+    lots: LotProfitability[];
+    /** Monedas de venta sin tasa configurada: su ingreso no entra en `revenueBase`. */
+    unconvertedCurrencies: string[];
+    /**
+     * Hubo ingresos convertidos con la tasa de HOY, no la del día del cobro: el
+     * sistema no guarda la tasa de cada venta. La vista debe advertirlo en vez
+     * de presentar la cifra como exacta.
+     */
+    hasConvertedRevenue: boolean;
+};
+
+export interface LotProfitabilityResponse {
+    message: string;
+    data: LotProfitabilityData;
 }
