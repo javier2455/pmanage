@@ -274,6 +274,7 @@ export default function InventoryHistoryPage() {
         <ProductCostLayers
           businessId={businessId}
           productId={productId}
+          unit={selectedProduct.product.unit}
           className="my-4"
         />
       )}

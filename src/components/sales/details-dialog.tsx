@@ -23,6 +23,7 @@ import {
 import { FileText, Loader2, Wallet, XCircle } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
+import { formatQuantity } from "@/lib/units";
 import { openPdfInNewTab } from "@/lib/download";
 import { mapCurrencyErrorFromBlob } from "@/lib/currency-errors";
 import { toastError, toastSuccess } from "@/lib/toast";
@@ -172,7 +173,7 @@ export default function DetailsDialog({
                             {item.product?.name}
                           </span>
                           <span className="truncate text-xs text-muted-foreground">
-                            {Number(item.quantity)} x{" "}
+                            {formatQuantity(item.quantity, item.product?.unit)} x{" "}
                             {formatMoney(Number(item.price), currency)}
                           </span>
                         </div>

@@ -30,6 +30,30 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+#### Decimales en cantidades de productos por unidades
+- El historial de inventario pintaba `quantity`, `previousStock` y `newStock` tal
+  como llegan del backend (columnas `decimal(10,2)`, es decir strings `"1.00"`),
+  así que un producto por piezas mostraba "Cantidad: 1.00" y "Stock: 5.00 → 6.00".
+  No existe media laptop: ahora [inventory-history-item.tsx](src/components/inventory/inventory-history-item.tsx)
+  formatea según la unidad del producto, y de paso deja de listar movimientos con
+  cantidad 0 (el string `"0.00"` es truthy y colaba).
+- Nuevo helper `formatQuantity()` en [units.ts](src/lib/units.ts): número ya
+  normalizado (redondeado en `ud`) y la unidad como sufijo **solo** en
+  peso/volumen, para celdas de tabla y badges donde "12 unidades" no cabe.
+  Complementa a `formatStockWithUnit()`, que sigue siendo el formato largo.
+- Aplicado a los sitios que mostraban cantidades sin mirar la unidad: CSV del
+  historial ([inventory-history-export.ts](src/lib/inventory-history-export.ts),
+  que además ahora escribe números y no texto), lotes de costo
+  ([product-cost-layers.tsx](src/components/inventory/product-cost-layers.tsx),
+  que rotulaba todo como "uds" — un lote de 0,5 kg salía como "0,5 uds"), tablas
+  de stock y de vendidos del cierre contable, tabla de productos del negocio,
+  detalles de producto y de venta, cancelación/devolución de venta, historial de
+  precios, actividad reciente del panel, diálogo de alerta de stock (mostraba
+  "0 unidades" para 0,4 kg) y badge de stock bajo.
+- El resumen del carrito ya no suma unidades de distinta naturaleza: 2 laptops +
+  0,5 kg de café daban "2,5 unidades". Si hay peso/volumen en el carrito, cuenta
+  productos.
+
 #### Rutas con basePath
 - Las 3 redirecciones a login por 401 en [axios.ts](src/lib/axios.ts) usaban
   `window.location.href = "/login"` (ignoraba el basePath y sacaba al usuario de

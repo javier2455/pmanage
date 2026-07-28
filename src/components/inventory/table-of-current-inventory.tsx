@@ -284,6 +284,7 @@ export default function TableOfCurrentInventory({
           productName={alertTarget.product?.name ?? "Producto"}
           currentStock={alertTarget.stock}
           currentThreshold={getThreshold(alertTarget)}
+          unit={alertTarget.product?.unit}
         />
       )}
     </TooltipProvider>

@@ -15,6 +15,7 @@ import { useGetProductByIdQuery } from "@/hooks/use-product"
 import { useGetProductCategoryByIdQuery } from "@/hooks/use-product-categories"
 import { Badge } from "@/components/ui/badge"
 import { ProductImage } from "@/components/products/product-image"
+import { formatStockWithUnit } from "@/lib/units"
 
 interface ProductDetailsDialogProps {
     productId: string
@@ -148,7 +149,7 @@ export default function ProductDetailsDialog({ productId, categoryName: category
                                                     : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                         }
                                     >
-                                        {business.stock} {product?.unit}
+                                        {formatStockWithUnit(business.stock, product?.unit)}
                                     </Badge>
                                 </div>
                             </>

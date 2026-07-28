@@ -3,6 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import type { SalesProductInfoResponse } from "@/lib/types/product"
 import { currencyLabel } from "@/lib/currency"
+import { formatQuantity } from "@/lib/units"
 import { formatClosingCurrency } from "./format-closing-currency"
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header"
 import {
@@ -87,7 +88,11 @@ export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
         className="-mr-2 h-8 w-full justify-end px-2 lg:-mr-4 lg:pr-4"
       />
     ),
-    cell: ({ row }) => <span>{Number(row.original.quantity)}</span>,
+    cell: ({ row }) => (
+      <span>
+        {formatQuantity(row.original.quantity, row.original.product?.unit)}
+      </span>
+    ),
   },
   {
     id: "precio",

@@ -168,6 +168,12 @@ export type DashboardSummaryActivity = {
   actionType: string;
   productName: string;
   quantity: number;
+  /**
+   * Unidad del producto (`ud`, `kg`, `L`…). Decide si la cantidad se muestra
+   * redondeada o con decimales. Opcional porque los movimientos cuyo producto
+   * se borró llegan sin producto.
+   */
+  unit?: string | null;
   currency: string;
   description: string;
   createdAt: string;

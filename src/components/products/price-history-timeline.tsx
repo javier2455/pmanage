@@ -58,6 +58,8 @@ function groupByDay(entries: PriceHistoryEntry[]): DayGroup[] {
 
 interface PriceHistoryTimelineProps {
   entries: PriceHistoryEntry[];
+  /** Unidad del producto: decide si el stock se muestra con decimales. */
+  unit?: string | null;
   isLoading?: boolean;
   isFetching?: boolean;
 }
@@ -98,6 +100,7 @@ function TimelineSkeleton() {
 
 export default function PriceHistoryTimeline({
   entries,
+  unit,
   isLoading = false,
   isFetching = false,
 }: PriceHistoryTimelineProps) {
@@ -151,7 +154,7 @@ export default function PriceHistoryTimeline({
               </h2>
               <ol className="list-none">
                 {group.items.map((entry) => (
-                  <PriceHistoryItem key={entry.id} entry={entry} />
+                  <PriceHistoryItem key={entry.id} entry={entry} unit={unit} />
                 ))}
               </ol>
             </section>

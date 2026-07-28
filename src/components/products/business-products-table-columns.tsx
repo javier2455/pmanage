@@ -6,6 +6,7 @@ import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ProductToShowInTable } from "@/lib/types/product";
+import { formatQuantity } from "@/lib/units";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
 import { EditBusinessProductDialog } from "@/components/products/edit-business-product-dialog";
@@ -111,7 +112,7 @@ export function createBusinessProductsColumns(
       ),
       cell: ({ row }) => (
         <span className="tabular-nums text-foreground">
-          {row.original.stock}
+          {formatQuantity(row.original.stock, row.original.product?.unit)}
         </span>
       ),
     },

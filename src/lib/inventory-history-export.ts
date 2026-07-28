@@ -2,6 +2,7 @@ import Papa from "papaparse";
 
 import { downloadBlob } from "@/lib/download";
 import { formatAmount, currencyLabel } from "@/lib/currency";
+import { normalizeStock } from "@/lib/units";
 import {
   inventoryActionTypeLabels,
   type InventoryActionType,
@@ -52,18 +53,35 @@ function actionTypeLabel(actionType: string): string {
   );
 }
 
+/**
+ * Cantidad como NÚMERO, no como el string crudo del backend.
+ *
+ * Las columnas son `decimal(10,2)`, así que llegan como "12.00" y el CSV las
+ * escribía tal cual: un producto por unidades salía con dos decimales que no
+ * significan nada. Devolverlas normalizadas (redondeadas en `ud`) las deja
+ * además como número real de Excel, ordenable y sumable.
+ */
+function quantityCell(
+  value: string | null | undefined,
+  unit?: string | null,
+): number | string {
+  if (value === null || value === undefined || value === "") return "";
+  return normalizeStock(value, unit);
+}
+
 /** Convierte los movimientos a las filas del CSV, ya con cabeceras legibles. */
 export function toInventoryHistoryRows(entries: InventoryEntry[]) {
   return entries.map((entry) => {
     const { date, time } = splitTimestamp(entry.createdAt);
+    const unit = entry.product?.unit;
     return {
       Fecha: date,
       Hora: time,
       Producto: entry.product?.name ?? "",
       Movimiento: actionTypeLabel(entry.actionType),
-      Cantidad: entry.quantity ?? "",
-      "Stock anterior": entry.previousStock ?? "",
-      "Stock nuevo": entry.newStock ?? "",
+      Cantidad: quantityCell(entry.quantity, unit),
+      "Stock anterior": quantityCell(entry.previousStock, unit),
+      "Stock nuevo": quantityCell(entry.newStock, unit),
       "Precio de adquisición": entry.entryPrice
         ? formatAmount(Number(entry.entryPrice))
         : "",

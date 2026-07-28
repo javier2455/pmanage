@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
+import { formatQuantity, formatStockWithUnit, normalizeStock } from "@/lib/units";
 import { useInView } from "@/hooks/use-in-view";
 import { getInventoryActionTypeStyle } from "./inventory-action-type-style";
 
@@ -51,6 +52,12 @@ export default function InventoryHistoryItem({
   const hasStockChange =
     entry.previousStock !== undefined && entry.newStock !== undefined;
   const style = getInventoryActionTypeStyle(entry.actionType);
+  // Las cantidades llegan como decimal(10,2) ("1.00"), así que la unidad del
+  // producto es la que decide si se pintan con decimales o redondeadas.
+  const unit = entry.product?.unit;
+  // `entry.quantity` es un string: "0.00" es truthy y colaba movimientos sin
+  // cantidad. Se compara ya normalizado.
+  const quantity = normalizeStock(entry.quantity, unit);
 
   return (
     <li
@@ -80,11 +87,11 @@ export default function InventoryHistoryItem({
             </header>
 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
-              {entry.quantity ? (
+              {quantity !== 0 ? (
                 <span>
                   Cantidad:{" "}
                   <span className="text-foreground tabular-nums">
-                    {entry.quantity}
+                    {formatStockWithUnit(quantity, unit)}
                   </span>
                 </span>
               ) : null}
@@ -92,7 +99,8 @@ export default function InventoryHistoryItem({
                 <span>
                   Stock:{" "}
                   <span className="text-foreground tabular-nums">
-                    {entry.previousStock} → {entry.newStock}
+                    {formatQuantity(entry.previousStock, unit)} →{" "}
+                    {formatQuantity(entry.newStock, unit)}
                   </span>
                 </span>
               ) : null}

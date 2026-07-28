@@ -8,6 +8,7 @@ import {
   getStockAlertStatus,
   STOCK_ALERT_LABELS,
 } from "@/lib/stock-alert";
+import { formatStockWithUnit } from "@/lib/units";
 
 interface StockAlertBadgeProps {
   stock: number;
@@ -49,7 +50,7 @@ export function StockAlertBadge({
       variant="secondary"
       title={
         isDefaultThreshold
-          ? `Umbral por defecto (${DEFAULT_LOW_STOCK_THRESHOLD} unidades). Configura uno propio desde "Alerta de stock" para recibir avisos.`
+          ? `Umbral por defecto (${formatStockWithUnit(DEFAULT_LOW_STOCK_THRESHOLD, unit)}). Configura uno propio desde "Alerta de stock" para recibir avisos.`
           : undefined
       }
       className={cn(

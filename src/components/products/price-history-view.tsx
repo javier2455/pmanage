@@ -136,6 +136,7 @@ export default function PriceHistoryView({
           ) : (
             <PriceHistoryTimeline
               entries={entries}
+              unit={product?.unit}
               isLoading={activeQuery.isLoading}
               isFetching={activeQuery.isFetching && !activeQuery.isLoading}
             />

@@ -5,6 +5,7 @@ import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import type { PriceHistoryEntry } from "@/lib/types/price-history";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatQuantity } from "@/lib/units";
 import { useInView } from "@/hooks/use-in-view";
 
 const DASH = "—";
@@ -91,8 +92,11 @@ function Row({
 
 export default function PriceHistoryItem({
   entry,
+  unit,
 }: {
   entry: PriceHistoryEntry;
+  /** Unidad del producto: decide si el stock se muestra con decimales. */
+  unit?: string | null;
 }) {
   const { ref, inView } = useInView<HTMLLIElement>();
   const price = parseNumber(entry.price);
@@ -156,7 +160,9 @@ export default function PriceHistoryItem({
             />
             <Row
               label="Stock"
-              value={entry.stock !== null ? entry.stock : DASH}
+              value={
+                entry.stock !== null ? formatQuantity(entry.stock, unit) : DASH
+              }
             />
             <Row label="Usuario" value={entry.username ?? DASH} />
             <Row

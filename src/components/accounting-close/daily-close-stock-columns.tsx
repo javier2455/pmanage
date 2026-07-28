@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { BusinessWithProducts } from "@/lib/types/business"
+import { formatQuantity } from "@/lib/units"
 import { formatClosingCurrency } from "./format-closing-currency"
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header"
 import {
@@ -86,7 +87,7 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
               : "text-foreground",
           )}
         >
-          {row.original.stock} uds
+          {formatQuantity(row.original.stock, row.original.product?.unit)}
         </span>
       )
     },

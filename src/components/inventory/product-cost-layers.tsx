@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProductCostLayers } from "@/hooks/use-inventory";
 import type { InventoryCostLayer } from "@/lib/types/inventory";
+import { formatStockWithUnit } from "@/lib/units";
 import { cn } from "@/lib/utils";
 
 const DASH = "—";
@@ -27,9 +28,14 @@ function formatAmount(value: number, currency: string) {
     return `${formatted} ${currency}`;
 }
 
-function formatQuantity(value: number) {
+/**
+ * Cantidad de un lote con su unidad. Antes se pintaba siempre con "uds" y hasta
+ * dos decimales, así que un producto por piezas mostraba "3 uds" pero uno a
+ * granel mentía: "0,5 uds" en vez de "0,5 kg".
+ */
+function formatLayerQuantity(value: number, unit?: string | null) {
     if (!Number.isFinite(value)) return DASH;
-    return new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 }).format(value);
+    return formatStockWithUnit(value, unit);
 }
 
 function formatDate(value: string) {
@@ -47,6 +53,12 @@ function formatDate(value: string) {
 interface ProductCostLayersProps {
     businessId: string;
     productId: string;
+    /**
+     * Unidad del producto (`ud`, `kg`, `L`…). Decide si las cantidades de cada
+     * lote se muestran redondeadas o con decimales. La respuesta de capas no la
+     * trae, así que la pone la vista, que ya sabe qué producto está mirando.
+     */
+    unit?: string | null;
     className?: string;
 }
 
@@ -61,6 +73,7 @@ interface ProductCostLayersProps {
 export function ProductCostLayers({
     businessId,
     productId,
+    unit,
     className,
 }: ProductCostLayersProps) {
     const { data, isLoading, isError } = useProductCostLayers(businessId, productId);
@@ -126,6 +139,7 @@ export function ProductCostLayers({
                             <CostLayerRow
                                 key={layer.id}
                                 layer={layer}
+                                unit={unit}
                                 isNext={index === 0}
                             />
                         ))}
@@ -145,8 +159,8 @@ export function ProductCostLayers({
                     <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
                         <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                         <span>
-                            {formatQuantity(uncostedQuantity)} unidades en stock no tienen
-                            costo registrado y no entran en el valor mostrado. Suelen ser
+                            {formatLayerQuantity(uncostedQuantity, unit)} en stock sin costo
+                            registrado; no entran en el valor mostrado. Suelen ser
                             existencias anteriores al control por lotes.
                         </span>
                     </p>
@@ -158,9 +172,11 @@ export function ProductCostLayers({
 
 function CostLayerRow({
     layer,
+    unit,
     isNext,
 }: {
     layer: InventoryCostLayer;
+    unit?: string | null;
     isNext: boolean;
 }) {
     // Solo tiene sentido mostrar el equivalente en pesos cuando la compra se hizo
@@ -177,7 +193,7 @@ function CostLayerRow({
             <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium tabular-nums">
-                        {formatQuantity(layer.remainingQuantity)} uds
+                        {formatLayerQuantity(layer.remainingQuantity, unit)}
                     </span>
                     <span className="text-muted-foreground">a</span>
                     <span className="font-medium tabular-nums">
@@ -194,7 +210,7 @@ function CostLayerRow({
                     Comprado el {formatDate(layer.acquiredAt)}
                     {layer.providerName ? ` a ${layer.providerName}` : ""}
                     {layer.originalQuantity !== layer.remainingQuantity
-                        ? ` · lote original de ${formatQuantity(layer.originalQuantity)} uds`
+                        ? ` · lote original de ${formatLayerQuantity(layer.originalQuantity, unit)}`
                         : ""}
                 </p>
             </div>
@@ -205,8 +221,10 @@ function CostLayerRow({
                 </p>
                 {isForeignCurrency && (
                     <p className="text-xs text-muted-foreground tabular-nums">
-                        {formatAmount(layer.unitCostBase, "CUP")}/ud · tasa{" "}
-                        {formatQuantity(layer.exchangeRateApplied)}
+                        {formatAmount(layer.unitCostBase, "CUP")}/{unit || "ud"} · tasa{" "}
+                        {new Intl.NumberFormat("es-ES", {
+                            maximumFractionDigits: 2,
+                        }).format(layer.exchangeRateApplied)}
                     </p>
                 )}
             </div>

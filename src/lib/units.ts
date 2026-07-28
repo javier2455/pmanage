@@ -49,6 +49,27 @@ export function parseDecimalInput(value: unknown): number {
 }
 
 /**
+ * Cantidad para espacios estrechos (celdas de tabla, badges, transiciones de
+ * stock): el número ya normalizado y, SOLO en peso/volumen, su unidad.
+ *
+ * - `ud` → "12" (nunca "12,00" ni "12 unidades": una laptop y media no existe,
+ *   y en una celda la palabra sobra)
+ * - peso/volumen → "0,4 kg", "2,5 L"
+ *
+ * El backend manda estas cantidades como `decimal(10,2)`, es decir strings
+ * "12.00", así que pintarlas en crudo era lo que metía decimales donde no los
+ * hay. Cuando hay sitio para la palabra completa, usar [formatStockWithUnit].
+ */
+export function formatQuantity(
+  value: number | string | null | undefined,
+  unit?: string | null,
+): string {
+  const n = normalizeStock(value, unit);
+  const formatted = n.toLocaleString("es-CO", { maximumFractionDigits: 3 });
+  return isIntegerUnit(unit) ? formatted : `${formatted} ${unit}`;
+}
+
+/**
  * Formatea una cantidad con su unidad para mostrar al usuario:
  * - `ud` → "1 unidad" / "12 unidades"
  * - peso/volumen → "0,4 kg", "2,5 L" (hasta 3 decimales, sin ceros sobrantes)

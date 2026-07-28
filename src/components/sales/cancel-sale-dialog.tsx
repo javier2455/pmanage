@@ -25,7 +25,7 @@ import {
 import { ProductImage } from "@/components/products/product-image"
 import { useGetSaleById } from "@/hooks/use-sales"
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency"
-import { isIntegerUnit } from "@/lib/units"
+import { formatQuantity, isIntegerUnit } from "@/lib/units"
 import type { CancelSaleProps } from "@/lib/types/sales"
 
 type Mode = "full" | "partial"
@@ -252,7 +252,7 @@ export function CancelSaleDialog({
                                                             {item.product?.name}
                                                         </span>
                                                         <span className="text-xs text-muted-foreground tabular-nums">
-                                                            {qty} ×{" "}
+                                                            {formatQuantity(qty, item.product?.unit)} ×{" "}
                                                             {formatMoney(Number(item.price), currency)}
                                                         </span>
                                                     </div>
@@ -321,7 +321,7 @@ export function CancelSaleDialog({
                                                         </div>
                                                         {loss > 0 && (
                                                             <p className="text-right text-xs text-destructive tabular-nums">
-                                                                Pérdida: {loss}
+                                                                Pérdida: {formatQuantity(loss, item.product?.unit)}
                                                             </p>
                                                         )}
                                                         <Input

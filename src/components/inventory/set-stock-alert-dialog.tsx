@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toastError, toastSuccess } from "@/lib/toast";
+import { formatStockWithUnit } from "@/lib/units";
 import { useSetStockAlert } from "@/hooks/use-stock-alerts";
 import {
   stockAlertSchema,
@@ -33,6 +34,11 @@ interface SetStockAlertDialogProps {
   productName: string;
   currentStock: number;
   currentThreshold: number | null;
+  /**
+   * Unidad del producto. Sin ella el diálogo redondeaba el stock y lo llamaba
+   * "unidades", así que 0,4 kg de café se anunciaban como "0 unidades".
+   */
+  unit?: string | null;
 }
 
 /**
@@ -47,6 +53,7 @@ export function SetStockAlertDialog({
   productName,
   currentStock,
   currentThreshold,
+  unit,
 }: SetStockAlertDialogProps) {
   const mutation = useSetStockAlert();
   const hasAlert = currentThreshold != null;
@@ -74,7 +81,7 @@ export function SetStockAlertDialog({
       });
       toastSuccess({
         title: "Alerta de stock guardada",
-        description: `Te avisaremos cuando "${productName}" baje de ${data.threshold} unidades.`,
+        description: `Te avisaremos cuando "${productName}" baje de ${formatStockWithUnit(data.threshold, unit)}.`,
       });
       onOpenChange(false);
     } catch (error) {
@@ -150,9 +157,8 @@ export function SetStockAlertDialog({
                 <Package className="h-3 w-3" />
                 Stock actual:{" "}
                 <span className="font-medium text-foreground">
-                  {Math.round(Number(currentStock) || 0).toLocaleString("es-CO")}
-                </span>{" "}
-                unidades
+                  {formatStockWithUnit(currentStock, unit)}
+                </span>
               </p>
             )}
           </div>

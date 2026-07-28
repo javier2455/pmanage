@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import type { DashboardSummaryActivity } from "@/lib/types/business";
+import { formatStockWithUnit } from "@/lib/units";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 function formatRelativeTime(iso: string) {
@@ -56,7 +57,7 @@ export default function RecentActivityTable({ activities }: RecentActivityTableP
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {activity.description?.trim() ||
-                                            `${actionLabel(activity.actionType)} · ${activity.quantity} u.`}
+                                            `${actionLabel(activity.actionType)} · ${formatStockWithUnit(activity.quantity, activity.unit)}`}
                                     </p>
                                 </div>
                                 <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">

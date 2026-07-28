@@ -1,5 +1,6 @@
 import { defineSuite, expect } from "@/testing/harness";
 import {
+  formatQuantity,
   formatStockWithUnit,
   isIntegerUnit,
   normalizeStock,
@@ -102,6 +103,25 @@ export const unitsSuite = defineSuite(
         expect(formatStockWithUnit(2.5, "L")).toBe("2,5 L");
       },
       "Para peso/volumen muestra el número en formato es-CO (coma decimal) con la unidad como sufijo: '0,4 kg', '2,5 L'. Hasta 3 decimales sin ceros sobrantes.",
+    );
+
+    test(
+      "formatQuantity: en 'ud' nunca pinta decimales",
+      () => {
+        expect(formatQuantity("1.00", "ud")).toBe("1");
+        expect(formatQuantity("12.00", "ud")).toBe("12");
+        expect(formatQuantity(2.5, "ud")).toBe("3");
+      },
+      "El backend manda las cantidades como decimal(10,2), así que llegan como '1.00'. En productos por unidades eso confunde (no vendes media laptop): se muestra el entero, sin la palabra 'unidades' porque va en celdas estrechas.",
+    );
+
+    test(
+      "formatQuantity: en peso/volumen conserva el decimal y añade la unidad",
+      () => {
+        expect(formatQuantity("0.50", "kg")).toBe("0,5 kg");
+        expect(formatQuantity("2.40", "L")).toBe("2,4 L");
+      },
+      "En peso/volumen el decimal es información real y la unidad hace falta para no leer '0,5' como media pieza: '0,5 kg', '2,4 L'.",
     );
   },
   { description: "Normalización y formato de stock por tipo de unidad." },

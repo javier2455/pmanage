@@ -94,7 +94,14 @@ export function SaleCartPanel({
   onCancel,
   className,
 }: SaleCartPanelProps) {
+  // Solo se pueden sumar en "unidades" los productos que se cuentan por piezas:
+  // mezclar 2 laptops con 0,5 kg de café daba "2,5 unidades", que no significa
+  // nada. Si el carrito trae peso/volumen, el resumen cuenta líneas.
+  const allIntegerUnits = items.every((i) => isIntegerUnit(i.unit))
   const totalUnits = items.reduce((sum, i) => sum + i.quantity, 0)
+  const totalLabel = allIntegerUnits
+    ? `${totalUnits.toLocaleString("es-CO")} ${totalUnits === 1 ? "unidad" : "unidades"}`
+    : `${items.length} ${items.length === 1 ? "producto" : "productos"}`
   // Los precios viven en CUP; los mostramos en la moneda elegida dividiendo por la
   // tasa (cuántas CUP vale 1 unidad). Transferencia va con tasa < 1 (0.8333 = +20%),
   // así 100 CUP / 0.8333 ≈ 120 transferencia; misma fórmula que el resto.
@@ -407,7 +414,7 @@ export function SaleCartPanel({
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-sm font-semibold text-card-foreground">Total</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
-                  {totalUnits} {totalUnits === 1 ? "unidad" : "unidades"}
+                  {totalLabel}
                 </span>
               </div>
               <span className="min-w-0 text-right text-xl font-bold tabular-nums text-card-foreground">
