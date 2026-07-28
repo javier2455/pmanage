@@ -21,6 +21,7 @@ import {
   useReorderNavigationTreeMutation,
 } from "@/hooks/use-navigation";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
+import { isAdminOnlyNode } from "@/lib/admin-access";
 import { toastError, toastSuccess } from "@/lib/toast";
 
 import { DeleteNodeDialog } from "@/components/navigation-admin/delete-node-dialog";
@@ -60,6 +61,27 @@ function countSectionDescendants(node: SectionApiNode): {
     menus: menus.length,
     submenus: menus.reduce((acc, m) => acc + (m.submenus?.length ?? 0), 0),
   };
+}
+
+/** ¿La sección con ese id es exclusiva de administradores? */
+function isSectionAdminOnly(
+  sections: SectionApiNode[],
+  sectionId: string,
+): boolean {
+  const section = sections.find((s) => s.id === sectionId);
+  return section ? isAdminOnlyNode(section) : false;
+}
+
+/**
+ * ¿El menú con ese id es exclusivo de administradores, por sí mismo o por
+ * heredarlo de su sección? Los submenús que cuelgan de él lo heredan a su vez.
+ */
+function isMenuAdminOnly(sections: SectionApiNode[], menuId: string): boolean {
+  for (const section of sections) {
+    const menu = (section.menus ?? []).find((m) => m.id === menuId);
+    if (menu) return isAdminOnlyNode(section) || isAdminOnlyNode(menu);
+  }
+  return false;
 }
 
 /**
@@ -402,6 +424,7 @@ export function MenusClient() {
           mode="create"
           onOpenChange={close}
           sectionId={dialog.sectionId}
+          sectionIsAdminOnly={isSectionAdminOnly(sections, dialog.sectionId)}
         />
       )}
       {dialog?.kind === "menu-edit" && (
@@ -411,6 +434,7 @@ export function MenusClient() {
           onOpenChange={close}
           sectionId={dialog.sectionId}
           menuId={dialog.node.id}
+          sectionIsAdminOnly={isSectionAdminOnly(sections, dialog.sectionId)}
           defaultValues={{
             sectionId: dialog.sectionId,
             name: dialog.node.name,
@@ -439,6 +463,7 @@ export function MenusClient() {
           mode="create"
           onOpenChange={close}
           menuId={dialog.menuId}
+          parentIsAdminOnly={isMenuAdminOnly(sections, dialog.menuId)}
         />
       )}
       {dialog?.kind === "submenu-edit" && (
@@ -448,6 +473,7 @@ export function MenusClient() {
           onOpenChange={close}
           menuId={dialog.menuId}
           submenuId={dialog.node.id}
+          parentIsAdminOnly={isMenuAdminOnly(sections, dialog.menuId)}
           defaultValues={{
             menuId: dialog.menuId,
             name: dialog.node.name,

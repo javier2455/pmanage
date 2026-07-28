@@ -5,8 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import { isProRoute, getProRedirect } from "@/lib/pro-gates";
-
-const ADMIN_PREFIX = "/dashboard/admin";
+import { ADMIN_ROUTE_PREFIX } from "@/lib/admin-access";
 
 /**
  * Barrera de cliente para rutas Pro y admin ante navegación directa por URL.
@@ -35,7 +34,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       return getProRedirect(pathname) ?? "/dashboard";
     }
     // Rol ya resuelto y no es admin: bloquear el panel de administración.
-    if (roleName && !isAdmin && pathname.startsWith(ADMIN_PREFIX)) {
+    if (roleName && !isAdmin && pathname.startsWith(ADMIN_ROUTE_PREFIX)) {
       return "/dashboard";
     }
     return null;

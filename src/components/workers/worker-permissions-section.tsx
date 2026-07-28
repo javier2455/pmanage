@@ -6,141 +6,32 @@ import { AlertCircle, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetAllSectionsQuery } from "@/hooks/use-navigation";
-import type { SectionApiNode } from "@/lib/types/navigation";
+import {
+  buildPermSections,
+  toSelectedItem,
+  toSelectedSubItem,
+  type SelectedPermItem,
+} from "@/lib/worker-permissions";
+
+/**
+ * La normalización del árbol (y el filtrado de todo lo exclusivo de
+ * administradores) vive en `@/lib/worker-permissions`, fuera de este
+ * componente, para poder ejercitarla en las suites compartidas. Se re-exporta
+ * aquí porque el formulario ya la importaba desde este módulo.
+ */
+export {
+  buildPermSections,
+  flattenPermItems,
+  permKey,
+  type PermMenu,
+  type PermSection,
+  type PermSubmenu,
+  type SelectedPermItem,
+} from "@/lib/worker-permissions";
 
 interface WorkerPermissionsSectionProps {
   selectedKeys: Set<string>;
   onToggle: (item: SelectedPermItem, children?: SelectedPermItem[]) => void;
-}
-
-/**
- * Item plano (menú o submenú) que el formulario guarda como seleccionado.
- * Lleva `idSection` para que al construir el payload podamos emitir también
- * la entrada de la sección padre (el backend la exige en el array de permisos).
- */
-export interface SelectedPermItem {
-  idSection: string;
-  idMenu: string;
-  idSubmenu?: string;
-  name: string;
-}
-
-export interface PermSubmenu {
-  idSection: string;
-  idMenu: string;
-  idSubmenu: string;
-  name: string;
-  url: string;
-}
-
-export interface PermMenu {
-  idSection: string;
-  idMenu: string;
-  name: string;
-  url: string;
-  submenus: PermSubmenu[];
-}
-
-export interface PermSection {
-  idSection: string;
-  name: string;
-  menus: PermMenu[];
-}
-
-export function permKey(item: { idMenu: string; idSubmenu?: string }): string {
-  return item.idSubmenu ?? item.idMenu;
-}
-
-/**
- * Módulos exclusivos de administradores del sistema que NO deben poder
- * asignarse a un trabajador (ni a dueños de negocio, sea plan gratuito,
- * básico o pro). Se identifican por su URL para ser estables ante cambios
- * de nombre en el backend.
- */
-const ADMIN_ONLY_URL_SEGMENTS = ["/admin/assign-plans", "/admin/menus"];
-
-function isAssignableUrl(url: string | null | undefined): boolean {
-  if (!url) return true;
-  return !ADMIN_ONLY_URL_SEGMENTS.some((segment) => url.includes(segment));
-}
-
-/**
- * Normaliza el árbol de GET /section a la jerarquía que pinta el acordeón,
- * descartando los módulos exclusivos de admin y las secciones que quedan
- * vacías tras el filtrado.
- */
-export function buildPermSections(nodes: SectionApiNode[]): PermSection[] {
-  const sections: PermSection[] = [];
-
-  for (const section of nodes) {
-    const menus: PermMenu[] = [];
-
-    for (const menu of section.menus ?? []) {
-      if (!isAssignableUrl(menu.url)) continue;
-
-      const submenus: PermSubmenu[] = (menu.submenus ?? [])
-        .filter((sub) => isAssignableUrl(sub.url))
-        .map((sub) => ({
-          idSection: section.id,
-          idMenu: menu.id,
-          idSubmenu: sub.id,
-          name: sub.name,
-          url: sub.url,
-        }));
-
-      menus.push({
-        idSection: section.id,
-        idMenu: menu.id,
-        name: menu.name,
-        url: menu.url,
-        submenus,
-      });
-    }
-
-    if (menus.length > 0) {
-      sections.push({ idSection: section.id, name: section.name, menus });
-    }
-  }
-
-  return sections;
-}
-
-/** Aplana las secciones a items seleccionables (menús + submenús). */
-export function flattenPermItems(sections: PermSection[]): SelectedPermItem[] {
-  const items: SelectedPermItem[] = [];
-
-  for (const section of sections) {
-    for (const menu of section.menus) {
-      items.push({
-        idSection: menu.idSection,
-        idMenu: menu.idMenu,
-        name: menu.name,
-      });
-      for (const sub of menu.submenus) {
-        items.push({
-          idSection: sub.idSection,
-          idMenu: sub.idMenu,
-          idSubmenu: sub.idSubmenu,
-          name: sub.name,
-        });
-      }
-    }
-  }
-
-  return items;
-}
-
-function toSelectedItem(menu: PermMenu): SelectedPermItem {
-  return { idSection: menu.idSection, idMenu: menu.idMenu, name: menu.name };
-}
-
-function toSelectedSubItem(sub: PermSubmenu): SelectedPermItem {
-  return {
-    idSection: sub.idSection,
-    idMenu: sub.idMenu,
-    idSubmenu: sub.idSubmenu,
-    name: sub.name,
-  };
 }
 
 export function WorkerPermissionsSection({

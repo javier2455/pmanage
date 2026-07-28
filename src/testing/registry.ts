@@ -1,5 +1,6 @@
 import type { Suite } from "./harness";
 import { accountingCloseCurrencySuite } from "./suites/accounting-close-currency.suite";
+import { adminAccessSuite } from "./suites/admin-access.suite";
 import { cashFlowSuite } from "./suites/cash-flow.suite";
 import { currencyErrorsSuite } from "./suites/currency-errors.suite";
 import { currencySuite } from "./suites/currency.suite";
@@ -31,6 +32,7 @@ export const allSuites: Suite[] = [
   dateRangeSuite,
   accountingCloseCurrencySuite,
   navigationAccessSuite,
+  adminAccessSuite,
   validationsSuite,
   phoneSuite,
   normalizationSuite,

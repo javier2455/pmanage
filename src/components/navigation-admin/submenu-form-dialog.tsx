@@ -24,13 +24,14 @@ import {
   useCreateSubmenuMutation,
   useUpdateSubmenuMutation,
 } from "@/hooks/use-navigation";
+import { ADMIN_ROLE_ID, isAdminRoute } from "@/lib/admin-access";
 import {
   createSubmenuSchema,
   type CreateSubmenuFormData,
 } from "@/lib/validations/navigation";
 
 import { IconPicker } from "./icon-picker";
-import { RoleMultiSelect } from "./role-multiselect";
+import { RolesField } from "./roles-field";
 
 interface SubmenuFormDialogProps {
   open: boolean;
@@ -38,6 +39,8 @@ interface SubmenuFormDialogProps {
   mode: "create" | "edit";
   menuId: string;
   submenuId?: string;
+  /** El menú o la sección padre son exclusivos de admin: el submenú lo hereda. */
+  parentIsAdminOnly?: boolean;
   defaultValues?: Partial<CreateSubmenuFormData>;
 }
 
@@ -57,6 +60,7 @@ export function SubmenuFormDialog({
   mode,
   menuId,
   submenuId,
+  parentIsAdminOnly = false,
   defaultValues,
 }: SubmenuFormDialogProps) {
   const isEdit = mode === "edit";
@@ -90,8 +94,16 @@ export function SubmenuFormDialog({
   const icon = watch("icon");
   const roles = watch("roles");
   const active = watch("active");
+  const url = watch("url");
+
+  /** Mismo criterio que en el menú: el submenú hereda del padre o de su ruta. */
+  const lockedToAdmin = parentIsAdminOnly || isAdminRoute(url);
+  const lockReason = parentIsAdminOnly
+    ? "Este submenú cuelga de un menú exclusivo de administradores."
+    : "La URL apunta al panel de administración.";
 
   async function onSubmit(data: CreateSubmenuFormData) {
+    const roles = lockedToAdmin ? [ADMIN_ROLE_ID] : data.roles;
     try {
       if (isEdit) {
         if (!submenuId) return;
@@ -104,7 +116,7 @@ export function SubmenuFormDialog({
             badge: data.badge ?? null,
             url: data.url,
             active: data.active,
-            roles: data.roles,
+            roles,
           },
         });
         toastSuccess({
@@ -119,7 +131,7 @@ export function SubmenuFormDialog({
           badge: data.badge ?? null,
           url: data.url,
           active: data.active,
-          roles: data.roles,
+          roles,
           // El backend asigna la última posición dentro del menú.
         });
         toastSuccess({
@@ -226,24 +238,15 @@ export function SubmenuFormDialog({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label>
-              Roles con acceso{" "}
-              <span className="text-xs text-muted-foreground">(opcional)</span>
-            </Label>
-            <RoleMultiSelect
-              value={roles ?? []}
-              onChange={(v) =>
-                setValue("roles", v, { shouldValidate: true, shouldDirty: true })
-              }
-              invalid={!!errors.roles}
-            />
-            {errors.roles && (
-              <p className="text-xs text-destructive">
-                {errors.roles.message as string}
-              </p>
-            )}
-          </div>
+          <RolesField
+            value={roles ?? []}
+            onChange={(v) =>
+              setValue("roles", v, { shouldValidate: true, shouldDirty: true })
+            }
+            lockedToAdmin={lockedToAdmin}
+            lockReason={lockReason}
+            error={errors.roles?.message as string | undefined}
+          />
 
           <p className="text-xs text-muted-foreground">
             La posición del submenú dentro del menú se ajusta arrastrándolo en

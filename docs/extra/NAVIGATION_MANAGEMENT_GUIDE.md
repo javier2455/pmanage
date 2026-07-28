@@ -142,6 +142,25 @@ hace por la posición en el árbol (no por un campo `kind`).
 5. **Eliminación en cascada.** Borrar una sección borra todos sus menús y
    submenús. Borrar un menú borra sus submenús. El diálogo de eliminación
    muestra una advertencia con los conteos antes de confirmar.
+6. **Administración es solo-admin, y se hereda.** Nada del panel de
+   administración puede verse, abrirse ni asignarse como permiso a un dueño
+   de negocio o a un trabajador. La regla no vive en una lista de rutas: un
+   nodo es "solo-admin" si sus `roles` se reducen a `["5"]` **o** si su URL
+   contiene el segmento `/admin/`, y la restricción **baja en cascada**
+   (sección → menú → submenú). Consecuencia práctica: un menú nuevo dentro
+   de la sección Administración nace bloqueado sin configurar nada.
+   - Criterio compartido: [src/lib/admin-access.ts](../src/lib/admin-access.ts)
+     y su espejo en backend `src/v2/navigation-policy/admin-access.ts`.
+   - Al crear/editar un menú o submenú que cuelga de un padre solo-admin (o
+     cuya URL es `/admin/…`), el campo "Roles con acceso" se fija en
+     *Administrador* y se bloquea ([roles-field.tsx](../src/components/navigation-admin/roles-field.tsx)),
+     para que el dato quede coherente en la BD.
+   - Dónde se hace cumplir: sidebar y `collectAllowedUrls` (visibilidad),
+     `RouteGuard` (navegación directa por URL), `buildPermSections`
+     (selector de permisos de trabajadores) y, como autoridad real, el
+     backend — `NavigationPolicyService` rechaza con 403 cualquier
+     `POST/PATCH /business-worker` que referencie un nodo de administración,
+     y `GET /section?businessId=` los omite aunque existan filas de permiso.
 
 ---
 
@@ -157,6 +176,10 @@ src/lib/validations/navigation.ts         # 6 esquemas Zod
 src/lib/api/navigation.ts                 # 16 funciones API
 src/hooks/use-navigation.ts               # hooks (queries + mutations) + invalidación
 
+src/lib/admin-access.ts                   # qué es "solo-admin" (rol o ruta) + poda del árbol
+src/lib/navigation-access.ts              # canAccessNode / collectAllowedUrls (sidebar = guard)
+src/lib/worker-permissions.ts             # buildPermSections/flattenPermItems (lógica pura)
+
 src/lib/toast.ts                          # helpers toastSuccess/toastError compartidos
 
 src/components/ui/admin-badge.tsx         # badge morado con gradiente (reutilizable)
@@ -164,6 +187,7 @@ src/components/ui/admin-badge.tsx         # badge morado con gradiente (reutiliz
 src/components/navigation-admin/
   ├── icon-picker.tsx          → selector visual sobre ICON_MAP
   ├── role-multiselect.tsx     → selector de roles + ROLE_IDS (4/5)
+  ├── roles-field.tsx          → campo "Roles con acceso" (se bloquea en admin si hereda)
   ├── role-badges.tsx          → RoleBadges (admin → AdminBadge; resto → chips neutros)
   ├── node-config.ts           → labels/iconos por NavigationNodeKind
   ├── navigation-tree.tsx      → render explícito section.menus[].submenus[]

@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ADMIN_ROLE_ID, isAdminOnlyRoles } from "@/lib/admin-access";
 
 /**
  * IDs fijos de roles según la BD del backend.
@@ -19,7 +20,7 @@ import {
  */
 export const ROLE_IDS = {
   BUSINESS_OWNER: "4",
-  ADMIN: "5",
+  ADMIN: ADMIN_ROLE_ID,
 } as const;
 
 export const ROLE_OPTIONS: Array<{ id: string; label: string }> = [
@@ -31,10 +32,12 @@ export function getRoleLabel(id: string): string {
   return ROLE_OPTIONS.find((r) => r.id === id)?.label ?? id;
 }
 
-export function isAdminOnly(roles: string[] | null | undefined): boolean {
-  if (!roles || roles.length !== 1) return false;
-  return roles[0] === ROLE_IDS.ADMIN;
-}
+/**
+ * Alias del criterio compartido en `@/lib/admin-access`, para que el badge del
+ * árbol de navegación y el filtro de permisos de trabajadores no puedan
+ * divergir.
+ */
+export const isAdminOnly = isAdminOnlyRoles;
 
 interface RoleMultiSelectProps {
   value: string[];

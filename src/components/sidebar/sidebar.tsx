@@ -10,6 +10,7 @@ import { useGetAllSectionsQuery } from "@/hooks/use-navigation"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
 import { isProRoute } from "@/lib/pro-gates"
+import { canAccessNode } from "@/lib/navigation-access"
 import { resolveIcon } from "@/lib/icon-map"
 import {
   Sidebar,
@@ -23,16 +24,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-
-/**
- * Filtro de visibilidad por rol. Si `roles` está vacío o es null se
- * considera "visible a todos los roles" — alineado con la regla de negocio
- * que permite secciones sin roles asignados.
- */
-function isVisibleForRole(roles: string[] | null | undefined, roleId: string) {
-  if (!roles || roles.length === 0) return true
-  return roles.includes(roleId)
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { roleId, isProPlan } = useUserRoleAndPlan()
@@ -56,15 +47,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     return sections
       .filter((s) => s.active)
-      .filter((s) => isVisibleForRole(s.roles, roleId))
+      .filter((s) => canAccessNode(s, roleId))
       .map<NavSection>((section) => {
         const items: NavItem[] = (section.menus ?? [])
           .filter((m) => m.active)
-          .filter((m) => isVisibleForRole(m.roles, roleId))
+          .filter((m) => canAccessNode(m, roleId))
           .map<NavItem>((menu) => {
             const subs: NavSubItem[] = (menu.submenus ?? [])
               .filter((s) => s.active)
-              .filter((s) => isVisibleForRole(s.roles, roleId))
+              .filter((s) => canAccessNode(s, roleId))
               .map((s) => {
                 const pro = s.badge === "Pro" || isProRoute(s.url)
                 return {

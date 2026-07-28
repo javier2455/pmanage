@@ -24,13 +24,14 @@ import {
   useCreateAdminMenuMutation,
   useUpdateAdminMenuMutation,
 } from "@/hooks/use-navigation";
+import { ADMIN_ROLE_ID, isAdminRoute } from "@/lib/admin-access";
 import {
   createAdminMenuSchema,
   type CreateAdminMenuFormData,
 } from "@/lib/validations/navigation";
 
 import { IconPicker } from "./icon-picker";
-import { RoleMultiSelect } from "./role-multiselect";
+import { RolesField } from "./roles-field";
 
 interface MenuFormDialogProps {
   open: boolean;
@@ -38,6 +39,8 @@ interface MenuFormDialogProps {
   mode: "create" | "edit";
   sectionId: string;
   menuId?: string;
+  /** La sección padre es exclusiva de administradores: el menú lo hereda. */
+  sectionIsAdminOnly?: boolean;
   defaultValues?: Partial<CreateAdminMenuFormData>;
 }
 
@@ -57,6 +60,7 @@ export function MenuFormDialog({
   mode,
   sectionId,
   menuId,
+  sectionIsAdminOnly = false,
   defaultValues,
 }: MenuFormDialogProps) {
   const isEdit = mode === "edit";
@@ -90,8 +94,21 @@ export function MenuFormDialog({
   const icon = watch("icon");
   const roles = watch("roles");
   const active = watch("active");
+  const url = watch("url");
+
+  /**
+   * Un menú es solo-admin si su sección lo es o si su URL apunta al panel
+   * `/admin`. En ese caso los roles no son editables: se guardan siempre como
+   * `[admin]` para que el sidebar y el selector de permisos de trabajadores
+   * (que filtran por rol) lo excluyan sin depender de la configuración manual.
+   */
+  const lockedToAdmin = sectionIsAdminOnly || isAdminRoute(url);
+  const lockReason = sectionIsAdminOnly
+    ? "Este menú pertenece a una sección exclusiva de administradores."
+    : "La URL apunta al panel de administración.";
 
   async function onSubmit(data: CreateAdminMenuFormData) {
+    const roles = lockedToAdmin ? [ADMIN_ROLE_ID] : data.roles;
     try {
       if (isEdit) {
         if (!menuId) return;
@@ -103,7 +120,7 @@ export function MenuFormDialog({
             badge: data.badge ?? null,
             url: data.url,
             active: data.active,
-            roles: data.roles,
+            roles,
           },
         });
         toastSuccess({
@@ -118,7 +135,7 @@ export function MenuFormDialog({
           badge: data.badge ?? null,
           url: data.url,
           active: data.active,
-          roles: data.roles,
+          roles,
           // El backend asigna la última posición dentro de la sección.
         });
         toastSuccess({
@@ -223,24 +240,15 @@ export function MenuFormDialog({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label>
-              Roles con acceso{" "}
-              <span className="text-xs text-muted-foreground">(opcional)</span>
-            </Label>
-            <RoleMultiSelect
-              value={roles ?? []}
-              onChange={(v) =>
-                setValue("roles", v, { shouldValidate: true, shouldDirty: true })
-              }
-              invalid={!!errors.roles}
-            />
-            {errors.roles && (
-              <p className="text-xs text-destructive">
-                {errors.roles.message as string}
-              </p>
-            )}
-          </div>
+          <RolesField
+            value={roles ?? []}
+            onChange={(v) =>
+              setValue("roles", v, { shouldValidate: true, shouldDirty: true })
+            }
+            lockedToAdmin={lockedToAdmin}
+            lockReason={lockReason}
+            error={errors.roles?.message as string | undefined}
+          />
 
           <p className="text-xs text-muted-foreground">
             La posición del menú dentro de la sección se ajusta arrastrándolo en
