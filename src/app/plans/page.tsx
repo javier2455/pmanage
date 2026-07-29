@@ -19,7 +19,6 @@ import { Check, X, MessageCircle, Zap } from "lucide-react"
 
 import { getAllPlans } from "@/lib/api/plans"
 import {
-    fallbackCatalog,
     planToCatalogEntry,
     type PlanCatalogEntry,
 } from "@/lib/plan-catalog"
@@ -44,7 +43,6 @@ export default function PlansPage() {
 
     const catalog = useMemo<PlanCatalogEntry[]>(() => {
         const plans: PlanResponse[] = plansData?.data ?? []
-        if (plans.length === 0) return fallbackCatalog()
         return plans.map(planToCatalogEntry).sort((a, b) => a.tier - b.tier)
     }, [plansData])
 

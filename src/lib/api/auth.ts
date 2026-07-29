@@ -85,6 +85,8 @@ export interface InvitationInformationResponse {
 
 interface Plan {
   id: string;
+  /** Identidad estable del plan; con ella se reconoce el plan en curso. */
+  code?: string;
   name: string;
   description: string;
   type: string;

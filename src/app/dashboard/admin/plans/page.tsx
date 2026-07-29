@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeDollarSign, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, Pencil, Plus } from "lucide-react";
 
 import { useGetAllPlansForAdmin } from "@/hooks/use-plans";
 import type { PlanResponse } from "@/lib/types/plans";
@@ -36,11 +36,19 @@ export default function AdminPlansPage() {
   return (
     <section className="flex flex-col gap-6 p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Planes</h1>
-          <p className="text-muted-foreground">
-            Define qué ofrece cada plan, sus límites y su precio
-          </p>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard/admin/assign-plans"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Planes</h1>
+            <p className="text-muted-foreground">
+              Define qué ofrece cada plan, sus límites y su precio
+            </p>
+          </div>
         </div>
         <Button asChild>
           <Link href="/dashboard/admin/assign-plans/create">

@@ -10,6 +10,8 @@ import type { PlanFeatures } from "@/lib/plan-features";
  */
 export function applySelectedPlanToSession(plan: {
   type?: string | null;
+  /** Identidad estable del plan; con ella se reconoce el plan en curso. */
+  code?: string | null;
   name?: string | null;
   expireDate?: string | null;
   /**
@@ -35,6 +37,7 @@ export function applySelectedPlanToSession(plan: {
         parsed.plan = {
           ...(parsed.plan ?? {}),
           ...(plan.type ? { type: plan.type } : {}),
+          ...(plan.code ? { code: plan.code } : {}),
           ...(plan.name ? { name: plan.name } : {}),
           ...(plan.expireDate !== undefined ? { expireDate: plan.expireDate } : {}),
         };

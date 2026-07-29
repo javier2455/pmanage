@@ -52,6 +52,7 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
     const planType = data.plan?.type ?? data.plan?.name ?? "";
     applySelectedPlanToSession({
       type: data.plan?.type,
+      code: data.plan?.code,
       name: data.plan?.name,
       expireDate: data.plan?.expireDate,
       isPro: data.plan?.isPro,

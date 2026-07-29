@@ -41,11 +41,6 @@ export const planFormSchema = z
       ["free", "basic", "premium", "enterprise"] satisfies [PlanType, ...PlanType[]],
       { error: "El tipo es requerido" },
     ),
-    tier: z
-      .number()
-      .int()
-      .min(0, "El nivel no puede ser negativo")
-      .max(100, "El nivel no puede exceder 100"),
     currency: z
       .string()
       .min(3, "La moneda es requerida")
@@ -62,11 +57,6 @@ export const planFormSchema = z
     // 0 es válido: un plan sin equipo es una oferta legítima, no un error.
     maxWorkers: limitField("el máximo de trabajadores", 0),
     features: featuresSchema,
-    trialDays: z
-      .number()
-      .int("Los días de prueba deben ser un número entero")
-      .min(0, "Los días de prueba no pueden ser negativos")
-      .nullable(),
     isActive: z.boolean(),
     isPublic: z.boolean(),
     displayOrder: z.number().int().min(0, "El orden no puede ser negativo"),

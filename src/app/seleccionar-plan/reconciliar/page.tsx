@@ -35,7 +35,7 @@ function ReconcileInner() {
   const planId = searchParams.get("planId");
 
   const selectPlan = useSelectPlanMutation();
-  const [chosenIds, setChosenIds] = useState<string[] | null>(null);
+  const [chosenId, setChosenId] = useState<string | null>(null);
 
   const { data: businesses = [], isLoading } = useQuery({
     queryKey: ["businesses"],
@@ -73,30 +73,9 @@ function ReconcileInner() {
     }
   }, [isLoading, activeBusinesses.length, maxBusinesses, router]);
 
-  // Selección por defecto: los primeros que caben, como sugerencia.
-  // TODO(backend): exponer una métrica de actividad para preseleccionar los más usados.
-  const keepBusinessIds = useMemo(
-    () =>
-      chosenIds ?? activeBusinesses.slice(0, maxBusinesses).map((b) => b.id),
-    [chosenIds, activeBusinesses, maxBusinesses],
-  );
-
-  /**
-   * Al marcar un negocio por encima del tope se descarta el más antiguo de la
-   * selección, en lugar de bloquear el clic sin explicación.
-   */
-  function toggleBusiness(businessId: string) {
-    const current = keepBusinessIds;
-    if (current.includes(businessId)) {
-      // Con un solo hueco, desmarcar dejaría la selección vacía: se trata como
-      // un cambio de elección, no como un descarte.
-      if (maxBusinesses === 1) return;
-      setChosenIds(current.filter((id) => id !== businessId));
-      return;
-    }
-    const next = [...current, businessId];
-    setChosenIds(next.slice(Math.max(0, next.length - maxBusinesses)));
-  }
+  // Negocio a conservar: el elegido por el usuario, o el primero como sugerencia.
+  // TODO(backend): exponer una métrica de actividad para preseleccionar el más usado.
+  const keepBusinessId = chosenId ?? activeBusinesses[0]?.id ?? null;
 
   // Conteo de trabajadores e invitaciones pendientes a través de los negocios
   // activos, para mostrar el impacto exacto del downgrade.
@@ -126,21 +105,19 @@ function ReconcileInner() {
     },
   });
 
-  const archivedCount = Math.max(
-    0,
-    activeBusinesses.length - keepBusinessIds.length,
-  );
+  const archivedCount = Math.max(0, activeBusinesses.length - 1);
 
   async function handleConfirm() {
-    if (keepBusinessIds.length === 0) return;
+    if (!keepBusinessId) return;
     try {
       const res = await selectPlan.mutateAsync({
         ...(planId ? { planId } : { planType: "basic" as const }),
         billingPeriod,
-        keepBusinessIds,
+        keepBusinessId,
       });
       applySelectedPlanToSession({
         type: res.data?.type,
+        code: res.data?.code,
         name: res.data?.name,
         expireDate: res.data?.expireDate,
       });
@@ -151,9 +128,7 @@ function ReconcileInner() {
       toastSuccess({
         title: `Plan ${planName} activado`,
         description:
-          archivedCount === 1
-            ? "Conservamos los negocios que elegiste; el otro quedó archivado."
-            : "Conservamos los negocios que elegiste; el resto quedó archivado.",
+          "Conservamos el negocio que elegiste; el resto quedó archivado.",
       });
       router.replace("/dashboard");
     } catch {
@@ -163,8 +138,6 @@ function ReconcileInner() {
       });
     }
   }
-
-  const isSingleChoice = maxBusinesses === 1;
 
   return (
     <div className="flex min-h-svh flex-col items-center bg-background px-4 py-12">
@@ -181,16 +154,13 @@ function ReconcileInner() {
         <div className="flex flex-col items-center gap-3 text-center">
           <NegoraLogo className="h-12 w-12 rounded-xl" />
           <h1 className="text-2xl font-bold text-foreground">
-            {isSingleChoice
-              ? "Elige el negocio que seguirás gestionando"
-              : "Elige los negocios que seguirás gestionando"}
+            Elige el negocio que seguirás gestionando
           </h1>
           <p className="max-w-xl text-sm text-muted-foreground">
             El plan {planName} incluye {maxBusinesses}{" "}
-            {maxBusinesses === 1 ? "negocio" : "negocios"}. Selecciona{" "}
-            {isSingleChoice ? "cuál quieres mantener activo" : "cuáles quieres mantener activos"}.
-            Los demás quedarán archivados (no se borran) y los recuperas al
-            instante si vuelves a un plan superior.
+            {maxBusinesses === 1 ? "negocio" : "negocios"}. Selecciona cuál
+            quieres mantener activo. Los demás quedarán archivados (no se
+            borran) y los recuperas al instante si vuelves a un plan superior.
           </p>
         </div>
 
@@ -198,19 +168,17 @@ function ReconcileInner() {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Tus negocios</CardTitle>
             <CardDescription>
-              {isSingleChoice
-                ? `Solo uno puede quedar activo en ${planName}.`
-                : `Hasta ${maxBusinesses} pueden quedar activos en ${planName}.`}
+              Solo uno puede quedar activo en {planName}.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {activeBusinesses.map((business) => {
-              const selected = keepBusinessIds.includes(business.id);
+              const selected = keepBusinessId === business.id;
               return (
                 <button
                   type="button"
                   key={business.id}
-                  onClick={() => toggleBusiness(business.id)}
+                  onClick={() => setChosenId(business.id)}
                   className={cn(
                     "flex items-center gap-3 rounded-lg border p-3 text-left transition-colors cursor-pointer",
                     selected
@@ -283,7 +251,7 @@ function ReconcileInner() {
         <Button
           type="button"
           onClick={handleConfirm}
-          disabled={keepBusinessIds.length === 0 || selectPlan.isPending}
+          disabled={!keepBusinessId || selectPlan.isPending}
           className="w-full cursor-pointer"
         >
           {selectPlan.isPending ? (

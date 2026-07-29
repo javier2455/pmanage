@@ -7,8 +7,6 @@ export interface PlanResponse {
   name: string;
   description: string | null;
   type: string;
-  /** Nivel de servicio: free 0 … enterprise 3. Sirve para comparar planes. */
-  tier: number;
   /** @deprecated Espejo de `priceMonthly`; lo sigue devolviendo el backend. */
   price: number | null;
   currency: string;
@@ -20,7 +18,6 @@ export interface PlanResponse {
   maxBusinesses: number | null;
   maxWorkers: number | null;
   features: PlanFeatures | null;
-  trialDays: number | null;
   isActive: boolean;
   isPublic: boolean;
   displayOrder: number;
@@ -50,7 +47,6 @@ export interface CreateTypePlanPayload {
   name: string;
   description: string | null;
   type: PlanType;
-  tier?: number;
   currency: string;
   priceMonthly: number;
   priceYearly: number;
@@ -58,7 +54,6 @@ export interface CreateTypePlanPayload {
   maxBusinesses: number | null;
   maxWorkers: number | null;
   features: PlanFeatures;
-  trialDays: number | null;
   isActive: boolean;
   isPublic: boolean;
   displayOrder: number;
@@ -112,9 +107,8 @@ export interface SelectPlanPayload {
   /** Forma anterior, solo capaz de nombrar dos planes. Se mantiene por compatibilidad. */
   planType?: SelectablePlanType;
   billingPeriod: BillingPeriod;
+  /** Negocio a conservar cuando el plan destino admite menos de los activos. */
   keepBusinessId?: string;
-  /** Negocios a conservar cuando el plan destino admite más de uno. */
-  keepBusinessIds?: string[];
 }
 
 export interface SelectPlanResponse {

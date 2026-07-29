@@ -6,11 +6,7 @@ import {
   isProPlan as checkProPlan,
   getMaxBusinesses as fallbackMaxBusinesses,
 } from "@/lib/pro-gates";
-import {
-  FREE_TIER_FEATURES,
-  type PlanFeatureKey,
-  type PlanFeatures,
-} from "@/lib/plan-features";
+import type { PlanFeatureKey, PlanFeatures } from "@/lib/plan-features";
 import { roleIdFromName } from "@/lib/roles";
 
 function readRoleName(): string {
@@ -161,17 +157,14 @@ export function useUserRoleAndPlan() {
   /**
    * ¿El plan concede esta capacidad?
    *
-   * Cuando el plan declara sus capacidades, mandan ellas. Si no las trae —plan
-   * anterior al modelo de features, o sesión aún sin refrescar por `/auth/me`—
-   * se recae en el gate binario Pro/no-Pro, que es exactamente lo que se
-   * aplicaba antes: así ningún usuario pierde acceso durante la transición.
+   * Todo plan declara las suyas, así que una clave ausente es una capacidad no
+   * concedida. Mientras la sesión aún no tiene el plan cargado, `features` es
+   * null y no se concede nada: es lo correcto: conceder por defecto abriría
+   * funciones de pago durante la carga.
    */
   const hasFeature = useCallback(
-    (key: PlanFeatureKey): boolean => {
-      if (features) return features[key] === true;
-      return FREE_TIER_FEATURES.includes(key) ? true : isProPlan;
-    },
-    [features, isProPlan],
+    (key: PlanFeatureKey): boolean => features?.[key] === true,
+    [features],
   );
 
   return {

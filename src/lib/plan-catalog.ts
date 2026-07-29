@@ -3,29 +3,29 @@ import { Shield, Sparkles, Crown, type LucideIcon } from "lucide-react";
 import type { PlanResponse } from "@/lib/types/plans";
 import {
   PLAN_FEATURES,
-  featuresFromTier,
   normalizeFeatures,
   type PlanFeatureKey,
 } from "@/lib/plan-features";
-import { PLANS, type PlanCardData, type PlanFeature } from "@/lib/plans-data";
 
 /**
  * Traduce los planes del catálogo del backend a lo que la vitrina necesita
  * pintar.
  *
- * Hasta ahora los precios y las funcionalidades anunciadas vivían escritos a
- * mano en `plans-data.ts` (y en la landing, y en los seeds), de modo que la
- * oferta publicada podía no coincidir con la que el backend aplicaba —y de
- * hecho no coincidía: se anunciaban 100 y 500 productos mientras la base
- * imponía 50 y 200. Al derivar la vitrina del propio plan, esa desviación deja
- * de ser posible.
- *
- * `plans-data.ts` se conserva como respaldo para cuando el catálogo no se puede
- * consultar; ver `fallbackCatalog`.
+ * Antes los precios y las funcionalidades anunciadas vivían escritos a mano en
+ * el front, en la landing y en los seeds, de modo que la oferta publicada podía
+ * no coincidir con la que el backend aplicaba —y no coincidía: se anunciaban
+ * 100 y 500 productos mientras la base imponía 50 y 200—. Al derivar la vitrina
+ * del propio plan, esa desviación deja de ser posible.
  */
 
+/** Una funcionalidad tal y como se anuncia en la vitrina. */
+export type PlanFeature = {
+  text: string;
+  included: boolean;
+};
+
 export type PlanCatalogEntry = {
-  id: string | null;
+  id: string;
   code: string;
   name: string;
   description: string;
@@ -51,21 +51,23 @@ export type PlanCatalogEntry = {
   maxBusinesses: number | null;
 };
 
+/**
+ * Nivel de servicio de cada familia, para ordenar y comparar planes sin mirar
+ * sus nombres. Se deriva del tipo —igual que en el backend— en vez de guardarse
+ * como columna propia, que solo permitiría contradecirlo.
+ */
+const TIER_BY_TYPE: Record<string, number> = {
+  free: 0,
+  basic: 1,
+  premium: 2,
+  enterprise: 3,
+};
+
 /** El icono acompaña al nivel del plan, no a su nombre. */
 function iconForTier(tier: number): LucideIcon {
   if (tier >= 2) return Crown;
   if (tier >= 1) return Sparkles;
   return Shield;
-}
-
-/**
- * Capacidades efectivas del plan: las que declara o, si es anterior al modelo
- * de capacidades, las que se deducen de su nivel.
- */
-function grantedFeaturesFor(plan: PlanResponse): Record<PlanFeatureKey, boolean> {
-  return plan.features
-    ? normalizeFeatures(plan.features)
-    : featuresFromTier(plan.tier ?? 0);
 }
 
 /**
@@ -80,10 +82,10 @@ function featureListFor(granted: Record<PlanFeatureKey, boolean>): PlanFeature[]
 }
 
 export function planToCatalogEntry(plan: PlanResponse): PlanCatalogEntry {
-  const tier = plan.tier ?? 0;
+  const tier = TIER_BY_TYPE[plan.type] ?? 0;
   const monthlyPrice = Number(plan.priceMonthly ?? plan.price ?? 0);
   const yearlyTotal = Number(plan.priceYearly ?? 0);
-  const granted = grantedFeaturesFor(plan);
+  const granted = normalizeFeatures(plan.features);
 
   return {
     id: plan.id,
@@ -103,32 +105,6 @@ export function planToCatalogEntry(plan: PlanResponse): PlanCatalogEntry {
     isPro: tier >= 2,
     maxBusinesses: plan.maxBusinesses ?? null,
   };
-}
-
-/**
- * Catálogo de respaldo, derivado de `plans-data.ts`, para cuando el backend no
- * responde. No sustituye al real: es lo que evita una pantalla de planes vacía
- * en el peor momento (el paywall tras vencer el trial).
- */
-export function fallbackCatalog(): PlanCatalogEntry[] {
-  return PLANS.map((plan: PlanCardData, index) => ({
-    id: null,
-    code: plan.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    name: plan.name,
-    description: plan.description,
-    tier: index,
-    currency: "USD",
-    monthlyPrice: plan.monthlyPrice,
-    yearlyPricePerMonth: plan.yearlyPrice,
-    yearlyTotal: plan.yearlyPrice * 12,
-    icon: plan.icon,
-    features: plan.features,
-    grantedFeatures: featuresFromTier(index),
-    isPro: plan.name === "Pro",
-    // Mismos topes que asume `PLAN_BUSINESS_LIMIT` cuando no hay dato del
-    // backend: Pro admite 3 negocios y el resto, uno.
-    maxBusinesses: plan.name === "Pro" ? 3 : 1,
-  }));
 }
 
 /**

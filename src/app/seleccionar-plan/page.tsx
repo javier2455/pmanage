@@ -18,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NegoraLogo } from "@/components/brand/negora-logo";
 import {
-  fallbackCatalog,
   planToCatalogEntry,
   selectablePlans,
   type PlanCatalogEntry,
@@ -53,9 +52,6 @@ export default function SelectPlanPage() {
 
   const catalog = useMemo<PlanCatalogEntry[]>(() => {
     const plans: PlanResponse[] = plansData?.data ?? [];
-    // Sin catálogo (backend caído) se recurre al respaldo local: este es el
-    // paywall, y una pantalla vacía aquí deja al usuario sin salida.
-    if (plans.length === 0) return selectablePlans(fallbackCatalog());
     return selectablePlans(plans.map(planToCatalogEntry)).sort(
       (a, b) => a.tier - b.tier,
     );
@@ -72,8 +68,10 @@ export default function SelectPlanPage() {
     // "bajar a Básico con más de uno"; ahora sale del tope del propio plan.
     const maxBusinesses = plan.maxBusinesses;
     if (maxBusinesses !== null && activeBusinessCount > maxBusinesses) {
-      const params = new URLSearchParams({ billing: billingPeriod });
-      if (plan.id) params.set("planId", plan.id);
+      const params = new URLSearchParams({
+        billing: billingPeriod,
+        planId: plan.id,
+      });
       router.push(`/seleccionar-plan/reconciliar?${params.toString()}`);
       return;
     }
@@ -81,15 +79,12 @@ export default function SelectPlanPage() {
     setPendingCode(plan.code);
     try {
       const res = await selectPlan.mutateAsync({
-        // Sin id (catálogo de respaldo) se recae en el tipo, que es lo único
-        // que el backend antiguo sabía interpretar.
-        ...(plan.id
-          ? { planId: plan.id }
-          : { planType: plan.isPro ? ("pro" as const) : ("basic" as const) }),
+        planId: plan.id,
         billingPeriod,
       });
       applySelectedPlanToSession({
         type: res.data?.type,
+        code: res.data?.code,
         name: res.data?.name,
         expireDate: res.data?.expireDate,
       });

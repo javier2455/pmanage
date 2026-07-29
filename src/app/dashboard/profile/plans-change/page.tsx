@@ -18,10 +18,15 @@ import {
     ArrowLeft,
 } from "lucide-react"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
-import { PLANS, normalizePlanKey } from "@/lib/plans-data"
+import { getAllPlans } from "@/lib/api/plans"
+import { planToCatalogEntry } from "@/lib/plan-catalog"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { PlanResponse } from "@/lib/types/plans"
 
 type StoredPlan = {
+    code?: string
     name?: string
     type?: string
 }
@@ -44,25 +49,25 @@ export default function ChangePlanPage() {
         }
     }, [])
 
-    const currentPlanKey = useMemo(() => {
-        const byType = normalizePlanKey(storedPlan?.type)
-        const byName = normalizePlanKey(storedPlan?.name)
-        return byType || byName
-    }, [storedPlan?.name, storedPlan?.type])
+    const { data: plansData, isPending } = useQuery({
+        queryKey: ["all-plans"],
+        queryFn: () => getAllPlans(),
+    })
 
     const plansWithCurrent = useMemo(() => {
-        return PLANS.map((p) => {
-            const key = normalizePlanKey(p.name)
-            const current =
-                currentPlanKey.length > 0 &&
-                (currentPlanKey === key ||
-                    (currentPlanKey === "free" && key.includes("gratuito")) ||
-                    (currentPlanKey === "basic" && key.includes("basico")) ||
-                    ((currentPlanKey === "pro" || currentPlanKey === "premium") && key === "pro"))
-
-            return { ...p, current }
-        })
-    }, [currentPlanKey])
+        const plans: PlanResponse[] = plansData?.data ?? []
+        return plans
+            .map(planToCatalogEntry)
+            .sort((a, b) => a.tier - b.tier)
+            .map((plan) => ({
+                // El plan en curso se reconoce por su código, que es su identidad
+                // estable. Antes se comparaban nombres normalizados con una lista
+                // de equivalencias ("basic" ≈ "basico", "pro" ≈ "premium") que
+                // fallaba en cuanto un plan se renombraba.
+                ...plan,
+                current: Boolean(storedPlan?.code) && storedPlan?.code === plan.code,
+            }))
+    }, [plansData, storedPlan?.code])
 
     return (
         <div className="flex flex-col gap-6 p-4">
@@ -99,14 +104,23 @@ export default function ChangePlanPage() {
                 </Tabs>
             </div>
 
+            {isPending ? (
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {[0, 1, 2].map((i) => (
+                        <Skeleton key={i} className="h-150 w-full rounded-xl" />
+                    ))}
+                </div>
+            ) : (
             <div className="grid gap-6 lg:grid-cols-3">
                 {plansWithCurrent.map((plan) => {
                     const Icon = plan.icon
                     const displayPrice =
-                        billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice
+                        billingPeriod === "monthly"
+                            ? plan.monthlyPrice
+                            : plan.yearlyPricePerMonth
                     return (
                         <Card
-                            key={plan.name}
+                            key={plan.code}
                             className={cn(
                                 "relative flex flex-col transition-all",
                                 plan.current &&
@@ -150,7 +164,7 @@ export default function ChangePlanPage() {
                                                     ${displayPrice}
                                                 </span>
                                                 <span className="text-sm text-muted-foreground">
-                                                    USD / mes
+                                                    {plan.currency} / mes
                                                 </span>
                                             </>
                                         )}
@@ -163,7 +177,7 @@ export default function ChangePlanPage() {
                                         <>
                                             {billingPeriod === "yearly" && (
                                                 <p className="mt-1.5 text-xs text-muted-foreground">
-                                                    Facturado anualmente (${displayPrice * 12} USD/año)
+                                                    Facturado anualmente ({plan.yearlyTotal} {plan.currency}/año)
                                                 </p>
                                             )}
                                             <p className="mt-1.5 text-xs text-muted-foreground">
@@ -210,7 +224,7 @@ export default function ChangePlanPage() {
                                         className="w-full"
                                         variant="outline"
                                     >
-                                        {plan.price === 0 ? "Cambiar a Free" : `Elegir ${plan.name}`}
+                                        {plan.monthlyPrice === 0 ? "Cambiar a Free" : `Elegir ${plan.name}`}
                                     </Button>
                                 )}
                             </CardFooter> */}
@@ -218,6 +232,7 @@ export default function ChangePlanPage() {
                     )
                 })}
             </div>
+            )}
 
             <Card className="border-emerald-500/20 bg-linear-to-r from-emerald-500/5 via-transparent to-emerald-500/5">
                 <CardContent className="flex flex-col items-center gap-5 py-8 text-center sm:flex-row sm:text-left">

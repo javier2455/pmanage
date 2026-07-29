@@ -107,26 +107,6 @@ export const PLAN_FEATURES: PlanFeatureDefinition[] = [
   },
 ];
 
-/**
- * Capacidades que cualquier plan ha concedido siempre, incluido el gratuito.
- *
- * Es la contrapartida del gate binario anterior (`isPro`): todo lo que NO está
- * en esta lista era exclusivo de Pro. Se usa como respaldo cuando el plan no
- * declara capacidades —sesión sin refrescar o plan anterior al modelo—, para
- * que nadie pierda acceso durante la transición. Debe reflejar lo mismo que
- * `featuresFromTier` en el backend.
- */
-export const FREE_TIER_FEATURES: PlanFeatureKey[] = [
-  "sales",
-  "expenses",
-  "dailyClose",
-  "exchangeRates",
-  "priceHistory",
-  "inventoryHistory",
-  "globalSearch",
-  "statsPanel",
-];
-
 /** Orden en que se presentan los grupos en el formulario. */
 export const PLAN_FEATURE_GROUPS: PlanFeatureGroup[] = [
   "Operación diaria",
@@ -166,26 +146,6 @@ export function normalizeFeatures(
     base[key] = features[key] === true;
   }
   return base;
-}
-
-/**
- * Reconstruye las capacidades de un plan que no las declara, a partir de su
- * nivel. Réplica de `featuresFromTier` del backend: existe para los planes
- * anteriores al modelo de capacidades, que llegan con `features` en null.
- */
-export function featuresFromTier(tier: number): Record<PlanFeatureKey, boolean> {
-  const isPro = tier >= 2;
-  const features = emptyFeatures();
-  for (const key of PLAN_FEATURE_KEYS) {
-    if (isPro) {
-      features[key] = true;
-    } else if (FREE_TIER_FEATURES.includes(key)) {
-      features[key] = true;
-    } else if (key === "emailNotifications") {
-      features[key] = tier >= 1;
-    }
-  }
-  return features;
 }
 
 /** ¿El plan concede esta capacidad? Ausente o falsa = no concedida. */

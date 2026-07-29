@@ -101,6 +101,8 @@ type OAuthProvider = {
 
 export type Plan = {
   id: string;
+  /** Identidad estable del plan; con ella se reconoce el plan en curso. */
+  code?: string;
   name: string;
   description: string | null;
   price: number | string | null;

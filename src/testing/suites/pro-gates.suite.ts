@@ -9,7 +9,6 @@ import {
   PLAN_BUSINESS_LIMIT,
 } from "@/lib/pro-gates";
 import {
-  FREE_TIER_FEATURES,
   hasFeature,
   normalizeFeatures,
   PLAN_FEATURE_KEYS,
@@ -148,19 +147,6 @@ export const proGatesSuite = defineSuite(
       "El formulario necesita un booleano por casilla. Lo que llega del backend puede ser parcial, así que se completa con false: lo no declarado no está concedido.",
     );
 
-    test(
-      "FREE_TIER_FEATURES cubre lo que todo plan concedía antes del modelo de capacidades",
-      () => {
-        // Este conjunto es el respaldo cuando un plan no declara capacidades:
-        // debe coincidir con lo que el gate binario dejaba pasar a un plan
-        // básico, o algún usuario perdería acceso al migrar.
-        expect(FREE_TIER_FEATURES).toContain("sales");
-        expect(FREE_TIER_FEATURES).toContain("dailyClose");
-        expect(FREE_TIER_FEATURES).not.toContain("monthlyClose");
-        expect(FREE_TIER_FEATURES).not.toContain("team");
-      },
-      "Las capacidades básicas (ventas, cierre diario) las tenía cualquier plan; las Pro (cierre mensual, equipo) no. Si esta lista se desalinea, los planes sin features declaradas conceden de más o de menos.",
-    );
   },
   { description: "Detección de plan Pro/Free, límites, capacidades y gating de rutas." },
 );

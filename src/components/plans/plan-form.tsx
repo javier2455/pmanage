@@ -27,11 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
+/** Familias de plan y el orden con que se sugieren en la vitrina. */
 const planTypeOptions = [
-  { value: "free", label: "Free", tier: 0 },
-  { value: "basic", label: "Básico", tier: 1 },
-  { value: "premium", label: "Premium", tier: 2 },
-  { value: "enterprise", label: "Enterprise", tier: 3 },
+  { value: "free", label: "Free", order: 0 },
+  { value: "basic", label: "Básico", order: 1 },
+  { value: "premium", label: "Premium", order: 2 },
+  { value: "enterprise", label: "Enterprise", order: 3 },
 ] as const;
 
 /**
@@ -101,7 +102,6 @@ function emptyPlanValues(): PlanFormInput {
     name: "",
     description: "",
     type: "basic",
-    tier: 1,
     currency: "USD",
     priceMonthly: 0,
     priceYearly: 0,
@@ -109,7 +109,6 @@ function emptyPlanValues(): PlanFormInput {
     maxBusinesses: 1,
     maxWorkers: 0,
     features: normalizeFeatures(null),
-    trialDays: null,
     isActive: true,
     isPublic: true,
     displayOrder: 0,
@@ -122,7 +121,6 @@ function planToFormValues(plan: PlanResponse): PlanFormInput {
     name: plan.name,
     description: plan.description ?? "",
     type: plan.type as PlanType,
-    tier: plan.tier ?? 0,
     currency: plan.currency ?? "USD",
     priceMonthly: Number(plan.priceMonthly ?? 0),
     priceYearly: Number(plan.priceYearly ?? 0),
@@ -130,7 +128,6 @@ function planToFormValues(plan: PlanResponse): PlanFormInput {
     maxBusinesses: plan.maxBusinesses,
     maxWorkers: plan.maxWorkers,
     features: normalizeFeatures(plan.features),
-    trialDays: plan.trialDays,
     isActive: plan.isActive,
     isPublic: plan.isPublic ?? true,
     displayOrder: plan.displayOrder ?? 0,
@@ -177,16 +174,14 @@ export function PlanForm({
   const currency = useWatch({ control, name: "currency" });
 
   /**
-   * El tipo sugiere el nivel, pero no lo impone: se puede tener un Premium con
-   * nivel propio. Solo se autocompleta al cambiar el tipo para no obligar a
-   * teclear el valor evidente.
+   * El tipo determina el nivel de servicio del plan, así que también sugiere su
+   * posición en la vitrina. Sigue siendo editable: el orden es presentación.
    */
   function handleTypeChange(value: string) {
     const option = planTypeOptions.find((o) => o.value === value);
     setValue("type", value as PlanType, { shouldValidate: true });
     if (option) {
-      setValue("tier", option.tier, { shouldValidate: true });
-      setValue("displayOrder", option.tier, { shouldValidate: true });
+      setValue("displayOrder", option.order, { shouldValidate: true });
     }
   }
 
@@ -270,21 +265,6 @@ export function PlanForm({
                 {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="tier">Nivel</Label>
-                <Input
-                  id="tier"
-                  type="number"
-                  min={0}
-                  step={1}
-                  {...register("tier", { setValueAs: (v) => (v === "" ? 0 : Number(v)) })}
-                  aria-invalid={errors.tier ? "true" : "false"}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Sirve para comparar planes: a mayor nivel, mejor servicio.
-                </p>
-                {errors.tier && <p className="text-sm text-destructive">{errors.tier.message}</p>}
-              </div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -370,25 +350,6 @@ export function PlanForm({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 md:max-w-xs">
-              <Label htmlFor="trialDays">
-                Días de prueba <span className="font-normal text-muted-foreground">(opcional)</span>
-              </Label>
-              <Input
-                id="trialDays"
-                type="number"
-                min={0}
-                step={1}
-                placeholder="Sin prueba"
-                {...register("trialDays", {
-                  setValueAs: (v) => (v === "" ? null : Number(v)),
-                })}
-                aria-invalid={errors.trialDays ? "true" : "false"}
-              />
-              {errors.trialDays && (
-                <p className="text-sm text-destructive">{errors.trialDays.message}</p>
-              )}
-            </div>
           </section>
 
           <Separator />

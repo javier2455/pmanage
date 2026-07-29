@@ -1,9 +1,5 @@
 import { defineSuite, expect } from "@/testing/harness";
-import {
-  fallbackCatalog,
-  planToCatalogEntry,
-  selectablePlans,
-} from "@/lib/plan-catalog";
+import { planToCatalogEntry, selectablePlans } from "@/lib/plan-catalog";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import type { PlanResponse } from "@/lib/types/plans";
 
@@ -15,7 +11,6 @@ function apiPlan(overrides: Partial<PlanResponse> = {}): PlanResponse {
     name: "Pro",
     description: "Para negocios en crecimiento",
     type: "premium",
-    tier: 2,
     price: 15,
     currency: "USD",
     priceMonthly: 15,
@@ -24,7 +19,6 @@ function apiPlan(overrides: Partial<PlanResponse> = {}): PlanResponse {
     maxBusinesses: 3,
     maxWorkers: 5,
     features: null,
-    trialDays: null,
     isActive: true,
     isPublic: true,
     displayOrder: 2,
@@ -61,7 +55,7 @@ export const planCatalogSuite = defineSuite(
       () => {
         const entry = planToCatalogEntry(
           apiPlan({
-            tier: 1,
+            type: "basic",
             features: { monthlyClose: true, providers: false, sales: true },
           }),
         );
@@ -84,17 +78,13 @@ export const planCatalogSuite = defineSuite(
     );
 
     test(
-      "un plan sin capacidades declaradas las deduce de su nivel",
+      "un plan sin capacidades no concede ninguna",
       () => {
-        const pro = planToCatalogEntry(apiPlan({ tier: 2, features: null }));
-        const basic = planToCatalogEntry(apiPlan({ tier: 1, features: null }));
-
-        expect(pro.grantedFeatures.monthlyClose).toBe(true);
-        expect(basic.grantedFeatures.monthlyClose).toBe(false);
-        expect(basic.grantedFeatures.emailNotifications).toBe(true);
-        expect(basic.grantedFeatures.sales).toBe(true);
+        const entry = planToCatalogEntry(apiPlan({ features: null }));
+        expect(entry.grantedFeatures.monthlyClose).toBe(false);
+        expect(entry.grantedFeatures.sales).toBe(false);
       },
-      "Los planes anteriores al modelo de capacidades llegan con features en null. Se deduce del nivel para reproducir el gate anterior en vez de dejar la vitrina vacía o negar accesos ya concedidos.",
+      "Todo plan declara sus capacidades (la migración las rellena y el alta las exige), así que un objeto ausente no se deduce del tipo de plan: no concede nada. Deducir abriría funciones de pago a partir de un dato que falta.",
     );
 
     test(
@@ -118,8 +108,8 @@ export const planCatalogSuite = defineSuite(
     test(
       "el icono acompaña al nivel, no al nombre del plan",
       () => {
-        const nivel0 = planToCatalogEntry(apiPlan({ tier: 0, name: "Cualquiera" }));
-        const nivel2 = planToCatalogEntry(apiPlan({ tier: 2, name: "Otro" }));
+        const nivel0 = planToCatalogEntry(apiPlan({ type: "free", name: "Cualquiera" }));
+        const nivel2 = planToCatalogEntry(apiPlan({ type: "premium", name: "Otro" }));
         expect(nivel0.icon).not.toBe(nivel2.icon);
       },
       "Un plan nuevo con nombre propio recibe el icono que le corresponde por nivel, sin necesidad de llamarse 'Pro' o 'Básico'.",
@@ -129,29 +119,17 @@ export const planCatalogSuite = defineSuite(
       "selectablePlans deja fuera el nivel gratuito",
       () => {
         const catalog = [
-          planToCatalogEntry(apiPlan({ tier: 0, code: "free" })),
-          planToCatalogEntry(apiPlan({ tier: 1, code: "basic" })),
-          planToCatalogEntry(apiPlan({ tier: 2, code: "pro" })),
+          planToCatalogEntry(apiPlan({ type: "free", code: "free" })),
+          planToCatalogEntry(apiPlan({ type: "basic", code: "basic" })),
+          planToCatalogEntry(apiPlan({ type: "premium", code: "pro" })),
         ];
         expect(selectablePlans(catalog).map((p) => p.code)).toEqual(["basic", "pro"]);
       },
       "El nivel gratuito es el periodo de prueba, no una opción a la que volver: ofrecerlo en el paywall permitiría renovar el trial indefinidamente.",
     );
 
-    test(
-      "el catálogo de respaldo no deja el paywall vacío",
-      () => {
-        const fallback = fallbackCatalog();
-        expect(fallback.length > 0).toBe(true);
-        expect(selectablePlans(fallback).length > 0).toBe(true);
-        // Sin id no se puede enviar planId: el flujo recae en planType.
-        expect(fallback.every((p) => p.id === null)).toBe(true);
-      },
-      "Si el backend no responde, la pantalla de selección de plan seguiría siendo el único camino del usuario tras vencer el trial. El respaldo local evita dejarlo sin salida, y al no traer id el envío recae en planType.",
-    );
   },
   {
-    description:
-      "Traducción del catálogo de planes del backend a la vitrina, con respaldo local.",
+    description: "Traducción del catálogo de planes del backend a la vitrina.",
   },
 );
