@@ -31,8 +31,8 @@ export default function CashBalanceWidget() {
 
   const hasAccounts = (accounts?.length ?? 0) > 0;
 
-  return (
-    <Card>
+  const card = (
+    <Card className="h-full transition-all hover:border-primary/50 hover:shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           Caja
@@ -56,18 +56,27 @@ export default function CashBalanceWidget() {
             </p>
           </>
         ) : (
+          // Nada de enlaces aquí dentro: la tarjeta entera ya es un `<Link>` a
+          // los saldos por moneda y anidar anclas es HTML inválido.
           <p className="text-sm text-muted-foreground">
             Aún no hay movimientos en caja. Consulta tus{" "}
-            <Link
-              href="/dashboard/business/currency-accounts"
-              className="underline-offset-2 hover:underline"
-            >
+            <span className="underline-offset-2 group-hover:underline">
               saldos por moneda
-            </Link>
+            </span>
             .
           </p>
         )}
       </CardContent>
     </Card>
+  );
+
+  return (
+    <Link
+      href="/dashboard/business/currency-accounts"
+      aria-label="Ver saldos por moneda"
+      className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+    >
+      {card}
+    </Link>
   );
 }

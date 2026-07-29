@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Skeleton } from '../ui/skeleton'
 import { ArrowDownRight, ArrowUpRight, DollarSign, Minus, Receipt } from 'lucide-react'
@@ -21,6 +22,11 @@ interface StatsCardProps {
    * `0,00 CUP` y un `0.00%` de tendencia como si fueran datos reales.
    */
   isLoading?: boolean
+  /**
+   * Cuando se indica, toda la tarjeta se convierte en un enlace a la vista del
+   * módulo (ventas, gastos…) en lugar de ser solo un resumen estático.
+   */
+  href?: string
 }
 
 function trendDirection(change: number, variant: StatsCardVariant) {
@@ -38,6 +44,7 @@ export default function StatsCard({
   percentageChange,
   count,
   isLoading = false,
+  href,
 }: StatsCardProps) {
   const direction = trendDirection(percentageChange, variant)
   const isGood = direction === 'up-good' || direction === 'down-good'
@@ -54,8 +61,13 @@ export default function StatsCard({
 
   const formattedChange = `${percentageChange > 0 ? '+' : ''}${percentageChange.toFixed(2)}%`
 
-  return (
-    <Card>
+  const card = (
+    <Card
+      className={cn(
+        'h-full',
+        href && 'transition-all hover:border-primary/50 hover:shadow-sm',
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -127,5 +139,17 @@ export default function StatsCard({
         ) : null}
       </CardContent>
     </Card>
+  )
+
+  if (!href) return card
+
+  return (
+    <Link
+      href={href}
+      aria-label={`Ver ${title.toLowerCase()}`}
+      className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+    >
+      {card}
+    </Link>
   )
 }

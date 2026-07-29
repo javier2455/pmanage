@@ -40,6 +40,7 @@ export default function DashboardPage() {
           percentageChange={dashboardSummary?.sales?.percentageChange ?? 0}
           count={dashboardSummary?.sales?.totalTransactions}
           isLoading={isLoadingSummary}
+          href="/dashboard/business/sales"
         />
         <StatsCard
           variant="expenses"
@@ -49,6 +50,7 @@ export default function DashboardPage() {
           percentageChange={dashboardSummary?.expenses?.percentageChange ?? 0}
           count={dashboardSummary?.expenses?.totalCount}
           isLoading={isLoadingSummary}
+          href="/dashboard/business/expenses"
         />
         <CashBalanceWidget />
       </div>
