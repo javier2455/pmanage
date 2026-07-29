@@ -1,11 +1,29 @@
+import type { PlanFeatures } from "@/lib/plan-features";
+
 export interface PlanResponse {
   id: string;
+  /** Identidad estable del plan; es lo único único, `type` puede repetirse. */
+  code: string;
   name: string;
   description: string | null;
   type: string;
+  /** Nivel de servicio: free 0 … enterprise 3. Sirve para comparar planes. */
+  tier: number;
+  /** @deprecated Espejo de `priceMonthly`; lo sigue devolviendo el backend. */
   price: number | null;
-  maxProducts: number;
+  currency: string;
+  priceMonthly: number;
+  /** Importe que se cobra al AÑO en la modalidad anual, no el mensualizado. */
+  priceYearly: number;
+  /** En los tres topes, `null` significa "sin límite". */
+  maxProducts: number | null;
+  maxBusinesses: number | null;
+  maxWorkers: number | null;
+  features: PlanFeatures | null;
+  trialDays: number | null;
   isActive: boolean;
+  isPublic: boolean;
+  displayOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,14 +40,32 @@ export interface AssignPlanResponse {
     data: AssignPlanResponseData;
 }
 
-export interface  CreateTypePlanPayload {
+/**
+ * Alta de plan. Los tres topes son de envío obligatorio aunque admitan `null`:
+ * omitirlos era lo que creaba planes con negocios y trabajadores ilimitados sin
+ * que nadie lo hubiera decidido, así que "sin límite" tiene que escribirse.
+ */
+export interface CreateTypePlanPayload {
+  code: string;
   name: string;
   description: string | null;
   type: PlanType;
-  price: number | null;
-  maxProducts: number;
+  tier?: number;
+  currency: string;
+  priceMonthly: number;
+  priceYearly: number;
+  maxProducts: number | null;
+  maxBusinesses: number | null;
+  maxWorkers: number | null;
+  features: PlanFeatures;
+  trialDays: number | null;
   isActive: boolean;
+  isPublic: boolean;
+  displayOrder: number;
 }
+
+/** Edición: todo opcional, porque omitir un campo es "déjalo como está". */
+export type UpdatePlanPayload = Partial<CreateTypePlanPayload>;
 
 type AssignPlanResponseData = {
   id: string;
@@ -68,9 +104,17 @@ export type BillingPeriod = "monthly" | "yearly";
  * backend conserva ese negocio y archiva el resto (ver backend-cambios.md).
  */
 export interface SelectPlanPayload {
-  planType: SelectablePlanType;
+  /**
+   * Plan destino. Es lo que debe enviarse: identifica un plan concreto del
+   * catálogo, incluidos los que no son ni "basic" ni "pro".
+   */
+  planId?: string;
+  /** Forma anterior, solo capaz de nombrar dos planes. Se mantiene por compatibilidad. */
+  planType?: SelectablePlanType;
   billingPeriod: BillingPeriod;
   keepBusinessId?: string;
+  /** Negocios a conservar cuando el plan destino admite más de uno. */
+  keepBusinessIds?: string[];
 }
 
 export interface SelectPlanResponse {
@@ -80,6 +124,12 @@ export interface SelectPlanResponse {
     type: string;
     name?: string;
     expireDate?: string | null;
+    planId?: string;
+    code?: string;
+    /** Periodo e importe realmente contratados. */
+    billingPeriod?: BillingPeriod;
+    price?: number;
+    currency?: string;
     /** URL de pago si el flujo comercial la requiere; opcional. */
     paymentUrl?: string | null;
   };

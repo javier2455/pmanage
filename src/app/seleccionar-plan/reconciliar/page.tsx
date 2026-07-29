@@ -17,24 +17,49 @@ import { NegoraLogo } from "@/components/brand/negora-logo";
 import { getMyBusinessesList } from "@/lib/api/business";
 import { getAllBusinessWorkers } from "@/lib/api/worker";
 import { getAllInvitations } from "@/lib/api/invitation";
+import { getAllPlans } from "@/lib/api/plans";
 import { useSelectPlanMutation } from "@/hooks/use-plans";
-import type { BillingPeriod } from "@/lib/types/plans";
+import type { BillingPeriod, PlanResponse } from "@/lib/types/plans";
+import { planToCatalogEntry } from "@/lib/plan-catalog";
 import { applySelectedPlanToSession } from "@/lib/plan-session";
 import { toastError, toastSuccess } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+
+/** Tope asumido si no se puede consultar el plan destino: el del plan Básico. */
+const FALLBACK_MAX_BUSINESSES = 1;
 
 function ReconcileInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const billingPeriod = (searchParams.get("billing") as BillingPeriod) || "monthly";
+  const planId = searchParams.get("planId");
 
   const selectPlan = useSelectPlanMutation();
-  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [chosenIds, setChosenIds] = useState<string[] | null>(null);
 
   const { data: businesses = [], isLoading } = useQuery({
     queryKey: ["businesses"],
     queryFn: () => getMyBusinessesList(),
   });
+
+  const { data: plansData } = useQuery({
+    queryKey: ["all-plans"],
+    queryFn: () => getAllPlans(),
+  });
+
+  // El plan destino dice cuántos negocios caben. Antes esta pantalla daba por
+  // hecho que siempre era uno, porque el único downgrade posible era a Básico.
+  const targetPlan = useMemo(() => {
+    const plans: PlanResponse[] = plansData?.data ?? [];
+    const match = planId ? plans.find((p) => p.id === planId) : undefined;
+    return match ? planToCatalogEntry(match) : null;
+  }, [plansData, planId]);
+
+  const maxBusinesses = targetPlan?.maxBusinesses ?? FALLBACK_MAX_BUSINESSES;
+  const planName = targetPlan?.name ?? "Básico";
+  // Si el plan destino conserva la gestión de equipo, el aviso no debe anunciar
+  // suspensiones que no van a ocurrir.
+  const keepsTeam = targetPlan?.grantedFeatures.team === true;
 
   const activeBusinesses = useMemo(
     () => businesses.filter((b) => b.status !== "archived"),
@@ -43,14 +68,35 @@ function ReconcileInner() {
 
   // Si no hay excedente, no hay nada que reconciliar: volver al paywall.
   useEffect(() => {
-    if (!isLoading && activeBusinesses.length <= 1) {
+    if (!isLoading && activeBusinesses.length <= maxBusinesses) {
       router.replace("/seleccionar-plan");
     }
-  }, [isLoading, activeBusinesses.length, router]);
+  }, [isLoading, activeBusinesses.length, maxBusinesses, router]);
 
-  // Negocio a conservar: el elegido por el usuario, o el primero como sugerencia.
-  // TODO(backend): exponer una métrica de actividad para preseleccionar el más usado.
-  const keepBusinessId = chosenId ?? activeBusinesses[0]?.id ?? null;
+  // Selección por defecto: los primeros que caben, como sugerencia.
+  // TODO(backend): exponer una métrica de actividad para preseleccionar los más usados.
+  const keepBusinessIds = useMemo(
+    () =>
+      chosenIds ?? activeBusinesses.slice(0, maxBusinesses).map((b) => b.id),
+    [chosenIds, activeBusinesses, maxBusinesses],
+  );
+
+  /**
+   * Al marcar un negocio por encima del tope se descarta el más antiguo de la
+   * selección, en lugar de bloquear el clic sin explicación.
+   */
+  function toggleBusiness(businessId: string) {
+    const current = keepBusinessIds;
+    if (current.includes(businessId)) {
+      // Con un solo hueco, desmarcar dejaría la selección vacía: se trata como
+      // un cambio de elección, no como un descarte.
+      if (maxBusinesses === 1) return;
+      setChosenIds(current.filter((id) => id !== businessId));
+      return;
+    }
+    const next = [...current, businessId];
+    setChosenIds(next.slice(Math.max(0, next.length - maxBusinesses)));
+  }
 
   // Conteo de trabajadores e invitaciones pendientes a través de los negocios
   // activos, para mostrar el impacto exacto del downgrade.
@@ -80,15 +126,18 @@ function ReconcileInner() {
     },
   });
 
-  const archivedCount = Math.max(0, activeBusinesses.length - 1);
+  const archivedCount = Math.max(
+    0,
+    activeBusinesses.length - keepBusinessIds.length,
+  );
 
   async function handleConfirm() {
-    if (!keepBusinessId) return;
+    if (keepBusinessIds.length === 0) return;
     try {
       const res = await selectPlan.mutateAsync({
-        planType: "basic",
+        ...(planId ? { planId } : { planType: "basic" as const }),
         billingPeriod,
-        keepBusinessId,
+        keepBusinessIds,
       });
       applySelectedPlanToSession({
         type: res.data?.type,
@@ -100,8 +149,11 @@ function ReconcileInner() {
         return;
       }
       toastSuccess({
-        title: "Plan Básico activado",
-        description: "Conservamos el negocio que elegiste; el resto quedó archivado.",
+        title: `Plan ${planName} activado`,
+        description:
+          archivedCount === 1
+            ? "Conservamos los negocios que elegiste; el otro quedó archivado."
+            : "Conservamos los negocios que elegiste; el resto quedó archivado.",
       });
       router.replace("/dashboard");
     } catch {
@@ -111,6 +163,8 @@ function ReconcileInner() {
       });
     }
   }
+
+  const isSingleChoice = maxBusinesses === 1;
 
   return (
     <div className="flex min-h-svh flex-col items-center bg-background px-4 py-12">
@@ -127,28 +181,36 @@ function ReconcileInner() {
         <div className="flex flex-col items-center gap-3 text-center">
           <NegoraLogo className="h-12 w-12 rounded-xl" />
           <h1 className="text-2xl font-bold text-foreground">
-            Elige el negocio que seguirás gestionando
+            {isSingleChoice
+              ? "Elige el negocio que seguirás gestionando"
+              : "Elige los negocios que seguirás gestionando"}
           </h1>
           <p className="max-w-xl text-sm text-muted-foreground">
-            El plan Básico incluye 1 negocio. Selecciona cuál quieres mantener
-            activo. Los demás quedarán archivados (no se borran) y los recuperas
-            al instante si vuelves a Pro.
+            El plan {planName} incluye {maxBusinesses}{" "}
+            {maxBusinesses === 1 ? "negocio" : "negocios"}. Selecciona{" "}
+            {isSingleChoice ? "cuál quieres mantener activo" : "cuáles quieres mantener activos"}.
+            Los demás quedarán archivados (no se borran) y los recuperas al
+            instante si vuelves a un plan superior.
           </p>
         </div>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Tus negocios</CardTitle>
-            <CardDescription>Solo uno puede quedar activo en Básico.</CardDescription>
+            <CardDescription>
+              {isSingleChoice
+                ? `Solo uno puede quedar activo en ${planName}.`
+                : `Hasta ${maxBusinesses} pueden quedar activos en ${planName}.`}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {activeBusinesses.map((business) => {
-              const selected = keepBusinessId === business.id;
+              const selected = keepBusinessIds.includes(business.id);
               return (
                 <button
                   type="button"
                   key={business.id}
-                  onClick={() => setChosenId(business.id)}
+                  onClick={() => toggleBusiness(business.id)}
                   className={cn(
                     "flex items-center gap-3 rounded-lg border p-3 text-left transition-colors cursor-pointer",
                     selected
@@ -200,24 +262,28 @@ function ReconcileInner() {
               {archivedCount} {archivedCount === 1 ? "negocio quedará" : "negocios quedarán"}{" "}
               archivado{archivedCount === 1 ? "" : "s"} en solo lectura (datos intactos).
             </li>
-            <li>
-              Se suspenderá el acceso de {impact?.workers ?? "…"}{" "}
-              {impact?.workers === 1 ? "trabajador" : "trabajadores"} (sus cuentas se conservan).
-            </li>
-            <li>
-              Se cancelarán {impact?.invites ?? "…"}{" "}
-              {impact?.invites === 1 ? "invitación pendiente" : "invitaciones pendientes"}.
-            </li>
+            {!keepsTeam && (
+              <>
+                <li>
+                  Se suspenderá el acceso de {impact?.workers ?? "…"}{" "}
+                  {impact?.workers === 1 ? "trabajador" : "trabajadores"} (sus cuentas se conservan).
+                </li>
+                <li>
+                  Se cancelarán {impact?.invites ?? "…"}{" "}
+                  {impact?.invites === 1 ? "invitación pendiente" : "invitaciones pendientes"}.
+                </li>
+              </>
+            )}
           </ul>
           <p className="ml-6 text-sm">
-            Todo se restaura automáticamente si vuelves al plan Pro.
+            Todo se restaura automáticamente si vuelves a un plan que lo incluya.
           </p>
         </div>
 
         <Button
           type="button"
           onClick={handleConfirm}
-          disabled={!keepBusinessId || selectPlan.isPending}
+          disabled={keepBusinessIds.length === 0 || selectPlan.isPending}
           className="w-full cursor-pointer"
         >
           {selectPlan.isPending ? (
@@ -226,7 +292,7 @@ function ReconcileInner() {
               Aplicando…
             </>
           ) : (
-            "Confirmar y pasar a Básico"
+            `Confirmar y pasar a ${planName}`
           )}
         </Button>
       </div>

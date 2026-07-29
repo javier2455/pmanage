@@ -99,6 +99,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Las capacidades del plan no viajan en cookies, así que aquí solo se puede
+  // aplicar el gate binario por tipo de plan. Los guards de cliente —que sí leen
+  // `plan.features` de la sesión— son los que resuelven por capacidad concreta;
+  // este bloque queda como aproximación anti-parpadeo para `next dev`.
   for (const route of PRO_ROUTES) {
     if (pathname.startsWith(route.path) && !isProPlan(planType)) {
       return NextResponse.redirect(new URL(route.redirect, request.url));

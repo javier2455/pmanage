@@ -1,11 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { assignPlan, createPlan, getAllPlans, getUserPlanHistory, removeUserPlan, selectPlan } from "@/lib/api/plans";
-import { AssignPlanPayload, CreateTypePlanPayload, SelectPlanPayload } from "@/lib/types/plans";
+import { assignPlan, createPlan, getAllPlans, getAllPlansForAdmin, getPlanById, getUserPlanHistory, removeUserPlan, selectPlan, updatePlan } from "@/lib/api/plans";
+import { AssignPlanPayload, CreateTypePlanPayload, SelectPlanPayload, UpdatePlanPayload } from "@/lib/types/plans";
 
 export function useGetAllPlans() {
     return useQuery({
         queryKey: ["all-plans"],
         queryFn: () => getAllPlans(),
+    });
+}
+
+/** Catálogo completo para administrar planes, incluidos ocultos e inactivos. */
+export function useGetAllPlansForAdmin() {
+    return useQuery({
+        queryKey: ["all-plans", "admin"],
+        queryFn: () => getAllPlansForAdmin(),
+    });
+}
+
+export function useGetPlanById(planId: string | undefined) {
+    return useQuery({
+        queryKey: ["plan", planId],
+        queryFn: () => getPlanById(planId as string),
+        enabled: Boolean(planId),
     });
 }
 
@@ -68,6 +84,21 @@ export function useCreatePlanMutation() {
         mutationFn: (payload: CreateTypePlanPayload) => createPlan(payload),
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: ["all-plans"] });
+        },
+    });
+}
+
+export function useUpdatePlanMutation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ planId, payload }: { planId: string; payload: UpdatePlanPayload }) =>
+            updatePlan(planId, payload),
+        onSuccess: async (_data, variables) => {
+            await Promise.all([
+                queryClient.refetchQueries({ queryKey: ["all-plans"] }),
+                queryClient.invalidateQueries({ queryKey: ["plan", variables.planId] }),
+            ]);
         },
     });
 }

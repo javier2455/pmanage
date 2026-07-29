@@ -1,4 +1,5 @@
 import { setAuthCookies, setPlanExpiredCookie, setNeedsReconciliationCookie } from "@/lib/cookies";
+import type { PlanFeatures } from "@/lib/plan-features";
 
 /**
  * Sincroniza el estado de sesión local tras elegir un plan self-service.
@@ -23,6 +24,8 @@ export function applySelectedPlanToSession(plan: {
     maxProducts: number | null;
     maxWorkers: number | null;
   };
+  /** Capacidades declaradas por el plan; gobiernan el gating por funcionalidad. */
+  features?: PlanFeatures | null;
 }): void {
   if (typeof window !== "undefined") {
     const stored = sessionStorage.getItem("user");
@@ -35,14 +38,22 @@ export function applySelectedPlanToSession(plan: {
           ...(plan.name ? { name: plan.name } : {}),
           ...(plan.expireDate !== undefined ? { expireDate: plan.expireDate } : {}),
         };
-        if (plan.isPro !== undefined || plan.limits !== undefined) {
+        if (
+          plan.isPro !== undefined ||
+          plan.limits !== undefined ||
+          plan.features !== undefined
+        ) {
           // El caller trae los valores frescos del backend: persistirlos.
           if (plan.isPro !== undefined) parsed.plan.isPro = plan.isPro;
           if (plan.limits !== undefined) parsed.plan.limits = plan.limits;
+          if (plan.features !== undefined) parsed.plan.features = plan.features;
         } else if (plan.type || plan.name) {
-          // Cambió el plan sin valores frescos: descartar los obsoletos.
+          // Cambió el plan sin valores frescos: descartar los obsoletos. Las
+          // capacidades del plan anterior son justo lo que no debe sobrevivir a
+          // un cambio de plan.
           delete parsed.plan.isPro;
           delete parsed.plan.limits;
+          delete parsed.plan.features;
         }
         sessionStorage.setItem("user", JSON.stringify(parsed));
       } catch {

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
     Card,
     CardContent,
@@ -12,55 +13,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Check, X, MessageCircle, Zap, Shield } from "lucide-react"
+import { Check, X, MessageCircle, Zap } from "lucide-react"
 
-type BillingPeriod = "monthly" | "yearly"
-
-const plans = [
-    {
-        name: "Basico",
-        description: "Ideal para negocios que estan comenzando y necesitan lo esencial.",
-        monthlyPrice: 5,
-        yearlyPrice: 4,
-        badge: null,
-        features: [
-            { text: "1 negocio", included: true },
-            { text: "Hasta 100 productos", included: true },
-            { text: "Registro de ventas y compras", included: true },
-            { text: "Gestión de gastos con categorías", included: true },
-            { text: "Cierre contable diario", included: true },
-            { text: "Tasas de cambio multi-moneda", included: true },
-            { text: "Historial de precios de productos", included: true },
-            { text: "Historial de inventario", included: true },
-            { text: "Búsqueda global", included: true },
-            { text: "Panel de estadísticas", included: true },
-            { text: "Notificaciones por correo", included: true },
-            { text: "Soporte por WhatsApp o correo", included: true },
-        ],
-        highlighted: false,
-    },
-    {
-        name: "Pro",
-        description: "Para negocios en crecimiento que necesitan control total.",
-        monthlyPrice: 15,
-        yearlyPrice: 12,
-        badge: "Recomendado",
-        features: [
-            { text: "Todo lo que incluye el plan basico mas:", included: true },
-            { text: "Hasta 3 negocios", included: true },
-            { text: "Hasta 500 productos", included: true },
-            { text: "Cierre contable mensual", included: true },
-            { text: "Exportar cierres a Excel/PDF", included: true },
-            { text: "Gestión de proveedores", included: true },
-            { text: "Gestión de equipo y permisos", included: true },
-            { text: "Comparador de precios multi-producto", included: true },
-            { text: "Notificaciones por WhatsApp", included: true },
-            { text: "Soporte prioritario 24/7", included: true },
-        ],
-        highlighted: false,
-    },
-]
+import { getAllPlans } from "@/lib/api/plans"
+import {
+    fallbackCatalog,
+    planToCatalogEntry,
+    type PlanCatalogEntry,
+} from "@/lib/plan-catalog"
+import type { BillingPeriod, PlanResponse } from "@/lib/types/plans"
 
 const WHATSAPP_NUMBER = "5215512345678"
 const WHATSAPP_MESSAGE = encodeURIComponent(
@@ -71,9 +34,29 @@ export default function PlansPage() {
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
     const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
 
-    function handleSelect(planName: string) {
-        setSelectedPlan(planName)
-    }
+    // Precios y funcionalidades salen del catálogo del backend. Esta página
+    // tenía su propia copia escrita a mano, que se desviaba tanto de la del
+    // paywall como de lo que el backend aplicaba de verdad.
+    const { data: plansData, isPending } = useQuery({
+        queryKey: ["all-plans"],
+        queryFn: () => getAllPlans(),
+    })
+
+    const catalog = useMemo<PlanCatalogEntry[]>(() => {
+        const plans: PlanResponse[] = plansData?.data ?? []
+        if (plans.length === 0) return fallbackCatalog()
+        return plans.map(planToCatalogEntry).sort((a, b) => a.tier - b.tier)
+    }, [plansData])
+
+    // Se destaca el plan de mayor nivel del catálogo, en vez de dar por hecho
+    // que el recomendado siempre se llama "Pro".
+    const highlightedCode = useMemo(
+        () => catalog.reduce<PlanCatalogEntry | null>(
+            (best, plan) => (!best || plan.tier > best.tier ? plan : best),
+            null,
+        )?.code ?? null,
+        [catalog],
+    )
 
     return (
         <section className="p-6">
@@ -104,118 +87,127 @@ export default function PlansPage() {
                         </Tabs>
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                        {plans.map((plan) => {
-                            const displayPrice =
-                                billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice
-                            return (
-                            <Card
-                                key={plan.name}
-                                className={`relative flex flex-col transition-all ${plan.highlighted
-                                    ? "border-primary shadow-lg shadow-primary/5 ring-1 ring-primary/20"
-                                    : ""
-                                    } ${selectedPlan === plan.name
-                                        ? "ring-2 ring-primary"
-                                        : ""
-                                    }`}
-                            >
-                                {plan.badge && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                                        <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold">
-                                            <Zap className="mr-1 h-3 w-3" />
-                                            {plan.badge}
-                                        </Badge>
-                                    </div>
-                                )}
-
-                                <CardHeader className="pb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className={`flex h-9 w-9 items-center justify-center rounded-lg ${plan.highlighted
-                                                ? "bg-primary text-primary-foreground"
-                                                : "bg-muted text-muted-foreground"
-                                                }`}
-                                        >
-                                            {plan.highlighted ? (
-                                                <Zap className="h-4 w-4" />
-                                            ) : (
-                                                <Shield className="h-4 w-4" />
-                                            )}
-                                        </div>
-                                        <CardTitle className="text-lg text-card-foreground">
-                                            {plan.name}
-                                        </CardTitle>
-                                    </div>
-                                    <CardDescription className="mt-2">
-                                        {plan.description}
-                                    </CardDescription>
-                                </CardHeader>
-
-                                <CardContent className="flex-1">
-                                    <div className="mb-6">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl font-bold text-card-foreground">
-                                                ${displayPrice}
-                                            </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                USD / mes
-                                            </span>
-                                        </div>
-                                        {billingPeriod === "yearly" && (
-                                            <p className="mt-1.5 text-xs text-muted-foreground">
-                                                Facturado anualmente (${displayPrice * 12} USD/año)
-                                            </p>
+                    {isPending ? (
+                        <div className="grid gap-6 md:grid-cols-2">
+                            {[0, 1].map((i) => (
+                                <Skeleton key={i} className="h-150 w-full rounded-xl" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {catalog.map((plan) => {
+                                const displayPrice =
+                                    billingPeriod === "monthly"
+                                        ? plan.monthlyPrice
+                                        : plan.yearlyPricePerMonth
+                                const highlighted = plan.code === highlightedCode
+                                const Icon = plan.icon
+                                return (
+                                    <Card
+                                        key={plan.code}
+                                        className={`relative flex flex-col transition-all ${highlighted
+                                            ? "border-primary shadow-lg shadow-primary/5 ring-1 ring-primary/20"
+                                            : ""
+                                            } ${selectedPlan === plan.code
+                                                ? "ring-2 ring-primary"
+                                                : ""
+                                            }`}
+                                    >
+                                        {highlighted && (
+                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                                                <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold">
+                                                    <Zap className="mr-1 h-3 w-3" />
+                                                    Recomendado
+                                                </Badge>
+                                            </div>
                                         )}
-                                        <p className="mt-1.5 text-xs text-muted-foreground">
-                                            Si pagas en moneda nacional, el cambio aplicado es el que acepta la plataforma.
-                                        </p>
-                                    </div>
 
-                                    <Separator className="mb-4" />
-
-                                    <ul className="flex flex-col gap-3">
-                                        {plan.features.map((feature) => (
-                                            <li
-                                                key={feature.text}
-                                                className="flex items-start gap-3"
-                                            >
-                                                {feature.included ? (
-                                                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                                                        <Check className="h-3 w-3 text-primary" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted">
-                                                        <X className="h-3 w-3 text-muted-foreground" />
-                                                    </div>
-                                                )}
-                                                <span
-                                                    className={`text-sm ${feature.included
-                                                        ? "text-card-foreground"
-                                                        : "text-muted-foreground"
+                                        <CardHeader className="pb-4">
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${highlighted
+                                                        ? "bg-primary text-primary-foreground"
+                                                        : "bg-muted text-muted-foreground"
                                                         }`}
                                                 >
-                                                    {feature.text}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
+                                                    <Icon className="h-4 w-4" />
+                                                </div>
+                                                <CardTitle className="text-lg text-card-foreground">
+                                                    {plan.name}
+                                                </CardTitle>
+                                            </div>
+                                            <CardDescription className="mt-2">
+                                                {plan.description}
+                                            </CardDescription>
+                                        </CardHeader>
 
-                                <CardFooter className="pt-4">
-                                    <Button
-                                        className="w-full"
-                                        variant={plan.highlighted ? "default" : "outline"}
-                                        onClick={() => handleSelect(plan.name)}
-                                    >
-                                        {selectedPlan === plan.name
-                                            ? "Plan seleccionado"
-                                            : `Elegir ${plan.name}`}
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                            )
-                        })}
-                    </div>
+                                        <CardContent className="flex-1">
+                                            <div className="mb-6">
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-4xl font-bold text-card-foreground">
+                                                        ${displayPrice}
+                                                    </span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {plan.currency} / mes
+                                                    </span>
+                                                </div>
+                                                {billingPeriod === "yearly" && (
+                                                    <p className="mt-1.5 text-xs text-muted-foreground">
+                                                        Facturado anualmente ({plan.yearlyTotal}{" "}
+                                                        {plan.currency}/año)
+                                                    </p>
+                                                )}
+                                                <p className="mt-1.5 text-xs text-muted-foreground">
+                                                    Si pagas en moneda nacional, el cambio aplicado es el que acepta la plataforma.
+                                                </p>
+                                            </div>
+
+                                            <Separator className="mb-4" />
+
+                                            <ul className="flex flex-col gap-3">
+                                                {plan.features.map((feature) => (
+                                                    <li
+                                                        key={feature.text}
+                                                        className="flex items-start gap-3"
+                                                    >
+                                                        {feature.included ? (
+                                                            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                                                <Check className="h-3 w-3 text-primary" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted">
+                                                                <X className="h-3 w-3 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                        <span
+                                                            className={`text-sm ${feature.included
+                                                                ? "text-card-foreground"
+                                                                : "text-muted-foreground"
+                                                                }`}
+                                                        >
+                                                            {feature.text}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </CardContent>
+
+                                        <CardFooter className="pt-4">
+                                            <Button
+                                                className="w-full"
+                                                variant={highlighted ? "default" : "outline"}
+                                                onClick={() => setSelectedPlan(plan.code)}
+                                            >
+                                                {selectedPlan === plan.code
+                                                    ? "Plan seleccionado"
+                                                    : `Elegir ${plan.name}`}
+                                            </Button>
+                                        </CardFooter>
+                                    </Card>
+                                )
+                            })}
+                        </div>
+                    )}
 
                     <Separator />
 

@@ -56,6 +56,7 @@ export function PlanGuard({ children }: { children: React.ReactNode }) {
       expireDate: data.plan?.expireDate,
       isPro: data.plan?.isPro,
       limits: data.plan?.limits,
+      features: data.plan?.features,
     });
 
     // Exceso de negocios para el plan: el tope viene de limits.maxBusinesses del

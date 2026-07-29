@@ -1,6 +1,7 @@
 import { defineSuite, expect } from "@/testing/harness";
 import { changePasswordSchema, loginSchema, registerSchema, verifySchema } from "@/lib/validations/auth";
-import { createPlanSchema } from "@/lib/validations/plans";
+import { planFormSchema } from "@/lib/validations/plans";
+import { emptyFeatures } from "@/lib/plan-features";
 import { workerFormSchema } from "@/lib/validations/workers";
 import { deactivateAccountSchema, updateUserSchema } from "@/lib/validations/user";
 import type { z } from "zod";
@@ -17,6 +18,34 @@ function firstErrorPath(
 ): PropertyKey | undefined {
   const result = schema.safeParse(value);
   return result.success ? undefined : result.error.issues[0]?.path[0];
+}
+
+/** Todas las capacidades del catálogo en `false`, que es como parte el alta. */
+function allFeaturesOff() {
+  return emptyFeatures();
+}
+
+/** Plan válido mínimo; cada test altera solo lo que quiere poner a prueba. */
+function planValues(overrides: Record<string, unknown> = {}) {
+  return {
+    code: "pro",
+    name: "Pro",
+    description: null,
+    type: "premium",
+    tier: 2,
+    currency: "USD",
+    priceMonthly: 15,
+    priceYearly: 144,
+    maxProducts: 500,
+    maxBusinesses: 3,
+    maxWorkers: 5,
+    features: allFeaturesOff(),
+    trialDays: null,
+    isActive: true,
+    isPublic: true,
+    displayOrder: 2,
+    ...overrides,
+  };
 }
 
 export const validationsSuite = defineSuite(
@@ -90,30 +119,95 @@ export const validationsSuite = defineSuite(
     );
 
     test(
-      "createPlan: válido con price nulo y maxProducts ≥ 1",
+      "plan: caso feliz con todos los topes declarados",
       () => {
-        expect(
-          ok(createPlanSchema, {
-            name: "Pro",
-            type: "premium",
-            price: null,
-            maxProducts: 500,
-            isActive: true,
-          }),
-        ).toBe(true);
+        expect(ok(planFormSchema, planValues())).toBe(true);
       },
-      "Crear un plan admite price null (plan sin precio definido) siempre que maxProducts sea ≥ 1 y el type sea uno válido. Caso feliz con type 'premium'.",
+      "Un plan completo (código, nombre, tipo, precios, los tres topes y las capacidades) pasa la validación. Es la forma que envía el formulario de administración.",
     );
 
     test(
-      "createPlan: rechaza maxProducts 0, price negativo y type inválido",
+      "plan: los tres topes admiten null como 'sin límite' explícito",
       () => {
-        const base = { name: "X", type: "basic", price: 5, maxProducts: 10, isActive: true };
-        expect(ok(createPlanSchema, { ...base, maxProducts: 0 })).toBe(false);
-        expect(ok(createPlanSchema, { ...base, price: -1 })).toBe(false);
-        expect(ok(createPlanSchema, { ...base, type: "ultra" })).toBe(false);
+        expect(
+          ok(
+            planFormSchema,
+            planValues({ maxProducts: null, maxBusinesses: null, maxWorkers: null }),
+          ),
+        ).toBe(true);
       },
-      "Tres reglas de negocio del plan: maxProducts debe ser > 0 (0 falla), el precio no puede ser negativo (-1 falla) y el type debe estar en el enum free/basic/premium/enterprise ('ultra' falla).",
+      "null significa 'sin límite' y es una elección deliberada del formulario (casilla 'Sin límite'). Se distingue de omitir el campo, que era lo que creaba planes ilimitados por descuido.",
+    );
+
+    test(
+      "plan: omitir un tope invalida el formulario",
+      () => {
+        const { maxBusinesses, ...withoutLimit } = planValues();
+        void maxBusinesses;
+        expect(ok(planFormSchema, withoutLimit)).toBe(false);
+      },
+      "Omitir maxBusinesses no vale como 'sin límite': el backend interpretaba la ausencia como ilimitado, así que el schema obliga a declararlo (número o null).",
+    );
+
+    test(
+      "plan: maxWorkers admite 0 pero productos y negocios exigen al menos 1",
+      () => {
+        expect(ok(planFormSchema, planValues({ maxWorkers: 0 }))).toBe(true);
+        expect(ok(planFormSchema, planValues({ maxProducts: 0 }))).toBe(false);
+        expect(ok(planFormSchema, planValues({ maxBusinesses: 0 }))).toBe(false);
+      },
+      "Un plan sin equipo (0 trabajadores) es una oferta legítima. En cambio un plan con 0 productos o 0 negocios no permitiría usar nada, así que se rechaza.",
+    );
+
+    test(
+      "plan: el código solo admite slug en minúsculas",
+      () => {
+        expect(ok(planFormSchema, planValues({ code: "pro-anual" }))).toBe(true);
+        expect(ok(planFormSchema, planValues({ code: "Pro Anual" }))).toBe(false);
+        expect(ok(planFormSchema, planValues({ code: "-pro" }))).toBe(false);
+      },
+      "El código es la identidad estable del plan y viaja en URLs y integraciones: se restringe a minúsculas, números y guiones, empezando por letra o número.",
+    );
+
+    test(
+      "plan: el precio anual no puede superar 12 mensualidades",
+      () => {
+        expect(ok(planFormSchema, planValues({ priceMonthly: 15, priceYearly: 144 }))).toBe(true);
+        expect(ok(planFormSchema, planValues({ priceMonthly: 15, priceYearly: 1800 }))).toBe(false);
+        expect(
+          firstErrorPath(planFormSchema, planValues({ priceMonthly: 15, priceYearly: 1800 })),
+        ).toBe("priceYearly");
+      },
+      "Pagar el año por adelantado nunca debería costar más que mes a mes; si ocurre es un cero de más al teclear. El error apunta a priceYearly, que es el campo a corregir.",
+    );
+
+    test(
+      "plan: un plan inactivo no puede anunciarse en la vitrina",
+      () => {
+        expect(ok(planFormSchema, planValues({ isActive: false, isPublic: false }))).toBe(true);
+        expect(ok(planFormSchema, planValues({ isActive: false, isPublic: true }))).toBe(false);
+      },
+      "Anunciar un plan que no se puede asignar lleva al usuario a un callejón sin salida: lo elige y la asignación falla. Inactivo y oculto sí es válido (plan retirado).",
+    );
+
+    test(
+      "plan: rechaza tipo fuera del enum y precios negativos",
+      () => {
+        expect(ok(planFormSchema, planValues({ type: "ultra" }))).toBe(false);
+        expect(ok(planFormSchema, planValues({ priceMonthly: -1 }))).toBe(false);
+      },
+      "El type debe estar en el enum free/basic/premium/enterprise ('ultra' falla) y ningún precio puede ser negativo.",
+    );
+
+    test(
+      "plan: las capacidades deben venir completas y como booleanos",
+      () => {
+        expect(ok(planFormSchema, planValues({ features: { monthlyClose: true } }))).toBe(false);
+        expect(
+          ok(planFormSchema, planValues({ features: { ...allFeaturesOff(), providers: "sí" } })),
+        ).toBe(false);
+      },
+      "El formulario envía una casilla por capacidad, así que el objeto llega con todas las claves del catálogo y valores booleanos. Un objeto parcial o con valores de otro tipo indica que el formulario y el catálogo se han desincronizado.",
     );
 
     test(

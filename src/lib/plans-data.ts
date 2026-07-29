@@ -1,9 +1,17 @@
 ﻿import { Shield, Sparkles, Crown, type LucideIcon } from "lucide-react";
 
 /**
- * Fuente única de los datos de presentación de planes (nombre, precios y
- * features) usada por la comparativa del dashboard y por el paywall de
- * selección de plan. Mantener sincronizado con la landing (`src/app/plans`).
+ * RESPALDO de los datos de presentación de planes.
+ *
+ * La comparativa del dashboard y el paywall leen el catálogo real del backend
+ * (`GET /plans`, ver `plan-catalog.ts`): precios, topes y funcionalidades salen
+ * del propio plan, que es lo que impide que lo anunciado se separe de lo que la
+ * aplicación aplica —como llegó a ocurrir, con 100 y 500 productos anunciados
+ * frente a 50 y 200 aplicados—.
+ *
+ * Esta lista solo entra en juego cuando el catálogo no se puede consultar, para
+ * que el paywall no quede vacío justo cuando es el único camino del usuario.
+ * Mantener sus cifras alineadas con las del catálogo en producción.
  */
 
 export type PlanFeature = {

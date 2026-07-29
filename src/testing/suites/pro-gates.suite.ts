@@ -5,8 +5,15 @@ import {
   isFreePlan,
   isProPlan,
   isProRoute,
+  requiredFeatureFor,
   PLAN_BUSINESS_LIMIT,
 } from "@/lib/pro-gates";
+import {
+  FREE_TIER_FEATURES,
+  hasFeature,
+  normalizeFeatures,
+  PLAN_FEATURE_KEYS,
+} from "@/lib/plan-features";
 
 export const proGatesSuite = defineSuite(
   "pro-gates · planes y rutas Pro",
@@ -89,6 +96,71 @@ export const proGatesSuite = defineSuite(
       },
       "Para una ruta Pro devuelve a dónde redirigir a un usuario sin plan Pro (/dashboard). Para una ruta no gateada devuelve null (no hay que redirigir).",
     );
+
+    test(
+      "requiredFeatureFor nombra la capacidad que exige cada ruta",
+      () => {
+        expect(requiredFeatureFor("/dashboard/business/workers")).toBe("team");
+        expect(requiredFeatureFor("/dashboard/business/providers")).toBe("providers");
+        expect(requiredFeatureFor("/dashboard/accounting-close/monthly")).toBe("monthlyClose");
+        expect(requiredFeatureFor("/dashboard/analytics")).toBe("analytics");
+      },
+      "Cada ruta protegida declara QUÉ capacidad exige, no solo que es 'Pro'. Es lo que permite que un plan nuevo abra una sección con solo marcar la casilla, sin tocar código.",
+    );
+
+    test(
+      "requiredFeatureFor: rutas libres no exigen capacidad",
+      () => {
+        expect(requiredFeatureFor("/dashboard")).toBeNull();
+        expect(requiredFeatureFor("/dashboard/business/sales")).toBeNull();
+      },
+      "Las rutas que no están en PRO_ROUTES devuelven null: cualquier plan entra sin comprobar capacidades.",
+    );
+
+    test(
+      "hasFeature: manda lo que el plan declara",
+      () => {
+        const features = { monthlyClose: true, providers: false };
+        expect(hasFeature(features, "monthlyClose")).toBe(true);
+        expect(hasFeature(features, "providers")).toBe(false);
+      },
+      "Cuando el plan trae sus capacidades, gobiernan ellas: una en true concede, una en false niega.",
+    );
+
+    test(
+      "hasFeature: capacidad ausente o sin plan no concede nada",
+      () => {
+        expect(hasFeature({ monthlyClose: true }, "providers")).toBe(false);
+        expect(hasFeature(null, "monthlyClose")).toBe(false);
+        expect(hasFeature(undefined, "sales")).toBe(false);
+      },
+      "Una clave que no aparece en el objeto es una capacidad no concedida, no una a deducir. Y sin capacidades (null/undefined) esta función no concede: el respaldo por plan Pro lo aplica el hook, no ella.",
+    );
+
+    test(
+      "normalizeFeatures completa el catálogo para el formulario",
+      () => {
+        const normalized = normalizeFeatures({ monthlyClose: true });
+        expect(normalized.monthlyClose).toBe(true);
+        expect(normalized.providers).toBe(false);
+        expect(Object.keys(normalized).length).toBe(PLAN_FEATURE_KEYS.length);
+      },
+      "El formulario necesita un booleano por casilla. Lo que llega del backend puede ser parcial, así que se completa con false: lo no declarado no está concedido.",
+    );
+
+    test(
+      "FREE_TIER_FEATURES cubre lo que todo plan concedía antes del modelo de capacidades",
+      () => {
+        // Este conjunto es el respaldo cuando un plan no declara capacidades:
+        // debe coincidir con lo que el gate binario dejaba pasar a un plan
+        // básico, o algún usuario perdería acceso al migrar.
+        expect(FREE_TIER_FEATURES).toContain("sales");
+        expect(FREE_TIER_FEATURES).toContain("dailyClose");
+        expect(FREE_TIER_FEATURES).not.toContain("monthlyClose");
+        expect(FREE_TIER_FEATURES).not.toContain("team");
+      },
+      "Las capacidades básicas (ventas, cierre diario) las tenía cualquier plan; las Pro (cierre mensual, equipo) no. Si esta lista se desalinea, los planes sin features declaradas conceden de más o de menos.",
+    );
   },
-  { description: "Detección de plan Pro/Free, límites y gating de rutas." },
+  { description: "Detección de plan Pro/Free, límites, capacidades y gating de rutas." },
 );

@@ -1,8 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import axios from "axios"
 import { sileo } from "sileo"
+import { BadgeDollarSign } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useGetAllUsersData, useGetUserPlanStats } from "@/hooks/use-user"
 import { useGetAllPlans, useAssignPlanMutation, useRemoveUserPlanMutation } from "@/hooks/use-plans"
 import type { UserDataResponse } from "@/lib/types/user"
@@ -236,13 +239,21 @@ export default function AssignPlansPage() {
 
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-6 overflow-x-hidden p-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Asignar Planes
-        </h1>
-        <p className="text-muted-foreground">
-          Administra los planes de suscripcion de los usuarios
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Asignar Planes
+          </h1>
+          <p className="text-muted-foreground">
+            Administra los planes de suscripcion de los usuarios
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/admin/plans">
+            <BadgeDollarSign className="mr-2 h-4 w-4" />
+            Gestionar planes
+          </Link>
+        </Button>
       </div>
 
       <AssignPlansStatsCards

@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useGetAllSectionsQuery } from "@/hooks/use-navigation"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
-import { isProRoute } from "@/lib/pro-gates"
+import { isProRoute, requiredFeatureFor } from "@/lib/pro-gates"
 import { canAccessNode } from "@/lib/navigation-access"
 import { resolveIcon } from "@/lib/icon-map"
 import {
@@ -26,7 +26,23 @@ import {
 import Link from "next/link"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { roleId, isProPlan } = useUserRoleAndPlan()
+  const { roleId, isProPlan, hasFeature } = useUserRoleAndPlan()
+
+  /**
+   * ¿Está bloqueada esta entrada del menú para el plan actual?
+   *
+   * Si la ruta declara una capacidad concreta (`PRO_ROUTES`), esa manda. Si solo
+   * viene marcada con el badge "Pro" desde la gestión de menús —donde no hay
+   * forma de nombrar una capacidad— se recae en el gate binario.
+   */
+  const isLockedByPlan = React.useCallback(
+    (url: string | null | undefined, badgedPro: boolean) => {
+      const required = requiredFeatureFor(url ?? "")
+      if (required) return !hasFeature(required)
+      return badgedPro && !isProPlan
+    },
+    [hasFeature, isProPlan],
+  )
   const { activeBusiness, businesses, isLoading: isLoadingBusinesses } = useBusiness()
   const hasNoBusinesses = !isLoadingBusinesses && businesses.length === 0
   const businessIdForMenu = activeBusiness?.isWorker ? activeBusiness.id : undefined
@@ -63,7 +79,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   url: s.url,
                   icon: resolveIcon(s.icon),
                   pro,
-                  disabled: hasNoBusinesses || (pro && !isProPlan),
+                  disabled:
+                    hasNoBusinesses || isLockedByPlan(s.url, s.badge === "Pro"),
                 }
               })
 
@@ -74,7 +91,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               icon: resolveIcon(menu.icon),
               items: subs.length ? subs : undefined,
               pro,
-              disabled: hasNoBusinesses || (pro && !isProPlan),
+              disabled:
+                hasNoBusinesses || isLockedByPlan(menu.url, menu.badge === "Pro"),
             }
           })
           .filter((item) => item.url !== "#" || (item.items && item.items.length > 0))
@@ -86,7 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
       })
       .filter((section) => section.items.length > 0)
-  }, [sections, roleId, isProPlan, hasNoBusinesses])
+  }, [sections, roleId, isLockedByPlan, hasNoBusinesses])
 
   return (
     <Sidebar className="" collapsible="icon" {...props}>

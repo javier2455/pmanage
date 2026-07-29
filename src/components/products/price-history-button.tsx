@@ -35,9 +35,9 @@ interface PriceHistoryButtonProps {
 export default function PriceHistoryButton({
   className,
 }: PriceHistoryButtonProps) {
-  const { isProPlan } = useUserRoleAndPlan();
+  const { hasFeature } = useUserRoleAndPlan();
 
-  if (isProPlan) {
+  if (hasFeature("priceComparator")) {
     return (
       <Button asChild variant="outline" className={className}>
         <Link href={PRICE_HISTORY_HREF}>

@@ -2,6 +2,7 @@ import apiClient from "@/lib/axios";
 import { authRoutes } from "@/lib/routes/auth";
 import type { LoginFormData, RegisterFormData } from "@/lib/validations/auth";
 import { LoginResponse, UserResponseOfRegister } from "../types/user";
+import type { PlanFeatures } from "@/lib/plan-features";
 
 interface LoginDataResponse {
   token: string;
@@ -101,6 +102,13 @@ interface Plan {
     maxProducts: number | null;
     maxWorkers: number | null;
   };
+  /**
+   * Capacidades declaradas por el plan. Gobiernan el gating por funcionalidad;
+   * si no vienen, el front recae en el gate binario `isPro`.
+   */
+  features?: PlanFeatures | null;
+  /** Nivel de servicio del plan, para comparar planes sin mirar nombres. */
+  tier?: number;
 }
 
 

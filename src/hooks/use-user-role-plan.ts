@@ -1,11 +1,16 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { getAuthCookies } from "@/lib/cookies";
 import {
   isProPlan as checkProPlan,
   getMaxBusinesses as fallbackMaxBusinesses,
 } from "@/lib/pro-gates";
+import {
+  FREE_TIER_FEATURES,
+  type PlanFeatureKey,
+  type PlanFeatures,
+} from "@/lib/plan-features";
 import { roleIdFromName } from "@/lib/roles";
 
 function readRoleName(): string {
@@ -79,6 +84,28 @@ function readMaxBusinesses(): string {
   return "";
 }
 
+/**
+ * Capacidades del plan serializadas, o "" si la sesión no las trae.
+ *
+ * Se devuelve el JSON como string a propósito: `useSyncExternalStore` compara
+ * por identidad, y devolver un objeto nuevo en cada lectura provocaría un
+ * bucle de renders.
+ */
+function readPlanFeatures(): string {
+  if (typeof window === "undefined") return "";
+  const stored = sessionStorage.getItem("user");
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const features = parsed.plan?.features;
+      if (features && typeof features === "object") return JSON.stringify(features);
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
 function readPlanType(): string {
   if (typeof window === "undefined") return "";
   const stored = sessionStorage.getItem("user");
@@ -108,6 +135,7 @@ export function useUserRoleAndPlan() {
     readMaxBusinesses,
     () => "",
   );
+  const featuresJson = useSyncExternalStore(subscribe, readPlanFeatures, () => "");
 
   const isAdmin = roleName.toLowerCase() === "admin";
   /* Preferir el flag isPro del backend (#21); si no viene, usar la detección
@@ -121,5 +149,39 @@ export function useUserRoleAndPlan() {
       ? fallbackMaxBusinesses(planType)
       : Number(maxBusinessesFlag);
 
-  return { roleName, roleId, planType, isAdmin, isProPlan, maxBusinesses };
+  const features = useMemo<PlanFeatures | null>(() => {
+    if (!featuresJson) return null;
+    try {
+      return JSON.parse(featuresJson) as PlanFeatures;
+    } catch {
+      return null;
+    }
+  }, [featuresJson]);
+
+  /**
+   * ¿El plan concede esta capacidad?
+   *
+   * Cuando el plan declara sus capacidades, mandan ellas. Si no las trae —plan
+   * anterior al modelo de features, o sesión aún sin refrescar por `/auth/me`—
+   * se recae en el gate binario Pro/no-Pro, que es exactamente lo que se
+   * aplicaba antes: así ningún usuario pierde acceso durante la transición.
+   */
+  const hasFeature = useCallback(
+    (key: PlanFeatureKey): boolean => {
+      if (features) return features[key] === true;
+      return FREE_TIER_FEATURES.includes(key) ? true : isProPlan;
+    },
+    [features, isProPlan],
+  );
+
+  return {
+    roleName,
+    roleId,
+    planType,
+    isAdmin,
+    isProPlan,
+    maxBusinesses,
+    features,
+    hasFeature,
+  };
 }

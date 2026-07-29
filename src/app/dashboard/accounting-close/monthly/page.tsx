@@ -48,7 +48,8 @@ export default function MonthlyPage() {
   )
 
   const { activeBusinessId } = useBusiness()
-  const { isProPlan } = useUserRoleAndPlan()
+  const { hasFeature } = useUserRoleAndPlan()
+  const canExport = hasFeature("exports")
   const [selectedMonth, setSelectedMonth] = useState<SelectedMonth | undefined>(undefined)
 
   const dateParams = selectedMonth
@@ -183,8 +184,8 @@ export default function MonthlyPage() {
               <Button
                 variant="outline"
                 className="gap-2"
-                disabled={!isProPlan}
-                title={!isProPlan ? "Requiere plan Pro para exportar" : undefined}
+                disabled={!canExport}
+                title={!canExport ? "Requiere plan Pro para exportar" : undefined}
               >
                 <Download className="h-4 w-4" />
                 Exportar

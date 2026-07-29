@@ -1,3 +1,5 @@
+import type { PlanFeatures } from "@/lib/plan-features";
+
 export interface LoginResponse {
   access_token: string;
   refresh_token: string;
@@ -120,4 +122,11 @@ export type Plan = {
     maxProducts: number | null;
     maxWorkers: number | null;
   };
+  /**
+   * Capacidades declaradas por el plan. Gobiernan el gating por funcionalidad;
+   * si no vienen, el front recae en el gate binario `isPro`.
+   */
+  features?: PlanFeatures | null;
+  /** Nivel de servicio del plan, para comparar planes sin mirar nombres. */
+  tier?: number;
 }

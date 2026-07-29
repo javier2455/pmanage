@@ -13,7 +13,8 @@ const DEFAULT_LIMIT = 10;
 
 export default function InventoryPage() {
   const { activeBusinessId } = useBusiness();
-  const { isProPlan } = useUserRoleAndPlan();
+  const { hasFeature } = useUserRoleAndPlan();
+  const canUseStockAlerts = hasFeature("stockAlerts");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
 
@@ -22,9 +23,10 @@ export default function InventoryPage() {
     { page, limit },
   );
 
-  // Alertas de stock — feature Pro. El endpoint solo se consulta para usuarios Pro.
+  // Alertas de stock — capacidad `stockAlerts`. El endpoint solo se consulta si
+  // el plan la concede.
   const { data: stockAlertsData } = useStockAlerts(
-    isProPlan ? (activeBusinessId ?? "") : "",
+    canUseStockAlerts ? (activeBusinessId ?? "") : "",
   );
   const alerts = stockAlertsData?.alerts ?? [];
 
@@ -47,7 +49,7 @@ export default function InventoryPage() {
           Consulta el stock disponible por producto en tu negocio.
         </p>
       </div>
-      {isProPlan && <LowStockAlertBanner alerts={alerts} />}
+      {canUseStockAlerts && <LowStockAlertBanner alerts={alerts} />}
       {showInitialSkeleton ? (
         <SimpleTableSkeleton />
       ) : (
@@ -65,7 +67,7 @@ export default function InventoryPage() {
           onPageChange={setPage}
           onLimitChange={handleLimitChange}
           alerts={alerts}
-          canManageAlerts={isProPlan}
+          canManageAlerts={canUseStockAlerts}
           businessId={activeBusinessId ?? ""}
         />
       )}

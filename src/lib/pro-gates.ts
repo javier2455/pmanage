@@ -13,6 +13,8 @@
  * - Agregar una ruta Pro = agregar 1 entrada a PRO_ROUTES.
  */
 
+import type { PlanFeatureKey } from "@/lib/plan-features";
+
 /** Normaliza un string de plan para comparación (sin tildes, minúsculas). */
 function normalizePlan(s: string): string {
   return s
@@ -54,39 +56,59 @@ export function getMaxBusinesses(planType: string | undefined): number {
 }
 
 /**
- * Rutas protegidas por plan Pro.
+ * Rutas protegidas por capacidad del plan.
  *
  * Cada entrada define:
- * - `path`:     prefijo de ruta que requiere Pro (se evalúa con startsWith)
- * - `redirect`: a dónde redirigir usuarios free
+ * - `path`:     prefijo de ruta protegido (se evalúa con startsWith)
+ * - `feature`:  capacidad que el plan debe conceder para entrar
+ * - `redirect`: a dónde redirigir a quien no la tiene
  *
- * Consumido por middleware.ts (server) y sidebar (client).
+ * Antes la condición era "ser plan Pro". Ahora es "tener esta capacidad", que
+ * es lo que permite que un plan nuevo abra una sección sin tocar código. Para
+ * los planes que aún no declaran capacidades, `hasFeature` recae en el gate
+ * Pro anterior, así que el comportamiento observable no cambia.
+ *
+ * Consumido por middleware.ts (server) y los guards de cliente.
  */
 export const PRO_ROUTES = [
   {
     path: "/dashboard/business/providers",
+    feature: "providers",
     redirect: "/dashboard",
   },
   {
     path: "/dashboard/business/workers",
+    feature: "team",
     redirect: "/dashboard",
   },
   {
     path: "/dashboard/accounting-close/monthly",
+    feature: "monthlyClose",
     redirect: "/dashboard",
   },
   {
     path: "/dashboard/analytics",
+    feature: "analytics",
     redirect: "/dashboard",
   },
-] as const;
+] as const satisfies ReadonlyArray<{
+  path: string;
+  feature: PlanFeatureKey;
+  redirect: string;
+}>;
 
-/** ¿Esta ruta está detrás del gate Pro? */
+/** ¿Esta ruta está detrás de una capacidad del plan? */
 export function isProRoute(pathname: string): boolean {
   return PRO_ROUTES.some((r) => pathname.startsWith(r.path));
 }
 
-/** Obtiene la URL de redirección para una ruta Pro, o null si no está gateada. */
+/** Capacidad que exige una ruta, o null si no está protegida. */
+export function requiredFeatureFor(pathname: string): PlanFeatureKey | null {
+  const match = PRO_ROUTES.find((r) => pathname.startsWith(r.path));
+  return match?.feature ?? null;
+}
+
+/** Obtiene la URL de redirección para una ruta protegida, o null si no lo está. */
 export function getProRedirect(pathname: string): string | null {
   const match = PRO_ROUTES.find((r) => pathname.startsWith(r.path));
   return match?.redirect ?? null;

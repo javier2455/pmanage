@@ -80,7 +80,10 @@ export default function InventoryHistoryFilters({
   canExport,
 }: InventoryHistoryFiltersProps) {
   const { data, isLoading } = useAllProductOfMyBusinesses(businessId);
-  const { isProPlan } = useUserRoleAndPlan();
+  const { hasFeature } = useUserRoleAndPlan();
+  // Distinto de `canExport` (que indica si hay datos que exportar): esto es si
+  // el PLAN concede Excel y PDF. El CSV está en todos los planes.
+  const canUseRichExports = hasFeature("exports");
   const products: BusinessWithProducts[] = data?.data ?? [];
 
   const productPlaceholder = isLoading
@@ -228,24 +231,24 @@ export default function InventoryHistoryFilters({
               CSV (.csv)
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={!isProPlan}
+              disabled={!canUseRichExports}
               onSelect={() => onExport("xlsx")}
             >
               <FileSpreadsheet className="text-emerald-600 dark:text-emerald-500" />
               Excel (.xlsx)
-              {!isProPlan && <ProBadge />}
+              {!canUseRichExports && <ProBadge />}
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={!isProPlan}
+              disabled={!canUseRichExports}
               onSelect={() => onExport("pdf")}
             >
               <FileType2 className="text-red-600 dark:text-red-500" />
               PDF (.pdf)
-              {!isProPlan && <ProBadge />}
+              {!canUseRichExports && <ProBadge />}
             </DropdownMenuItem>
             {/* Un item deshabilitado no dispara hover, así que el motivo no
                 cabe en un tooltip: va como nota al pie del menú. */}
-            {!isProPlan && (
+            {!canUseRichExports && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">

@@ -26,6 +26,7 @@ import {
 import { sileo } from "sileo";
 import { isValidPhone } from "@/lib/validations/phone";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
+import type { PlanFeatureKey } from "@/lib/plan-features";
 import {
   useBusinessSettings,
   useUpdateBusinessSettings,
@@ -68,8 +69,12 @@ type ChannelConfig = {
   key: NotificationChannel;
   label: string;
   icon: typeof Mail;
-  /** Requiere plan PRO (Premium/Enterprise). */
-  pro: boolean;
+  /**
+   * Capacidad del plan que habilita el canal. Antes era un booleano `pro`; al
+   * nombrar la capacidad concreta, un plan puede conceder las notificaciones
+   * por correo sin conceder las de WhatsApp.
+   */
+  feature: PlanFeatureKey;
   /** Requiere un teléfono válido asociado al negocio. */
   requiresPhone: boolean;
   /**
@@ -80,13 +85,27 @@ type ChannelConfig = {
 };
 
 const CHANNELS: ChannelConfig[] = [
-  { key: "email", label: "Correo", icon: Mail, pro: false, requiresPhone: false },
-  { key: "sms", label: "SMS", icon: MessageSquare, pro: true, requiresPhone: true },
+  {
+    key: "email",
+    label: "Correo",
+    icon: Mail,
+    feature: "emailNotifications",
+    requiresPhone: false,
+  },
+  {
+    key: "sms",
+    label: "SMS",
+    icon: MessageSquare,
+    // No hay capacidad propia para SMS: comparte la de WhatsApp porque ambos
+    // son la mensajería del plan Pro.
+    feature: "whatsappNotifications",
+    requiresPhone: true,
+  },
   {
     key: "whatsapp",
     label: "WhatsApp",
     icon: MessageCircle,
-    pro: true,
+    feature: "whatsappNotifications",
     requiresPhone: true,
     // WhatsApp todavía en desarrollo: deshabilitado temporalmente.
     comingSoon: true,
@@ -174,7 +193,7 @@ function matrixToPayload(
 }
 
 export function NotificationSettingsCard({ business }: { business: Business | null }) {
-  const { isProPlan } = useUserRoleAndPlan();
+  const { hasFeature } = useUserRoleAndPlan();
   const businessId = business?.id;
 
   const { data: settings, isLoading } = useBusinessSettings(businessId);
@@ -201,15 +220,14 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
     setMatrix(settingsToMatrix(settings));
   }
 
-  // Gating por canal:
-  // - email    → disponible en todos los planes.
-  // - sms/whatsapp → requieren PRO (Premium/Enterprise) y un teléfono válido.
+  // Gating por canal: cada uno declara la capacidad del plan que lo habilita,
+  // y los de mensajería exigen además un teléfono válido.
   const hasValidPhone = isValidPhone(business?.phone);
-  const showPhoneWarning = isProPlan && !hasValidPhone;
+  const showPhoneWarning = hasFeature("whatsappNotifications") && !hasValidPhone;
 
   function isChannelDisabled(channel: ChannelConfig): boolean {
     if (channel.comingSoon) return true;
-    if (channel.pro && !isProPlan) return true;
+    if (!hasFeature(channel.feature)) return true;
     if (channel.requiresPhone && !hasValidPhone) return true;
     return false;
   }
@@ -293,7 +311,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                           <span className="flex items-center gap-1">
                             <Icon className="h-3.5 w-3.5" />
                             {channel.label}
-                            {channel.pro && !channel.comingSoon && !isProPlan && (
+                            {!channel.comingSoon && !hasFeature(channel.feature) && (
                               <ProBadge className="ml-0" />
                             )}
                           </span>
@@ -353,9 +371,10 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                                   <span className="flex items-center gap-1 sm:hidden">
                                     <Icon className="h-3.5 w-3.5" />
                                     {channel.label}
-                                    {channel.pro &&
-                                      !channel.comingSoon &&
-                                      !isProPlan && <ProBadge className="ml-0" />}
+                                    {!channel.comingSoon &&
+                                      !hasFeature(channel.feature) && (
+                                        <ProBadge className="ml-0" />
+                                      )}
                                     {channel.comingSoon && (
                                       <span
                                         className={cn(

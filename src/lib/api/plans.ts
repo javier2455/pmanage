@@ -1,6 +1,6 @@
 import apiClient from "@/lib/axios";
 import { plansRoutes } from "../routes/plans";
-import { AssignPlanPayload, AssignPlanResponse, CreateTypePlanPayload, PlanHistoryResponse, SelectPlanPayload, SelectPlanResponse } from "../types/plans";
+import { AssignPlanPayload, AssignPlanResponse, CreateTypePlanPayload, PlanHistoryResponse, PlanResponse, SelectPlanPayload, SelectPlanResponse, UpdatePlanPayload } from "../types/plans";
 
 export async function getActivePlan() {
     const { data } = await apiClient.get(plansRoutes.getActivePlan);
@@ -34,6 +34,25 @@ export async function removeUserPlan(userId: string) {
 
 export async function createPlan(payload: CreateTypePlanPayload) {
     const { data } = await apiClient.post(plansRoutes.createPlan, payload);
+    return data;
+}
+
+export async function updatePlan(planId: string, payload: UpdatePlanPayload) {
+    const { data } = await apiClient.put(plansRoutes.updatePlan(planId), payload);
+    return data;
+}
+
+/**
+ * Catálogo completo para el panel: `GET /plans` es público y oculta a propósito
+ * los planes no anunciables, así que no sirve para administrarlos.
+ */
+export async function getAllPlansForAdmin(): Promise<{ data: PlanResponse[] }> {
+    const { data } = await apiClient.get(plansRoutes.getAllPlansForAdmin);
+    return data;
+}
+
+export async function getPlanById(planId: string): Promise<{ data: PlanResponse }> {
+    const { data } = await apiClient.get(plansRoutes.getPlanById(planId));
     return data;
 }
 

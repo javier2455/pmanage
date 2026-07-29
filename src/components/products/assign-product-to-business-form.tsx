@@ -40,7 +40,8 @@ export function AssignProductToBusinessForm() {
   const router = useRouter()
   const pathname = usePathname()
   const { activeBusinessId } = useBusiness()
-  const { isProPlan } = useUserRoleAndPlan()
+  const { hasFeature } = useUserRoleAndPlan()
+  const canUseStockAlerts = hasFeature("stockAlerts")
   const createProductInBusinessMutation = useCreateProductInBusinessMutation()
   // Tasas de cambio del negocio para el costo multimoneda (ver multimoneda-productos.md).
   const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "")
@@ -122,7 +123,7 @@ export function AssignProductToBusinessForm() {
         entryPrice: data.entryPrice,
         stock: data.stock,
         // Solo aplica para usuarios Pro; el campo está oculto para el resto.
-        stockAlertThreshold: isProPlan ? (data.stockAlertThreshold ?? null) : null,
+        stockAlertThreshold: canUseStockAlerts ? (data.stockAlertThreshold ?? null) : null,
         currency: selectedCurrency,
         exchangeRateApplied:
           selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
@@ -385,8 +386,8 @@ export function AssignProductToBusinessForm() {
           </div>
         </div>
 
-        {/* Stock alert threshold — feature Pro, opcional */}
-        {isProPlan && (
+        {/* Umbral de alerta de stock — capacidad `stockAlerts`, opcional */}
+        {canUseStockAlerts && (
           <div className="mb-6 flex flex-col gap-2">
             <Label
               htmlFor="stock-alert-threshold"

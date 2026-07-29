@@ -38,7 +38,8 @@ const DEFAULT_LIMIT = 10;
 
 export default function InventoryHistoryPage() {
   const { activeBusinessId } = useBusiness();
-  const { isProPlan } = useUserRoleAndPlan();
+  const { hasFeature } = useUserRoleAndPlan();
+  const canExport = hasFeature("exports");
   const businessId = activeBusinessId ?? "";
 
   const [page, setPage] = useState(1);
@@ -184,7 +185,7 @@ export default function InventoryHistoryPage() {
   async function handleExport(format: InventoryHistoryExportFormat) {
     // El servidor es quien decide, pero comprobarlo aquí evita una petición
     // condenada al 403 y da un mensaje más claro que el del guard.
-    if (format !== "csv" && !isProPlan) {
+    if (format !== "csv" && !canExport) {
       toastError({
         title: "Disponible en plan Pro",
         description:
