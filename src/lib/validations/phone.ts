@@ -10,13 +10,25 @@ export function isDialCodeOnly(value: string | null | undefined): boolean {
 }
 
 /**
+ * Separadores de cortesía: no cambian el número, solo cómo se escribió.
+ * Un negocio dado de alta con "+53 5555 1234" tiene un teléfono tan usable
+ * como "+5355551234", y antes contaba como inválido — dejando el canal SMS
+ * deshabilitado sin motivo real.
+ */
+const PHONE_SEPARATORS = /[\s().-]/g;
+
+/**
  * Returns true if `value` is a full, valid E.164-style phone number
  * (not empty, not just a dial code). Shared rule for any feature that
  * needs to know whether a usable phone number is present.
+ *
+ * Tolera separadores porque responde a "¿hay un número con el que se pueda
+ * contactar?". El formato de entrada lo siguen exigiendo los schemas de abajo.
  */
 export function isValidPhone(value: string | null | undefined): boolean {
   if (!value) return false;
-  return !isDialCodeOnly(value) && /^\+[1-9]\d{6,14}$/.test(value);
+  const compact = value.replace(PHONE_SEPARATORS, "");
+  return !isDialCodeOnly(compact) && /^\+[1-9]\d{6,14}$/.test(compact);
 }
 
 /**

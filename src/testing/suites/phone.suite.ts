@@ -36,6 +36,17 @@ export const phoneSuite = defineSuite(
     );
 
     test(
+      "isValidPhone: tolera separadores de cortesía",
+      () => {
+        expect(isValidPhone("+53 5555 1234")).toBe(true);
+        expect(isValidPhone("+53 7 1234567")).toBe(true);
+        expect(isValidPhone("+53-5555-1234")).toBe(true);
+        expect(isValidPhone("+53 (5) 5551234")).toBe(true);
+      },
+      "Espacios, guiones y paréntesis no cambian el número. Esta función responde a '¿hay un teléfono al que se pueda escribir?', y rechazar '+53 5555 1234' dejaba el canal SMS deshabilitado por un detalle de formato.",
+    );
+
+    test(
       "isValidPhone: rechaza prefijo solo, vacío y basura",
       () => {
         expect(isValidPhone("+53")).toBe(false);
