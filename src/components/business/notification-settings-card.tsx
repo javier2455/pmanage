@@ -96,9 +96,7 @@ const CHANNELS: ChannelConfig[] = [
     key: "sms",
     label: "SMS",
     icon: MessageSquare,
-    // No hay capacidad propia para SMS: comparte la de WhatsApp porque ambos
-    // son la mensajería del plan Pro.
-    feature: "whatsappNotifications",
+    feature: "smsNotifications",
     requiresPhone: true,
   },
   {
@@ -223,7 +221,14 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   // Gating por canal: cada uno declara la capacidad del plan que lo habilita,
   // y los de mensajería exigen además un teléfono válido.
   const hasValidPhone = isValidPhone(business?.phone);
-  const showPhoneWarning = hasFeature("whatsappNotifications") && !hasValidPhone;
+  /* El aviso del teléfono sale de los canales que realmente lo necesitan y ya
+     están disponibles: desde que SMS tiene capacidad propia, mirar solo la de
+     WhatsApp dejaba sin aviso a un plan que concede SMS pero no WhatsApp. */
+  const showPhoneWarning =
+    !hasValidPhone &&
+    CHANNELS.some(
+      (ch) => ch.requiresPhone && !ch.comingSoon && hasFeature(ch.feature),
+    );
 
   function isChannelDisabled(channel: ChannelConfig): boolean {
     if (channel.comingSoon) return true;

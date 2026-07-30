@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useGetAllSectionsQuery } from "@/hooks/use-navigation"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { useBusiness } from "@/context/business-context"
-import { isProRoute, requiredFeatureFor } from "@/lib/pro-gates"
+import { requiredFeatureFor } from "@/lib/pro-gates"
 import { canAccessNode } from "@/lib/navigation-access"
 import { resolveIcon } from "@/lib/icon-map"
 import {
@@ -73,26 +73,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               .filter((s) => s.active)
               .filter((s) => canAccessNode(s, roleId))
               .map((s) => {
-                const pro = s.badge === "Pro" || isProRoute(s.url)
+                /* El badge anuncia "esto no lo tienes", no "esto es de pago":
+                   marcarlo por ruta hacía que un plan que sí concede la
+                   capacidad la viera igualmente etiquetada como Pro. */
+                const lockedByPlan = isLockedByPlan(s.url, s.badge === "Pro")
                 return {
                   title: s.name,
                   url: s.url,
                   icon: resolveIcon(s.icon),
-                  pro,
-                  disabled:
-                    hasNoBusinesses || isLockedByPlan(s.url, s.badge === "Pro"),
+                  pro: lockedByPlan,
+                  disabled: hasNoBusinesses || lockedByPlan,
                 }
               })
 
-            const pro = menu.badge === "Pro" || isProRoute(menu.url)
+            const lockedByPlan = isLockedByPlan(menu.url, menu.badge === "Pro")
             return {
               title: menu.name,
               url: menu.url || "#",
               icon: resolveIcon(menu.icon),
               items: subs.length ? subs : undefined,
-              pro,
-              disabled:
-                hasNoBusinesses || isLockedByPlan(menu.url, menu.badge === "Pro"),
+              pro: lockedByPlan,
+              disabled: hasNoBusinesses || lockedByPlan,
             }
           })
           .filter((item) => item.url !== "#" || (item.items && item.items.length > 0))

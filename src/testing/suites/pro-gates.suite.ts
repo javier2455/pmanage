@@ -13,6 +13,10 @@ import {
   normalizeFeatures,
   PLAN_FEATURE_KEYS,
 } from "@/lib/plan-features";
+import {
+  applySelectedPlanToSession,
+  subscribeToPlanSession,
+} from "@/lib/plan-session";
 
 export const proGatesSuite = defineSuite(
   "pro-gates · planes y rutas Pro",
@@ -145,6 +149,24 @@ export const proGatesSuite = defineSuite(
         expect(Object.keys(normalized).length).toBe(PLAN_FEATURE_KEYS.length);
       },
       "El formulario necesita un booleano por casilla. Lo que llega del backend puede ser parcial, así que se completa con false: lo no declarado no está concedido.",
+    );
+
+    test(
+      "applySelectedPlanToSession avisa del cambio de plan",
+      () => {
+        let avisos = 0;
+        const baja = subscribeToPlanSession(() => {
+          avisos += 1;
+        });
+
+        applySelectedPlanToSession({ type: "premium", features: { providers: true } });
+        expect(avisos).toBe(1);
+
+        baja();
+        applySelectedPlanToSession({ type: "basic" });
+        expect(avisos).toBe(1);
+      },
+      "sessionStorage no emite eventos en la misma pestaña: sin este aviso, los componentes ya renderizados seguían usando el plan viejo y un cambio de plan no surtía efecto hasta recargar. La baja debe dejar de recibirlos para no filtrar suscriptores al desmontar.",
     );
 
   },

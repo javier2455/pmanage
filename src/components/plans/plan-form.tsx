@@ -2,16 +2,27 @@
 
 import { useForm, useWatch, type Control, type UseFormSetValue } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BadgeDollarSign, Plus, Save, X } from "lucide-react";
+import { BadgeDollarSign, Info, Plus, Save, X } from "lucide-react";
 
 import { planFormSchema, type PlanFormData, type PlanFormInput } from "@/lib/validations/plans";
 import type { PlanResponse, PlanType } from "@/lib/types/plans";
 import {
   PLAN_FEATURE_GROUPS,
+  PLAN_FEATURE_KEYS,
   featuresByGroup,
   normalizeFeatures,
+  type PlanFeatureDefinition,
+  type PlanFeatureGroup,
   type PlanFeatureKey,
 } from "@/lib/plan-features";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,6 +103,35 @@ function LimitField({
       <p className="text-xs text-muted-foreground">{hint}</p>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
+  );
+}
+
+/**
+ * Detalle de qué hace la capacidad en el sistema. Va en popover y no como texto
+ * fijo porque son 19 casillas: al pie de cada una, la sección dejaría de poder
+ * leerse de un vistazo.
+ */
+function FeatureInfo({ feature }: { feature: PlanFeatureDefinition }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="ml-auto shrink-0 cursor-pointer rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+          aria-label={`Qué hace: ${feature.label}`}
+        >
+          <Info className="size-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72">
+        <PopoverHeader>
+          <PopoverTitle>{feature.label}</PopoverTitle>
+          <PopoverDescription className="text-xs">
+            {feature.description}
+          </PopoverDescription>
+        </PopoverHeader>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -188,6 +228,24 @@ export function PlanForm({
   function toggleFeature(key: PlanFeatureKey, checked: boolean) {
     setValue(`features.${key}`, checked, { shouldValidate: true });
   }
+
+  /** Marca o desmarca de golpe todas las capacidades del catálogo. */
+  function setAllFeatures(granted: boolean) {
+    for (const key of PLAN_FEATURE_KEYS) {
+      setValue(`features.${key}`, granted, { shouldValidate: true });
+    }
+  }
+
+  /** Lo mismo, limitado a un grupo (la tarjeta donde está el botón). */
+  function setGroupFeatures(group: PlanFeatureGroup, granted: boolean) {
+    for (const feature of featuresByGroup(group)) {
+      setValue(`features.${feature.key}`, granted, { shouldValidate: true });
+    }
+  }
+
+  /* El botón alterna: si ya está todo concedido, sirve para quitarlo. Así una
+     sola acción cubre los dos casos en vez de pedir dos controles. */
+  const allGranted = PLAN_FEATURE_KEYS.every((key) => features?.[key] === true);
 
   const yearlyEquivalent =
     priceMonthly > 0 ? (priceMonthly * 12).toFixed(2) : null;
@@ -399,41 +457,69 @@ export function PlanForm({
 
           {/* ---------- Capacidades ---------- */}
           <section className="flex flex-col gap-5">
-            <div>
-              <h3 className="text-sm font-semibold text-card-foreground">Qué incluye</h3>
-              <p className="text-xs text-muted-foreground">
-                Lo marcado se anuncia en la vitrina y habilita el acceso real.
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-card-foreground">Qué incluye</h3>
+                <p className="text-xs text-muted-foreground">
+                  Lo marcado se anuncia en la vitrina y habilita el acceso real.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAllFeatures(!allGranted)}
+              >
+                {allGranted ? "Quitar todas" : "Marcar todas"}
+              </Button>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              {PLAN_FEATURE_GROUPS.map((group) => (
-                <div key={group} className="flex flex-col gap-3 rounded-lg border border-border p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {group}
-                  </p>
-                  {featuresByGroup(group).map((feature) => (
-                    <label
-                      key={feature.key}
-                      className="flex cursor-pointer items-start gap-2.5"
-                      htmlFor={`feature-${feature.key}`}
-                    >
-                      <Checkbox
-                        id={`feature-${feature.key}`}
-                        className="mt-0.5"
-                        checked={features?.[feature.key] === true}
-                        onCheckedChange={(checked) => toggleFeature(feature.key, !!checked)}
-                      />
-                      <span className="flex flex-col gap-0.5">
-                        <span className="text-sm text-card-foreground">{feature.label}</span>
-                        {feature.hint && (
-                          <span className="text-xs text-muted-foreground">{feature.hint}</span>
-                        )}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              ))}
+              {PLAN_FEATURE_GROUPS.map((group) => {
+                const groupFeatures = featuresByGroup(group);
+                const allInGroup = groupFeatures.every(
+                  (feature) => features?.[feature.key] === true,
+                );
+
+                return (
+                  <div
+                    key={group}
+                    className="flex flex-col gap-3 rounded-lg border border-border p-4"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {group}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto px-2 py-1 text-xs"
+                        onClick={() => setGroupFeatures(group, !allInGroup)}
+                      >
+                        {allInGroup ? "Quitar todas" : "Marcar todas"}
+                      </Button>
+                    </div>
+                    {groupFeatures.map((feature) => (
+                      <div key={feature.key} className="flex items-start gap-2.5">
+                        <Checkbox
+                          id={`feature-${feature.key}`}
+                          className="mt-0.5"
+                          checked={features?.[feature.key] === true}
+                          onCheckedChange={(checked) => toggleFeature(feature.key, !!checked)}
+                        />
+                        <Label
+                          htmlFor={`feature-${feature.key}`}
+                          className="cursor-pointer text-sm font-normal leading-snug text-card-foreground"
+                        >
+                          {feature.label}
+                        </Label>
+                        <FeatureInfo feature={feature} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </section>
 

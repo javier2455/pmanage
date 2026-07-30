@@ -7,6 +7,7 @@ import {
   getMaxBusinesses as fallbackMaxBusinesses,
 } from "@/lib/pro-gates";
 import type { PlanFeatureKey, PlanFeatures } from "@/lib/plan-features";
+import { subscribeToPlanSession } from "@/lib/plan-session";
 import { roleIdFromName } from "@/lib/roles";
 
 function readRoleName(): string {
@@ -117,8 +118,13 @@ function readPlanType(): string {
   return getAuthCookies().planType ?? "";
 }
 
-function subscribe() {
-  return () => {};
+/**
+ * El plan en sesión lo reescribe `applySelectedPlanToSession` (PlanGuard tras
+ * cada `/auth/me`, y los flujos de cambio de plan). Suscribirse a ese aviso es
+ * lo que hace que un cambio de plan surta efecto sin recargar la página.
+ */
+function subscribe(onStoreChange: () => void) {
+  return subscribeToPlanSession(onStoreChange);
 }
 
 export function useUserRoleAndPlan() {

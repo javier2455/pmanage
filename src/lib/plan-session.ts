@@ -2,6 +2,25 @@ import { setAuthCookies, setPlanExpiredCookie, setNeedsReconciliationCookie } fr
 import type { PlanFeatures } from "@/lib/plan-features";
 
 /**
+ * Quién quiere enterarse de que el plan en sesión cambió.
+ *
+ * `sessionStorage` no emite eventos en la misma pestaña, así que sin esto los
+ * componentes que ya se renderizaron seguían usando el plan viejo durante toda
+ * la vida de la página: al subir de plan, las funciones nuevas no aparecían
+ * hasta recargar, y una sesión con capacidades obsoletas no se corregía nunca
+ * aunque `/auth/me` ya devolviera las buenas.
+ */
+const listeners = new Set<() => void>();
+
+/** Suscribe a los cambios del plan en sesión. Devuelve la función de baja. */
+export function subscribeToPlanSession(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/**
  * Sincroniza el estado de sesión local tras elegir un plan self-service.
  * Actualiza el `plan` guardado en sessionStorage, la cookie `user_plan_type`
  * (que lee el middleware para el gating Pro), limpia la cookie de plan vencido y
@@ -69,4 +88,7 @@ export function applySelectedPlanToSession(plan: {
   setAuthCookies({ planType });
   setPlanExpiredCookie(false);
   setNeedsReconciliationCookie(false);
+
+  // Al final: los suscriptores deben leer el estado ya escrito, no el anterior.
+  for (const listener of listeners) listener();
 }
