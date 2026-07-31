@@ -20,6 +20,11 @@ export function subscribeToPlanSession(listener: () => void): () => void {
   };
 }
 
+/** Avisa a los suscriptores de que el plan en sesión cambió. */
+export function notifyPlanSessionChange(): void {
+  for (const listener of listeners) listener();
+}
+
 /**
  * Sincroniza el estado de sesión local tras elegir un plan self-service.
  * Actualiza el `plan` guardado en sessionStorage, la cookie `user_plan_type`
@@ -90,5 +95,5 @@ export function applySelectedPlanToSession(plan: {
   setNeedsReconciliationCookie(false);
 
   // Al final: los suscriptores deben leer el estado ya escrito, no el anterior.
-  for (const listener of listeners) listener();
+  notifyPlanSessionChange();
 }

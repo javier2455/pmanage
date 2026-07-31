@@ -1,17 +1,12 @@
 /**
- * Micro-harness de testing agnóstico al entorno.
+ * Micro-harness de testing para la lógica pura (moneda, stock, gates).
  *
- * Motivo: la app compila como export estático (`output: "export"`), así que no
- * hay servidor donde ejecutar Vitest al hacer clic en la UI admin. La lógica
- * pura (moneda, stock, gates) sí puede correr en el navegador, así que
- * definimos cada suite UNA sola vez con este harness y la ejecutamos en dos
- * sitios:
- *   - `pnpm test` → un wrapper la corre dentro de Vitest real (terminal/CI).
- *   - `/dashboard/admin/test` → el runner del navegador la ejecuta en vivo.
+ * Cada suite se define UNA sola vez con este harness y `run-all.test.ts` la
+ * ejecuta dentro de Vitest real (`pnpm test`, terminal/CI). Son pruebas
+ * internas: no tienen ninguna vista en la app.
  *
  * No reemplaza a Vitest: para tests que necesiten mocks, async o el navegador
- * (componentes), usa archivos `*.test.ts` normales — corren con `pnpm test`
- * pero NO aparecen en la UI admin (que solo ejecuta lógica pura síncrona).
+ * (componentes), usa archivos `*.test.ts` normales.
  */
 
 export type TestCase = {

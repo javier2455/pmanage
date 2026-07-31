@@ -78,6 +78,17 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+#### Abrir "Pruebas del sistema" degradaba la sesión al plan básico
+- El runner in-app corría las suites al montar la vista, y la suite `pro-gates`
+  llamaba a la función **real** `applySelectedPlanToSession`, que escribe en
+  `sessionStorage` y en las cookies de auth. Al pasarle `{ type: "basic" }` sin
+  datos frescos del backend, esta borraba `plan.features`, `plan.isPro` y
+  `plan.limits`, dejaba `plan.type` en `"basic"` y la cookie `user_plan_type`
+  igual: un admin con plan Pro perdía **todas** las funciones Pro hasta recargar.
+- El aviso a los suscriptores se extrae a `notifyPlanSessionChange()`
+  ([lib/plan-session.ts](src/lib/plan-session.ts)) y el test comprueba el
+  alta/aviso/baja con esa función, sin tocar la sesión.
+
 #### Notificaciones: el estado de "leída" no se guardaba
 - La ruta para marcar **una** notificación como leída estaba declarada
   `@Patch("{id}/read")` en vez de `@Patch(":id/read")`. Con NestJS 11 → Express 5 →
@@ -203,6 +214,16 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   ni a reenviar al guardar, y la validación de "permisos incompletos" lo ignora.
 - **Nota:** es un control de UI en el cliente. El backend debería rechazar también
   un `assign-plans` / `menus` enviado manualmente para un trabajador.
+
+### Eliminado
+
+#### Vista "Pruebas del sistema" (`/dashboard/admin/test`)
+- Se retira la página admin que ejecutaba las suites en el navegador, junto con
+  su runner (`components/admin-test/`, `testing/run-suites.ts`). Las pruebas se
+  mantienen como internas: las suites siguen en `src/testing/suites/` y corren
+  con `pnpm test` (Vitest).
+- **Pendiente manual:** eliminar el menú "Pruebas del sistema" desde
+  `/dashboard/admin/menus`; vive en la base de datos, no en el código.
 
 ---
 

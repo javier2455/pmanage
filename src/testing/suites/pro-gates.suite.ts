@@ -14,7 +14,7 @@ import {
   PLAN_FEATURE_KEYS,
 } from "@/lib/plan-features";
 import {
-  applySelectedPlanToSession,
+  notifyPlanSessionChange,
   subscribeToPlanSession,
 } from "@/lib/plan-session";
 
@@ -152,21 +152,21 @@ export const proGatesSuite = defineSuite(
     );
 
     test(
-      "applySelectedPlanToSession avisa del cambio de plan",
+      "el aviso de cambio de plan llega a los suscriptores y la baja lo corta",
       () => {
         let avisos = 0;
         const baja = subscribeToPlanSession(() => {
           avisos += 1;
         });
 
-        applySelectedPlanToSession({ type: "premium", features: { providers: true } });
+        notifyPlanSessionChange();
         expect(avisos).toBe(1);
 
         baja();
-        applySelectedPlanToSession({ type: "basic" });
+        notifyPlanSessionChange();
         expect(avisos).toBe(1);
       },
-      "sessionStorage no emite eventos en la misma pestaña: sin este aviso, los componentes ya renderizados seguían usando el plan viejo y un cambio de plan no surtía efecto hasta recargar. La baja debe dejar de recibirlos para no filtrar suscriptores al desmontar.",
+      "sessionStorage no emite eventos en la misma pestaña: sin este aviso, los componentes ya renderizados seguían usando el plan viejo y un cambio de plan no surtía efecto hasta recargar. La baja debe dejar de recibirlos para no filtrar suscriptores al desmontar. Se prueba el aviso suelto y no `applySelectedPlanToSession`: esa escribe en sessionStorage y en las cookies de auth, efectos que un test no debe provocar.",
     );
 
   },

@@ -18,12 +18,10 @@ import { validationsSuite } from "./suites/validations.suite";
 /**
  * Registro central de suites de lógica pura.
  *
- * Fuente única consumida por:
- *   - `run-all.test.ts` → Vitest (terminal/CI)
- *   - `/dashboard/admin/test` → runner del navegador (UI admin)
+ * Fuente única consumida por `run-all.test.ts` → Vitest (terminal/CI).
  *
  * Para añadir una suite nueva: créala con `defineSuite` en `./suites/` y
- * agrégala aquí. Aparecerá automáticamente en ambos lados.
+ * agrégala aquí. Correrá automáticamente con `pnpm test`.
  */
 export const allSuites: Suite[] = [
   currencySuite,
