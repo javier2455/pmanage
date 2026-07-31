@@ -107,13 +107,13 @@ export default function ProductsPage() {
           Consulta, actualiza, añade y elimina productos de tu negocio
         </p>
         <div className="mt-4 mb-4 flex items-center justify-end gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" data-tour="products-import-btn">
             <Link href="/dashboard/business/products/import">
               <Upload data-icon="inline-start" />
               Importar
             </Link>
           </Button>
-          <Button asChild>
+          <Button asChild data-tour="products-create-btn">
             <Link href="/dashboard/business/products/create">
               <Plus data-icon="inline-start" />
               Crear producto
@@ -122,7 +122,7 @@ export default function ProductsPage() {
         </div>
 
         <div className="space-y-8">
-          <div>
+          <div data-tour="products-catalog-section">
             <h2 className="text-lg font-semibold text-foreground mb-3">
               Catálogo del almacén
             </h2>
@@ -149,7 +149,7 @@ export default function ProductsPage() {
             )}
           </div>
 
-          <div>
+          <div data-tour="products-onsale-section">
             <h1 className="text-lg font-semibold text-foreground mb-2">
               Productos a la venta
             </h1>
@@ -160,7 +160,11 @@ export default function ProductsPage() {
                 de apilarse; en sm+ vuelven a alinearse a la derecha. */}
             <div className="mt-4 mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
               <PriceHistoryButton className="w-full sm:w-auto" />
-              <Button asChild className="w-full sm:w-auto">
+              <Button
+                asChild
+                className="w-full sm:w-auto"
+                data-tour="products-assign-btn"
+              >
                 <Link href="/dashboard/business/products/asign-to-business">
                   <Plus data-icon="inline-start" />
                   Asignar producto

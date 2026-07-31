@@ -262,7 +262,9 @@ export default function CreateBusinessPage() {
         </p>
       </div>
 
-      <StepIndicator step={step} />
+      <div data-tour="business-create-steps">
+        <StepIndicator step={step} />
+      </div>
 
       <form
         onSubmit={(event) => {

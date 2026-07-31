@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import packageJson from "../../../package.json";
-import { ChevronsUpDown, LogOut, Moon, Sun, User } from "lucide-react";
+import { ChevronsUpDown, CircleHelp, LogOut, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,7 @@ import {
 import { useRouter } from "next/navigation";
 import { clearSession } from "@/lib/session";
 import { PlanIndicator } from "@/components/sidebar/plan-indicator";
+import { useTour } from "@/components/tour/tour-provider";
 
 interface StoredUser {
   name?: string;
@@ -34,6 +35,7 @@ export function NavUser() {
   const router = useRouter();
   const { isMobile } = useSidebar();
   const { setTheme, resolvedTheme } = useTheme();
+  const { openCatalog, isReady: isTourReady } = useTour();
   const [user, setUser] = useState<StoredUser>({});
   const [mounted, setMounted] = useState(false);
 
@@ -122,6 +124,18 @@ export function NavUser() {
                     <Moon className="mr-2 size-4" />
                   )}
                   {isDark ? "Modo claro" : "Modo oscuro"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  disabled={!isTourReady}
+                  /* El diálogo lo monta TourProvider, no este menú. Se espera
+                     un tick a que Radix termine de cerrar el dropdown: hasta
+                     entonces deja `pointer-events: none` en el body y el
+                     diálogo abriría muerto. */
+                  onSelect={() => setTimeout(openCatalog, 0)}
+                >
+                  <CircleHelp className="mr-2 size-4" />
+                  Guías de uso
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />

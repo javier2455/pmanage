@@ -55,7 +55,7 @@ export default function ProvidersPage() {
 
   return (
     <section className="flex flex-col gap-8">
-      <div>
+      <div data-tour="providers-title">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Proveedores
         </h1>
@@ -63,7 +63,7 @@ export default function ProvidersPage() {
           Gestiona los proveedores de tu negocio y los productos que suministran
         </p>
         <div className="mb-4 mt-4 flex items-center justify-end">
-          <Button asChild>
+          <Button asChild data-tour="providers-create-btn">
             <Link href="/dashboard/business/providers/create">
               <Plus data-icon="inline-start" />
               Crear proveedor

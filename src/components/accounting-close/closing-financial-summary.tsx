@@ -346,7 +346,9 @@ export function ClosingFinancialSummary({
   )
 
   return (
-    <Card>
+    /* El ancla del tour se deriva del período para no duplicar el componente:
+       el cierre diario y el mensual comparten este resumen. */
+    <Card data-tour={`${period === "monthly" ? "monthly" : "daily"}-close-summary`}>
       <CardHeader>
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">

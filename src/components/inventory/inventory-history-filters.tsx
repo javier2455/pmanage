@@ -119,7 +119,7 @@ export default function InventoryHistoryFilters({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-tour="inventory-history-filters">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
         <div className="flex flex-1 flex-col gap-2">
           <Label
@@ -219,6 +219,7 @@ export default function InventoryHistoryFilters({
               size="sm"
               disabled={isExporting || !canExport}
               className="w-fit"
+              data-tour="inventory-history-export-btn"
             >
               <Download data-icon="inline-start" />
               {isExporting ? "Exportando…" : "Exportar"}

@@ -61,7 +61,7 @@ export default function ProfilePage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Card de informacion del usuario */}
-        <Card className="lg:col-span-2 xl:col-span-1">
+        <Card className="lg:col-span-2 xl:col-span-1" data-tour="profile-user-card">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Card del plan activo */}
-        <Card className="lg:col-span-2 xl:col-span-1">
+        <Card className="lg:col-span-2 xl:col-span-1" data-tour="profile-plan-card">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -287,6 +287,7 @@ export default function ProfilePage() {
                   <Link
                     href="/dashboard/profile/plans-change"
                     className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    data-tour="profile-plan-change-btn"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Cambiar de plan

@@ -159,6 +159,7 @@ export function CategoriesTable({
             <Button
               type="button"
               onClick={() => setCreateOpen(true)}
+              data-tour="categories-kind-create-btn"
               className={cn(
                 "w-full shrink-0 lg:w-auto",
                 isFetching && "pointer-events-none opacity-50",

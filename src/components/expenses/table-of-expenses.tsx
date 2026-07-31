@@ -150,6 +150,7 @@ export default function TableOfExpenses({
                 isFetching && "pointer-events-none opacity-50",
               )}
               aria-disabled={isFetching}
+              data-tour="expenses-create-btn"
             >
               <Link
                 href="/dashboard/business/expenses/create"

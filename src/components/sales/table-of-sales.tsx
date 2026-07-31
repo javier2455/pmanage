@@ -148,6 +148,7 @@ export default function TableOfSales({
                 isFetching && "pointer-events-none opacity-50",
               )}
               aria-disabled={isFetching}
+              data-tour="sales-create-btn"
             >
               <Link
                 href="/dashboard/business/sales/create"

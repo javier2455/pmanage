@@ -169,7 +169,7 @@ export function UpdateStockForm() {
     <div className="flex flex-col gap-6">
       {/* Product select */}
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" data-tour="inventory-create-product">
           <Label className="text-card-foreground">Producto</Label>
           <Combobox<BusinessWithProducts | null>
             value={selectedProduct}
@@ -260,7 +260,10 @@ export function UpdateStockForm() {
               </div>
 
               {/* Provider selector */}
-              <div className="flex flex-col gap-2 sm:col-span-2">
+              <div
+                className="flex flex-col gap-2 sm:col-span-2"
+                data-tour="inventory-create-provider"
+              >
                 <Label className="text-card-foreground">
                   Proveedor <span className="text-xs text-muted-foreground">(opcional)</span>
                 </Label>
@@ -350,18 +353,23 @@ export function UpdateStockForm() {
                 control={control}
                 name="currency"
                 render={({ field }) => (
-                  <EntryCostCurrency
-                    currency={field.value ?? BASE_CURRENCY}
-                    onCurrencyChange={field.onChange}
-                    availableCurrencies={availableCurrencies}
-                    entryPrice={Number(entryPriceValue) || 0}
-                    exchangeRate={exchange}
-                  />
+                  <div data-tour="inventory-create-currency">
+                    <EntryCostCurrency
+                      currency={field.value ?? BASE_CURRENCY}
+                      onCurrencyChange={field.onChange}
+                      availableCurrencies={availableCurrencies}
+                      entryPrice={Number(entryPriceValue) || 0}
+                      exchangeRate={exchange}
+                    />
+                  </div>
                 )}
               />
 
               {/* Registrar la entrada como gasto de reposición de stock */}
-              <div className="flex items-start gap-2 sm:col-span-2">
+              <div
+                className="flex items-start gap-2 sm:col-span-2"
+                data-tour="inventory-create-as-expense"
+              >
                 <Controller
                   control={control}
                   name="registerAsExpense"

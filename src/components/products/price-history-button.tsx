@@ -39,7 +39,12 @@ export default function PriceHistoryButton({
 
   if (hasFeature("priceComparator")) {
     return (
-      <Button asChild variant="outline" className={className}>
+      <Button
+        asChild
+        variant="outline"
+        className={className}
+        data-tour="products-price-history-btn"
+      >
         <Link href={PRICE_HISTORY_HREF}>
           <History data-icon="inline-start" />
           <PriceHistoryLabel />

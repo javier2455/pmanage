@@ -28,7 +28,7 @@ function grants(pathname: string, base: string): boolean {
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
-function isPathAllowed(pathname: string, allowedUrls: string[]): boolean {
+export function isPathAllowed(pathname: string, allowedUrls: string[]): boolean {
   if (ALWAYS_ALLOWED.some((base) => grants(pathname, base))) return true;
   return allowedUrls.some((url) => grants(pathname, url));
 }

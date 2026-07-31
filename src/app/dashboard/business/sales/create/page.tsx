@@ -289,7 +289,7 @@ export default function CreateSalesPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         {/* Catálogo */}
         <div className="flex flex-col gap-4">
-          <div className="relative">
+          <div className="relative" data-tour="sales-create-search">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
@@ -321,7 +321,10 @@ export default function CreateSalesPage() {
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            <div
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"
+              data-tour="sales-create-grid"
+            >
               {products.map((bp) => (
                 <ProductGridCard
                   key={bp.id}

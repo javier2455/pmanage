@@ -66,7 +66,10 @@ export default function ExpensesPage() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2"
+                data-tour="expenses-all-businesses-switch"
+              >
                 <Switch
                   id="all-businesses"
                   checked={consolidated}

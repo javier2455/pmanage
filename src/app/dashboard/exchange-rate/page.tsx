@@ -30,7 +30,10 @@ export default function ExchangeRatePage() {
         </p>
       </div>
       {activeCurrencies.length > 0 && exchange && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          data-tour="exchange-rate-cards"
+        >
           {activeCurrencies.map((code) => (
             <ExchangeCard
               key={code}

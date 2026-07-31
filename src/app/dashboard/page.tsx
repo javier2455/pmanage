@@ -31,7 +31,11 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        data-tour="dashboard-stats-grid"
+      >
+        <div data-tour="dashboard-sales-card">
         <StatsCard
           variant="sales"
           title="Ventas"
@@ -42,6 +46,7 @@ export default function DashboardPage() {
           isLoading={isLoadingSummary}
           href="/dashboard/business/sales"
         />
+        </div>
         <StatsCard
           variant="expenses"
           title="Gastos"
@@ -52,10 +57,12 @@ export default function DashboardPage() {
           isLoading={isLoadingSummary}
           href="/dashboard/business/expenses"
         />
-        <CashBalanceWidget />
+        <div data-tour="dashboard-cash-card">
+          <CashBalanceWidget />
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2" data-tour="dashboard-recent-grid">
         <RecentSalesTable
           sales={dashboardSummary?.lastFiveSales}
           isLoading={isLoadingSummary}

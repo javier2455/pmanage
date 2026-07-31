@@ -90,10 +90,20 @@ export default function CurrencyAccountsPage() {
         // La pestaña "Flujo por período" llega en una fase posterior. Ver
         // docs/flujo-de-caja.md.
         <Tabs defaultValue="balances">
-          <TabsList>
+          <TabsList data-tour="currency-accounts-tabs">
             <TabsTrigger value="balances">Saldos</TabsTrigger>
-            <TabsTrigger value="consolidated">Consolidado</TabsTrigger>
-            <TabsTrigger value="transactions">Transacciones</TabsTrigger>
+            <TabsTrigger
+              value="consolidated"
+              data-tour="currency-accounts-tab-consolidated"
+            >
+              Consolidado
+            </TabsTrigger>
+            <TabsTrigger
+              value="transactions"
+              data-tour="currency-accounts-tab-transactions"
+            >
+              Transacciones
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="balances">
             <BalancesTable accounts={mergedAccounts} />

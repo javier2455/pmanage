@@ -164,7 +164,7 @@ export default function MonthlyPage() {
     <div className="flex flex-col gap-6 p-4">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div data-tour="monthly-close-title">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Cierre Mensual
           </h1>
@@ -174,11 +174,13 @@ export default function MonthlyPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <MonthFilter
-            value={selectedMonth}
-            onConfirm={(month) => setSelectedMonth(month)}
-            onClear={() => setSelectedMonth(undefined)}
-          />
+          <div data-tour="monthly-close-month-filter">
+            <MonthFilter
+              value={selectedMonth}
+              onConfirm={(month) => setSelectedMonth(month)}
+              onClear={() => setSelectedMonth(undefined)}
+            />
+          </div>
           <Popover>
             <PopoverTrigger asChild>
               <Button

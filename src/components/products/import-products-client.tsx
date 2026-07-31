@@ -494,7 +494,7 @@ export function ImportProductsClient() {
             <CardContent className="flex flex-col gap-6">
               {/* Copiar catálogo desde otro negocio */}
               {otherBusinesses.length > 0 && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2" data-tour="products-import-copy-btn">
                   <Button
                     type="button"
                     variant="outline"
@@ -547,7 +547,11 @@ export function ImportProductsClient() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="outline">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      data-tour="products-import-template-btn"
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Descargar plantilla
                       <ChevronDown className="ml-2 h-4 w-4 opacity-70" />
@@ -574,6 +578,7 @@ export function ImportProductsClient() {
                 <Button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
+                  data-tour="products-import-upload-btn"
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {fileName ? "Cambiar archivo" : "Subir Excel o CSV"}
@@ -654,7 +659,7 @@ export function ImportProductsClient() {
                     <span className="text-sm font-medium text-card-foreground">
                       ¿Qué quieres hacer con cada producto?
                     </span>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2" data-tour="products-import-target">
                       <TargetOption
                         active={target === "catalog+sale"}
                         title="Catálogo + a la venta"
@@ -695,7 +700,10 @@ export function ImportProductsClient() {
 
                   {/* Registrar la entrada como gasto (solo con venta) */}
                   {withSale && (
-                    <label className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                    <label
+                      className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3"
+                      data-tour="products-import-as-expense"
+                    >
                       <Checkbox
                         className="mt-0.5"
                         checked={registerAsExpense}
@@ -727,7 +735,10 @@ export function ImportProductsClient() {
 
                 {/* Vista previa editable + importación (requiere estructura válida) */}
                 {structureOk && (
-                  <div className="flex flex-col gap-4 border-t border-border pt-2">
+                  <div
+                    className="flex flex-col gap-4 border-t border-border pt-2"
+                    data-tour="products-import-grid"
+                  >
                     <PreviewGrid
                       rows={rows}
                       validations={validations}
@@ -764,6 +775,7 @@ export function ImportProductsClient() {
                           type="button"
                           onClick={() => handleImport(true)}
                           disabled={!canImport || importMutation.isPending}
+                          data-tour="products-import-continue-btn"
                         >
                           {importMutation.isPending ? (
                             "Validando..."

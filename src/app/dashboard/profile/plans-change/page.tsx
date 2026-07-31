@@ -93,7 +93,7 @@ export default function ChangePlanPage() {
                     value={billingPeriod}
                     onValueChange={(value) => setBillingPeriod(value as BillingPeriod)}
                 >
-                    <TabsList>
+                    <TabsList data-tour="plans-change-billing-tabs">
                         <TabsTrigger value="monthly" className="px-6 cursor-pointer">
                             Mensual
                         </TabsTrigger>
@@ -111,7 +111,7 @@ export default function ChangePlanPage() {
                     ))}
                 </div>
             ) : (
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-3" data-tour="plans-change-grid">
                 {plansWithCurrent.map((plan) => {
                     const Icon = plan.icon
                     const displayPrice =
@@ -234,7 +234,10 @@ export default function ChangePlanPage() {
             </div>
             )}
 
-            <Card className="border-emerald-500/20 bg-linear-to-r from-emerald-500/5 via-transparent to-emerald-500/5">
+            <Card
+                className="border-emerald-500/20 bg-linear-to-r from-emerald-500/5 via-transparent to-emerald-500/5"
+                data-tour="plans-change-contact-card"
+            >
                 <CardContent className="flex flex-col items-center gap-5 py-8 text-center sm:flex-row sm:text-left">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
                         <svg

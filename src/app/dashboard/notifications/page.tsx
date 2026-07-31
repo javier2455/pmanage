@@ -116,6 +116,7 @@ export default function NotificationsPage() {
           className="gap-1.5"
           onClick={handleMarkAll}
           disabled={isMarkingActive || activeUnread === 0}
+          data-tour="notifications-mark-all-btn"
         >
           {isMarkingActive ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -127,7 +128,7 @@ export default function NotificationsPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as NotificationTab)}>
-        <TabsList>
+        <TabsList data-tour="notifications-tabs">
           <TabsTrigger value="general">
             Generales
             {generalUnreadCount > 0 ? (
@@ -195,7 +196,7 @@ function NotificationsList({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-lg border border-border bg-card">
+      <div className="rounded-lg border border-border bg-card" data-tour="notifications-list">
         {isLoading && items.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />

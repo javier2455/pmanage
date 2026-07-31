@@ -20,7 +20,10 @@ export function LowStockAlertBanner({ alerts }: LowStockAlertBannerProps) {
   const running = low.filter((a) => a.stock > 0);
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+    <div
+      className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+      data-tour="inventory-low-stock-banner"
+    >
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <p className="text-sm font-medium">

@@ -126,6 +126,7 @@ export default function TableOfCurrentInventory({
               isFetching && "pointer-events-none opacity-50",
             )}
             aria-disabled={isFetching}
+            data-tour="inventory-history-btn"
           >
             <Link
               href="/dashboard/business/inventory/history"
@@ -142,6 +143,7 @@ export default function TableOfCurrentInventory({
               isFetching && "pointer-events-none opacity-50",
             )}
             aria-disabled={isFetching}
+            data-tour="inventory-add-entry-btn"
           >
             <Link
               href="/dashboard/business/inventory/create"

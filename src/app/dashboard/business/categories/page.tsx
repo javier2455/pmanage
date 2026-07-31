@@ -54,7 +54,7 @@ function CategoryKindCard({ kind }: { kind: CategoryKind }) {
 export default function CategoriesHubPage() {
   return (
     <section className="flex flex-col gap-6 p-6">
-      <div>
+      <div data-tour="categories-title">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Categorías
         </h1>
@@ -65,7 +65,9 @@ export default function CategoriesHubPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {KIND_ORDER.map((kind) => (
-          <CategoryKindCard key={kind} kind={kind} />
+          <div key={kind} data-tour={`categories-card-${kind}`}>
+            <CategoryKindCard kind={kind} />
+          </div>
         ))}
       </div>
     </section>

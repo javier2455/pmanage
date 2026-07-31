@@ -321,7 +321,7 @@ export function AssignProductToBusinessForm() {
         </div>
 
         {/* Registrar la entrada como gasto de reposición de stock */}
-        <div className="mb-6 flex items-start gap-2">
+        <div className="mb-6 flex items-start gap-2" data-tour="product-assign-as-expense">
           <Controller
             control={control}
             name="registerAsExpense"

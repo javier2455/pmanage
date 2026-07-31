@@ -176,7 +176,7 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
     }
 
     return (
-        <Card>
+        <Card data-tour="exchange-rate-form-card">
             <CardHeader>
                 <CardTitle className="text-xl font-bold">Monedas del negocio</CardTitle>
                 <CardDescription>
@@ -191,7 +191,10 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                             Aún no has agregado monedas. Usa el botón &quot;Agregar moneda&quot; para empezar.
                         </p>
                     ) : (
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <div
+                            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                            data-tour="exchange-rate-currency-grid"
+                        >
                             {activeCodes.map((code) => {
                                 const currentValue = currentData ? Number(currentData[code]) : 0
                                 const isTransfer = code === TRANSFER_CODE
@@ -257,7 +260,12 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                     <div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button type="button" variant="outline" disabled={inactiveCodes.length === 0}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={inactiveCodes.length === 0}
+                                    data-tour="exchange-rate-add-currency-btn"
+                                >
                                     <Plus className="mr-2 h-4 w-4" />
                                     Agregar moneda
                                 </Button>
@@ -276,7 +284,11 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                     <Separator />
 
                     <div className="flex justify-end">
-                        <Button type="submit" disabled={isPending}>
+                        <Button
+                            type="submit"
+                            disabled={isPending}
+                            data-tour="exchange-rate-save-btn"
+                        >
                             <RefreshCw className="mr-2 h-4 w-4" />
                             {isPending ? "Guardando..." : "Guardar cambios"}
                         </Button>

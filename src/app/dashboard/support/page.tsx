@@ -47,7 +47,7 @@ export default function SupportPage() {
         <div className="mb-4 mt-4 flex items-center justify-end">
           <CreateTicketDialog
             trigger={
-              <Button>
+              <Button data-tour="support-create-ticket-btn">
                 <Plus data-icon="inline-start" />
                 Nuevo ticket
               </Button>

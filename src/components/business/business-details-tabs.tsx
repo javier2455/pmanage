@@ -53,19 +53,22 @@ export function BusinessDetailsTabs() {
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="gap-6">
       <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden sm:w-fit">
-        <TabsTrigger value="detalles">
+        <TabsTrigger value="detalles" data-tour="business-details-tab-details">
           <Store />
           Detalles
         </TabsTrigger>
-        <TabsTrigger value="horario">
+        <TabsTrigger value="horario" data-tour="business-details-tab-schedule">
           <Clock />
           Horario
         </TabsTrigger>
-        <TabsTrigger value="notificaciones">
+        <TabsTrigger
+          value="notificaciones"
+          data-tour="business-details-tab-notifications"
+        >
           <Bell />
           Notificaciones
         </TabsTrigger>
-        <TabsTrigger value="eliminar">
+        <TabsTrigger value="eliminar" data-tour="business-details-tab-delete">
           <TriangleAlert />
           Eliminar
         </TabsTrigger>

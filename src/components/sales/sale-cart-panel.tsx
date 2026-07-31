@@ -115,7 +115,7 @@ export function SaleCartPanel({
   const grandTotal = productsTotal + deliveryFee
 
   return (
-    <Card className={cn("flex h-fit flex-col", className)}>
+    <Card className={cn("flex h-fit flex-col", className)} data-tour="sales-cart-panel">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-card-foreground">
@@ -375,7 +375,10 @@ export function SaleCartPanel({
             </div>
 
             {/* Moneda de la venta */}
-            <div className="flex items-center justify-between border-t border-border pt-4">
+            <div
+              className="flex items-center justify-between border-t border-border pt-4"
+              data-tour="sales-cart-currency"
+            >
               <span className="text-sm font-medium text-card-foreground">Moneda</span>
               <Select value={currency} onValueChange={onCurrencyChange} disabled={isPending}>
                 <SelectTrigger size="sm" className="min-w-24">
@@ -428,6 +431,7 @@ export function SaleCartPanel({
                 onClick={onSubmitAndPay}
                 disabled={items.length === 0 || isPending}
                 className="w-full bg-emerald-500 font-semibold uppercase tracking-wide text-white hover:bg-emerald-600 disabled:opacity-50"
+                data-tour="sales-cart-submit-pay"
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 {isPending ? "Registrando..." : "Registrar venta y cobrar"}

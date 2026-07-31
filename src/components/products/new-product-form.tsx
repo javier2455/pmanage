@@ -153,7 +153,7 @@ export function NewProductForm() {
                 </div>
                 <div className="my-4">
                     {/* Unit */}
-                    <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                    <div className="grid gap-4 sm:grid-cols-2 mb-6" data-tour="product-create-unit">
                         <div className="flex flex-col gap-2">
                             <Label className="text-card-foreground">
                                 Unidad de medida <span className="text-destructive">*</span>
@@ -244,7 +244,7 @@ export function NewProductForm() {
                 </div>
 
                 {/* Image upload */}
-                <div className="flex flex-col gap-2 mb-6">
+                <div className="flex flex-col gap-2 mb-6" data-tour="product-create-image">
                     <Label className="text-card-foreground">Imagen del producto</Label>
                     <input
                         ref={fileInputRef}
@@ -325,7 +325,11 @@ export function NewProductForm() {
                             Cancelar
                         </Link>
                     </Button>
-                    <Button type="submit" disabled={createProductMutation.isPending}>
+                    <Button
+                        type="submit"
+                        disabled={createProductMutation.isPending}
+                        data-tour="product-create-submit"
+                    >
                         <PackagePlus className="mr-2 h-4 w-4" />
                         {createProductMutation.isPending ? "Registrando..." : "Registrar producto"}
                     </Button>

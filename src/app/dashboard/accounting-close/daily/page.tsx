@@ -149,7 +149,7 @@ export default function DailyPage() {
     <div className="flex flex-col gap-6 p-4">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div data-tour="daily-close-title">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Cierre Diario
           </h1>
@@ -159,11 +159,13 @@ export default function DailyPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <DateFilter
-            startDate={selectedDate}
-            onConfirm={(date) => setSelectedDate(date)}
-            onClear={() => setSelectedDate(undefined)}
-          />
+          <div data-tour="daily-close-date-filter">
+            <DateFilter
+              startDate={selectedDate}
+              onConfirm={(date) => setSelectedDate(date)}
+              onClear={() => setSelectedDate(undefined)}
+            />
+          </div>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -171,6 +173,7 @@ export default function DailyPage() {
                 className="gap-2"
                 disabled={!canExport}
                 title={!canExport ? "Requiere plan Pro para exportar" : undefined}
+                data-tour="daily-close-export-btn"
               >
                 <Download className="h-4 w-4" />
                 Exportar
@@ -300,7 +303,10 @@ export default function DailyPage() {
           que cada card quede constreñida al ancho de la pantalla y el scroll
           horizontal interno de la tabla funcione en móvil (igual que Stock). */}
       <div className="flex flex-col gap-6">
-        <Card className="gap-4 border-t-2 border-t-emerald-500/60 bg-emerald-500/3 py-4 dark:border-t-emerald-400/50 dark:bg-emerald-400/10">
+        <Card
+          className="gap-4 border-t-2 border-t-emerald-500/60 bg-emerald-500/3 py-4 dark:border-t-emerald-400/50 dark:bg-emerald-400/10"
+          data-tour="daily-close-sold-card"
+        >
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-emerald-500/10">
@@ -323,7 +329,10 @@ export default function DailyPage() {
           />
         </Card>
 
-        <Card className="gap-4 border-t-2 border-t-destructive/50 bg-destructive/3 py-4 dark:bg-destructive/10">
+        <Card
+          className="gap-4 border-t-2 border-t-destructive/50 bg-destructive/3 py-4 dark:bg-destructive/10"
+          data-tour="daily-close-expenses-card"
+        >
           <CardHeader>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-destructive/10">
@@ -349,7 +358,7 @@ export default function DailyPage() {
         </Card>
       </div>
 
-      <Card className="gap-4 py-4">
+      <Card className="gap-4 py-4" data-tour="daily-close-stock-card">
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">

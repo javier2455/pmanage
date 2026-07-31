@@ -38,7 +38,7 @@ export default function ProductPriceHistoryPage() {
         </div>
       </div>
 
-      <Card>
+      <Card data-tour="price-history-selector">
         <CardContent className="p-6">
           <PriceHistoryProductSelector
             value={selectedBusinessProduct?.id ?? null}
@@ -48,10 +48,12 @@ export default function ProductPriceHistoryPage() {
       </Card>
 
       {selectedBusinessProduct ? (
-        <PriceHistoryView
-          key={selectedBusinessProduct.id}
-          businessProduct={selectedBusinessProduct}
-        />
+        <div data-tour="price-history-view">
+          <PriceHistoryView
+            key={selectedBusinessProduct.id}
+            businessProduct={selectedBusinessProduct}
+          />
+        </div>
       ) : (
         <Card>
           <CardContent className="p-6">

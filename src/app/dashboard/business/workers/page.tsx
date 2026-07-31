@@ -128,11 +128,22 @@ export default function WorkersPage() {
         {/* En móvil la lista se limita al ancho disponible y scrollea en
             horizontal (mismo patrón que los tabs de detalles de negocio): con
             `w-fit` los tres tabs se salían de la pantalla. */}
-        <TabsList className="w-full max-w-full justify-start overflow-x-auto overflow-y-hidden sm:w-fit">
-          <TabsTrigger value="workers" className="cursor-pointer">
+        <TabsList
+          className="w-full max-w-full justify-start overflow-x-auto overflow-y-hidden sm:w-fit"
+          data-tour="workers-tabs"
+        >
+          <TabsTrigger
+            value="workers"
+            className="cursor-pointer"
+            data-tour="workers-tab-workers"
+          >
             Trabajadores
           </TabsTrigger>
-          <TabsTrigger value="invitations" className="cursor-pointer">
+          <TabsTrigger
+            value="invitations"
+            className="cursor-pointer"
+            data-tour="workers-tab-invitations"
+          >
             Invitaciones
             {invitationsCount && invitationsCount > 0 ? (
               <Badge
@@ -143,7 +154,11 @@ export default function WorkersPage() {
               </Badge>
             ) : null}
           </TabsTrigger>
-          <TabsTrigger value="metrics" className="cursor-pointer">
+          <TabsTrigger
+            value="metrics"
+            className="cursor-pointer"
+            data-tour="workers-tab-metrics"
+          >
             {/* Etiqueta corta en móvil: el nombre completo hacía que los tres
                 tabs no cupieran en pantalla. */}
             <span className="sm:hidden">Desempeño</span>
