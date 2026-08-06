@@ -388,6 +388,7 @@ export default function DailyPage() {
         period="daily"
         serverTotals={serverTotals}
         costSummary={data?.costSummary}
+        tips={data?.tips}
       />
     </div>
   )

@@ -94,11 +94,31 @@ export interface CreateSaleProps {
 
 // --- Pagos (Fase 1) ---
 
+/** Vuelto entregado al cliente. Su moneda puede diferir de la del pago. */
+export interface VueltoItem {
+  moneda: string;
+  monto: number;
+}
+
+/**
+ * Qué hacer con lo que sobra cuando el cliente entrega de más.
+ *
+ * Es obligatorio en cuanto el pago supera lo pendiente: su presencia le dice al
+ * backend que el cajero vio el excedente, y sin ella el cobro se rechaza con
+ * `EXCEDENTE_NO_DECLARADO`. Lo que no se devuelva como `vuelto` queda a favor
+ * del negocio; ese importe no se envía, lo calcula el backend.
+ */
+export interface ExcedentePago {
+  vuelto?: VueltoItem;
+}
+
 export interface RegistrarPagoItem {
   moneda: string;
+  /** Lo que el cliente ENTREGA, no lo que cubre la venta. */
   monto: number;
   metodo: PaymentMethod;
   referencia?: string;
+  excedente?: ExcedentePago;
 }
 
 export interface RegistrarPagoDto {
@@ -108,10 +128,16 @@ export interface RegistrarPagoDto {
 export interface PagoResumenItem {
   id: string;
   moneda: string;
+  /** Importe entregado, en `moneda`. */
   monto: number;
   tasa: number;
+  /** Importe aplicado a la venta, en la moneda de la venta. */
   equivalente: number;
   metodo: PaymentMethod;
+  /** Vuelto devuelto, con su moneda y tasa propias. `null` si no hubo. */
+  vuelto?: { moneda: string; monto: number; tasa: number } | null;
+  /** Excedente no devuelto, en la moneda de la VENTA. */
+  propina?: number;
   referencia?: string | null;
   fecha: string;
 }
@@ -128,6 +154,8 @@ export interface PaymentsSummary {
   pendiente: number;
   monedaBase: string;
   estado: PaymentStatus;
+  /** Suma de los excedentes no devueltos, en la moneda de la venta. */
+  totalPropinas?: number;
   pagos: PagoResumenItem[];
   sugerencia: PagoSugerencia | null;
 }

@@ -44,6 +44,21 @@ export interface ClosingCostCoverage {
     withoutCost: number;
 }
 
+/**
+ * Excedentes de cobro que no se devolvieron: propinas y sobrantes de cuando el
+ * cajero no tenía cambio exacto.
+ *
+ * Va aparte del ingreso por ventas: es dinero que entró a la caja pero no vendió
+ * mercancía, así que sumarlo al ingreso inflaría el margen. Sin este renglón, en
+ * cambio, el cierre no explicaría todo el dinero que hay en el cajón.
+ */
+export interface ClosingTips {
+    /** Total por moneda de la venta, sin convertir. */
+    byCurrency: Record<string, number>;
+    /** Consolidado en CUP. */
+    consolidatedBase: number;
+}
+
 /** Cara de costos del cierre, toda en CUP. Calculada por el backend. */
 export interface ClosingCostSummary {
     /** Costo de la mercancía vendida en el período. */
@@ -90,6 +105,11 @@ export type AccountingCloseResponse = {
      * ese caso la UI omite el bloque en vez de mostrar ceros.
      */
     costSummary?: ClosingCostSummary;
+    /**
+     * Excedentes de cobro que el cliente no se llevó. Opcional: los despliegues
+     * anteriores al vuelto no lo traen y la UI omite el bloque.
+     */
+    tips?: ClosingTips;
     /**
      * Monedas con movimientos en el período que NO tienen tasa configurada y
      * quedaron fuera del consolidado del backend (disponible desde 2026-07-02).

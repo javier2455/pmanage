@@ -20,8 +20,9 @@ import {
   useCancelSaleMutation,
   useDownloadFacturaMutation,
   useGetSaleById,
+  usePaymentsSummary,
 } from "@/hooks/use-sales";
-import { FileText, Loader2, Wallet, XCircle } from "lucide-react";
+import { Coins, FileText, Loader2, Wallet, XCircle } from "lucide-react";
 import { ProductImage } from "@/components/products/product-image";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { formatQuantity } from "@/lib/units";
@@ -113,6 +114,18 @@ export default function DetailsDialog({
   const totalPaid = Number(data?.totalPaid ?? 0);
   const pendiente = Math.max(total - totalPaid, 0);
   const items = data?.items ?? [];
+
+  // Desglose de los cobros: cuánto entregó el cliente, cuánto se le devolvió y
+  // cuánto quedó a favor del negocio. `totalPaid` solo cuenta lo aplicado a la
+  // venta, así que sin esto no habría forma de auditar un cobro con vuelto.
+  const isOpen = isControlled ? open : undefined;
+  const { data: paymentsSummary } = usePaymentsSummary(
+    isOpen === false ? "" : saleId,
+  );
+  const pagosConVuelto = (paymentsSummary?.pagos ?? []).filter(
+    (p) => p.vuelto || (p.propina ?? 0) > 0,
+  );
+  const totalPropinas = paymentsSummary?.totalPropinas ?? 0;
   const status = resolvePaymentStatus({
     isCancelled: data?.isCancelled,
     paymentStatus: data?.paymentStatus,
@@ -323,6 +336,56 @@ export default function DetailsDialog({
                 <span className="font-semibold tabular-nums text-amber-600">
                   {formatMoney(pendiente, currency)}
                 </span>
+              </div>
+            )}
+
+            {/* Solo aparece si en algún cobro sobró dinero: en el caso normal
+                (pago exacto) no añade ruido al detalle. */}
+            {pagosConVuelto.length > 0 && (
+              <div className="w-full rounded-lg border border-border bg-muted/30 p-3">
+                <div className="mb-2 flex items-center gap-1.5">
+                  <Coins className="size-3.5 text-muted-foreground" />
+                  <span className="text-xs font-semibold text-card-foreground">
+                    Detalle del cobro
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {pagosConVuelto.map((pago) => (
+                    <div
+                      key={pago.id}
+                      className="flex flex-col gap-0.5 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          Entregó el cliente
+                        </span>
+                        <span className="font-medium tabular-nums text-card-foreground">
+                          {formatMoney(pago.monto, pago.moneda)}
+                        </span>
+                      </div>
+                      {pago.vuelto && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            Se le devolvió
+                          </span>
+                          <span className="font-medium tabular-nums text-card-foreground">
+                            {formatMoney(pago.vuelto.monto, pago.vuelto.moneda)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {totalPropinas > 0 && (
+                    <div className="flex items-center justify-between border-t border-border pt-1.5 text-xs">
+                      <span className="text-muted-foreground">
+                        Quedó a favor del negocio
+                      </span>
+                      <span className="font-semibold tabular-nums text-emerald-600">
+                        {formatMoney(totalPropinas, currency)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             {canPay ? (

@@ -67,10 +67,24 @@ export async function registerPayments(
   dto: RegistrarPagoDto,
 ): Promise<{ resumen: PaymentsSummary }> {
   // Cada pago viaja con la moneda en el código del backend (cup_transferencia).
+  // El vuelto lleva la suya propia: puede devolverse en una moneda distinta a
+  // la del pago, así que también hay que traducirla.
   const payload: RegistrarPagoDto = {
     pagos: dto.pagos.map((pago) => ({
       ...pago,
       moneda: toBackendCurrency(pago.moneda),
+      ...(pago.excedente
+        ? {
+            excedente: pago.excedente.vuelto
+              ? {
+                  vuelto: {
+                    ...pago.excedente.vuelto,
+                    moneda: toBackendCurrency(pago.excedente.vuelto.moneda),
+                  },
+                }
+              : {},
+          }
+        : {}),
     })),
   };
   const { data } = await apiClient.post(
@@ -96,6 +110,9 @@ export async function getPaymentsSummary(
     pagos: data.pagos.map((pago) => ({
       ...pago,
       moneda: fromBackendCurrency(pago.moneda),
+      vuelto: pago.vuelto
+        ? { ...pago.vuelto, moneda: fromBackendCurrency(pago.vuelto.moneda) }
+        : pago.vuelto,
     })),
   };
 }

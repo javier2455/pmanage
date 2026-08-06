@@ -40,6 +40,26 @@ export const currencyErrorsSuite = defineSuite(
     );
 
     test(
+      "los tres errores del excedente dicen qué hacer, no solo qué falló",
+      () => {
+        const noDeclarado = mapCurrencyError(
+          axiosErrorWith({ codigo: "EXCEDENTE_NO_DECLARADO" }),
+        );
+        const vueltoAlto = mapCurrencyError(
+          axiosErrorWith({ codigo: "VUELTO_EXCEDE_EXCEDENTE" }),
+        );
+        const sinExcedente = mapCurrencyError(
+          axiosErrorWith({ codigo: "VUELTO_SIN_EXCEDENTE" }),
+        );
+
+        expect(noDeclarado).toContain("cuánto se devuelve de vuelto");
+        expect(vueltoAlto).toContain("entregó de más");
+        expect(sinExcedente).toContain("no cubre lo que falta");
+      },
+      "Cuando el cliente paga de más, el cajero necesita saber qué corregir: que falta indicar el vuelto, que el vuelto se pasa del excedente, o que no hay excedente porque el pago no cubre la venta.",
+    );
+
+    test(
       "código desconocido con message → devuelve el message del backend",
       () => {
         const msg = mapCurrencyError(

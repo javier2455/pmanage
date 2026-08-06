@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarCheck,
+  Coins,
   LayoutGrid,
   List,
   PackageMinus,
@@ -47,6 +48,7 @@ import { useExchangeRate } from "@/hooks/use-exchange"
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales"
 import type {
   ClosingCostSummary,
+  ClosingTips,
   ExpenseInAccountingClose,
 } from "@/lib/types/accounting-close"
 
@@ -62,6 +64,8 @@ interface ClosingFinancialSummaryProps {
   /** Costo de lo vendido y ganancia bruta (backend). Ausente → no se muestra el
    * bloque; no hay forma de calcularlo en el cliente. */
   costSummary?: ClosingCostSummary | null
+  /** Excedentes de cobro no devueltos. Ausente o en cero → no se muestra. */
+  tips?: ClosingTips | null
 }
 
 const PERIOD_COPY = {
@@ -262,6 +266,65 @@ function GrossProfitBlock({
 }
 
 /**
+ * Lo que los clientes dejaron de más al pagar.
+ *
+ * No entra en Ventas ni en la ganancia bruta: no vendió mercancía, y sumarlo
+ * daría un margen inflado con un importe de costo cero. Se muestra porque es la
+ * pieza que explica por qué en la caja hay más dinero del que suman las ventas.
+ */
+function TipsBlock({
+  tips,
+  currency,
+  exchangeRate,
+}: {
+  tips: ClosingTips
+  currency: string
+  exchangeRate: Parameters<typeof convertFromBase>[2]
+}) {
+  const total = convertFromBase(tips.consolidatedBase, currency, exchangeRate)
+  const detalle = Object.entries(tips.byCurrency).filter(
+    ([, monto]) => monto > 0,
+  )
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <Coins className="size-4 text-muted-foreground" aria-hidden="true" />
+        <span className="text-sm font-semibold text-card-foreground">
+          Propinas y sobrantes de cobro
+        </span>
+        <span className="ml-auto whitespace-nowrap text-base font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+          +{formatMoney(total, currency)}
+        </span>
+      </div>
+
+      {detalle.length > 1 ? (
+        <div className="flex flex-col gap-2">
+          {detalle.map(([moneda, monto]) => (
+            <div
+              key={moneda}
+              className="flex flex-wrap items-center gap-x-4 gap-y-0.5"
+            >
+              <span className="text-sm text-muted-foreground">
+                {currencyLabel(moneda)}
+              </span>
+              <span className="ml-auto whitespace-nowrap text-sm font-semibold tabular-nums text-card-foreground">
+                {formatMoney(monto, moneda)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <p className="text-xs text-muted-foreground">
+        Dinero que entró a la caja sin vender mercancía: lo que el cliente dejó
+        al no recoger el vuelto. No se suma a las ventas ni a la ganancia bruta.
+      </p>
+    </div>
+  )
+}
+
+/**
  * Resumen financiero del cierre con desglose por moneda + equivalente
  * consolidado. Reemplaza el balance plano (que sumaba monedas distintas como si
  * fueran una) por subtotales fieles a cada moneda y un consolidado único
@@ -274,6 +337,7 @@ export function ClosingFinancialSummary({
   period,
   serverTotals,
   costSummary,
+  tips,
 }: ClosingFinancialSummaryProps) {
   const copy = PERIOD_COPY[period]
   const { data: exchangeData } = useExchangeRate(businessId)
@@ -478,6 +542,15 @@ export function ClosingFinancialSummary({
               <GrossProfitBlock
                 costSummary={costSummary}
                 incomeBase={consolidated.incomeBase}
+                currency={consolidatedCurrency}
+                exchangeRate={exchangeRate}
+              />
+            ) : null}
+
+            {/* Excedentes de cobro. Se omite si nadie dejó nada. */}
+            {tips && tips.consolidatedBase > 0 ? (
+              <TipsBlock
+                tips={tips}
                 currency={consolidatedCurrency}
                 exchangeRate={exchangeRate}
               />

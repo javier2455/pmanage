@@ -302,6 +302,7 @@ export default function MonthlyPage() {
         period="monthly"
         serverTotals={serverTotals}
         costSummary={data?.costSummary}
+        tips={data?.tips}
       />
     </div>
   )

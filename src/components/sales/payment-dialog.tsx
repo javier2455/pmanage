@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Plus, Trash2, Wallet } from "lucide-react";
+import { Coins, Loader2, Plus, Trash2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -119,6 +119,13 @@ export function PaymentDialog({
   }, [availableCurrencies, monedaBase]);
 
   const [rows, setRows] = React.useState<PaymentRow[]>([]);
+  // Moneda y monto del vuelto. Se manejan aparte de las filas porque el
+  // excedente lo produce el cobro entero, no un pago concreto.
+  const [monedaVuelto, setMonedaVuelto] = React.useState(monedaBase);
+  const [montoVuelto, setMontoVuelto] = React.useState("");
+  // `false` mientras el cajero no ha tocado el vuelto: así el campo sigue el
+  // excedente conforme teclea el monto, en vez de quedarse en el primer valor.
+  const [vueltoEditado, setVueltoEditado] = React.useState(false);
 
   // Prefill al abrir: usa la `sugerencia` del backend o el pendiente en moneda base.
   React.useEffect(() => {
@@ -138,8 +145,22 @@ export function PaymentDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, summary]);
 
+  // El vuelto se devuelve por defecto en la moneda de la venta, que es la que
+  // el negocio siempre tiene en caja.
+  React.useEffect(() => {
+    if (isOpen) setMonedaVuelto(monedaBase);
+  }, [isOpen, monedaBase]);
+
+  function resetVuelto() {
+    setMontoVuelto("");
+    setVueltoEditado(false);
+  }
+
   function handleOpenChange(value: boolean) {
-    if (!value) setRows([]);
+    if (!value) {
+      setRows([]);
+      resetVuelto();
+    }
     setOpen(value);
   }
 
@@ -173,6 +194,54 @@ export function PaymentDialog({
   const totalNuevo = equivalentes.reduce((sum, e) => sum + e, 0);
   const pendienteTrasPago = Math.max(pendiente - totalNuevo, 0);
 
+  // Lo que el cliente entrega de más, en la moneda de la venta. Es lo que se
+  // reparte entre vuelto y lo que queda a favor del negocio.
+  const excedente = Math.max(totalNuevo - pendiente, 0);
+  const hayExcedente = excedente > 0.01;
+
+  /** Convierte un importe de la moneda de la venta a la del vuelto. */
+  const aMonedaVuelto = React.useCallback(
+    (montoBase: number) => {
+      if (monedaVuelto === monedaBase) return montoBase;
+      return convertBetween(montoBase, monedaBase, monedaVuelto, exchange) ?? 0;
+    },
+    [monedaVuelto, monedaBase, exchange],
+  );
+
+  /** Y al revés: lo que el cajero teclea, medido en la moneda de la venta. */
+  const vueltoEnBase = React.useMemo(() => {
+    const monto = Number(montoVuelto);
+    if (!Number.isFinite(monto) || monto <= 0) return 0;
+    if (monedaVuelto === monedaBase) return monto;
+    return convertBetween(monto, monedaVuelto, monedaBase, exchange) ?? 0;
+  }, [montoVuelto, monedaVuelto, monedaBase, exchange]);
+
+  // Mientras el cajero no lo toque, el vuelto propuesto es el excedente entero:
+  // devolverlo todo es lo que pasa en la mayoría de los cobros.
+  const vueltoSugerido = React.useMemo(
+    () => Math.round(aMonedaVuelto(excedente) * 100) / 100,
+    [aMonedaVuelto, excedente],
+  );
+
+  React.useEffect(() => {
+    if (!hayExcedente) {
+      // Dejó de sobrar dinero (bajó el monto): el vuelto ya no aplica.
+      if (montoVuelto !== "") resetVuelto();
+      return;
+    }
+    if (!vueltoEditado) {
+      setMontoVuelto(vueltoSugerido > 0 ? String(vueltoSugerido) : "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hayExcedente, vueltoSugerido, vueltoEditado]);
+
+  // Lo que no se devuelve se queda en el negocio: propina, o sobrante porque no
+  // había cambio exacto. Nunca negativo: si el vuelto se pasa, se bloquea antes.
+  const aFavorDelNegocio = hayExcedente
+    ? Math.max(Math.round((excedente - vueltoEnBase) * 100) / 100, 0)
+    : 0;
+  const vueltoExcesivo = hayExcedente && vueltoEnBase > excedente + 0.01;
+
   /**
    * Autocompleta el monto de una fila para cubrir todo lo que falta, en la moneda
    * de esa fila. Descuenta lo que ya aportan las demás filas (caso típico: pago
@@ -194,14 +263,34 @@ export function PaymentDialog({
   }
 
   async function handleSubmit() {
-    const pagos: RegistrarPagoItem[] = rows.map((r) => ({
+    // El excedente lo genera el cobro completo, así que se adjunta a la última
+    // fila con importe: es la que lo produce cuando se paga en varias monedas.
+    const ultimaConMonto = rows.reduce(
+      (ultima, r, i) => (Number(r.monto) > 0 ? i : ultima),
+      -1,
+    );
+    const montoVueltoNum = Number(montoVuelto);
+
+    const pagos: RegistrarPagoItem[] = rows.map((r, i) => ({
       moneda: r.moneda,
       monto: Number(r.monto),
       metodo: r.metodo,
       ...(r.referencia.trim() ? { referencia: r.referencia.trim() } : {}),
+      // Se manda aunque el vuelto sea 0: su presencia es lo que confirma al
+      // backend que el excedente se revisó, y sin ella rechaza el cobro.
+      ...(hayExcedente && i === ultimaConMonto
+        ? {
+            excedente:
+              Number.isFinite(montoVueltoNum) && montoVueltoNum > 0
+                ? { vuelto: { moneda: monedaVuelto, monto: montoVueltoNum } }
+                : {},
+          }
+        : {}),
     }));
 
-    const parsed = makePaymentsSchema(currencyOptions).safeParse({ pagos });
+    const parsed = makePaymentsSchema(currencyOptions, excedente).safeParse({
+      pagos,
+    });
     if (!parsed.success) {
       toastError({
         title: "Revisa los pagos",
@@ -217,11 +306,18 @@ export function PaymentDialog({
         dto: { pagos: parsed.data.pagos },
         businessId: activeBusinessId ?? "",
       });
+      const detalleVuelto =
+        montoVueltoNum > 0
+          ? ` Devuelve ${formatMoney(montoVueltoNum, monedaVuelto)} de vuelto.`
+          : aFavorDelNegocio > 0
+            ? ` Quedan ${formatMoney(aFavorDelNegocio, monedaBase)} a favor del negocio.`
+            : "";
       toastSuccess({
         title: "Pago registrado correctamente",
-        description: `Se registró un pago equivalente a ${formatMoney(totalNuevo, monedaBase)}.`,
+        description: `Se aplicaron ${formatMoney(Math.min(totalNuevo, pendiente), monedaBase)} a la venta.${detalleVuelto}`,
       });
       setRows([]);
+      resetVuelto();
       setOpen(false);
       onPaid?.();
     } catch (error) {
@@ -426,13 +522,111 @@ export function PaymentDialog({
         {/* Footer fijo: resumen del pago + acción */}
         {!isClosed && (
           <DialogFooter className="shrink-0 flex-col gap-3 border-t border-border p-6 sm:flex-col">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total a registrar</span>
+            {/* Reparto del excedente. Solo aparece cuando el cliente entrega de
+                más, que es justo cuando el cajero necesita saber qué devolver. */}
+            {hayExcedente && (
+              <div className="flex w-full flex-col gap-3 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="size-4 text-emerald-600" />
+                    <span className="text-sm font-semibold text-card-foreground">
+                      El cliente paga de más
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums text-emerald-600">
+                    {formatMoney(excedente, monedaBase)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs text-muted-foreground">
+                      Devolver en
+                    </Label>
+                    <Select
+                      value={monedaVuelto}
+                      onValueChange={(v) => {
+                        setMonedaVuelto(v);
+                        // La cifra tecleada era de otra moneda: vuelve a
+                        // proponerse el excedente completo en la nueva.
+                        setVueltoEditado(false);
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencyOptions.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {currencyLabel(c)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-muted-foreground">
+                        Vuelto
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMontoVuelto("");
+                          setVueltoEditado(true);
+                        }}
+                        className="text-xs font-medium text-emerald-600 hover:underline"
+                      >
+                        Dejar como propina
+                      </button>
+                    </div>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={montoVuelto}
+                      placeholder="0.00"
+                      onChange={(e) => {
+                        setMontoVuelto(e.target.value);
+                        setVueltoEditado(true);
+                      }}
+                      aria-invalid={vueltoExcesivo}
+                      className="tabular-nums"
+                    />
+                  </div>
+                </div>
+
+                {vueltoExcesivo ? (
+                  <p className="text-xs font-medium text-destructive">
+                    El vuelto no puede pasar de{" "}
+                    {formatMoney(vueltoSugerido, monedaVuelto)}.
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Queda a favor del negocio
+                    </span>
+                    <span className="font-semibold tabular-nums text-card-foreground">
+                      {formatMoney(aFavorDelNegocio, monedaBase)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex w-full items-center justify-between text-sm">
+              <span className="text-muted-foreground">Entrega el cliente</span>
               <span className="font-semibold tabular-nums text-card-foreground">
                 {formatMoney(totalNuevo, monedaBase)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex w-full items-center justify-between text-sm">
+              <span className="text-muted-foreground">Se aplica a la venta</span>
+              <span className="font-semibold tabular-nums text-emerald-600">
+                {formatMoney(Math.min(totalNuevo, pendiente), monedaBase)}
+              </span>
+            </div>
+            <div className="flex w-full items-center justify-between text-sm">
               <span className="text-muted-foreground">Quedaría pendiente</span>
               <span className="font-semibold tabular-nums text-amber-600">
                 {formatMoney(pendienteTrasPago, monedaBase)}
@@ -441,7 +635,9 @@ export function PaymentDialog({
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={registerMutation.isPending || totalNuevo <= 0}
+              disabled={
+                registerMutation.isPending || totalNuevo <= 0 || vueltoExcesivo
+              }
               className="w-full bg-emerald-500 font-semibold text-white hover:bg-emerald-600"
             >
               {registerMutation.isPending ? (

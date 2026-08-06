@@ -18,6 +18,13 @@ export function mapCurrencyError(
       data?.codigo ?? data?.code ?? data?.error ?? data?.message ?? "";
     if (code.includes("PAGO_EXCEDE_TOTAL"))
       return "La suma de pagos supera el total pendiente de la venta.";
+    // Errores del reparto del excedente (vuelto / a favor del negocio).
+    if (code.includes("EXCEDENTE_NO_DECLARADO"))
+      return "El pago supera lo pendiente. Indica cuánto se devuelve de vuelto antes de registrarlo.";
+    if (code.includes("VUELTO_EXCEDE_EXCEDENTE"))
+      return "El vuelto no puede ser mayor que lo que el cliente entregó de más.";
+    if (code.includes("VUELTO_SIN_EXCEDENTE"))
+      return "No hay vuelto que devolver: el pago no cubre lo que falta de la venta.";
     if (code.includes("MONEDAS_NO_CONFIGURADAS"))
       return "El negocio no tiene tasas de cambio configuradas. Configúralas en la sección de Tasas de cambio.";
     // MONEDA_COMPRA_NO_CONFIGURADA es la variante de addStock; el include cubre ambas.
