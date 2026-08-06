@@ -72,6 +72,17 @@ export type CurrentInventoryEntry = {
     businessId: string;
     productId: string;
     price: string;
+    /**
+     * Moneda en la que se FIJÓ el precio; `price` viene siempre en CUP. Puede
+     * faltar en respuestas anteriores al backend 148: la UI cae a `CUP`.
+     * Ver docs/moneda-precio-venta.md.
+     */
+    priceCurrency?: string;
+    /**
+     * Tasa aplicada al fijar el precio. Con ella se reconstruye el importe
+     * original (`price / priceExchangeRateApplied`). `null` si se fijó en CUP.
+     */
+    priceExchangeRateApplied?: number | string | null;
     stock: number;
     entryPrice: string;
     updatedAt: string;

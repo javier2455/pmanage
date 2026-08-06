@@ -276,7 +276,7 @@ export const SECTION_TOURS: TourDefinition[] = [
         element: "#price",
         title: "Precio y cantidad",
         description:
-          "El precio es a cuánto lo vendes (siempre en CUP) y el stock, cuántos tienes ahora mismo.",
+          "El precio es a cuánto lo vendes. Si lo cobras en otra moneda, elígela al lado: lo guardamos convertido a CUP con la tasa de hoy. El stock es cuántos tienes ahora mismo.",
       },
       {
         id: "asignar-alert",

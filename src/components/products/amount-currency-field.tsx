@@ -19,42 +19,57 @@ import {
   type ExchangeRateLike,
 } from "@/lib/currency";
 
-interface EntryCostCurrencyProps {
-  /** Moneda seleccionada del costo (`CUP`, `USD`, `EURO`…). */
+interface AmountCurrencyFieldProps {
+  /**
+   * `id` del selector. Hay que pasarlo cuando conviven dos selectores en el mismo
+   * formulario (costo y precio de venta al asignar un producto): con el `id` por
+   * defecto repetido, la etiqueta del segundo enfocaría el select del primero.
+   */
+  id?: string;
+  /** Etiqueta visible del selector. */
+  label?: string;
+  /** Moneda seleccionada del importe (`CUP`, `USD`, `EURO`…). */
   currency: string;
   onCurrencyChange: (currency: string) => void;
   /** Monedas seleccionables, derivadas de `getAvailableCurrencies(exchange)`. */
   availableCurrencies: string[];
-  /** Costo ingresado por el usuario, en la moneda seleccionada. */
-  entryPrice: number;
+  /** Importe ingresado por el usuario, en la moneda seleccionada. */
+  amount: number;
   /** Objeto de tasas (`useExchangeRate().data?.data`). */
   exchangeRate: ExchangeRateLike;
 }
 
 /**
- * Selector de moneda + preview del costo convertido a CUP, compartido entre
- * "Asignar producto" y "Agregar stock". La conversión usa la tasa de
- * `MonetaryExchange`; esa misma tasa se envía al backend como
- * `exchangeRateApplied` desde el formulario. Ver docs/multimoneda-productos.md.
+ * Selector de moneda + preview del importe convertido a CUP. Lo comparten el
+ * costo de entrada ("Asignar producto", "Agregar stock") y el precio de venta
+ * ("Asignar producto", "Editar producto"), porque en los cuatro casos el importe
+ * se ingresa en la moneda que el usuario maneja pero se persiste en CUP.
+ *
+ * Quién hace la conversión difiere y el formulario debe saberlo: el **costo** lo
+ * convierte el backend a partir de `currency` + `exchangeRateApplied`; el
+ * **precio de venta** lo convierte el propio formulario antes de enviar, porque
+ * el endpoint no acepta moneda (ver docs/moneda-precio-venta.md).
  */
-export function EntryCostCurrency({
+export function AmountCurrencyField({
+  id = "entry-currency",
+  label = "Moneda del costo",
   currency,
   onCurrencyChange,
   availableCurrencies,
-  entryPrice,
+  amount,
   exchangeRate,
-}: EntryCostCurrencyProps) {
+}: AmountCurrencyFieldProps) {
   const isBase = currency === BASE_CURRENCY;
   const rate = getCurrencyRate(exchangeRate, currency);
-  const hasAmount = Number.isFinite(entryPrice) && entryPrice > 0;
+  const hasAmount = Number.isFinite(amount) && amount > 0;
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="entry-currency" className="text-card-foreground">
-        Moneda del costo
+      <Label htmlFor={id} className="text-card-foreground">
+        {label}
       </Label>
       <Select value={currency} onValueChange={onCurrencyChange}>
-        <SelectTrigger id="entry-currency" className="w-full">
+        <SelectTrigger id={id} className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -89,7 +104,7 @@ export function EntryCostCurrency({
           <span>
             Se guardará como{" "}
             <span className="font-semibold text-card-foreground">
-              {formatMoney(convertToBase(entryPrice, currency, exchangeRate), BASE_CURRENCY)}
+              {formatMoney(convertToBase(amount, currency, exchangeRate), BASE_CURRENCY)}
             </span>{" "}
             (tasa {rate})
           </span>

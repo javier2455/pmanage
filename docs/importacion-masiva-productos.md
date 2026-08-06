@@ -138,11 +138,23 @@ español:
 | `descripcion` | `productDescription` | No | texto | |
 | `unidad` | `productUnit` | **Sí** | `kg, lb, g, L, mL, ud` | Se normaliza (`l`→`L`, `ml`→`mL`, `unidad`→`ud`) |
 | `categoria` | `categoryName` | No | texto | Se crea si no existe |
-| `precio` | `price` | **Sí\*** | número > 0 (CUP) | \*Solo requerido si destino = a la venta. Siempre en CUP |
+| `precio` | `price` | **Sí\*** | número > 0 | \*Solo requerido si destino = a la venta. En la moneda de `moneda_precio` |
+| `moneda_precio` | `priceCurrency` | No | `CUP, USD, EURO, MLC, …` | Moneda del **precio de venta** (por defecto CUP). Alias: `moneda_venta` |
 | `costo` | `entryPrice` | No | número ≥ 0 | Para calcular ganancias. En la moneda de `moneda` |
 | `moneda` | `currency` | No | `CUP, USD, EURO, MLC, …` | Moneda del **costo** (por defecto CUP). Ver §7 (multimoneda) |
 | `stock` | `stock` | **Sí\*** | número ≥ 0 | \*Solo requerido si destino = a la venta |
 | `umbral_alerta_stock` | `stockAlertThreshold` | No | entero ≥ 1 | Función **Pro** |
+
+> **`moneda` y `moneda_precio` son independientes.** La primera describe el
+> **costo** y la segunda el **precio de venta**: un negocio puede comprar en USD y
+> cotizar en CUP, o al revés. Ambos importes se guardan **convertidos a CUP** con
+> la tasa del negocio (migración 149); una moneda sin tasa configurada marca la
+> fila con error, sin abortar el lote en modo tolerante. Ver
+> [moneda-precio-venta.md](moneda-precio-venta.md).
+>
+> Las plantillas antiguas **siguen siendo válidas**: sin la columna, el precio se
+> interpreta como CUP, igual que antes. El mapeo es por nombre de encabezado, no
+> por posición.
 
 > **Columnas retiradas de la plantilla** (ver §9 para el detalle y cómo reactivar):
 > `imagen_url` (el usuario no conoce las URLs) y las de **mayoreo/modelo de venta**
@@ -505,9 +517,9 @@ documentan aquí para no reintroducirlas sin querer y para saber cómo reactivar
 ### Fase 3 — alcance
 
 **✅ Implementado**
-- **Multimoneda del costo**: la columna `moneda` permite el `costo`/`entryPrice` en
-  otra divisa; se convierte a CUP con la tasa del negocio (`MonetaryExchange`). El
-  precio de venta sigue siendo CUP. Ver §7 y §9.
+- **Multimoneda del costo y del precio**: las columnas `moneda` y `moneda_precio`
+  permiten el `costo`/`entryPrice` y el `precio` en otra divisa; ambos se convierten
+  a CUP con la tasa del negocio (`MonetaryExchange`). Ver §7 y §9.
 - **Registrar la entrada como gasto** (`registerAsExpense`): checkbox opcional en el
   asistente que crea un gasto de "Reposición de stock" (`costo × stock`, en la moneda
   original) por cada producto **nuevo** a la venta. Ver §7 y §9.

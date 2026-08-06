@@ -180,12 +180,23 @@ export function useUpdateBusinessProductPriceMutation() {
     mutationFn: ({
       businessProductId,
       price,
+      priceCurrency,
+      priceExchangeRateApplied,
     }: {
       businessProductId: string;
       price: number;
       businessId: string;
       productId: string;
-    }) => updateBusinessProductPrice(businessProductId, price),
+      /** Moneda en que se cotiza el precio; el backend lo guarda en CUP. */
+      priceCurrency?: string;
+      priceExchangeRateApplied?: number;
+    }) =>
+      updateBusinessProductPrice(
+        businessProductId,
+        price,
+        priceCurrency,
+        priceExchangeRateApplied,
+      ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["all-product-of-my-businesses", variables.businessId],

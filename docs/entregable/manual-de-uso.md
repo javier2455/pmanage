@@ -256,11 +256,17 @@ distintos y con stock distinto.
 **Productos → Asignar al negocio**:
 
 1. Busca el producto del catálogo (la lista carga a medida que escribes y desplazas).
-2. **Precio de venta** — a cuánto lo vendes.
+2. **Precio de venta** y su **moneda** — a cuánto lo vendes. Si lo cobras en USD,
+   selecciona USD y escribe el precio en USD; antes de guardar verás el equivalente
+   en CUP, que es el que queda registrado.
 3. **Costo de entrada** y su **moneda** — a cuánto te costó. Si lo compraste en USD,
    selecciona USD; el sistema hace la conversión con tu tasa.
 4. **Stock inicial**.
 5. **Categoría** (opcional).
+
+> **Ojo con la tasa.** El precio se guarda convertido a CUP con la tasa del día en
+> que lo fijas. Si la tasa se mueve mucho, revisa los precios de los productos que
+> cotizas en divisa: no se actualizan solos.
 
 ### 6.3 Importación masiva
 

@@ -73,6 +73,8 @@ export async function createInBusiness(
     productId,
     categoryId,
     price,
+    priceCurrency,
+    priceExchangeRateApplied,
     entryPrice,
     stock,
     stockAlertThreshold,
@@ -100,6 +102,14 @@ export async function createInBusiness(
         ? {
             currency,
             ...(exchangeRateApplied ? { exchangeRateApplied } : {}),
+          }
+        : {}),
+      // Ídem para el precio de venta, con su propio par de campos: el backend lo
+      // convierte a CUP y guarda `priceCurrency` como referencia de cómo se fijó.
+      ...(priceCurrency && priceCurrency !== "CUP"
+        ? {
+            priceCurrency,
+            ...(priceExchangeRateApplied ? { priceExchangeRateApplied } : {}),
           }
         : {}),
     },
@@ -198,10 +208,21 @@ export async function updateBusinessProductCategory(
   return data;
 }
 
-export async function updateBusinessProductPrice(businessProductId: string, price: number) {
+export async function updateBusinessProductPrice(
+  businessProductId: string,
+  price: number,
+  priceCurrency?: string,
+  priceExchangeRateApplied?: number,
+) {
   const reponse = await apiClient.put(
     productRoutes.updateBusinessProductPrice(businessProductId),
-    { price: price },
+    {
+      price: price,
+      // El backend convierte a CUP. Si no se envía moneda conserva la que tenía
+      // el producto, así que solo la omitimos cuando el precio se fija en CUP.
+      ...(priceCurrency ? { priceCurrency } : {}),
+      ...(priceExchangeRateApplied ? { priceExchangeRateApplied } : {}),
+    },
   );
 
   if (reponse.status === 204) {

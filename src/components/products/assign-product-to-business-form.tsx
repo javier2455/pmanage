@@ -27,11 +27,23 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox"
 import { ProductCombobox } from "@/components/products/product-combobox"
-import { EntryCostCurrency } from "@/components/products/entry-cost-currency"
+import { AmountCurrencyField } from "@/components/products/amount-currency-field"
 import { useExchangeRate } from "@/hooks/use-exchange"
-import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
+import {
+  BASE_CURRENCY,
+  convertToBase,
+  currencyLabel,
+  formatMoney,
+  getAvailableCurrencies,
+  getCurrencyRate,
+  roundMoney,
+} from "@/lib/currency"
 import { mapCurrencyError } from "@/lib/currency-errors"
-import { AssignProductToBusinessFormData, assignProductToBusinessSchema } from "@/lib/validations/products"
+import {
+  AssignProductToBusinessFormData,
+  assignProductToBusinessSchema,
+  MAX_PRODUCT_PRICE,
+} from "@/lib/validations/products"
 import { Product } from "@/lib/types/product"
 
 type CategoryOption = { id: string; name: string }
@@ -81,12 +93,14 @@ export function AssignProductToBusinessForm() {
       stock: 0,
       stockAlertThreshold: null,
       currency: BASE_CURRENCY,
+      priceInputCurrency: BASE_CURRENCY,
       registerAsExpense: false,
     },
   })
 
   const selectedProductId = watch("productId")
   const entryPriceValue = watch("entryPrice")
+  const priceValue = watch("price")
 
   async function onSubmit(data: AssignProductToBusinessFormData) {
     if (!activeBusinessId) {
@@ -109,6 +123,29 @@ export function AssignProductToBusinessForm() {
     const selectedCurrency = data.currency ?? BASE_CURRENCY
     const rate = getCurrencyRate(exchange, selectedCurrency)
 
+    // El precio de venta se envía en la moneda en que se cotiza; el backend lo
+    // convierte a CUP con `priceExchangeRateApplied`, igual que hace con el
+    // costo. Ver docs/moneda-precio-venta.md.
+    const priceCurrency = data.priceInputCurrency ?? BASE_CURRENCY
+    const priceRate = getCurrencyRate(exchange, priceCurrency)
+    // El backend rechazaría la moneda sin tasa, pero avisamos antes de enviar
+    // para no gastar un viaje y poder señalar el campo.
+    if (priceRate == null) {
+      setError("price", {
+        message: `La moneda ${currencyLabel(priceCurrency)} no tiene tasa configurada. Configúrala en Tasas de cambio o fija el precio en ${currencyLabel(BASE_CURRENCY)}.`,
+      })
+      return
+    }
+    // El tope del schema se aplica a lo escrito; lo que se guarda es el
+    // equivalente en CUP, así que se valida ese (200 USD son 135,000 CUP).
+    const priceInBase = roundMoney(convertToBase(data.price, priceCurrency, exchange))
+    if (priceInBase > MAX_PRODUCT_PRICE) {
+      setError("price", {
+        message: `El precio equivale a ${formatMoney(priceInBase, BASE_CURRENCY)} y el máximo es ${formatMoney(MAX_PRODUCT_PRICE, BASE_CURRENCY)}.`,
+      })
+      return
+    }
+
     try {
       await createProductInBusinessMutation.mutateAsync({
         businessId: activeBusinessId,
@@ -119,7 +156,11 @@ export function AssignProductToBusinessForm() {
         categoryId: data.categoryId ?? null,
         unit: product.unit,
         imageUrl: product.imageUrl ?? undefined,
+        // En la moneda cotizada; el backend lo convierte y guarda en CUP.
         price: data.price,
+        priceCurrency,
+        priceExchangeRateApplied:
+          priceCurrency !== BASE_CURRENCY ? priceRate : undefined,
         entryPrice: data.entryPrice,
         stock: data.stock,
         // Solo aplica para usuarios Pro; el campo está oculto para el resto.
@@ -309,11 +350,11 @@ export function AssignProductToBusinessForm() {
             control={control}
             name="currency"
             render={({ field }) => (
-              <EntryCostCurrency
+              <AmountCurrencyField
                 currency={field.value ?? BASE_CURRENCY}
                 onCurrencyChange={field.onChange}
                 availableCurrencies={availableCurrencies}
-                entryPrice={Number(entryPriceValue) || 0}
+                amount={Number(entryPriceValue) || 0}
                 exchangeRate={exchange}
               />
             )}
@@ -348,11 +389,11 @@ export function AssignProductToBusinessForm() {
           </div>
         </div>
 
-        {/* Precio de venta, Stock */}
-        <div className="grid gap-4 sm:grid-cols-2 mb-6">
+        {/* Precio de venta + moneda en la que se cobra */}
+        <div className="grid gap-4 sm:grid-cols-2 mb-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor="price" className="text-card-foreground">
-              Precio <span className="text-destructive">*</span>
+              Precio de venta <span className="text-destructive">*</span>
             </Label>
             <Input
               id="price"
@@ -367,6 +408,31 @@ export function AssignProductToBusinessForm() {
               <p className="text-xs text-destructive">{errors.price.message}</p>
             )}
           </div>
+          <Controller
+            control={control}
+            name="priceInputCurrency"
+            render={({ field }) => (
+              <AmountCurrencyField
+                id="price-currency"
+                label="Moneda del precio"
+                currency={field.value ?? BASE_CURRENCY}
+                onCurrencyChange={field.onChange}
+                availableCurrencies={availableCurrencies}
+                amount={Number(priceValue) || 0}
+                exchangeRate={exchange}
+              />
+            )}
+          />
+        </div>
+        <p className="mb-6 text-xs text-muted-foreground">
+          Si cobras este producto en otra moneda, elígela aquí: se guarda su
+          equivalente en {currencyLabel(BASE_CURRENCY)} con la tasa de hoy, que es
+          el que usan las ventas, el margen y el costo medio. Al cambiar la tasa
+          tendrás que revisar el precio.
+        </p>
+
+        {/* Stock */}
+        <div className="grid gap-4 sm:grid-cols-2 mb-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="stock" className="text-card-foreground">
               Stock <span className="text-destructive">*</span>

@@ -34,9 +34,21 @@ import {
     useUpdateBusinessProductPriceMutation,
 } from "@/hooks/use-product"
 import { useGetAllProductCategoriesQuery } from "@/hooks/use-product-categories"
+import { useExchangeRate } from "@/hooks/use-exchange"
+import { AmountCurrencyField } from "@/components/products/amount-currency-field"
+import {
+    BASE_CURRENCY,
+    convertToBase,
+    currencyLabel,
+    formatMoney,
+    getAvailableCurrencies,
+    getCurrencyRate,
+    roundMoney,
+} from "@/lib/currency"
 import {
     EditBusinessProductFormData,
     editBusinessProductSchema,
+    MAX_PRODUCT_PRICE,
 } from "@/lib/validations/products"
 
 interface EditBusinessProductDialogProps {
@@ -51,11 +63,13 @@ interface EditBusinessProductDialogProps {
 
 type CategoryOption = { id: string; name: string }
 
+/**
+ * Los precios del catálogo se guardan en CUP; formatearlos como pesos
+ * colombianos era solo un resto del formato por defecto y confundía justo aquí,
+ * donde ahora conviven dos monedas.
+ */
 function formatCurrency(value: number) {
-    return new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-    }).format(value)
+    return formatMoney(value, BASE_CURRENCY)
 }
 
 export function EditBusinessProductDialog({
@@ -70,6 +84,11 @@ export function EditBusinessProductDialog({
     const { activeBusinessId } = useBusiness()
     const updatePriceMutation = useUpdateBusinessProductPriceMutation()
     const updateCategoryMutation = useUpdateBusinessProductCategoryMutation()
+    // Tasas del negocio para poder fijar el precio en otra moneda. El precio se
+    // persiste siempre en CUP. Ver docs/moneda-precio-venta.md.
+    const { data: exchangeRateData } = useExchangeRate(activeBusinessId ?? "")
+    const exchange = exchangeRateData?.data
+    const availableCurrencies = getAvailableCurrencies(exchange)
 
     // La categoría vive en el BusinessProduct; se edita aquí. Ver docs/category.md.
     const { data: categoriesData, isLoading: isLoadingCategories } =
@@ -91,17 +110,34 @@ export function EditBusinessProductDialog({
         formState: { errors },
     } = useForm<EditBusinessProductFormData>({
         resolver: zodResolver(editBusinessProductSchema),
-        defaultValues: { price: currentPrice, categoryId: currentCategoryId },
+        defaultValues: {
+            price: currentPrice,
+            priceInputCurrency: BASE_CURRENCY,
+            categoryId: currentCategoryId,
+        },
     })
 
     React.useEffect(() => {
-        if (open) reset({ price: currentPrice, categoryId: currentCategoryId })
+        if (open)
+            reset({
+                // El precio guardado está en CUP, así que el diálogo abre siempre
+                // en la moneda base: `priceCurrency` del backend describe el
+                // importe guardado (CUP), no la moneda en la que se cotizó.
+                price: currentPrice,
+                priceInputCurrency: BASE_CURRENCY,
+                categoryId: currentCategoryId,
+            })
     }, [open, currentPrice, currentCategoryId, reset])
 
     const watchedPrice = watch("price")
+    const priceCurrency = watch("priceInputCurrency") ?? BASE_CURRENCY
+    const priceRate = getCurrencyRate(exchange, priceCurrency)
+    // El precio nuevo, ya en CUP: es la única forma de compararlo con el actual.
     const newPrice =
-        typeof watchedPrice === "number" && !Number.isNaN(watchedPrice)
-            ? watchedPrice
+        typeof watchedPrice === "number" &&
+        !Number.isNaN(watchedPrice) &&
+        priceRate !== null
+            ? roundMoney(convertToBase(watchedPrice, priceCurrency, exchange))
             : undefined
     const delta =
         newPrice !== undefined && newPrice !== currentPrice
@@ -115,7 +151,28 @@ export function EditBusinessProductDialog({
 
     async function onSubmit(formData: EditBusinessProductFormData) {
         const nextCategoryId = formData.categoryId ?? null
-        const priceChanged = formData.price !== currentPrice
+        const selectedCurrency = formData.priceInputCurrency ?? BASE_CURRENCY
+        const rate = getCurrencyRate(exchange, selectedCurrency)
+        // El backend rechaza la moneda sin tasa; avisamos antes de enviar para
+        // poder señalar el campo.
+        if (rate === null) {
+            setError("price", {
+                message: `La moneda ${currencyLabel(selectedCurrency)} no tiene tasa configurada. Configúrala en Tasas de cambio o fija el precio en ${currencyLabel(BASE_CURRENCY)}.`,
+            })
+            return
+        }
+        // El endpoint guarda el precio en CUP; calculamos el equivalente para
+        // comparar con el actual y validar el tope, pero se envía sin convertir.
+        const nextPrice = roundMoney(
+            convertToBase(formData.price, selectedCurrency, exchange),
+        )
+        if (nextPrice > MAX_PRODUCT_PRICE) {
+            setError("price", {
+                message: `El precio equivale a ${formatCurrency(nextPrice)} y el máximo es ${formatCurrency(MAX_PRODUCT_PRICE)}.`,
+            })
+            return
+        }
+        const priceChanged = nextPrice !== currentPrice
         const categoryChanged = nextCategoryId !== (currentCategoryId ?? null)
 
         if (!priceChanged && !categoryChanged) {
@@ -130,6 +187,9 @@ export function EditBusinessProductDialog({
                 await updatePriceMutation.mutateAsync({
                     businessProductId,
                     price: formData.price,
+                    priceCurrency: selectedCurrency,
+                    priceExchangeRateApplied:
+                        selectedCurrency !== BASE_CURRENCY ? rate : undefined,
                     businessId: activeBusinessId ?? "",
                     productId,
                 })
@@ -208,19 +268,37 @@ export function EditBusinessProductDialog({
                     onSubmit={handleSubmit(onSubmit)}
                     className="flex flex-col gap-3"
                 >
-                    <div className="flex flex-col gap-2">
-                        <Label htmlFor="product-price" className="text-card-foreground">
-                            Precio <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="product-price"
-                            type="number"
-                            min={1}
-                            step="0.01"
-                            placeholder="0.00"
-                            autoFocus
-                            {...register("price", { valueAsNumber: true })}
-                            aria-invalid={errors.price ? "true" : "false"}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="product-price" className="text-card-foreground">
+                                Precio <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="product-price"
+                                type="number"
+                                min={1}
+                                step="0.01"
+                                placeholder="0.00"
+                                autoFocus
+                                {...register("price", { valueAsNumber: true })}
+                                aria-invalid={errors.price ? "true" : "false"}
+                            />
+                        </div>
+                        {/* Moneda en la que se cobra: el precio se guarda convertido a CUP. */}
+                        <Controller
+                            control={control}
+                            name="priceInputCurrency"
+                            render={({ field }) => (
+                                <AmountCurrencyField
+                                    id="product-price-currency"
+                                    label="Moneda del precio"
+                                    currency={field.value ?? BASE_CURRENCY}
+                                    onCurrencyChange={field.onChange}
+                                    availableCurrencies={availableCurrencies}
+                                    amount={Number(watchedPrice) || 0}
+                                    exchangeRate={exchange}
+                                />
+                            )}
                         />
                     </div>
 

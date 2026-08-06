@@ -35,7 +35,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { InventoryUpdateStockFormData, makeInventoryUpdateStockSchema } from "@/lib/validations/inventory"
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
 import { useExchangeRate } from "@/hooks/use-exchange"
-import { EntryCostCurrency } from "@/components/products/entry-cost-currency"
+import { AmountCurrencyField } from "@/components/products/amount-currency-field"
 import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
 import { mapCurrencyError } from "@/lib/currency-errors"
 import {
@@ -354,11 +354,11 @@ export function UpdateStockForm() {
                 name="currency"
                 render={({ field }) => (
                   <div data-tour="inventory-create-currency">
-                    <EntryCostCurrency
+                    <AmountCurrencyField
                       currency={field.value ?? BASE_CURRENCY}
                       onCurrencyChange={field.onChange}
                       availableCurrencies={availableCurrencies}
-                      entryPrice={Number(entryPriceValue) || 0}
+                      amount={Number(entryPriceValue) || 0}
                       exchangeRate={exchange}
                     />
                   </div>

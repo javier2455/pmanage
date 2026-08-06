@@ -30,6 +30,15 @@ describe("validateHeaders · estructura de la plantilla", () => {
     expect(hv.ok).toBe(true);
   });
 
+  it("reconoce la columna de moneda del precio por su alias", () => {
+    const hv = validateHeaders(
+      ["nombre", "unidad", "precio", "moneda_venta", "stock"],
+      "catalog+sale",
+    );
+    expect(hv.ok).toBe(true);
+    expect(hv.unknown).toHaveLength(0);
+  });
+
   it("sugiere el encabezado correcto ante un typo", () => {
     const hv = validateHeaders(
       ["nombre", "unidad", "precoi", "stock"],
@@ -122,6 +131,50 @@ describe("validateRow · validación por celda", () => {
       "catalog+sale",
     );
     expect(errors.currency).toContain("no es una moneda válida");
+  });
+
+  it("normaliza la moneda del precio de venta, independiente de la del costo", () => {
+    // Se compra en USD y se cotiza en EURO: son dos columnas distintas y ninguna
+    // debe pisar a la otra.
+    const { item, errors } = validateRow(
+      {
+        productName: "X",
+        productUnit: "kg",
+        price: "20",
+        priceCurrency: "eur",
+        stock: "1",
+        entryPrice: "8",
+        currency: "usd",
+      },
+      "catalog+sale",
+    );
+    expect(errors.priceCurrency).toBeUndefined();
+    expect(item.priceCurrency).toBe("EURO");
+    expect(item.currency).toBe("USD");
+  });
+
+  it("deja la moneda del precio sin definir cuando la columna viene vacía", () => {
+    // Ausente = CUP; es lo que mantiene compatibles las plantillas anteriores.
+    const { item, errors } = validateRow(
+      { productName: "X", productUnit: "kg", price: "10", stock: "1" },
+      "catalog+sale",
+    );
+    expect(errors.priceCurrency).toBeUndefined();
+    expect(item.priceCurrency).toBeUndefined();
+  });
+
+  it("rechaza una moneda de precio no válida", () => {
+    const { errors } = validateRow(
+      {
+        productName: "X",
+        productUnit: "kg",
+        price: "10",
+        priceCurrency: "dolares",
+        stock: "1",
+      },
+      "catalog+sale",
+    );
+    expect(errors.priceCurrency).toContain("no es una moneda válida");
   });
 });
 

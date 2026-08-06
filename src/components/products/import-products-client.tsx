@@ -314,6 +314,10 @@ export function ImportProductsClient() {
           productUnit: str(product.unit),
           categoryName: str(category?.name),
           price: str(bp.price),
+          // El precio guardado ya está en CUP, aunque se cotizara en divisa:
+          // copiar aquí `bp.priceCurrency` haría que el backend lo convirtiera
+          // por segunda vez.
+          priceCurrency: "",
           entryPrice: str(bp.entryPrice),
           currency: "", // el costo guardado ya está en CUP
           stock: "0", // cada negocio tiene su propio inventario

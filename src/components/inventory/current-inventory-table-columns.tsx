@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { StockAlertBadge } from "./stock-alert-badge";
 import { formatStockWithUnit } from "@/lib/units";
-import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
+import { BASE_CURRENCY, currencyLabel, formatMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 export type CurrentInventoryColumnMeta = {
@@ -146,11 +146,39 @@ export function buildCurrentInventoryColumns({
       header: () => (
         <span className="block font-medium text-foreground">Precio</span>
       ),
-      cell: ({ row }) => (
-        <span className="tabular-nums text-foreground">
-          {formatMoney(Number(row.original.price) || 0, BASE_CURRENCY)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const { price, priceCurrency, priceExchangeRateApplied } = row.original;
+        const quoteRate = Number(priceExchangeRateApplied) || 0;
+        // El precio se guarda en CUP. Cuando se fijó en divisa, se muestra debajo
+        // el importe original reconstruido con la tasa que se aplicó: es lo que
+        // el dueño reconoce ("este producto lo vendo a 20 USD").
+        const quoted =
+          priceCurrency && priceCurrency !== BASE_CURRENCY && quoteRate > 0
+            ? (Number(price) || 0) / quoteRate
+            : null;
+        return (
+          <div className="flex flex-col">
+            <span className="tabular-nums text-foreground">
+              {formatMoney(Number(price) || 0, BASE_CURRENCY)}
+            </span>
+            {quoted !== null ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help text-xs text-muted-foreground">
+                    fijado en {formatMoney(quoted, priceCurrency!)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  El precio se fijó en {currencyLabel(priceCurrency!)} con una tasa
+                  de {quoteRate}. Si la tasa cambió desde entonces, el equivalente
+                  de hoy es distinto: revísalo para seguir cobrando lo mismo en esa
+                  moneda.
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       id: "margin",

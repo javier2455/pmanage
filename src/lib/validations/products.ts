@@ -20,12 +20,19 @@ const stockAlertThresholdField = z
   .nullable()
   .optional();
 
+/**
+ * Tope del precio de venta, en CUP. Se exporta porque cuando el precio se fija en
+ * otra moneda hay que validar el importe **ya convertido** a CUP, no el que se
+ * escribió en el campo. Ver docs/moneda-precio-venta.md.
+ */
+export const MAX_PRODUCT_PRICE = 1000000;
+
 export const createProductInBusinessSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
   category: z.string().nullable().optional(),
   unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
-  price: z.number().min(1, "El precio es requerido").max(1000000, "El precio máximo es de 100,000"),
+  price: z.number().min(1, "El precio es requerido").max(MAX_PRODUCT_PRICE, "El precio máximo es de 1,000,000"),
   entryPrice: z.number().min(1, "El precio es requerido").max(1000000, "El precio máximo es de 100,000"),
   stock: z
     .number()
@@ -45,6 +52,11 @@ export const assignProductToBusinessSchema = createProductInBusinessSchema
     // por eso no validamos contra una lista aquí. `exchangeRateApplied` se
     // computa en el submit, no es campo del formulario. Ver docs/multimoneda-productos.md.
     currency: z.string().optional(),
+    // Moneda en la que el usuario TECLEA el precio de venta. No viaja al backend:
+    // el formulario convierte a CUP y envía el resultado. Ojo, no confundir con
+    // `priceCurrency` del backend, que etiqueta el importe ya guardado y por eso
+    // vale siempre CUP. Ver docs/moneda-precio-venta.md.
+    priceInputCurrency: z.string().optional(),
     // Cuando es `true`, el backend crea además un gasto de "Reposición de stock"
     // por `entryPrice × stock` en la moneda original. `entryPrice` y `stock` ya son
     // requeridos (`min(1)`), así que la validación condicional del backend se cumple.
@@ -69,7 +81,11 @@ export const editBusinessProductSchema = z.object({
   price: z
     .number({ error: "Ingresa un precio válido" })
     .positive("El precio debe ser mayor a 0")
-    .max(1000000, "El precio máximo es de 1,000,000"),
+    .max(MAX_PRODUCT_PRICE, "El precio máximo es de 1,000,000"),
+  // Moneda en la que se teclea el precio; el diálogo convierte a CUP antes de
+  // enviarlo, porque el endpoint de precio no acepta moneda (quedó fuera del
+  // cambio 148 del backend). Ver docs/moneda-precio-venta.md.
+  priceInputCurrency: z.string().optional(),
   categoryId: z.string().nullable().optional(),
 });
 

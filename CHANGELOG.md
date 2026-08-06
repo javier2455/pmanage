@@ -11,6 +11,29 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Moneda del precio de venta
+- Al asignar un producto a un negocio y al editar su precio ahora se elige **en qué
+  moneda se cobra**, con preview del equivalente en CUP. Antes solo el **costo**
+  tenía moneda y el precio se interpretaba siempre como CUP: quien vendía a 5 USD
+  guardaba 5 CUP, y el inventario mostraba margen negativo y la venta salía a
+  céntimos.
+- El precio viaja en la moneda cotizada (`priceCurrency` +
+  `priceExchangeRateApplied`) y **el backend lo convierte a CUP al guardarlo**,
+  igual que hace con el costo (migraciones 148 y 149). Todo lo que consume el
+  precio —validación de la venta, margen, costo medio, analytics, cierres— sigue
+  leyendo CUP sin cambios.
+- El inventario muestra el precio en CUP y, si se fijó en divisa, **«fijado en
+  20,00 USD»** debajo, con la tasa aplicada en el tooltip.
+- Una moneda sin tasa configurada **rechaza** la operación en vez de guardar el
+  importe sin convertir.
+- La **importación masiva** gana la columna `moneda_precio` (alias `moneda_venta`),
+  independiente de `moneda`, que sigue describiendo el costo: se puede comprar en
+  una divisa y cotizar en otra. Las plantillas antiguas siguen siendo válidas —sin
+  la columna, el precio se lee como CUP— porque el mapeo es por encabezado.
+- Límite conocido: el precio queda congelado en CUP; si la tasa se mueve hay que
+  reeditarlo. Motivo y plan de aviso automático:
+  [docs/moneda-precio-venta.md](docs/moneda-precio-venta.md).
+
 #### Costeo de inventario FIFO por capas y su cascada
 - El costo de un producto deja de ser un único `entryPrice` que **cada compra
   sobrescribe** y pasa a ser una lista de **lotes** (`InventoryCostLayer`) con lo
@@ -77,6 +100,25 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   [docs/despliegue-negora-manager.md](docs/despliegue-negora-manager.md).
 
 ### Corregido
+
+#### La tasa de transferencia en CUP no se podía usar (backend)
+- Al **guardar** las tasas, la rama que actualiza un negocio con registro previo
+  escribía `cupTransferencia` en vez de `CUP_TRANSFERENCIA`; TypeORM descarta lo
+  que no mapea, así que la tasa volvía a 0 sin ningún error. Como cada negocio
+  nace con un registro en 0, era la rama que se tomaba siempre.
+- Al **leer**, la resolución de tasa del costo repetía el mismo error de nombre, y
+  un costo en transferencia CUP fallaba con «moneda no configurada». Ese mapa
+  duplicado se sustituyó por `extractExchangeRate`, que ya resolvía bien todas las
+  columnas.
+- Dos tests de regresión: el typecheck no ve el fallo porque `Object.assign` acepta
+  cualquier literal. Detalle en `psearch-back` → `migration_doc/149`.
+
+#### Precios formateados como pesos colombianos
+- El diálogo de editar producto mostraba el precio actual y su variación con
+  `Intl.NumberFormat("es-CO", { currency: "COP" })`. Ahora usa `formatMoney` en CUP,
+  la moneda en la que realmente se guardan. Quedan con el mismo formato heredado la
+  tabla de productos, la tarjeta de catálogo, el diálogo de detalles y el historial
+  de precios (ver [docs/moneda-precio-venta.md](docs/moneda-precio-venta.md) §3.6).
 
 #### Abrir "Pruebas del sistema" degradaba la sesión al plan básico
 - El runner in-app corría las suites al montar la vista, y la suite `pro-gates`

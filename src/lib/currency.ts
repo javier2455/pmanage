@@ -177,6 +177,16 @@ export function convertToBase(
 }
 
 /**
+ * Redondea a 2 decimales, la escala de las columnas monetarias del backend
+ * (`decimal(10,2)`). Necesario cuando el frontend es quien convierte a CUP antes
+ * de enviar (precio de venta): `5 × 380.5` puede dar `1902.4999999999998` y el
+ * importe guardado debe ser exactamente el que se previsualizó.
+ */
+export function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/**
  * Convierte un monto de una moneda a otra usando CUP como puente.
  * Útil para previsualizar el `equivalente` de un pago a la moneda base de la venta.
  * Se apoya en `convertToBase`/`convertFromBase`; toda moneda pasa por CUP igual.

@@ -15,6 +15,7 @@ export type ImportColumnKey =
   | "productUnit"
   | "categoryName"
   | "price"
+  | "priceCurrency"
   | "entryPrice"
   | "currency"
   | "stock"
@@ -106,7 +107,17 @@ export const IMPORT_COLUMNS: ImportColumnDef[] = [
     requiredForSale: true,
     type: "number",
     example: "150",
-    help: "Precio de venta en CUP (mayor que 0). Requerido para poner a la venta.",
+    help: "Precio de venta (mayor que 0), en la moneda de la columna 'moneda_precio'. Requerido para poner a la venta.",
+  },
+  {
+    key: "priceCurrency",
+    header: "moneda_precio",
+    aliases: ["moneda_venta", "price_currency", "divisa_precio"],
+    requiredAlways: false,
+    requiredForSale: false,
+    type: "currency",
+    example: "",
+    help: `Moneda del PRECIO DE VENTA (opcional; por defecto CUP). El backend lo guarda convertido a CUP con la tasa del negocio. Válidas: ${IMPORT_CURRENCIES.join(", ")}.`,
   },
   {
     key: "entryPrice",
@@ -396,12 +407,26 @@ export function validateRow(raw: RawRow, target: ImportTarget): RowValidation {
     }
   }
 
+  // Moneda del precio de venta, independiente de la del costo: se compra en una
+  // divisa y se puede cotizar en otra. El backend convierte a CUP al guardar.
+  let priceCurrency: ImportCurrency | undefined;
+  const priceCurrencyRaw = (raw.priceCurrency ?? "").trim();
+  if (priceCurrencyRaw) {
+    const c = normalizeCurrency(priceCurrencyRaw);
+    if (!c) {
+      errors.priceCurrency = `"${priceCurrencyRaw}" no es una moneda válida. Usa una de: ${IMPORT_CURRENCIES.join(", ")}.`;
+    } else {
+      priceCurrency = c;
+    }
+  }
+
   const item: ImportProductItem = {
     productName,
     productDescription: (raw.productDescription ?? "").trim() || undefined,
     productUnit,
     categoryName: (raw.categoryName ?? "").trim() || undefined,
     price,
+    priceCurrency,
     entryPrice,
     currency,
     stock,
@@ -423,6 +448,8 @@ export function toImportItem(item: ImportProductItem): ImportProductItem {
   if (item.entryPrice != null) clean.entryPrice = item.entryPrice;
   // Solo se envía la moneda si difiere de CUP (el backend asume CUP por defecto).
   if (item.currency && item.currency !== "CUP") clean.currency = item.currency;
+  if (item.priceCurrency && item.priceCurrency !== "CUP")
+    clean.priceCurrency = item.priceCurrency;
   if (item.stock != null) clean.stock = item.stock;
   if (item.stockAlertThreshold != null)
     clean.stockAlertThreshold = item.stockAlertThreshold;
@@ -449,6 +476,7 @@ export function templateRows(): string[][] {
     productUnit: "kg",
     categoryName: "Granos",
     price: "150",
+    priceCurrency: "",
     entryPrice: "120",
     currency: "",
     stock: "100",
@@ -460,6 +488,7 @@ export function templateRows(): string[][] {
     productUnit: "L",
     categoryName: "Aceites",
     price: "600",
+    priceCurrency: "",
     entryPrice: "520",
     currency: "",
     stock: "40",

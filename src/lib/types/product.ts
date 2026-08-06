@@ -76,6 +76,19 @@ export type CreateProductInBusinessProps = {
      */
     currency?: string;
     /**
+     * Moneda en la que se cotiza `price` (`CUP`, `USD`, `EURO`…). El backend
+     * convierte a CUP antes de persistir y guarda esta moneda como referencia de
+     * cómo se fijó el precio — mismo patrón que `currency` para el costo.
+     * Ver docs/moneda-precio-venta.md.
+     */
+    priceCurrency?: string;
+    /**
+     * Tasa CUP por 1 unidad de `priceCurrency`. Si se omite, el backend la busca
+     * en `MonetaryExchange`. Se envía la misma que se usó en el preview para que
+     * lo guardado sea exactamente lo previsualizado.
+     */
+    priceExchangeRateApplied?: number;
+    /**
      * Tasa CUP por 1 unidad de `currency`. Si se omite, el backend la busca en
      * `MonetaryExchange` del negocio. El frontend envía la misma tasa que usó
      * para previsualizar el costo convertido.
@@ -158,6 +171,12 @@ export type ImportProductItem = {
     productUnit: ProductUnit;
     categoryName?: string;
     price?: number;
+    /**
+     * Moneda del `price` (venta). `CUP` o ausente = sin conversión. Independiente
+     * de `currency`: se puede comprar en USD y cotizar en CUP. El backend guarda
+     * el precio convertido a CUP. Ver docs/moneda-precio-venta.md.
+     */
+    priceCurrency?: string;
     entryPrice?: number;
     /**
      * Moneda del `entryPrice` (costo). `CUP` o ausente = sin conversión. El backend

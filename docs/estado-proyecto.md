@@ -196,7 +196,12 @@ de `MonetaryExchange`, nunca lista fija).
 - **Compras de inventario (Fase 3):** `currency` + `exchangeRateApplied` en add-stock,
   con preview del costo en CUP ([update-stock-form.tsx](../src/components/inventory/update-stock-form.tsx)).
 - **Asignar producto al negocio:** mismo costo multimoneda, vía el componente
-  compartido `EntryCostCurrency` ([entry-cost-currency.tsx](../src/components/products/entry-cost-currency.tsx)).
+  compartido `AmountCurrencyField` ([amount-currency-field.tsx](../src/components/products/amount-currency-field.tsx)).
+- **Precio de venta multimoneda:** el precio se fija en la moneda en que se cobra y
+  el backend lo persiste convertido a CUP (migraciones 148 + 149), con
+  `priceCurrency` y `priceExchangeRateApplied` como referencia de cómo se fijó —
+  mismo patrón que el costo. Detalle y límite conocido (deriva de la tasa) en
+  [docs/moneda-precio-venta.md](moneda-precio-venta.md).
 - **Tipo de venta + entrega:** `saleType` (`in_store`/`delivery`/`pickup`) con campos
   de delivery condicionales y validación (dirección obligatoria si `delivery`).
 - **Gastos multimoneda:** `currency` en tipos/validación/formulario y visualización
@@ -348,6 +353,11 @@ costo real de lo que aún quedaba de la compra anterior y el margen salía mal.
 > y `expense.amount` conservan la **moneda original** + la tasa aplicada, que es el dato que
 > el usuario reconoce. Al leer estos datos hay que mirar siempre a qué importe describe el
 > campo `currency`.
+>
+> `businessProduct.price` (precio de venta) también se guarda en CUP, pero **sin ninguna
+> columna que diga en qué moneda se fijó**: la conversión la hace el frontend al enviar y
+> se pierde el origen. Consecuencias y qué haría falta en el backend, en
+> [docs/moneda-precio-venta.md](moneda-precio-venta.md).
 
 ### Detalle: Importación masiva de productos (feature 46) — rama `feat-upload-products`
 
