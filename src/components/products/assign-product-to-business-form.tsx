@@ -15,7 +15,6 @@ import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -39,6 +38,7 @@ import {
   AssignProductToBusinessFormData,
   assignProductToBusinessSchema,
   MAX_PRODUCT_PRICE,
+  MIN_MONEY_IN_BASE,
 } from "@/lib/validations/products"
 import { Product } from "@/lib/types/product"
 
@@ -89,7 +89,6 @@ export function AssignProductToBusinessForm() {
       stockAlertThreshold: null,
       currency: BASE_CURRENCY,
       priceInputCurrency: BASE_CURRENCY,
-      registerAsExpense: false,
     },
   })
 
@@ -139,12 +138,30 @@ export function AssignProductToBusinessForm() {
       })
       return
     }
-    // El tope del schema se aplica a lo escrito; lo que se guarda es el
-    // equivalente en CUP, así que se valida ese (200 USD son 135,000 CUP).
+    // Los límites del schema se aplican a lo escrito; lo que se guarda es el
+    // equivalente en CUP, así que se validan sobre ese (200 USD son 135,000 CUP
+    // por arriba; 0,60 USD son 264 CUP por abajo, y son válidos).
     const priceInBase = roundMoney(convertToBase(data.price, priceCurrency, exchange))
     if (priceInBase > MAX_PRODUCT_PRICE) {
       setError("price", {
         message: `El precio equivale a ${formatMoney(priceInBase, BASE_CURRENCY)} y el máximo es ${formatMoney(MAX_PRODUCT_PRICE, BASE_CURRENCY)}.`,
+      })
+      return
+    }
+    if (priceInBase < MIN_MONEY_IN_BASE) {
+      setError("price", {
+        message: `El precio equivale a ${formatMoney(priceInBase, BASE_CURRENCY)} y el mínimo que se puede guardar es ${formatMoney(MIN_MONEY_IN_BASE, BASE_CURRENCY)}.`,
+      })
+      return
+    }
+
+    // Ídem para el costo, que también puede teclearse en divisa.
+    const entryPriceInBase = roundMoney(
+      convertToBase(data.entryPrice, selectedCurrency, exchange),
+    )
+    if (entryPriceInBase < MIN_MONEY_IN_BASE) {
+      setError("entryPrice", {
+        message: `El costo equivale a ${formatMoney(entryPriceInBase, BASE_CURRENCY)} y el mínimo que se puede guardar es ${formatMoney(MIN_MONEY_IN_BASE, BASE_CURRENCY)}.`,
       })
       return
     }
@@ -173,7 +190,6 @@ export function AssignProductToBusinessForm() {
         currency: selectedCurrency,
         exchangeRateApplied:
           selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
-        registerAsExpense: data.registerAsExpense,
       })
 
       sileo.success({
@@ -186,22 +202,6 @@ export function AssignProductToBusinessForm() {
         description: "El producto se ha asignado a tu negocio correctamente",
       })
 
-      // Confirmación adicional del gasto auto-registrado (en la moneda original).
-      if (data.registerAsExpense) {
-        const expenseAmount = (data.entryPrice * data.stock).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-        sileo.success({
-          title: "Gasto registrado",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
-          description: `${expenseAmount} ${selectedCurrency} en Reposición de stock`,
-        })
-      }
       reset()
       setSelectedProduct(null)
       router.push("/dashboard/business/products")
@@ -322,7 +322,7 @@ export function AssignProductToBusinessForm() {
             <Input
               id="entry-price"
               type="number"
-              min={1}
+              min={0}
               step="0.01"
               placeholder="0.00"
               {...register("entryPrice", { valueAsNumber: true })}
@@ -347,34 +347,6 @@ export function AssignProductToBusinessForm() {
           />
         </div>
 
-        {/* Registrar la entrada como gasto de reposición de stock */}
-        <div className="mb-6 flex items-start gap-2" data-tour="product-assign-as-expense">
-          <Controller
-            control={control}
-            name="registerAsExpense"
-            render={({ field }) => (
-              <Checkbox
-                id="register-as-expense"
-                checked={!!field.value}
-                onCheckedChange={(checked) => field.onChange(checked === true)}
-                className="mt-0.5"
-              />
-            )}
-          />
-          <div className="flex flex-col gap-1">
-            <Label
-              htmlFor="register-as-expense"
-              className="cursor-pointer text-card-foreground"
-            >
-              Registrar como gasto de reposición de stock
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Crea automáticamente un gasto en la categoría «Reposición de stock»
-              por el costo de entrada × stock.
-            </p>
-          </div>
-        </div>
-
         {/* Precio de venta + moneda en la que se cobra */}
         <div className="grid gap-4 sm:grid-cols-2 mb-2">
           <div className="flex flex-col gap-2">
@@ -384,7 +356,7 @@ export function AssignProductToBusinessForm() {
             <Input
               id="price"
               type="number"
-              min={1}
+              min={0}
               step="0.01"
               placeholder="0.00"
               {...register("price", { valueAsNumber: true })}

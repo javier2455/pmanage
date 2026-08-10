@@ -27,13 +27,32 @@ const stockAlertThresholdField = z
  */
 export const MAX_PRODUCT_PRICE = 1000000;
 
+/**
+ * Mínimo de un importe monetario, en CUP. Es la resolución de las columnas
+ * `decimal(10,2)` del backend: por debajo, lo que se guardaría es 0.
+ *
+ * Los campos de dinero solo exigen "> 0" aquí; este mínimo lo comprueba el
+ * formulario sobre el importe **ya convertido a CUP**, porque se pueden teclear
+ * en divisa y 0,60 USD son ~264 CUP, no 0,60. Mismo criterio que el tope
+ * (`MAX_PRODUCT_PRICE`). Ver docs/multimoneda-productos.md.
+ */
+export const MIN_MONEY_IN_BASE = 0.01;
+
 export const createProductInBusinessSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
   category: z.string().nullable().optional(),
   unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
-  price: z.number().min(1, "El precio es requerido").max(MAX_PRODUCT_PRICE, "El precio máximo es de 1,000,000"),
-  entryPrice: z.number().min(1, "El precio es requerido").max(1000000, "El precio máximo es de 100,000"),
+  // "> 0" y no "≥ 1": el importe puede cotizarse en divisa, donde 1 unidad son
+  // cientos de CUP. El mínimo real se valida sobre el equivalente en CUP.
+  price: z
+    .number({ message: "El precio es requerido" })
+    .positive("El precio debe ser mayor que 0")
+    .max(MAX_PRODUCT_PRICE, "El precio máximo es de 1,000,000"),
+  entryPrice: z
+    .number({ message: "El costo es requerido" })
+    .positive("El costo debe ser mayor que 0")
+    .max(MAX_PRODUCT_PRICE, "El costo máximo es de 1,000,000"),
   stock: z
     .number()
     .min(1, "El monto es requerido")
@@ -64,10 +83,9 @@ export const assignProductToBusinessSchema = createProductInBusinessSchema
     // `priceCurrency` del backend, que etiqueta el importe ya guardado y por eso
     // vale siempre CUP. Ver docs/moneda-precio-venta.md.
     priceInputCurrency: z.string().optional(),
-    // Cuando es `true`, el backend crea además un gasto de "Reposición de stock"
-    // por `entryPrice × stock` en la moneda original. `entryPrice` y `stock` ya son
-    // requeridos (`min(1)`), así que la validación condicional del backend se cumple.
-    registerAsExpense: z.boolean().optional(),
+    // Sin `registerAsExpense`: el alta individual no crea el gasto de
+    // "Reposición de stock" (el endpoint no lo soporta). Pendiente documentado
+    // en docs/pendientes-gasto-reposicion-al-asignar.md.
   });
 
 export const editProductSchema = z.object({

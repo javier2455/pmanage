@@ -81,7 +81,6 @@ export async function createInBusiness(
     stockAlertThreshold,
     currency,
     exchangeRateApplied,
-    registerAsExpense,
   } = credentials;
   const { data } = await apiClient.post(
     productRoutes.createProductInBusiness(credentials.businessId),
@@ -100,9 +99,6 @@ export async function createInBusiness(
           : {}),
       // Solo se envía si el usuario (Pro) definió un umbral.
       ...(stockAlertThreshold != null ? { stockAlertThreshold } : {}),
-      // Auto-registro del gasto de reposición de stock. Solo se envía si el
-      // usuario lo marcó; el backend valida `entryPrice` y `stock` > 0.
-      ...(registerAsExpense ? { registerAsExpense: true } : {}),
       // Multimoneda: solo si el costo se ingresó en una moneda distinta a CUP.
       // El backend convierte `entryPrice × exchangeRateApplied` a CUP.
       ...(currency && currency !== "CUP"

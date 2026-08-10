@@ -113,6 +113,19 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+#### Costos y precios en divisa por debajo de 1 no se podían registrar
+- Comprar a **0,60 USD la unidad** (un lote de bolsas de arroz, por ejemplo) se
+  rechazaba con «el valor debe ser mayor que 1». El mínimo se aplicaba al número
+  tecleado sin mirar la moneda: nació pensando en CUP, pero en divisa equivalía a
+  exigir 1 USD (~440 CUP) de costo mínimo. Afectaba al costo y al precio de venta
+  al asignar un producto, y al costo del lote en la entrada de stock.
+- Ahora los importes solo exigen **ser mayores que 0** y el mínimo real se valida
+  sobre el **equivalente en CUP** —igual que ya se validaba el tope—, con el
+  corte en 0,01 CUP, que es la resolución de las columnas `decimal(10,2)` del
+  backend. El mensaje dice a cuánto equivale lo escrito.
+- El campo sigue siendo el costo **por unidad**; la compra por cantidad se
+  refleja en `costo × stock` (0,60 USD × 24 bolsas = 14,40 USD).
+
 #### La tasa de transferencia en CUP no se podía usar (backend)
 - Al **guardar** las tasas, la rama que actualiza un negocio con registro previo
   escribía `cupTransferencia` en vez de `CUP_TRANSFERENCIA`; TypeORM descarta lo

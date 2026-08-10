@@ -264,14 +264,6 @@ export const SECTION_TOURS: TourDefinition[] = [
           "El precio de entrada es lo que tú pagaste. Con esto calculamos después tu ganancia real, no solo lo que facturaste.",
       },
       {
-        id: "asignar-as-expense",
-        element: '[data-tour="product-assign-as-expense"]',
-        onMissing: "skip",
-        title: "¿Anotarlo como gasto?",
-        description:
-          "Marca la casilla si acabas de comprar esta mercancía: te creamos el gasto en «Reposición de stock» sin que tengas que ir a Gastos.",
-      },
-      {
         id: "asignar-price-stock",
         element: "#price",
         title: "Precio y cantidad",

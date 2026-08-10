@@ -36,7 +36,15 @@ import { InventoryUpdateStockFormData, makeInventoryUpdateStockSchema } from "@/
 import { useAddStockToProductMutation } from "@/hooks/use-inventory"
 import { useExchangeRate } from "@/hooks/use-exchange"
 import { AmountCurrencyField } from "@/components/products/amount-currency-field"
-import { BASE_CURRENCY, getAvailableCurrencies, getCurrencyRate } from "@/lib/currency"
+import {
+  BASE_CURRENCY,
+  convertToBase,
+  formatMoney,
+  getAvailableCurrencies,
+  getCurrencyRate,
+  roundMoney,
+} from "@/lib/currency"
+import { MIN_MONEY_IN_BASE } from "@/lib/validations/products"
 import { mapCurrencyError } from "@/lib/currency-errors"
 import {
   DEFAULT_LOW_STOCK_THRESHOLD,
@@ -111,6 +119,19 @@ export function UpdateStockForm() {
     // moneda y la misma tasa usada para previsualizar el costo en CUP.
     const selectedCurrency = data.currency ?? BASE_CURRENCY
     const rate = getCurrencyRate(exchange, selectedCurrency)
+
+    // El schema solo exige "> 0" porque el costo puede teclearse en divisa; el
+    // mínimo real es el del importe convertido, que es lo que se guarda.
+    const entryPriceInBase = roundMoney(
+      convertToBase(data.entryPrice, selectedCurrency, exchange),
+    )
+    if (entryPriceInBase < MIN_MONEY_IN_BASE) {
+      setError("entryPrice", {
+        message: `El costo equivale a ${formatMoney(entryPriceInBase, BASE_CURRENCY)} y el mínimo que se puede guardar es ${formatMoney(MIN_MONEY_IN_BASE, BASE_CURRENCY)}.`,
+      })
+      return
+    }
+
     try {
       const response = await addStockToProductMutation.mutateAsync({
         businessId: activeBusinessId ?? "",
@@ -334,7 +355,7 @@ export function UpdateStockForm() {
                 <Input
                   id="entry-price"
                   type="number"
-                  min={1}
+                  min={0}
                   step="0.01"
                   placeholder="0.00"
                   {...register("entryPrice", { valueAsNumber: true })}

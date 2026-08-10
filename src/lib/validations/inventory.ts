@@ -24,7 +24,13 @@ export function makeInventoryUpdateStockSchema(allowDecimals = false) {
 
   return z.object({
     quantity,
-    entryPrice: z.number().min(1, "El precio de entrada es requerido").max(1000000, "El precio de entrada máximo es de 1,000,000"),
+    // "> 0" y no "≥ 1": el costo puede ingresarse en divisa (0,60 USD son ~264
+    // CUP). El mínimo real lo comprueba el formulario sobre el equivalente en
+    // CUP, con `MIN_MONEY_IN_BASE`.
+    entryPrice: z
+      .number({ message: "El precio de entrada es requerido" })
+      .positive("El precio de entrada debe ser mayor que 0")
+      .max(1000000, "El precio de entrada máximo es de 1,000,000"),
     productId: z.string().min(1, "El producto es requerido"),
     description: z.string().min(1, "La descripción es requerida"),
     providerId: z.string().uuid().nullable().optional(),
