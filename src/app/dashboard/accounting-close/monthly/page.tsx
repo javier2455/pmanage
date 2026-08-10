@@ -301,7 +301,6 @@ export default function MonthlyPage() {
         businessId={activeBusinessId}
         period="monthly"
         serverTotals={serverTotals}
-        costSummary={data?.costSummary}
         tips={data?.tips}
       />
     </div>

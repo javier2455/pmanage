@@ -4,8 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { PhoneInput } from "@/components/ui/phone-input"
-import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -18,22 +16,11 @@ import { ShoppingCart, Minus, Plus, Trash2, X, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { isIntegerUnit, parseDecimalInput } from "@/lib/units"
 import { currencyLabel, formatMoney } from "@/lib/currency"
-import type { SaleType } from "@/lib/types/sales"
 
-/** Datos de contacto/entrega de la venta (solo se usan en `delivery`). */
-export interface SaleDeliveryInfo {
-  address: string
-  contactPhone: string
-  contactName: string
-  /** Precio de la mensajería, en la moneda de la venta. Cadena cruda del input (se parsea al enviar). */
-  fee: string
-}
-
-const SALE_TYPE_OPTIONS: { value: SaleType; label: string }[] = [
-  { value: "in_store", label: "En tienda" },
-  { value: "delivery", label: "A domicilio" },
-  { value: "pickup", label: "Para recoger" },
-]
+// El selector de tipo de venta se retiró: todas las ventas se registran
+// `in_store`. A domicilio y para recoger no llegaron a tener flujo propio (no
+// hay reparto, ni estado de entrega, ni aviso al cliente), así que pedirlo solo
+// ensuciaba el dato. Ver docs/pendientes-tipos-de-venta.md.
 
 export interface SaleCartItem {
   productId: string
@@ -56,14 +43,6 @@ interface SaleCartPanelProps {
   rate: number
   availableCurrencies: string[]
   onCurrencyChange: (currency: string) => void
-  /** Tipo de venta (en tienda / domicilio / recoger). */
-  saleType: SaleType
-  onSaleTypeChange: (saleType: SaleType) => void
-  /** El negocio tiene delivery habilitado (`acceptsMessaging`). Si es `false`, la opción "A domicilio" se deshabilita. */
-  acceptsDelivery: boolean
-  /** Datos de entrega; solo relevantes cuando `saleType === "delivery"`. */
-  delivery: SaleDeliveryInfo
-  onDeliveryChange: (patch: Partial<SaleDeliveryInfo>) => void
   onSetQuantity: (productId: string, quantity: number) => void
   onRemove: (productId: string) => void
   /** Registrar venta sin cobrar. */
@@ -82,11 +61,6 @@ export function SaleCartPanel({
   rate,
   availableCurrencies,
   onCurrencyChange,
-  saleType,
-  onSaleTypeChange,
-  acceptsDelivery,
-  delivery,
-  onDeliveryChange,
   onSetQuantity,
   onRemove,
   onSubmit,
@@ -106,13 +80,8 @@ export function SaleCartPanel({
   // tasa (cuántas CUP vale 1 unidad). Transferencia va con tasa < 1 (0.8333 = +20%),
   // así 100 CUP / 0.8333 ≈ 120 transferencia; misma fórmula que el resto.
   const toCurrency = (cupValue: number) => cupValue / (rate || 1)
-  // La tarifa se ingresa directamente en la moneda de la venta (no en CUP).
-  const parsedFee = parseDecimalInput(delivery.fee)
-  const deliveryFee =
-    saleType === "delivery" && !Number.isNaN(parsedFee) ? parsedFee : 0
-  // Subtotal de productos en la moneda elegida; el total suma la mensajería.
-  const productsTotal = toCurrency(total)
-  const grandTotal = productsTotal + deliveryFee
+  // Sin mensajería que sumar, el total son los productos en la moneda elegida.
+  const grandTotal = toCurrency(total)
 
   return (
     <Card className={cn("flex h-fit flex-col", className)} data-tour="sales-cart-panel">
@@ -248,132 +217,6 @@ export function SaleCartPanel({
               })}
             </div>
 
-            {/* Tipo de venta */}
-            <div className="flex flex-col gap-3 border-t border-border pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-card-foreground">
-                  Tipo de venta
-                </span>
-                <Select
-                  value={saleType}
-                  onValueChange={(v) => onSaleTypeChange(v as SaleType)}
-                  disabled={isPending}
-                >
-                  <SelectTrigger size="sm" className="min-w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SALE_TYPE_OPTIONS.map((opt) => (
-                      <SelectItem
-                        key={opt.value}
-                        value={opt.value}
-                        disabled={opt.value === "delivery" && !acceptsDelivery}
-                      >
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Aviso cuando el negocio no ofrece delivery */}
-              {!acceptsDelivery && (
-                <p className="text-xs text-muted-foreground">
-                  Este negocio no acepta delivery. Habilítalo en los datos del
-                  negocio para vender a domicilio.
-                </p>
-              )}
-
-              {/* Datos de entrega — solo para ventas a domicilio */}
-              {saleType === "delivery" && acceptsDelivery && (
-                <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
-                  <div className="flex flex-col gap-1.5">
-                    <Label
-                      htmlFor="delivery-address"
-                      className="text-xs text-card-foreground"
-                    >
-                      Dirección de entrega{" "}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="delivery-address"
-                      value={delivery.address}
-                      onChange={(e) =>
-                        onDeliveryChange({ address: e.target.value })
-                      }
-                      placeholder="Calle, número, referencia..."
-                      disabled={isPending}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label
-                      htmlFor="delivery-name"
-                      className="text-xs text-card-foreground"
-                    >
-                      Nombre de contacto{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        (opcional)
-                      </span>
-                    </Label>
-                    <Input
-                      id="delivery-name"
-                      value={delivery.contactName}
-                      onChange={(e) =>
-                        onDeliveryChange({ contactName: e.target.value })
-                      }
-                      placeholder="A quién se entrega"
-                      disabled={isPending}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label
-                      htmlFor="delivery-phone"
-                      className="text-xs text-card-foreground"
-                    >
-                      Teléfono de contacto{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        (opcional)
-                      </span>
-                    </Label>
-                    <PhoneInput
-                      value={delivery.contactPhone}
-                      onChange={(value) =>
-                        onDeliveryChange({ contactPhone: value })
-                      }
-                      defaultCountry="cu"
-                      placeholder="5555 5555"
-                      disabled={isPending}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label
-                      htmlFor="delivery-fee"
-                      className="text-xs text-card-foreground"
-                    >
-                      Precio de la mensajería{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        ({currencyLabel(currency)})
-                      </span>
-                    </Label>
-                    <Input
-                      id="delivery-fee"
-                      type="text"
-                      inputMode="decimal"
-                      value={delivery.fee}
-                      onChange={(e) => {
-                        const parsed = parseDecimalInput(e.target.value)
-                        if (e.target.value === "" || !Number.isNaN(parsed)) {
-                          onDeliveryChange({ fee: e.target.value })
-                        }
-                      }}
-                      placeholder="0"
-                      disabled={isPending}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Moneda de la venta */}
             <div
               className="flex items-center justify-between border-t border-border pt-4"
@@ -393,24 +236,6 @@ export function SaleCartPanel({
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Desglose: productos + mensajería (solo cuando hay tarifa) */}
-            {deliveryFee > 0 && (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Productos</span>
-                  <span className="tabular-nums text-card-foreground">
-                    {formatMoney(productsTotal, currency)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Mensajería</span>
-                  <span className="tabular-nums text-card-foreground">
-                    {formatMoney(deliveryFee, currency)}
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Total */}
             <div className="flex items-start justify-between gap-3">

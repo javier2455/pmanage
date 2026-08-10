@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ import {
   useRegisterPaymentsMutation,
 } from "@/hooks/use-sales";
 import {
+  amountToCoverBase,
   BASE_CURRENCY,
   convertBetween,
   currencyLabel,
@@ -54,6 +56,9 @@ interface PaymentRow {
   metodo: PaymentMethod;
   referencia: string;
 }
+
+/** Qué se hizo con lo que el cliente entregó de más. */
+type DestinoExcedente = "vuelto" | "propina";
 
 interface PaymentDialogProps {
   saleId: string;
@@ -126,17 +131,26 @@ export function PaymentDialog({
   // `false` mientras el cajero no ha tocado el vuelto: así el campo sigue el
   // excedente conforme teclea el monto, en vez de quedarse en el primer valor.
   const [vueltoEditado, setVueltoEditado] = React.useState(false);
+  // Qué se hace con lo que sobra. "vuelto" es lo normal y va marcado de entrada:
+  // el excedente se devuelve salvo que el cliente diga lo contrario.
+  const [destinoExcedente, setDestinoExcedente] =
+    React.useState<DestinoExcedente>("vuelto");
 
-  // Prefill al abrir: usa la `sugerencia` del backend o el pendiente en moneda base.
+  /**
+   * Prefill al abrir: la moneda de la VENTA y lo que falta por cobrar.
+   *
+   * No se usa `summary.sugerencia` del backend: para una venta en CUP propone
+   * pagar en USD con el importe redondeado hacia arriba, así que el diálogo
+   * abría en otra moneda y con un excedente de céntimos que nadie pidió.
+   */
   React.useEffect(() => {
     if (!isOpen || !summary) return;
     setRows((prev) => {
       if (prev.length > 0) return prev;
-      const sug = summary.sugerencia;
       return [
         {
-          moneda: sug?.moneda ?? monedaBase,
-          monto: sug ? String(sug.monto) : pendiente > 0 ? String(pendiente) : "",
+          moneda: monedaBase,
+          monto: pendiente > 0 ? String(pendiente) : "",
           metodo: "cash",
           referencia: "",
         },
@@ -154,6 +168,7 @@ export function PaymentDialog({
   function resetVuelto() {
     setMontoVuelto("");
     setVueltoEditado(false);
+    setDestinoExcedente("vuelto");
   }
 
   function handleOpenChange(value: boolean) {
@@ -217,23 +232,29 @@ export function PaymentDialog({
   }, [montoVuelto, monedaVuelto, monedaBase, exchange]);
 
   // Mientras el cajero no lo toque, el vuelto propuesto es el excedente entero:
-  // devolverlo todo es lo que pasa en la mayoría de los cobros.
+  // devolverlo todo es lo que pasa en la mayoría de los cobros. Hacia ABAJO,
+  // porque devolver más de lo que sobró no es un vuelto válido.
   const vueltoSugerido = React.useMemo(
-    () => Math.round(aMonedaVuelto(excedente) * 100) / 100,
+    () => Math.floor(aMonedaVuelto(excedente) * 100) / 100,
     [aMonedaVuelto, excedente],
   );
 
   React.useEffect(() => {
     if (!hayExcedente) {
       // Dejó de sobrar dinero (bajó el monto): el vuelto ya no aplica.
-      if (montoVuelto !== "") resetVuelto();
+      if (montoVuelto !== "" || destinoExcedente !== "vuelto") resetVuelto();
+      return;
+    }
+    if (destinoExcedente === "propina") {
+      // Se queda todo el negocio: no hay importe que devolver.
+      if (montoVuelto !== "") setMontoVuelto("");
       return;
     }
     if (!vueltoEditado) {
       setMontoVuelto(vueltoSugerido > 0 ? String(vueltoSugerido) : "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hayExcedente, vueltoSugerido, vueltoEditado]);
+  }, [hayExcedente, vueltoSugerido, vueltoEditado, destinoExcedente]);
 
   // Lo que no se devuelve se queda en el negocio: propina, o sobrante porque no
   // había cambio exacto. Nunca negativo: si el vuelto se pasa, se bloquea antes.
@@ -254,12 +275,13 @@ export function PaymentDialog({
     );
     const restanteBase = Math.max(pendiente - otrasFilasBase, 0);
     const moneda = rows[index]?.moneda ?? monedaBase;
-    const enMoneda =
-      moneda === monedaBase
-        ? restanteBase
-        : convertBetween(restanteBase, monedaBase, moneda, exchange) ?? restanteBase;
-    const redondeado = Math.round(enMoneda * 100) / 100;
-    updateRow(index, { monto: redondeado > 0 ? String(redondeado) : "" });
+    // `amountToCoverBase` redondea hacia arriba: al centavo más cercano el cobro
+    // se quedaba corto la mitad de las veces y la venta acababa en
+    // `partially_paid` sin avisar. Lo que sobre sale como vuelto.
+    const redondeado = amountToCoverBase(restanteBase, moneda, exchange);
+    updateRow(index, {
+      monto: redondeado && redondeado > 0 ? String(redondeado) : "",
+    });
   }
 
   async function handleSubmit() {
@@ -551,6 +573,7 @@ export function PaymentDialog({
                         // proponerse el excedente completo en la nueva.
                         setVueltoEditado(false);
                       }}
+                      disabled={destinoExcedente === "propina"}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue />
@@ -566,21 +589,9 @@ export function PaymentDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Vuelto
-                      </Label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMontoVuelto("");
-                          setVueltoEditado(true);
-                        }}
-                        className="text-xs font-medium text-emerald-600 hover:underline"
-                      >
-                        Dejar como propina
-                      </button>
-                    </div>
+                    <Label className="text-xs text-muted-foreground">
+                      Vuelto a entregar
+                    </Label>
                     <Input
                       type="text"
                       inputMode="decimal"
@@ -590,18 +601,50 @@ export function PaymentDialog({
                         setMontoVuelto(e.target.value);
                         setVueltoEditado(true);
                       }}
+                      disabled={destinoExcedente === "propina"}
                       aria-invalid={vueltoExcesivo}
                       className="tabular-nums"
                     />
                   </div>
                 </div>
 
+                {/* Qué se hizo con el sobrante. Va marcado "entregar vuelto":
+                    es lo que ocurre casi siempre y lo que se ejecuta si el
+                    cajero no toca nada. */}
+                <RadioGroup
+                  value={destinoExcedente}
+                  onValueChange={(v) => {
+                    setDestinoExcedente(v as DestinoExcedente);
+                    setVueltoEditado(false);
+                  }}
+                  className="gap-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="vuelto" id="destino-vuelto" />
+                    <Label
+                      htmlFor="destino-vuelto"
+                      className="cursor-pointer text-xs font-normal text-card-foreground"
+                    >
+                      Entregar el vuelto al cliente
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="propina" id="destino-propina" />
+                    <Label
+                      htmlFor="destino-propina"
+                      className="cursor-pointer text-xs font-normal text-card-foreground"
+                    >
+                      El cliente lo deja como propina
+                    </Label>
+                  </div>
+                </RadioGroup>
+
                 {vueltoExcesivo ? (
                   <p className="text-xs font-medium text-destructive">
                     El vuelto no puede pasar de{" "}
                     {formatMoney(vueltoSugerido, monedaVuelto)}.
                   </p>
-                ) : (
+                ) : aFavorDelNegocio > 0 ? (
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">
                       Queda a favor del negocio
@@ -610,7 +653,7 @@ export function PaymentDialog({
                       {formatMoney(aFavorDelNegocio, monedaBase)}
                     </span>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
 

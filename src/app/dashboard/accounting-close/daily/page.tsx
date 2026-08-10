@@ -387,7 +387,6 @@ export default function DailyPage() {
         businessId={activeBusinessId}
         period="daily"
         serverTotals={serverTotals}
-        costSummary={data?.costSummary}
         tips={data?.tips}
       />
     </div>

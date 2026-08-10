@@ -8,7 +8,6 @@ import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import { useCreateSaleMutation } from "@/hooks/use-sales"
 import { useExchangeRate } from "@/hooks/use-exchange"
 import { BusinessWithProducts } from "@/lib/types/business"
-import { SaleType } from "@/lib/types/sales"
 import { isIntegerUnit } from "@/lib/units"
 import {
   BASE_CURRENCY,
@@ -46,20 +45,12 @@ interface CartItem {
 
 export default function CreateSalesPage() {
   const router = useRouter()
-  const { activeBusinessId, activeBusiness } = useBusiness()
-  const acceptsDelivery = activeBusiness?.acceptsMessaging ?? false
+  const { activeBusinessId } = useBusiness()
 
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [selectedCurrency, setSelectedCurrency] = useState(BASE_CURRENCY)
-  const [saleType, setSaleType] = useState<SaleType>("in_store")
-  const [delivery, setDelivery] = useState({
-    address: "",
-    contactPhone: "",
-    contactName: "",
-    fee: "",
-  })
   // Venta recién creada pendiente de cobro inline (flujo "Registrar venta y cobrar").
   const [createdSaleId, setCreatedSaleId] = useState<string | null>(null)
   const [paymentOpen, setPaymentOpen] = useState(false)
@@ -68,10 +59,6 @@ export default function CreateSalesPage() {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300)
     return () => clearTimeout(timer)
   }, [search])
-
-  // Si el negocio activo no acepta delivery, no dejamos la venta en "domicilio".
-  // Se ajusta en render (condición idempotente) en vez de en un efecto.
-  if (!acceptsDelivery && saleType === "delivery") setSaleType("in_store")
 
   const { data, isLoading } = useAllProductOfMyBusinesses(
     activeBusinessId ?? "",
@@ -185,36 +172,15 @@ export default function CreateSalesPage() {
   async function submitSale(cobrarAhora: boolean) {
     if (cartItems.length === 0) return
 
-    // La dirección es obligatoria para ventas a domicilio (contrato del backend).
-    if (saleType === "delivery" && !delivery.address.trim()) {
-      sileo.error({
-        title: "Falta la dirección de entrega",
-        description:
-          "Ingresa la dirección de entrega para registrar una venta a domicilio.",
-      })
-      return
-    }
-
     try {
       const response = await createSaleMutation.mutateAsync({
         idbusiness: activeBusinessId ?? "",
         descripcion: "",
         currency,
-        saleType,
-        // Datos de entrega: solo se envían en ventas a domicilio y si tienen valor.
-        ...(saleType === "delivery"
-          ? {
-              deliveryAddress: delivery.address.trim(),
-              // Precio de la mensajería en la moneda de la venta; vacío = 0.
-              deliveryFee: delivery.fee.trim() ? Number(delivery.fee) : 0,
-              ...(delivery.contactName.trim()
-                ? { deliveryContactName: delivery.contactName.trim() }
-                : {}),
-              ...(delivery.contactPhone.trim()
-                ? { deliveryContactPhone: delivery.contactPhone.trim() }
-                : {}),
-            }
-          : {}),
+        // Todas las ventas se registran en tienda: los otros tipos se retiraron
+        // del mostrador (ver docs/pendientes-tipos-de-venta.md). Se envía
+        // explícito en vez de confiar en el default del backend.
+        saleType: "in_store",
         items: cartItems.map(({ productId, quantity, price }) => ({
           idproducto: productId,
           quantity,
@@ -347,13 +313,6 @@ export default function CreateSalesPage() {
           rate={rate}
           availableCurrencies={availableCurrencies}
           onCurrencyChange={setSelectedCurrency}
-          saleType={saleType}
-          onSaleTypeChange={setSaleType}
-          acceptsDelivery={acceptsDelivery}
-          delivery={delivery}
-          onDeliveryChange={(patch) =>
-            setDelivery((prev) => ({ ...prev, ...patch }))
-          }
           onSetQuantity={setItemQuantity}
           onRemove={removeFromCart}
           onSubmit={() => submitSale(false)}

@@ -13,7 +13,6 @@ import {
 import { StockAlertBadge } from "./stock-alert-badge";
 import { formatStockWithUnit } from "@/lib/units";
 import { BASE_CURRENCY, currencyLabel, formatMoney } from "@/lib/currency";
-import { cn } from "@/lib/utils";
 
 export type CurrentInventoryColumnMeta = {
   headerClassName?: string;
@@ -94,51 +93,9 @@ export function buildCurrentInventoryColumns({
         </div>
       ),
     },
-    {
-      id: "averageCost",
-      accessorFn: (row) => row.costing?.averageCost ?? null,
-      meta: compactColumnMeta,
-      header: () => (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="block cursor-help font-medium text-foreground">
-              Costo medio
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs">
-            Costo medio ponderado de las unidades que quedan en el almacén. Si
-            todavía hay mercancía de una compra anterior más barata, no coincide
-            con el último precio pagado al proveedor.
-          </TooltipContent>
-        </Tooltip>
-      ),
-      cell: ({ row }) => {
-        const costing = row.original.costing;
-        if (!costing || costing.averageCost === null) {
-          return <span className="text-muted-foreground">—</span>;
-        }
-        return (
-          <div className="flex flex-col">
-            <span className="tabular-nums text-foreground">
-              {formatMoney(costing.averageCost, BASE_CURRENCY)}
-            </span>
-            {costing.uncostedQuantity > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help text-xs text-muted-foreground">
-                    {costing.uncostedQuantity} sin costo
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  Unidades en stock sin registro de a qué costo entraron. Quedan
-                  fuera del costo medio y del margen.
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-          </div>
-        );
-      },
-    },
+    // Columna "Costo medio" retirada de la vista. El backend sigue enviando
+    // `costing.averageCost` y `costing.uncostedQuantity`, así que reponerla es
+    // volver a declarar la columna. Ver docs/pendientes-costeo.md.
     {
       id: "price",
       accessorFn: (row) => Number(row.price) || 0,
@@ -180,45 +137,8 @@ export function buildCurrentInventoryColumns({
         );
       },
     },
-    {
-      id: "margin",
-      accessorFn: (row) => row.costing?.marginPct ?? null,
-      meta: compactColumnMeta,
-      header: () => (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="block cursor-help font-medium text-foreground">
-              Margen
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs">
-            Cuánto queda del precio de venta después de pagar la mercancía,
-            calculado sobre el costo medio del stock. No descuenta gastos
-            operativos.
-          </TooltipContent>
-        </Tooltip>
-      ),
-      cell: ({ row }) => {
-        const margin = row.original.costing?.marginPct;
-        if (margin === null || margin === undefined) {
-          return <span className="text-muted-foreground">—</span>;
-        }
-        return (
-          <span
-            className={cn(
-              "tabular-nums font-medium",
-              // Un margen negativo es vender por debajo del costo: se marca en
-              // rojo porque es una pérdida por cada unidad que sale.
-              margin < 0
-                ? "text-destructive"
-                : "text-emerald-600 dark:text-emerald-400",
-            )}
-          >
-            {margin.toFixed(1)}%
-          </span>
-        );
-      },
-    },
+    // Columna "Margen" retirada de la vista. El backend sigue enviando
+    // `costing.marginPct`. Ver docs/pendientes-costeo.md.
     {
       id: "updatedAt",
       accessorKey: "updatedAt",

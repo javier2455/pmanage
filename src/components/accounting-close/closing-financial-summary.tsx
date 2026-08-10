@@ -9,7 +9,6 @@ import {
   Coins,
   LayoutGrid,
   List,
-  PackageMinus,
 } from "lucide-react"
 
 import {
@@ -47,7 +46,6 @@ import {
 import { useExchangeRate } from "@/hooks/use-exchange"
 import type { SaleWithProductAndBusiness } from "@/lib/types/sales"
 import type {
-  ClosingCostSummary,
   ClosingTips,
   ExpenseInAccountingClose,
 } from "@/lib/types/accounting-close"
@@ -61,9 +59,6 @@ interface ClosingFinancialSummaryProps {
   /** Consolidado en CUP calculado por el backend; se prefiere sobre el cálculo
    * local con tasas vivas. Ausente → se recalcula client-side (fallback). */
   serverTotals?: ClosingServerTotals | null
-  /** Costo de lo vendido y ganancia bruta (backend). Ausente → no se muestra el
-   * bloque; no hay forma de calcularlo en el cliente. */
-  costSummary?: ClosingCostSummary | null
   /** Excedentes de cobro no devueltos. Ausente o en cero → no se muestra. */
   tips?: ClosingTips | null
 }
@@ -164,108 +159,6 @@ function CurrencyBreakdownCard({ row }: { row: ClosingCurrencyRow }) {
 }
 
 /**
- * Ingresos − costo de la mercancía vendida.
- *
- * Deliberadamente NO se mezcla con el balance de arriba ni altera el veredicto.
- * El balance sigue el movimiento de caja (una compra pesa el día que se paga) y
- * este bloque el devengo (el costo pesa el día que la mercancía se vende).
- * Restar el costo dos veces —una como gasto de la compra, otra como costo de lo
- * vendido— es el error clásico al juntar ambos criterios, así que se presentan
- * como dos lecturas separadas del mismo período y la nota lo explica.
- */
-function GrossProfitBlock({
-  costSummary,
-  incomeBase,
-  currency,
-  exchangeRate,
-}: {
-  costSummary: ClosingCostSummary
-  incomeBase: number
-  currency: string
-  exchangeRate: Parameters<typeof convertFromBase>[2]
-}) {
-  const income = convertFromBase(incomeBase, currency, exchangeRate)
-  const cost = convertFromBase(costSummary.costOfGoodsSold, currency, exchangeRate)
-  const profit = convertFromBase(costSummary.grossProfit, currency, exchangeRate)
-  const { withoutCost } = costSummary.costCoverage
-  // El margen se calcula en base para no arrastrar el redondeo de la conversión.
-  const marginPct =
-    incomeBase > 0 ? (costSummary.grossProfit / incomeBase) * 100 : null
-
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-      <div className="flex items-center gap-2">
-        <PackageMinus className="size-4 text-muted-foreground" aria-hidden="true" />
-        <span className="text-sm font-semibold text-card-foreground">
-          Costo de la mercancía vendida
-        </span>
-        {marginPct !== null ? (
-          <Badge variant="secondary" className="ml-auto text-xs tabular-nums">
-            {marginPct.toFixed(1)}% de margen
-          </Badge>
-        ) : null}
-      </div>
-
-      <div className="flex flex-col gap-2.5">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
-          <span className="text-sm text-muted-foreground">Ingresos</span>
-          <span className="ml-auto whitespace-nowrap text-sm font-semibold tabular-nums text-card-foreground">
-            {formatMoney(income, currency)}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
-          <span className="text-sm text-muted-foreground">
-            Costo de lo vendido
-          </span>
-          <span className="ml-auto whitespace-nowrap text-sm font-semibold tabular-nums text-destructive">
-            -{formatMoney(cost, currency)}
-          </span>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
-          <span className="text-sm font-bold text-card-foreground">
-            Ganancia bruta
-          </span>
-          <span
-            className={cn(
-              "ml-auto whitespace-nowrap text-base font-bold tabular-nums",
-              profit >= 0
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-destructive",
-            )}
-          >
-            {profit >= 0 ? "+" : "-"}
-            {formatMoney(Math.abs(profit), currency)}
-          </span>
-        </div>
-      </div>
-
-      {withoutCost > 0 ? (
-        <div className="flex items-start gap-2 rounded-md border border-border bg-background/60 p-3 text-xs text-muted-foreground">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>
-            {withoutCost === 1
-              ? "1 línea vendida no tiene costo registrado y queda fuera del cálculo."
-              : `${withoutCost} líneas vendidas no tienen costo registrado y quedan fuera del cálculo.`}{" "}
-            La ganancia mostrada es mayor que la real. Solo afecta a ventas
-            anteriores al registro de costos por lote.
-          </span>
-        </div>
-      ) : null}
-
-      <p className="text-xs text-muted-foreground">
-        Esta lectura descuenta el costo cuando la mercancía se vende; el balance
-        de arriba descuenta las compras cuando se pagan. Son dos vistas del mismo
-        período, no se suman.
-      </p>
-    </div>
-  )
-}
-
-/**
  * Lo que los clientes dejaron de más al pagar.
  *
  * No entra en Ventas ni en la ganancia bruta: no vendió mercancía, y sumarlo
@@ -336,7 +229,6 @@ export function ClosingFinancialSummary({
   businessId,
   period,
   serverTotals,
-  costSummary,
   tips,
 }: ClosingFinancialSummaryProps) {
   const copy = PERIOD_COPY[period]
@@ -537,15 +429,9 @@ export function ClosingFinancialSummary({
               </div>
             ) : null}
 
-            {/* Ingresos − costo de lo vendido. Solo si el backend lo trae. */}
-            {costSummary ? (
-              <GrossProfitBlock
-                costSummary={costSummary}
-                incomeBase={consolidated.incomeBase}
-                currency={consolidatedCurrency}
-                exchangeRate={exchangeRate}
-              />
-            ) : null}
+            {/* El bloque "Costo de la mercancía vendida" se retiró de la vista.
+                El backend sigue calculando `costSummary` y el PDF/Excel del
+                cierre lo siguen mostrando. Ver docs/pendientes-costeo.md. */}
 
             {/* Excedentes de cobro. Se omite si nadie dejó nada. */}
             {tips && tips.consolidatedBase > 0 ? (

@@ -1,7 +1,16 @@
 # Estado del proyecto — pmanage
 
 > Documento de referencia del estado real del proyecto. Incluye lo implementado, lo que está en curso y las proyecciones de desarrollo.
-> Última actualización: **2026-07-28** — bloque de **costeo e inteligencia de inventario**
+> Última actualización: **2026-08-08** — **vuelto y propina en el cobro de ventas**
+> (el cliente ya puede pagar de más: se reparte el excedente entre lo que se devuelve y lo
+> que queda a favor del negocio, con integridad de caja y renglón propio en el cierre),
+> **retirada temporal de las vistas de costeo** (card de ganancia bruta en los cierres y
+> columnas de costo medio/margen en inventario — ver [pendientes-costeo.md](pendientes-costeo.md)),
+> **retirada de los tipos de venta a domicilio y para recoger** del mostrador, que no tenían
+> operación detrás (ver [pendientes-tipos-de-venta.md](pendientes-tipos-de-venta.md))
+> y **suite de tests del frontend** con Vitest, que este documento daba por inexistente.
+> Ver [features 53–54](#implementado-en-develop--pendiente-de-promover-a-producción).
+> Anterior — 2026-07-28: bloque de **costeo e inteligencia de inventario**
 > (costeo **FIFO por capas**, ganancia bruta y costo de lo vendido en los cierres, margen por
 > producto y **rentabilidad lote a lote**), **importación masiva de productos** desde Excel/CSV,
 > **gestión de navegación** (secciones/menús/submenús con reordenado), **motor de tablas PDF**
@@ -19,7 +28,7 @@
 
 | | |
 |---|---|
-| **Versión actual** | `2.1.4` (`package.json`) |
+| **Versión actual** | `2.3.3` (`package.json`) |
 | **Versión en producción** | `1.0.0` (rama `main`) — pendiente de promover a `2.x` |
 | **Último commit** | `5bc8fe8` — 2026-06-27 *(el trabajo de julio no está reflejado aquí; el repo local no es un checkout de git, así que las features 42–52 se documentan desde las fuentes citadas en cada fila)* |
 | **PR `develop → main`** | **En preparación** — rama `release/v2.0.0` lista (ver [Promoción a producción v2](#promoción-a-producción-v2)) |
@@ -109,6 +118,8 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 50 | **Revisión de julio 2026 — 5 fases de correcciones**: estados de carga del panel, retirada de presupuestos en saldos por moneda, desempeño de ventas por período y multimoneda, filtros de fecha/tipo + exportación en historial de inventario, y maquetación del PDF de cierre | BE `139`, `140`, `141` | — · detalle en [revision-2026-07-correcciones.md](revision-2026-07-correcciones.md) |
 | 51 | **Refactor de transacciones financieras** a 4 tipos con monto y moneda originales + fix de duplicados en cancelación multimoneda | BE `136`, `137` | — |
 | 52 | **Cron de cierres** (diario/mensual por hora de cierre del negocio, idempotente) + **datos enriquecidos** en el correo de cierre | BE `087`, `088` | — |
+| 53 | **Vuelto y propina en el cobro** — el cliente puede pagar de más; el excedente se reparte entre lo devuelto (en la moneda que se elija) y lo que queda a favor del negocio, con salida de caja propia y renglón en el cierre | BE `150` | **Migración `20260806120000` sin aplicar** en producción (ver detalle) |
+| 54 | **Suite de tests del frontend** (Vitest, 15 suites, 212 casos sobre lógica pura: moneda, cierres, planes, validaciones, permisos) | — | — |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
 >
@@ -359,6 +370,118 @@ costo real de lo que aún quedaba de la compra anterior y el margen salía mal.
 > se pierde el origen. Consecuencias y qué haría falta en el backend, en
 > [docs/moneda-precio-venta.md](moneda-precio-venta.md).
 
+### Detalle: Tipos de venta retirados del mostrador (2026-08-08)
+
+El selector **"Tipo de venta"** del carrito se retiró: todas las ventas nuevas se registran
+como `in_store`. Con él se fueron las opciones **A domicilio** y **Para recoger**, el bloque
+de datos de entrega (dirección, contacto, precio de mensajería) y el desglose
+Productos/Mensajería del total.
+
+**Por qué:** ninguno de los dos tipos tenía flujo detrás. Marcar una venta como delivery
+guardaba una dirección y una tarifa, y ahí se acababa — no hay reparto, ni estado de
+entrega, ni asignación, ni aviso al cliente. Era un campo que el cajero respondía en cada
+venta sin que la respuesta cambiara nada, y que además hacía parecer que existía una
+operación de delivery inexistente.
+
+**Lo que se pierde mientras tanto:** la tarifa de mensajería era la única forma de cobrar un
+extra que no fuera un producto del catálogo, y los datos de contacto de entrega ya no se
+guardan. Las ventas antiguas conservan su tipo y su detalle sigue mostrándose; el backend,
+el `deliveryFee` y el flag `acceptsMessaging` del negocio quedan intactos.
+
+Qué se quitó, qué aportaba y las cuatro decisiones a tomar antes de reponerlo (estado de
+entrega, asignación del reparto, el `deliveryFee` que hoy no llega al cierre, y si `pickup`
+aporta algo sobre `in_store`) están en
+**[pendientes-tipos-de-venta.md](pendientes-tipos-de-venta.md)**.
+
+### Detalle: Vistas de costeo retiradas de la interfaz (2026-08-08)
+
+Tres piezas de las features 43–44 se **quitaron de la pantalla** a petición del equipo. El
+backend sigue calculando y enviando todo; lo retirado es solo el render:
+
+1. La card **"Costo de la mercancía vendida"** (ingresos → costo → ganancia bruta) de los
+   cierres diario y mensual.
+2. La columna **"Costo medio"** del inventario actual.
+3. La columna **"Margen"** del inventario actual.
+
+**El PDF y el Excel del cierre siguen mostrando la sección de costo**, así que hoy hay
+divergencia deliberada entre pantalla e informes. La **rentabilidad lote a lote**
+(feature 45), la tarjeta de valor de inventario y la notificación de margen negativo
+quedan intactas.
+
+**Dato de fondo que conviene resolver antes de reponerlas:** de 208 líneas de venta en
+`dveloxso_psearch_develop` solo **6** tienen costo registrado, porque el backfill del
+costeo histórico nunca llegó a ejecutarse. Con esa cobertura, las tres vistas mostraban
+mayoritariamente guiones y una ganancia bruta bastante más alta que la real.
+
+Qué aportaba cada una, dónde vivía el código, cómo reponerlo y las tareas previas
+(reconciliar migraciones → ejecutar el backfill → comprobar cobertura) están en
+**[pendientes-costeo.md](pendientes-costeo.md)**.
+
+### Detalle: Vuelto y propina en el cobro de ventas (feature 53) — BE `150`
+
+Hasta ahora era **imposible registrar un cobro que superara el total de la venta**: el
+backend rechazaba cualquier pago que pasara del total en más de un centavo. Eso bloqueaba
+el caso más corriente de un mostrador —venta de 978 CUP y el cliente paga con un billete de
+1000— y el más frecuente al cobrar en divisa: una venta de 34 525 CUP a tasa 675 son
+51,15 USD, y el cliente que no tiene centavos entrega 55. El cajero tenía que teclear el
+importe exacto, así que el sistema registraba un dinero que no coincidía con el del cajón.
+
+**El modelo.** En `Payment` se separó lo **entregado** (`amount`) de lo **aplicado a la
+venta** (`amountInBaseCurrency`), que antes eran siempre el mismo número. Sobre ese eje,
+cuatro columnas nuevas guardan el reparto del excedente. Sin vuelto ni propina ambos
+importes coinciden, así que el histórico no cambia y la migración no necesita backfill.
+
+**Tres decisiones que conviene conocer:**
+
+- **El vuelto lleva su propia moneda y su propia tasa congelada.** Se paga en USD y se
+  devuelve en CUP porque no circulan centavos de dólar; sin esto la función no serviría.
+- **La propina se guarda en la moneda de la VENTA, no en la del pago.** No es un billete
+  concreto sino una diferencia de valor. En la moneda del pago se perdería precisión de
+  forma inaceptable: sobre una venta de 34 525 CUP pagada con 55 USD donde solo se
+  devuelven 2 500 CUP, el sobrante real son 100 CUP, pero `100/675` redondea a 0,15 USD =
+  101,25 CUP y el cierre dejaría de cuadrar con la caja.
+- **El excedente hay que declararlo siempre**, aunque sea con un objeto vacío. Es lo que
+  atrapa un 5500 tecleado en vez de 55; sin esa puerta, el importe de más se registraría
+  como propina en silencio.
+
+**Frontend.** El diálogo de cobro
+([payment-dialog.tsx](../src/components/sales/payment-dialog.tsx)) muestra un bloque de
+excedente **solo cuando el cliente entrega de más**: selector de moneda del vuelto, importe
+ya relleno con el excedente convertido, atajo *"Dejar como propina"* y la línea viva *"Queda
+a favor del negocio"*. El resumen final pasó de dos líneas a tres — **Entrega el cliente /
+Se aplica a la venta / Quedaría pendiente**. El detalle de la venta
+([details-dialog.tsx](../src/components/sales/details-dialog.tsx)) añade un bloque
+*"Detalle del cobro"* solo si en algún pago sobró dinero, y el resumen del cierre un bloque
+**"Propinas y sobrantes de cobro"**, separado de Ventas y de la ganancia bruta porque no
+vendió mercancía.
+
+**Caja y cierre.** El vuelto sale del cajón con un movimiento propio (`change_given`) en su
+moneda, y al cancelar una venta el cliente devuelve el vuelto (`change_returned`) — sin eso,
+cancelar dejaba la caja descuadrada. Las propinas se agregan al cierre por la **fecha del
+pago** (una venta de ayer cobrada hoy deja su propina en el cajón de hoy) y **no** se suman
+al ingreso, para no inflar el margen bruto con un importe de costo cero.
+
+**Corrección del 2026-08-08 — "Pagar todo" dejaba la venta pendiente.** Al cobrar en otra
+moneda, el botón redondeaba al centavo **más cercano**: 1000 CUP a tasa 675 son 1,4814… USD
+→ 1,48 USD = **999 CUP**, un peso corto, y la venta quedaba `partially_paid` pese a estar
+cobrada. El backend ya redondeaba hacia arriba en su sugerencia; el frontend no. Arreglado
+con `amountToCoverBase` ([currency.ts](../src/lib/currency.ts)) y un test de propiedad que
+recorre importes y comprueba que el equivalente nunca se queda corto. En el mismo paso, el
+diálogo dejó de abrir en USD (usaba `summary.sugerencia`, que para una venta en CUP propone
+dólares) y el atajo "Dejar como propina" pasó a ser un par de **radio buttons** con
+*Entregar el vuelto* marcado por defecto.
+
+**Verificado:** 475 tests en backend (11 nuevos, incluidas las cuatro trazas de mostrador
+con sus importes exactos) y 212 en frontend, todos en verde.
+
+Documento completo, con el algoritmo y la comprobación del cuadre de caja caso por caso:
+[150-sale-payment-change-and-tips.md](../../psearch-back/src/v2/migration_doc/150-sale-payment-change-and-tips.md).
+
+> ⚠️ **Bloqueador de despliegue:** la migración `20260806120000-AddChangeAndTipToPayments`
+> **no está aplicada en producción**. En desarrollo el esquema se actualizó solo porque
+> `NODE_ENV=development` activa `synchronize`; en producción eso está apagado y el cobro
+> fallará hasta aplicarla. Ver la deuda técnica de migraciones más abajo.
+
 ### Detalle: Importación masiva de productos (feature 46) — rama `feat-upload-products`
 
 Un negocio con 100+ productos no puede darlos de alta de uno en uno. Se carga un
@@ -470,6 +593,10 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
 
 | Feature | Notas |
 |---|---|
+| **Reponer las vistas de costeo** (card de ganancia bruta en cierres, costo medio y margen en inventario) | Retiradas el 2026-08-08. El backend sigue enviando los datos; falta ejecutar el backfill del costeo histórico antes de volver a mostrarlas — ver [pendientes-costeo.md](pendientes-costeo.md) |
+| **Venta a domicilio con flujo real** (estado de entrega, asignación del reparto, mensajería en el cierre) | El selector de tipo de venta se retiró el 2026-08-08 por no tener operación detrás; el backend sigue soportando los tres tipos — ver [pendientes-tipos-de-venta.md](pendientes-tipos-de-venta.md) |
+| **Persistir el método de pago** (`metodo`) | El DTO lo exige, se valida… y se descarta: `Payment` no tiene la columna. Sin él no se puede auditar si un vuelto se dio en efectivo (feature 53) |
+| **Cierre por devengo vs. caja por caja** | El cierre cuenta como ingreso toda venta no cancelada aunque nadie haya pagado; `currency_accounts` solo se mueve al cobrar. Con ventas a crédito ambos divergen |
 | OAuth con Google | Rama existe (`feature/auth-google`), falta backend |
 | Categorías de producto globales | Frontend hecho y revertido; espera definición de backend ([docs/PENDIENTE-categorias-producto-globales.md](PENDIENTE-categorias-producto-globales.md)) |
 | Gestión de divisas (conversión dinámica) | Frontend hecho y revertido; pendiente de re-alineación |
@@ -488,12 +615,14 @@ Spec completa: [docs/extra/CONTABILIDAD_NUCLEO.md](extra/CONTABILIDAD_NUCLEO.md)
 | Tipos duplicados entre `lib/types/` e inline | ✅ Las interfaces inline son props de componentes (práctica estándar React); tipos de dominio centralizados en `src/lib/types/` |
 | JWT en sessionStorage | ✅ Trade-off documentado e intencional — cookies solo sirven al middleware; la sesión expira al cerrar la pestaña (ver `docs/extra/AUDIT.md`) |
 | Query keys con riesgo de cache leak entre negocios | ✅ Todos los hooks incluyen `businessId` en la key (`["entity", businessId, ...]`); la invalidación cruzada está controlada |
+| Frontend sin tests automatizados | ✅ **Resuelto** — suite Vitest con 15 archivos en `src/testing/suites/` y 209 casos (`pnpm test`) sobre la lógica pura: moneda y conversión, errores multimoneda, cierres, planes, permisos, validaciones y formatos. Sigue sin haber tests de componentes ni e2e |
 
 ### Pendiente
 
 | Problema | Impacto | Prioridad |
 |---|---|---|
-| **Frontend sin tests automatizados** (ni unitarios ni e2e) — el backend sí tiene suite Jest sobre la lógica pura (`money.util`, `pdf-table`, `closing-schedule.util`, `summary-period.util`, guards…) | Regresiones no detectadas en CI del lado del cliente | Alta |
+| **Las migraciones del backend nunca se han ejecutado.** La base `dveloxso_psearch_develop` **no tiene siquiera tabla `migrations`**: todo el esquema se ha ido creando con `synchronize`, que solo está activo fuera de producción. Consecuencias: (1) en producción el esquema **no** se actualiza solo y cada columna nueva rompe su endpoint —es lo que provocó el `Unknown column 'price_exchange_rate_applied'`—; (2) correr `migration:run` hoy intentaría aplicar las 31 desde cero, fallando en las que crean tablas ya existentes y **duplicando las capas de costo** con el backfill, cuyo `up()` no limpia antes de insertar | Despliegues rotos en producción y riesgo de corromper el costeo si alguien lanza las migraciones a ciegas | **Alta** |
+| **Sin tests de componentes ni e2e en el frontend** — la suite Vitest cubre lógica pura, pero no hay render de componentes ni flujos de navegación | Regresiones de UI no detectadas en CI | Media |
 | **Errores de TypeScript en `psearch-back/src/v1/menu/menu.service.spec.ts`** — falta `@jest/globals` y hay `as` sobre tipos que ya no encajan (`order`, `permissions`) | `tsc --noEmit` no está limpio en el backend; enmascara errores nuevos | Media |
 | **Entidad `Notification` desalineada con su tabla** — `isSent`, `sendError` y `sentAt` no declaran `name`, así que TypeORM espera `isSent`/`sendError`/`sentAt` mientras la migración creó `is_sent`/`send_error`/`sent_at` (y `findUnsent` consulta las snake_case en SQL crudo). Funciona solo si `synchronize` creó las columnas duplicadas | Columnas duplicadas y datos que pueden divergir según por dónde se lean | Media |
 | Sin Prettier configurado | Inconsistencia de estilo entre archivos | Baja |
@@ -560,6 +689,15 @@ hay que añadir su regla **en dos sitios**: en `public/.htaccess` (para `develop
 ## Siguiente acción recomendada
 
 **Orden sugerido:**
+
+0bis. **Reconciliar el historial de migraciones del backend** — es ahora el bloqueador de
+   despliegue más urgente. Ninguna base tiene tabla `migrations`, así que en producción el
+   esquema no se actualiza y cada columna nueva rompe su endpoint (ya pasó con
+   `price_exchange_rate_applied`, y volverá a pasar con las cuatro columnas del vuelto de la
+   feature 53). Registrar como aplicadas las migraciones que el esquema ya tiene **sin
+   ejecutarlas**, y solo después correr las que faltan de verdad. Cuidado con
+   `BackfillInventoryCostLayers`: su `up()` no limpia antes de insertar y duplicaría las
+   capas de costo.
 
 0. **Desplegar el backend** con el arreglo de notificaciones del 2026-07-28 (la ruta
    `:id/read` es un cambio de servidor: hasta que no se redespliegue, marcar una

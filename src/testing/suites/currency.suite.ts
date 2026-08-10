@@ -1,5 +1,6 @@
 import { defineSuite, expect } from "@/testing/harness";
 import {
+  amountToCoverBase,
   BASE_CURRENCY,
   convertBetween,
   convertFromBase,
@@ -9,6 +10,7 @@ import {
   fromBackendCurrency,
   getAvailableCurrencies,
   getCurrencyRate,
+  roundMoney,
   toBackendCurrency,
 } from "@/lib/currency";
 
@@ -238,6 +240,52 @@ export const currencySuite = defineSuite(
         expect(formatMoney(Number.POSITIVE_INFINITY)).toBe("0.00 CUP");
       },
       "Defensa contra valores corruptos: NaN o Infinity se muestran como '0.00' para no enseñar 'NaN' o '∞' al usuario en una pantalla de dinero.",
+    );
+
+    test(
+      "amountToCoverBase nunca se queda corto al convertir a otra moneda",
+      () => {
+        const tasas = { USD: 675 };
+        // El caso que rompía "Pagar todo": 1000/675 = 1.4814…, que al centavo
+        // más cercano daba 1.48 USD = 999 CUP. Un peso corto bastaba para que la
+        // venta quedara `partially_paid` en vez de `paid`.
+        expect(amountToCoverBase(1000, "USD", tasas)).toBe(1.49);
+
+        // La propiedad tiene que valer para cualquier importe, no solo para ese:
+        // se recogen los que se quedarían cortos para que el fallo diga cuáles.
+        //
+        // Se compara en centavos enteros porque es como decide el backend
+        // (`enCentavos` en payment.service): `convertToBase` devuelve el
+        // producto crudo y 2.76 × 675 da 1862.9999… en coma flotante, que no es
+        // un cobro corto sino ruido de IEEE-754.
+        const enCentavos = (v: number) => Math.round(roundMoney(v) * 100);
+        const cortos: number[] = [];
+        for (let total = 1; total <= 3000; total += 7) {
+          const enUsd = amountToCoverBase(total, "USD", tasas) as number;
+          const cubierto = convertToBase(enUsd, "USD", tasas);
+          if (enCentavos(cubierto) < enCentavos(total)) cortos.push(total);
+        }
+        expect(cortos).toEqual([]);
+      },
+      "El importe que propone 'Pagar todo' debe cubrir SIEMPRE lo que falta al reconvertirlo a la moneda de la venta. Si se queda corto aunque sea por un centavo, el backend registra el cobro como pago parcial y la venta aparece pendiente pese a estar cobrada.",
+    );
+
+    test(
+      "amountToCoverBase en la moneda de la venta es el importe exacto",
+      () => {
+        expect(amountToCoverBase(1000, BASE_CURRENCY, rates)).toBe(1000);
+        expect(amountToCoverBase(34525.5, BASE_CURRENCY, rates)).toBe(34525.5);
+      },
+      "Cobrar en la misma moneda de la venta no convierte nada: sin redondeo hacia arriba no se inventa un excedente de céntimos que el cajero tendría que justificar.",
+    );
+
+    test(
+      "amountToCoverBase devuelve null si la moneda no tiene tasa",
+      () => {
+        expect(amountToCoverBase(1000, "CAD", rates)).toBeNull();
+        expect(amountToCoverBase(0, "USD", rates)).toBe(0);
+      },
+      "Sin tasa configurada no hay importe que proponer: `null` deja que la UI no rellene nada en vez de escribir un cero que el cajero podría registrar sin darse cuenta.",
     );
   },
   { description: "Conversión y formato de moneda para ventas/pagos." },

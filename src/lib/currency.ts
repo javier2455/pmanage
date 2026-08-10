@@ -205,6 +205,30 @@ export function convertBetween(
 }
 
 /**
+ * Cuánto hay que cobrar en `currency` para cubrir `amountBase` de la moneda de
+ * la venta. Redondea **hacia arriba** al centavo; `null` si falta tasa.
+ *
+ * El redondeo al centavo más cercano deja el cobro corto la mitad de las veces:
+ * 1000 CUP a tasa 675 son 1.4814… USD, que redondeados dan 1.48 = 999 CUP. Ese
+ * peso de menos hacía que "Pagar todo" registrara la venta como `partially_paid`
+ * en vez de `paid`, sin ningún aviso. Hacia arriba, el sobrante es un excedente
+ * visible que el cajero devuelve como vuelto.
+ *
+ * Mismo criterio que la `sugerencia` del backend, que ya usaba `Math.ceil`.
+ */
+export function amountToCoverBase(
+  amountBase: number,
+  currency: string,
+  exchangeRate: ExchangeRateLike,
+): number | null {
+  if (!Number.isFinite(amountBase) || amountBase <= 0) return 0;
+  if (currency === BASE_CURRENCY) return roundMoney(amountBase);
+  const rate = getCurrencyRate(exchangeRate, currency);
+  if (rate == null || rate <= 0) return null;
+  return Math.ceil((amountBase / rate) * 100) / 100;
+}
+
+/**
  * Etiqueta legible de una moneda para selectores y sufijos de monto. Coincide con
  * el código salvo `CUP_TRANSFERENCIA`, cuyo código (17 caracteres sin espacios)
  * desborda y se solapa en layouts estrechos (carrito, diálogo de pago). Usamos su
