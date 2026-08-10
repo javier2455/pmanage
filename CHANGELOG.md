@@ -11,6 +11,18 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Crear la categoría mientras se asigna el producto
+- El selector de categoría del formulario de asignación **ya no se bloquea cuando el
+  negocio no tiene ninguna**: antes se deshabilitaba con «Aún no hay categorías» y
+  obligaba a salir a la sección de Categorías y volver a empezar. Ahora se escribe
+  el nombre ahí mismo y se crea al guardar el producto.
+- El combobox filtra las categorías existentes mientras se escribe y, si el texto no
+  coincide con ninguna, ofrece **«Crear "…"»**. Lo escrito se conserva aunque no se
+  pulse esa opción, con un aviso de qué categoría se creará.
+- El nombre viaja al backend (`categoryName`), que la busca en el negocio sin
+  distinguir mayúsculas y solo la crea si no existe (migración 151), así que no se
+  duplican categorías por escribir «bebidas» en vez de «Bebidas».
+
 #### Moneda del precio de venta
 - Al asignar un producto a un negocio y al editar su precio ahora se elige **en qué
   moneda se cobra**, con preview del equivalente en CUP. Antes solo el **costo**

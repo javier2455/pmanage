@@ -48,6 +48,13 @@ export const assignProductToBusinessSchema = createProductInBusinessSchema
     // La categoría se asigna al BusinessProduct al asignar el producto al
     // negocio. Opcional. Ver docs/category.md.
     categoryId: z.string().nullable().optional(),
+    // Categoría nueva escrita en el combobox: viaja como nombre y el backend la
+    // registra (find-or-create) al guardar. Excluyente con `categoryId`.
+    categoryName: z
+      .string()
+      .max(255, "El nombre de la categoría máximo es de 255 caracteres")
+      .nullable()
+      .optional(),
     // Moneda del `entryPrice`. El selector solo ofrece monedas con tasa válida,
     // por eso no validamos contra una lista aquí. `exchangeRateApplied` se
     // computa en el submit, no es campo del formulario. Ver docs/multimoneda-productos.md.

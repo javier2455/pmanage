@@ -8,8 +8,8 @@ export default defineConfig({
     },
   },
   test: {
-    // Por ahora solo lógica pura: entorno node, sin DOM.
-    // Cuando añadamos tests de componentes cambiaremos a "jsdom".
+    // Lógica pura por defecto (entorno node, sin DOM). Los tests de componentes
+    // piden el suyo con `// @vitest-environment jsdom` en la primera línea.
     environment: "node",
     globals: true,
     // Solo *.test.ts son archivos Vitest. Los *.suite.ts son specs compartidas

@@ -59,6 +59,12 @@ export type CreateProductInBusinessProps = {
     name: string;
     description: string | null;
     categoryId: string | null;
+    /**
+     * Nombre de una categoría que aún no existe en el negocio. Solo se envía
+     * cuando no hay `categoryId`: el backend la busca por nombre (sin distinguir
+     * mayúsculas) y la crea si hace falta.
+     */
+    categoryName?: string | null;
     unit: ProductUnit;
     imageUrl?: string | null | undefined;
     price: number;

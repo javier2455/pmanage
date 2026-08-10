@@ -72,6 +72,7 @@ export async function createInBusiness(
   const {
     productId,
     categoryId,
+    categoryName,
     price,
     priceCurrency,
     priceExchangeRateApplied,
@@ -90,7 +91,13 @@ export async function createInBusiness(
       entryPrice,
       stock,
       // La categoría se asigna al BusinessProduct en esta llamada. Ver docs/category.md.
-      ...(categoryId ? { categoryId } : {}),
+      // Si el usuario escribió una que no existe, viaja el nombre y el backend
+      // la registra antes de asignarla.
+      ...(categoryId
+        ? { categoryId }
+        : categoryName?.trim()
+          ? { categoryName: categoryName.trim() }
+          : {}),
       // Solo se envía si el usuario (Pro) definió un umbral.
       ...(stockAlertThreshold != null ? { stockAlertThreshold } : {}),
       // Auto-registro del gasto de reposición de stock. Solo se envía si el

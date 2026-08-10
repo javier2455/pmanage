@@ -117,6 +117,11 @@ export function useCreateProductInBusinessMutation() {
       queryClient.invalidateQueries({
         queryKey: ["stock-alerts", variables.businessId],
       });
+      // La asignación puede haber creado una categoría nueva (`categoryName`),
+      // así que refrescamos la lista para que aparezca sin recargar.
+      if (variables.categoryName) {
+        queryClient.invalidateQueries({ queryKey: ["product-categories"] });
+      }
     },
   });
 }

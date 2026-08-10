@@ -19,13 +19,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { Separator } from "@/components/ui/separator"
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox"
+  CategoryCombobox,
+  type CategoryOption,
+} from "@/components/products/category-combobox"
 import { ProductCombobox } from "@/components/products/product-combobox"
 import { AmountCurrencyField } from "@/components/products/amount-currency-field"
 import { useExchangeRate } from "@/hooks/use-exchange"
@@ -45,8 +41,6 @@ import {
   MAX_PRODUCT_PRICE,
 } from "@/lib/validations/products"
 import { Product } from "@/lib/types/product"
-
-type CategoryOption = { id: string; name: string }
 
 export function AssignProductToBusinessForm() {
   const router = useRouter()
@@ -88,6 +82,7 @@ export function AssignProductToBusinessForm() {
     defaultValues: {
       productId: "",
       categoryId: null,
+      categoryName: null,
       entryPrice: 0,
       price: 0,
       stock: 0,
@@ -101,6 +96,14 @@ export function AssignProductToBusinessForm() {
   const selectedProductId = watch("productId")
   const entryPriceValue = watch("entryPrice")
   const priceValue = watch("price")
+  const categoryIdValue = watch("categoryId") ?? null
+  // Categoría escrita a mano que aún no existe; el backend la crea al guardar.
+  const categoryNameValue = watch("categoryName") ?? null
+
+  const categoryItems: CategoryOption[] = productCategories.map((c) => ({
+    id: c.id,
+    name: c.name,
+  }))
 
   async function onSubmit(data: AssignProductToBusinessFormData) {
     if (!activeBusinessId) {
@@ -154,6 +157,8 @@ export function AssignProductToBusinessForm() {
         description: product.description,
         // La categoría se asigna al BusinessProduct desde el selector del form.
         categoryId: data.categoryId ?? null,
+        // Si escribió una que no existe, el backend la registra al guardar.
+        categoryName: data.categoryName ?? null,
         unit: product.unit,
         imageUrl: product.imageUrl ?? undefined,
         // En la moneda cotizada; el backend lo convierte y guarda en CUP.
@@ -261,65 +266,46 @@ export function AssignProductToBusinessForm() {
           <Label htmlFor="category-select" className="text-card-foreground">
             Categoría
           </Label>
-          <Controller
-            control={control}
-            name="categoryId"
-            render={({ field }) => {
-              const items: CategoryOption[] = productCategories.map((c) => ({
-                id: c.id,
-                name: c.name,
-              }))
-              const selectedOption: CategoryOption | null =
-                items.find((i) => i.id === field.value) ?? null
-              return (
-                <Combobox<CategoryOption | null>
-                  value={selectedOption}
-                  onValueChange={(opt) => field.onChange(opt?.id ?? null)}
-                  items={items}
-                  itemToStringLabel={(opt) => opt?.name ?? ""}
-                  isItemEqualToValue={(a, b) =>
-                    (a?.id ?? null) === (b?.id ?? null)
-                  }
-                >
-                  <ComboboxInput
-                    id="category-select"
-                    placeholder={
-                      isLoadingCategories
-                        ? "Cargando categorías..."
-                        : items.length === 0
-                          ? "Aún no hay categorías"
-                          : "Buscar categoría..."
-                    }
-                    className="w-full"
-                    showClear={!!selectedOption}
-                    disabled={isLoadingCategories || items.length === 0}
-                  />
-                  <ComboboxContent>
-                    <ComboboxList className="max-h-64">
-                      {items.map((opt) => (
-                        <ComboboxItem key={opt.id} value={opt}>
-                          {opt.name}
-                        </ComboboxItem>
-                      ))}
-                      <ComboboxEmpty>
-                        No se encontró ninguna categoría.
-                      </ComboboxEmpty>
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              )
+          <CategoryCombobox
+            id="category-select"
+            categories={categoryItems}
+            categoryId={categoryIdValue}
+            categoryName={categoryNameValue}
+            isLoading={isLoadingCategories}
+            invalid={!!errors.categoryId || !!errors.categoryName}
+            onChange={({ categoryId, categoryName }) => {
+              setValue("categoryId", categoryId, { shouldValidate: true })
+              setValue("categoryName", categoryName, { shouldValidate: true })
             }}
           />
-          <p className="text-xs text-muted-foreground">
-            Opcional — administra tus categorías en la sección de{" "}
-            <Link
-              href="/dashboard/business/categories/products"
-              className="underline-offset-2 hover:text-white hover:underline"
-            >
-              Categorías
-            </Link>
-            .
-          </p>
+          {categoryNameValue ? (
+            <p className="text-xs text-primary">
+              Se creará la categoría «{categoryNameValue}» al guardar el
+              producto.
+            </p>
+          ) : categoryItems.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Opcional — aún no tienes categorías. Escribe un nombre (por
+              ejemplo «Bebidas») y la crearemos al guardar el producto.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Opcional — escribe para buscar o crear una nueva. También puedes
+              administrarlas en la sección de{" "}
+              <Link
+                href="/dashboard/business/categories/products"
+                className="underline-offset-2 hover:text-white hover:underline"
+              >
+                Categorías
+              </Link>
+              .
+            </p>
+          )}
+          {errors.categoryName && (
+            <p className="text-xs text-destructive">
+              {errors.categoryName.message}
+            </p>
+          )}
           {errors.categoryId && (
             <p className="text-xs text-destructive">
               {errors.categoryId.message}
