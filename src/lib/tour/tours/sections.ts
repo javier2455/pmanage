@@ -257,11 +257,19 @@ export const SECTION_TOURS: TourDefinition[] = [
           "Busca en el catálogo el producto que quieres poner a la venta.",
       },
       {
+        id: "asignar-category",
+        element: "#category-select",
+        onMissing: "skip",
+        title: "En qué categoría lo pones",
+        description:
+          "No hace falta tenerla creada de antes: escribe el nombre y, si no existe, te ofrecemos crearla aquí mismo al guardar el producto.",
+      },
+      {
         id: "asignar-entry-price",
         element: "#entry-price",
         title: "Cuánto te costó",
         description:
-          "El precio de entrada es lo que tú pagaste. Con esto calculamos después tu ganancia real, no solo lo que facturaste.",
+          "El precio de entrada es lo que tú pagaste, por unidad. Con esto calculamos después tu ganancia real, no solo lo que facturaste. Si compraste en divisa, elige la moneda al lado: valen importes por debajo de 1, como 0,60 USD.",
       },
       {
         id: "asignar-price-stock",
@@ -401,6 +409,14 @@ export const SECTION_TOURS: TourDefinition[] = [
           "Cada línea es una venta. Toca una fila para ver el detalle: qué productos llevaba, en qué moneda y si ya está cobrada.",
       },
       {
+        id: "ventas-payment-status",
+        element: "#sales-table",
+        onMissing: "skip",
+        title: "Cobrada o pendiente",
+        description:
+          "Cada venta lleva su estado de pago: pendiente, pago parcial o pagada. Una venta que registraste sin cobrar se queda esperando aquí hasta que registres el pago.",
+      },
+      {
         id: "ventas-cancel",
         element: "#sales-table",
         onMissing: "skip",
@@ -463,6 +479,12 @@ export const SECTION_TOURS: TourDefinition[] = [
         title: "Registrar y cobrar",
         description:
           "El botón principal guarda la venta y abre el cobro de una vez: es el flujo de mostrador. El otro solo la anota para cobrarla después.",
+      },
+      {
+        id: "venta-excedente",
+        title: "Cuando paga de más",
+        description:
+          "En el cobro puedes sumar pagos en varias monedas. Si el cliente entrega más de lo que debe, te preguntamos qué hiciste con la diferencia: devolverla como vuelto —incluso en otra moneda, si no tienes cambio— o dejarla como propina. Lo que no devuelves queda a favor del negocio y se contabiliza aparte de las ventas.",
       },
     ],
   },
@@ -860,7 +882,13 @@ export const SECTION_TOURS: TourDefinition[] = [
         element: '[data-tour="daily-close-summary"]',
         title: "Ganaste o perdiste",
         description:
-          "El resumen final: ventas menos gastos, por moneda y también todo junto en la moneda que elijas.",
+          "El resumen final: ventas menos gastos y menos lo que te costó la mercancía vendida, por moneda y también todo junto en la moneda que elijas.",
+      },
+      {
+        id: "cierre-tips",
+        title: "Propinas y sobrantes",
+        description:
+          "Si algún cliente pagó de más y no se llevó el vuelto, ese dinero aparece en su propio bloque. Está fuera de las ventas y de la ganancia a propósito: entró a la caja sin vender mercancía. Es lo que explica que en la caja haya más de lo que suman tus ventas.",
       },
       {
         id: "cierre-export",
@@ -977,7 +1005,7 @@ export const SECTION_TOURS: TourDefinition[] = [
         element: '[data-tour="business-details-tab-schedule"]',
         title: "Cuándo abres",
         description:
-          "Registra tu horario. Si aceptas domicilios, es lo que le dice al sistema cuándo puedes recibir pedidos.",
+          "Registra tu horario. De la hora de cierre depende cuándo te enviamos el resumen contable del día.",
       },
       {
         id: "negocio-notifications",

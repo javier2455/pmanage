@@ -121,7 +121,7 @@ export const FLOW_TOURS: TourDefinition[] = [
         onMissing: "skip",
         title: "Revisa el carrito",
         description:
-          "Cambia cantidades o quita líneas antes de cerrar. Aquí también eliges si es en tienda o a domicilio.",
+          "Cambia cantidades o quita líneas antes de cerrar. El total se recalcula solo.",
       },
       {
         id: "primera-venta-currency",
@@ -137,7 +137,13 @@ export const FLOW_TOURS: TourDefinition[] = [
         onMissing: "skip",
         title: "Registra y cobra",
         description:
-          "Guarda la venta, descuenta el stock y abre el cobro. A partir de ahí ya cuenta para el cierre del día.",
+          "Guarda la venta, descuenta el stock y abre el cobro. Debajo tienes «Registrar venta» a secas, por si la cobras más tarde: queda como pendiente de pago.",
+      },
+      {
+        id: "primera-venta-excedente",
+        title: "Si te paga de más",
+        description:
+          "En el cobro puedes juntar varias monedas, y si el cliente entrega de más te preguntamos qué hiciste con lo que sobró: devolverlo como vuelto —en la moneda que tengas en caja— o quedártelo como propina. Lo que no devuelves entra a la caja, pero no cuenta como venta.",
       },
     ],
   },

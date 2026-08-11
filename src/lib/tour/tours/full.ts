@@ -167,7 +167,15 @@ export const FULL_TOUR: TourDefinition = {
       onMissing: "skip",
       title: "El carrito",
       description:
-        "Al agregar el primer producto aparece aquí: ajustas cantidades, eliges si es en tienda o a domicilio y en qué moneda cobras. Las monedas se configuran en Tipo de cambio, al final del recorrido.",
+        "Al agregar el primer producto aparece aquí: ajustas cantidades y eliges en qué moneda cobras. Las monedas se configuran en Tipo de cambio, al final del recorrido.",
+    },
+    {
+      id: "full-sales-cobro",
+      element: '[data-tour="sales-cart-submit-pay"]',
+      onMissing: "skip",
+      title: "Registrar y cobrar",
+      description:
+        "«Registrar venta y cobrar» cierra la venta y abre el cobro; «Registrar venta» la deja pendiente para cobrarla después. En el cobro puedes juntar varias monedas y, si el cliente paga de más, decides si devuelves el vuelto o se queda como propina.",
     },
 
     // --- Gastos ------------------------------------------------------------

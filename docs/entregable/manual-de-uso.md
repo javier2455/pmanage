@@ -1,6 +1,6 @@
 # Negora — Manual de uso
 
-> **Sistema de gestión para negocios** · Versión del documento: 2026-07-28
+> **Sistema de gestión para negocios** · Versión del documento: 2026-08-10 (app 2.3.5)
 > Acceso: **https://negora.dveloxsoft.com/manager/**
 
 Este manual recorre el sistema completo, pantalla por pantalla, en el mismo orden en
@@ -30,10 +30,11 @@ siempre con una etiqueta antes de que intentes usarlas, nunca te deja a medias.
 14. [Desempeño y estadísticas `PRO`](#14-desempeño-y-estadísticas-pro)
 15. [Equipo de trabajo `PRO`](#15-equipo-de-trabajo-pro)
 16. [Notificaciones y alertas](#16-notificaciones-y-alertas)
-17. [Soporte](#17-soporte)
-18. [Tu perfil, tu plan y tu cuenta](#18-tu-perfil-tu-plan-y-tu-cuenta)
-19. [Preguntas frecuentes](#19-preguntas-frecuentes)
-20. [Glosario](#20-glosario)
+17. [Las guías dentro de la aplicación](#17-las-guías-dentro-de-la-aplicación)
+18. [Soporte](#18-soporte)
+19. [Tu perfil, tu plan y tu cuenta](#19-tu-perfil-tu-plan-y-tu-cuenta)
+20. [Preguntas frecuentes](#20-preguntas-frecuentes)
+21. [Glosario](#21-glosario)
 
 ---
 
@@ -61,8 +62,13 @@ su **margen real**, no una estimación.
 ### Cómo está organizado
 
 La aplicación tiene una barra lateral izquierda con las secciones, una barra superior
-con el **selector de negocio activo**, la **búsqueda global** y la **campana de
-notificaciones**, y el contenido en el centro.
+con el **selector de negocio activo**, la **búsqueda global**, el **botón de ayuda** y
+la **campana de notificaciones**, y el contenido en el centro.
+
+> **No hace falta leerse este manual entero para empezar.** La aplicación lleva dentro
+> guías interactivas que te van señalando la pantalla mientras te explican qué hace cada
+> cosa. Se abren desde el botón de ayuda de la barra superior; están descritas en
+> [Las guías dentro de la aplicación](#17-las-guías-dentro-de-la-aplicación).
 
 > **El negocio activo manda.** Casi todo lo que ves —productos, ventas, gastos,
 > inventario, caja— corresponde al negocio seleccionado arriba. Si algo "no aparece",
@@ -115,31 +121,41 @@ que la reenvíe.
 La primera vez que entras, el sistema te pide elegir plan. No puedes usar la
 aplicación sin uno.
 
-| | **Gratuito** | **Básico** | **Pro** |
+| | **Gratuito**<br>*(prueba, 15 días)* | **Básico** | **Pro** |
 |---|---|---|---|
 | Precio mensual | $0 | $5 | $15 |
 | Precio anual (por mes) | $0 | $4 | $12 |
-| Negocios | 1 | 1 | **3** |
-| Productos | 100 | 100 | **500** |
+| Negocios | **3** | 1 | **3** |
+| Productos | **500** | 100 | **500** |
 | Ventas, compras e inventario | ✓ | ✓ | ✓ |
 | Gastos con categorías | ✓ | ✓ | ✓ |
 | Cierre contable diario | ✓ | ✓ | ✓ |
 | Tasas de cambio multi-moneda | ✓ | ✓ | ✓ |
 | Historial de precios e inventario | ✓ | ✓ | ✓ |
 | Búsqueda global y panel de estadísticas | ✓ | ✓ | ✓ |
-| Notificaciones por correo | — | ✓ | ✓ |
-| **Cierre contable mensual** | — | — | ✓ |
-| **Exportar cierres a Excel/PDF** | — | — | ✓ |
-| **Proveedores** | — | — | ✓ |
-| **Equipo y permisos** | — | — | ✓ |
-| **Comparador de precios multi-producto** | — | — | ✓ |
-| **Notificaciones por WhatsApp** | — | — | ✓ |
-| Soporte | WhatsApp / correo | WhatsApp / correo | Prioritario 24/7 |
+| Notificaciones por SMS | ✓ | ✓ | ✓ |
+| Notificaciones por correo | ✓ | ✓ | ✓ |
+| **Cierre contable mensual** | ✓ | — | ✓ |
+| **Exportar cierres a Excel/PDF** | ✓ | — | ✓ |
+| **Proveedores** | ✓ | — | ✓ |
+| **Equipo y permisos** | ✓ | — | ✓ |
+| **Alertas de stock** | ✓ | — | ✓ |
+| **Comparador de precios multi-producto** | ✓ | — | ✓ |
+| **Estadísticas avanzadas** | ✓ | — | ✓ |
+| **Notificaciones por WhatsApp** *(en desarrollo)* | ✓ | — | ✓ |
+| Soporte | Prioritario 24/7 | WhatsApp / correo | Prioritario 24/7 |
 
-### Prueba Pro de 15 días
+### El plan Gratuito *es* la prueba Pro de 15 días
 
-Al registrarte se te concede un **periodo de prueba del plan Pro durante 15 días**,
-sin compromiso. Puedes usar todo, incluidas las funciones Pro.
+Al registrarte se te concede el plan Gratuito, que **concede exactamente lo mismo que
+Pro —capacidades y topes— durante 15 días**, sin compromiso ni tarjeta. No es una
+versión recortada: es Pro entero para que decidas con conocimiento de causa.
+
+> Es de **un solo uso**: quien ya tuvo un plan alguna vez no puede volver a elegirlo.
+
+Pasados los 15 días eliges plan de pago. Es entonces cuando aparecen las diferencias de
+la tabla: el Básico no incluye cierre mensual, exportaciones, proveedores, equipo,
+alertas de stock ni estadísticas avanzadas.
 
 ### Qué pasa cuando termina la prueba
 
@@ -180,9 +196,14 @@ Puedes aplicar el mismo horario a varios días de una vez.
 > El horario no es decorativo: **de la hora de cierre depende cuándo se te envía el
 > cierre contable del día**.
 
-**Delivery / mensajería** — activa si tu negocio hace entregas a domicilio. Al
-activarlo, el formulario de venta te deja elegir "Entrega a domicilio" y capturar la
-dirección y el contacto del destinatario.
+**Delivery / mensajería** — deja constancia de que tu negocio hace entregas a domicilio.
+
+> **De momento es solo informativo.** El selector de tipo de venta se retiró del
+> mostrador en agosto de 2026: **todas las ventas nuevas se registran como venta en
+> tienda**. Marcar "a domicilio" guardaba una dirección y nada más —no había reparto, ni
+> estado de entrega, ni aviso al cliente—, así que era una pregunta más en cada cobro
+> cuya respuesta no cambiaba nada. Volverá cuando haya un flujo de entrega detrás. Las
+> ventas antiguas conservan el tipo con el que se registraron.
 
 **Notificaciones** — qué avisos quieres recibir y **por qué canal**:
 
@@ -193,9 +214,20 @@ dirección y el contacto del destinatario.
 | Inventario bajo | Un producto se acerca a su umbral mínimo |
 | Producto agotado | Un producto llegó a 0 |
 
-Y los canales: **Correo** (todos los planes de pago), **SMS** `PRO` y **WhatsApp**
-`PRO` *(en desarrollo)*. Los canales de teléfono necesitan que el negocio tenga un
-número válido guardado.
+Y los canales:
+
+| Canal | Disponible en | Requisito |
+|---|---|---|
+| **Correo** | Todos los planes | Correo válido guardado en el negocio |
+| **SMS** | Todos los planes | Teléfono válido guardado en el negocio |
+| **WhatsApp** `PRO` | Pro *(en desarrollo)* | Teléfono válido guardado en el negocio |
+
+> **El SMS ya no es una función Pro.** Se incluye en todos los planes: el único canal
+> reservado al plan Pro es WhatsApp, que además todavía está en desarrollo y aparece
+> deshabilitado con la etiqueta "Próximamente".
+
+El teléfono puedes escribirlo como te resulte natural —con espacios, guiones o
+paréntesis—: el sistema los tolera y valida el número que hay debajo.
 
 ### 4.3 Cambiar de negocio
 
@@ -218,6 +250,10 @@ Es la pantalla de inicio (**`/dashboard`**). De un vistazo:
 
 Cada bloque tiene su indicador de carga: si algo tarda, lo ves; nunca te quedas
 mirando una pantalla en blanco sin saber si falló.
+
+> **Las tarjetas son enlaces.** Pulsar la de ventas te lleva a Ventas, la de gastos a
+> Gastos y la de saldo de caja a Saldos en divisa, ya en el negocio activo. El panel no
+> es solo un resumen: es el atajo.
 
 ### Búsqueda global
 
@@ -262,11 +298,19 @@ distintos y con stock distinto.
 3. **Costo de entrada** y su **moneda** — a cuánto te costó. Si lo compraste en USD,
    selecciona USD; el sistema hace la conversión con tu tasa.
 4. **Stock inicial**.
-5. **Categoría** (opcional).
+5. **Categoría** (opcional). No hace falta tenerla creada de antes: escribe el nombre y,
+   si no coincide con ninguna existente, el selector te ofrece **«Crear "…"»** y la crea
+   al guardar el producto. Si ya existe con otras mayúsculas ("bebidas" frente a
+   "Bebidas"), reutiliza la que hay en vez de duplicarla.
 
 > **Ojo con la tasa.** El precio se guarda convertido a CUP con la tasa del día en
 > que lo fijas. Si la tasa se mueve mucho, revisa los precios de los productos que
 > cotizas en divisa: no se actualizan solos.
+
+> **Importes por debajo de 1 en divisa.** Comprar a 0,60 USD la unidad es perfectamente
+> válido: el mínimo no se aplica a la cifra que escribes sino a su **equivalente en CUP**
+> (el corte está en 0,01 CUP). Recuerda que el costo es **por unidad**: 0,60 USD × 24
+> bolsas son 14,40 USD de compra.
 
 ### 6.3 Importación masiva
 
@@ -284,6 +328,15 @@ Si vas a cargar decenas o cientos de productos, no lo hagas uno a uno.
 
 > Nada se guarda hasta que confirmas. Un archivo con errores no te deja el catálogo a
 > medias.
+
+**Dos columnas de moneda, no una.** La plantilla distingue la moneda del **costo**
+(`moneda`) de la moneda del **precio de venta** (`moneda_precio`, también admite
+`moneda_venta`), porque es normal comprar en una divisa y cotizar en otra. Si usas una
+plantilla antigua sin esa columna, el precio se interpreta como CUP: las plantillas
+viejas siguen siendo válidas.
+
+También puedes marcar que la importación **registre la compra como gasto** de reposición
+de stock, igual que en la entrada de mercancía.
 
 ### 6.4 Ver y editar productos
 
@@ -314,6 +367,10 @@ medio**, **margen** y valor.
 > **El valor del inventario está a costo, no a precio de venta.** Es lo correcto
 > contablemente: tu mercancía vale lo que te costó, no lo que esperas cobrar.
 
+Los precios se muestran en CUP y, si fijaste el del producto en divisa, debajo aparece
+**"fijado en 20,00 USD"** con la tasa aplicada en el tooltip. Así sabes de un vistazo
+cuáles tendrás que revisar si la tasa se mueve.
+
 ### 7.2 Registrar entrada de mercancía
 
 **Inventario → Nueva entrada**:
@@ -323,9 +380,16 @@ medio**, **margen** y valor.
 3. **Costo unitario** y su **moneda**.
 4. **Proveedor** (opcional) — si lo eliges, el costo se autocompleta con el último
    precio que te dio ese proveedor.
-5. Confirma.
+5. **"Registrar como gasto de reposición de stock"** (opcional) — si lo marcas, el
+   sistema crea solo el gasto correspondiente, en la categoría *Reposición de stock*,
+   por **costo × cantidad** y en la moneda en que compraste. Te ahorra ir después a
+   Gastos a anotar la misma compra a mano.
+6. Confirma.
 
 El stock sube y se crea un **lote de costo** (ver más abajo).
+
+> El costo se admite **por debajo de 1 en divisa**: lo que se valida es el equivalente
+> en CUP, no la cifra tecleada.
 
 ### 7.3 Cómo calcula Negora tu costo real — costeo por lotes (FIFO)
 
@@ -356,7 +420,7 @@ mermas, stock inicial y ajustes.
 Puedes filtrar por **producto**, por **rango de fechas** y por **tipo de movimiento**, y
 **exportar** el resultado.
 
-### 7.5 Alertas de stock
+### 7.5 Alertas de stock `PRO`
 
 Desde el detalle de un producto, **"Configurar alerta"**: defines el umbral mínimo.
 Cuando el stock baja de ahí, recibes el aviso de **inventario bajo**; cuando llega a 0,
@@ -375,29 +439,72 @@ Los productos por debajo del umbral se marcan visualmente en las listas.
 1. **Moneda de la venta** — en qué moneda le cobras al cliente.
 2. **Añade productos.** Busca, elige cantidad. El sistema valida contra el stock
    disponible y muestra el subtotal por línea.
-3. **Tipo de venta** — en local o **entrega a domicilio** (si tu negocio tiene delivery
-   activado). Si es a domicilio, capturas dirección y contacto.
-4. **Pagos.** Aquí está la parte potente: una venta puede cobrarse **en varias monedas a
-   la vez**. Si el total son 5.000 CUP y el cliente te da 20 USD y el resto en CUP,
-   registras los dos pagos. **La tasa se congela en el momento de la venta**, así que
-   una fluctuación posterior no altera esa venta.
-5. **Confirma.**
+3. **Cierra la venta** con uno de los dos botones:
+   - **"Registrar venta y cobrar"** — lo normal en el mostrador: registra la venta y
+     abre el cobro en el acto.
+   - **"Registrar venta"** — la deja **pendiente de pago**, para cobrarla más tarde.
 
-Al confirmarse: el stock baja, se consumen los lotes de costo, se registra el
-movimiento de caja y queda disponible la **factura en PDF**.
+Al registrarse: el stock baja, se consumen los lotes de costo y queda disponible la
+**factura en PDF**. Los movimientos de caja se registran con el cobro.
 
 > **El resumen del carrito no suma peras con manzanas.** Si llevas 2 laptops y 0,5 kg
 > de café, no te dice "2,5 unidades": cuenta productos.
 
-### 8.2 Ver ventas
+> Todas las ventas se registran como **venta en tienda**. El selector de tipo de venta
+> (a domicilio / para recoger) se retiró; ver [Delivery](#42-detalles-del-negocio).
 
-**Ventas** lista las del negocio activo. **Pulsa cualquier fila** para ver el detalle:
-productos, cantidades, precios, pagos por moneda, tipo de venta, datos de entrega y
-quién la registró.
+### 8.2 Cobrar una venta
+
+El cobro es un paso propio, así que una venta puede quedarse esperando. Cada venta lleva
+su **estado de pago** bien visible en la lista y en el detalle:
+
+| Estado | Qué significa |
+|---|---|
+| **Pendiente de pago** | Registrada, sin cobrar nada todavía |
+| **Pago parcial** | Cobrada en parte; queda un pendiente |
+| **Pagada** | Cobrada por completo |
+| **Cancelada** | Anulada; no admite pagos |
+
+En **"Registrar pago"** ves de un vistazo el total, lo pagado y lo pendiente, y añades
+uno o varios pagos:
+
+1. **Moneda y monto.** Una venta puede cobrarse **en varias monedas a la vez**: si el
+   total son 5.000 CUP y el cliente te da 20 USD y el resto en CUP, agregas dos pagos con
+   **"Agregar otra moneda"**. Debajo de cada uno ves su equivalente en la moneda de la
+   venta. **La tasa se congela en el momento del cobro**, así que una fluctuación
+   posterior no altera esa venta.
+2. **"Pagar todo"** rellena el importe que falta, ya convertido a la moneda de esa línea
+   y redondeado hacia arriba: si redondeara hacia abajo, la venta se quedaría en "pago
+   parcial" por unos céntimos sin que nadie se diera cuenta.
+3. **Referencia** (opcional) — el número de la transferencia, por ejemplo.
+
+### 8.3 Cuando el cliente paga de más: vuelto y propina
+
+Si lo que entrega el cliente supera lo que falta por cobrar, aparece el bloque **"El
+cliente paga de más"** con el excedente y **hay que decidir qué se hizo con él**:
+
+- **Entregar el vuelto al cliente** — es la opción marcada por defecto. El sistema
+  propone devolver el excedente completo, pero puedes cambiar el importe y **la moneda en
+  que lo devuelves** (si no tienes cambio en la moneda del cobro, devuelves en otra). No
+  te deja devolver más de lo que sobró.
+- **El cliente lo deja como propina** — no se devuelve nada.
+
+Lo que no se devuelve —la propina, o el resto de cuando no tienes cambio exacto— aparece
+como **"Queda a favor del negocio"** antes de confirmar, y luego en el cierre contable.
+
+> **La propina no es una venta.** No suma a ingresos ni a ganancia bruta: no vendió
+> mercancía, y contarla ahí inflaría tu margen con un costo de cero. Se contabiliza
+> aparte, y es lo que explica que en la caja haya más dinero del que suman tus ventas.
+
+### 8.4 Ver ventas
+
+**Ventas** lista las del negocio activo, con su estado de pago. **Pulsa cualquier fila**
+para ver el detalle: productos, cantidades, precios, pagos por moneda, propinas y vueltos
+de cada cobro, y quién la registró.
 
 Desde el detalle descargas la **factura en PDF**.
 
-### 8.3 Cancelar una venta o aceptar una devolución
+### 8.5 Cancelar una venta o aceptar una devolución
 
 En la fila de la venta, el icono de **cancelar**:
 
@@ -475,8 +582,21 @@ cancelaciones.
 **Tasas de cambio**. Aquí defines **tus** tasas, las que realmente usas, no las de un
 mercado oficial que no te sirve.
 
-Monedas soportadas: **CUP** (base), **USD**, **EUR**, **MXN**, **CAD**, **GBP**,
-**CHF**, **JPY**.
+Monedas soportadas, además del **CUP** en efectivo, que es la moneda base:
+
+| | |
+|---|---|
+| **USD** | Dólar estadounidense |
+| **EURO** | Euro |
+| **CUP Transferencia** | Pago en CUP por transferencia bancaria |
+| **Tarjeta Clásica** | |
+| **MLC** | |
+| **CAD**, **GBP**, **CHF**, **MXN**, **JPY** | Dólar canadiense, libra, franco suizo, peso mexicano, yen |
+
+> **CUP Transferencia y Tarjeta Clásica son monedas de pleno derecho**, no variantes del
+> CUP en efectivo. Es deliberado: si cobrar por transferencia te sale más caro que cobrar
+> en efectivo, esa diferencia se refleja en su tasa y deja de comerse tu margen sin que
+> te enteres. Configúralas como cualquier otra.
 
 Para cada una fijas cuántos CUP vale. Esa tasa es la que el sistema aplica al convertir
 costos, consolidar saldos y cerrar el mes.
@@ -498,6 +618,10 @@ costos, consolidar saldos y cerrar el mes.
 - **Resumen financiero**: ingresos, gastos, **costo de la mercancía vendida**,
   **ganancia bruta** y balance final, con indicador visual de ganancia o pérdida.
 - **Desglose por moneda** — cuánto entró en cada una, además del consolidado.
+- **Propinas y sobrantes de cobro** — lo que los clientes dejaron de más, con su desglose
+  por moneda. Va en su propio bloque, fuera de las ventas y de la ganancia bruta, porque
+  entró a la caja sin vender mercancía. Es la pieza que cuadra la caja cuando hay más
+  dinero del que suman las ventas.
 
 ### 13.2 Cierre mensual `PRO`
 
@@ -598,12 +722,66 @@ Cada una con su propio paginador.
 | **Venta cancelada** | Se cancela una venta |
 | **Cambio de precio** | Alguien modifica el precio de un producto |
 
-Además, por los canales que configuraste en el negocio (correo, SMS `PRO`), llegan los
-**cierres diario y mensual**.
+Además, por los canales que configuraste en el negocio (correo y SMS, incluidos en todos
+los planes), llegan los **cierres diario y mensual**.
+
+Las alertas de **stock bajo** y **producto agotado** dependen de que hayas configurado el
+umbral del producto, que es una función `PRO`.
 
 ---
 
-## 17. Soporte
+## 17. Las guías dentro de la aplicación
+
+Además de este manual, Negora lleva dentro **guías interactivas**: en lugar de
+describirte una pantalla, te la señalan. Cada paso resalta el botón o el campo del que
+habla, y la guía te va llevando de una pantalla a otra sola.
+
+### 17.1 Dónde están
+
+El **botón de ayuda** (el círculo con el interrogante) de la barra superior. Te ofrece
+dos cosas:
+
+- **Tour de esta vista** — la guía de la pantalla en la que estás ahora mismo.
+- **Ver todas las guías** — el catálogo completo.
+
+La primera vez que entras al panel, el sistema te lo propone él solo con un aviso de
+"¿Primera vez por aquí?". Si dices "Ahora no", no vuelve a insistir: el botón de ayuda
+sigue ahí cuando lo quieras.
+
+### 17.2 Qué guías hay
+
+| Tipo | Cuántas | Para qué |
+|---|---|---|
+| **Recorrido completo** | 1 | Te lleva por todo el sistema en el orden en que se usa: categorías, productos, ventas, gastos, caja, tasas y cierre |
+| **Guías por sección** | 27 | Una por pantalla: qué es cada cosa que ves en ella |
+| **Guías por tarea** | 10 | Cómo se hace algo concreto, aunque cruce varias pantallas |
+
+Las guías por tarea responden a lo que la gente pregunta de verdad:
+
+- Registrar mi primera venta
+- Importar productos desde Excel
+- Anotar una compra de mercancía como gasto
+- Entender por qué mi stock no cuadra
+- Que me avisen antes de quedarme sin nada
+- Invitar a un trabajador
+- Cerrar el día
+- Cambiar la tasa del dólar
+- Cobrar por transferencia sin perder dinero
+- Trabajar con más de un negocio
+
+### 17.3 Cómo se usan
+
+Empiezas la guía y avanzas paso a paso; puedes **salirte en cualquier momento** y
+repetirla las veces que quieras.
+
+> **Cada usuario ve solo lo que puede usar.** Las guías se ajustan a tu plan y a tus
+> permisos: los pasos que hablan de funciones que no tienes concedidas se omiten, y una
+> guía entera de una sección a la que no accedes ni siquiera aparece en el catálogo. Por
+> eso un trabajador y el dueño no ven exactamente las mismas guías.
+
+---
+
+## 18. Soporte
 
 **Soporte → Nuevo ticket**: asunto y descripción del problema.
 
@@ -616,19 +794,23 @@ en la pestaña "Soporte".
 
 ---
 
-## 18. Tu perfil, tu plan y tu cuenta
+## 19. Tu perfil, tu plan y tu cuenta
 
-### 18.1 Perfil
+### 19.1 Perfil
 
 **Perfil** — tus datos personales y tu plan activo. Desde **Editar perfil** los
 actualizas.
 
-### 18.2 Plan
+### 19.2 Plan
 
 - **Cambiar plan** — pasar a otro plan.
 - **Historial de planes** — todas tus suscripciones con sus fechas.
 
-### 18.3 Desactivar la cuenta
+Al cambiar de plan **no hace falta recargar ni volver a entrar**: las funciones que gana
+el plan nuevo aparecen en el acto, y las que pierde dejan de estar disponibles igual de
+rápido.
+
+### 19.3 Desactivar la cuenta
 
 Desde el perfil. Al desactivarla:
 
@@ -637,13 +819,13 @@ Desde el perfil. Al desactivarla:
   **reactivarla**: todo sigue donde lo dejaste.
 - Pasados los 15 días, la cuenta y sus datos se eliminan definitivamente.
 
-### 18.4 Cerrar sesión
+### 19.4 Cerrar sesión
 
 Desde el menú de usuario. Cierra la sesión de verdad, también en el servidor.
 
 ---
 
-## 19. Preguntas frecuentes
+## 20. Preguntas frecuentes
 
 **Registré una venta pero el stock no bajó.**
 Comprueba el negocio activo en la barra superior. Es casi siempre eso: la venta se
@@ -672,17 +854,39 @@ Los otros se archivan **sin borrarse**.
 **¿Puedo cobrar una venta en dos monedas?**
 Sí. Registra un pago por cada moneda; el sistema cuadra el total.
 
+**En la caja hay más dinero del que suman mis ventas del día.**
+Mira el bloque **"Propinas y sobrantes de cobro"** del cierre. Ese dinero entró sin
+vender mercancía —propinas y excedentes que no se devolvieron— y por eso no está sumado
+a las ventas ni a la ganancia bruta.
+
+**Registré una venta y aparece como "Pendiente de pago".**
+La cerraste con "Registrar venta" en vez de "Registrar venta y cobrar". La venta existe y
+el stock ya bajó; el cobro lo registras cuando quieras desde la propia venta.
+
+**El cliente pagó de más y no tenía cambio.**
+En el cobro, reduce el vuelto a lo que sí le devolviste (o cámbialo de moneda). La
+diferencia queda "a favor del negocio". Si no le devolviste nada, marca "propina".
+
+**No puedo poner un costo de 0,60 USD.**
+Sí puedes. Ese límite se corrigió: el mínimo se mide sobre el equivalente en CUP, no
+sobre la cifra que escribes. Si aún lo ves, recarga la aplicación para tomar la versión
+nueva.
+
+**Ya no encuentro dónde marcar una venta como "a domicilio".**
+Se retiró: todas las ventas se registran como venta en tienda. No había ningún flujo de
+reparto detrás del campo, así que solo ensuciaba el cobro y las estadísticas.
+
 **No me llegan las notificaciones por correo.**
 Revisa dos cosas: que el negocio tenga un correo válido guardado, y que el aviso esté
-activado para el canal "Correo" en Detalles → Notificaciones. El plan Gratuito no
-incluye notificaciones por correo.
+activado para el canal "Correo" en Detalles → Notificaciones. Correo y SMS están
+incluidos en todos los planes.
 
 **Cerré el navegador y tuve que volver a entrar.**
 Es intencional. La sesión no sobrevive al cierre del navegador por seguridad.
 
 ---
 
-## 20. Glosario
+## 21. Glosario
 
 | Término | Qué significa |
 |---|---|
@@ -696,6 +900,10 @@ Es intencional. La sesión no sobrevive al cierre del navegador por seguridad.
 | **Ganancia bruta** | Ingresos − costo de lo vendido |
 | **Margen** | Qué porcentaje del precio de venta es ganancia |
 | **Merma** | Mercancía perdida o dañada; pérdida real |
+| **Estado de pago** | Si una venta está pendiente, pagada en parte o pagada |
+| **Excedente** | Lo que el cliente entrega por encima de lo que debe |
+| **Vuelto** | La parte del excedente que se le devuelve |
+| **Propina** | El excedente que el cliente no se lleva; entra a caja, no a ventas |
 | **Moneda base** | CUP. La moneda en que se consolida todo |
 | **Tasa congelada** | La tasa guardada con la operación, que no cambia después |
 | **Consolidado** | Varias monedas convertidas a moneda base para sumarlas |
