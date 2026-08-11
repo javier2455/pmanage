@@ -19,7 +19,7 @@
 - [Parte A — Backend (`psearch-back`)](#parte-a--backend-psearch-back)
   - [A0. Prerrequisitos](#a0-prerrequisitos--arreglan-bugs-que-ya-existen-hoy)
   - [A1. Módulo de sincronización](#a1-módulo-de-sincronización--srcv2sync)
-  - [A2. CRUD completo offline](#a2-crud-completo-offline--updated_at-soft-delete-y-pull)
+  - [A2. Ediciones de ventas y gastos ya sincronizadas](#a2-ediciones-de-ventas-y-gastos-ya-sincronizadas)
   - [A3. Integridad contable](#a3-integridad-contable)
   - [A4. Migraciones](#a4-migraciones-necesarias)
 - [Parte B — Cliente (`pmanage`)](#parte-b--cliente-pmanage)
@@ -93,7 +93,7 @@ futuro hiciera falta, el camino está descrito en [A2](#a2-ediciones-de-ventas-y
 y se puede retomar sin rehacer nada.
 
 **Lo que no se ahorra, y hay que asumir:** cada endpoint nuevo del sistema tendrá que decidir su
-semántica offline a partir de ahora, para siempre. Ver el [riesgo 8](#riesgos-aceptados).
+semántica offline a partir de ahora, para siempre. Ver el [riesgo 9](#riesgos-aceptados).
 
 ---
 
@@ -1207,6 +1207,41 @@ DOM.
 heartbeat, y `BroadcastChannel('negora-sync')` para propagar estado entre pestañas. Dos pestañas
 subiendo la misma cola serían doble envío.
 
+### Editar y descartar operaciones de la cola
+
+Es la pieza que sustituye a "editar y borrar offline" para casi todo el uso real, y **no toca el
+backend en absoluto**: la operación nunca salió del dispositivo.
+
+`pmanage/src/lib/offline/outbox-edit.ts`:
+
+```ts
+editOp(opId: string, nextPayload: unknown): Promise<EditResult>
+discardOp(opId: string, cascade: 'block' | 'discard'): Promise<DiscardResult>
+```
+
+Reglas, y aquí está toda la dificultad:
+
+- **Solo se puede editar en estado `pending`, `blocked`, `failed` o `rejected`.** Nunca en `inflight`
+  (se está enviando) ni en `done` (ya está en el servidor — para eso está la edición normal, que se
+  encola como una op nueva de tipo `update`).
+- **Revalidar la cadena antes de confirmar, no después.** Si se edita "crear producto" y hay una
+  venta encolada que lo referencia, hay que recalcular los descendientes transitivos y **mostrar al
+  usuario qué va a pasar con ellos antes de que confirme**: *"Esta venta y 2 operaciones más dependen
+  de este producto."*
+- **Descartar con dependientes exige elegir**: `AlertDialog` con las dos salidas —dejar los
+  dependientes bloqueados a la espera de que se recree la raíz, o descartarlos también en cascada—
+  enumerando exactamente cuáles se verían afectados. Nunca decidir por el usuario.
+- **Toda edición deja traza**: la versión anterior del payload se conserva en la propia operación
+  (`previousPayloads[]`) hasta que se sincroniza con éxito. Si algo sale mal, se puede reconstruir
+  qué había antes.
+- El `entityId` (el UUID) **no cambia nunca** al editar. Solo cambia el payload. Así las referencias
+  de los dependientes siguen siendo válidas y no hay que reescribir nada más.
+- Al editar, `updatedAt` de la operación se refresca pero **`seq` se mantiene**: el orden de la cola
+  sigue siendo el orden en que ocurrieron las cosas, no el orden en que se corrigieron.
+
+La lógica de recálculo de la cadena se extrae pura (`recomputeChain(ops, editedId)`) para poder
+testearla sin IndexedDB.
+
 ## B7. Interfaz de sincronización
 
 Todo bajo `pmanage/src/components/offline/`:
@@ -1215,7 +1250,7 @@ Todo bajo `pmanage/src/components/offline/`:
 |---|---|---|
 | `connection-indicator.tsx` | `Badge` + `Tooltip` | Barra superior del dashboard, junto a la campana. Verde / ámbar "Sin conexión" / azul girando "Sincronizando" / rojo "N con error" |
 | `pending-changes-button.tsx` | `Button` + `Badge` | **El botón del requisito**: siempre visible, con contador reactivo. También en `nav-user.tsx` para móvil colapsado. Con 0 pendientes se atenúa pero **no desaparece** |
-| `sync-drawer.tsx` | `Sheet` (existe) | Botón primario "Subir cambios (N)", "Última sincronización: hace X", `Tabs` Pendientes / Con error / Historial. Lista agrupada por entidad con `Collapsible`. **Las cadenas de dependencia se muestran anidadas** ("Venta · depende de: Producto «Coca-Cola»") para que se entienda por qué algo está bloqueado |
+| `sync-drawer.tsx` | `Sheet` (existe) | Botón primario "Subir cambios (N)", "Última sincronización: hace X", `Tabs` Pendientes / Con error / Historial. Lista agrupada por entidad con `Collapsible`, cada fila con `DropdownMenu` [**Editar** / Reintentar / Ver detalle / Descartar]. **Las cadenas de dependencia se muestran anidadas** ("Venta · depende de: Producto «Coca-Cola»") para que se entienda por qué algo está bloqueado, y para que al editar o descartar se vea a quién afecta |
 | `sync-reconnect-dialog.tsx` | `Dialog` (existe) | Se abre una vez al pasar offline → online: *"Volvió la conexión. Tienes N cambios sin subir. ¿Subirlos ahora?"* → [Subir ahora] [Más tarde] + casilla "Subir automáticamente a partir de ahora". **Nunca auto-subir por defecto.** Antirrebote de 10 min |
 | `sync-result-dialog.tsx` | `Dialog` + `Progress` | "12 subidos · 2 fallaron", con el mensaje literal del servidor y acción sugerida |
 | `conflict-resolver.tsx` | `Dialog` + `Table` | Ver B8 |
@@ -1227,7 +1262,9 @@ Hook público `pmanage/src/hooks/use-sync.ts`:
 
 ```ts
 { status, pendingCount, blockedCount, failedCount, rejectedCount,
-  lastSyncAt, progress, push(), retry(opId), retryAll(), discard(opId) }
+  lastSyncAt, progress,
+  push(), retry(opId), retryAll(),
+  edit(opId, nextPayload), discard(opId, cascade), previewImpact(opId) }
 ```
 
 Faltan en `pmanage/src/components/ui/`: `alert-dialog` (confirmar descartes destructivos) y
@@ -1285,8 +1322,8 @@ la interfaz consulta para deshabilitar botones con `Tooltip` explicativo.
 6. **Cobrar venta / registrar pagos** — el servidor calcula resumen, recargo y vuelto multimoneda
    (`repartirCobro`, con reglas de excedente no declarado y vuelto). Replicarlo es riesgo directo de
    descuadre de caja. Offline se registra la venta como pendiente de cobro.
-7. **Cancelar una venta ya sincronizada** — devuelve unidades a las capas FIFO exactas en el
-   servidor. *(Para una venta aún pendiente, la acción correcta es "descartar la operación".)*
+7. **Borrar una venta** — ni offline ni online. El endpoint actual deja el inventario descuadrado
+   ([A0.5](#a05-delete-salesid-está-roto-hoy)). La operación correcta es cancelar.
 8. **Cerrar caja / cierre contable** — y regla nueva: bloquearlo **incluso online** si el negocio
    tiene operaciones pendientes. Un cierre con ventas sin subir es un cierre falso.
 9. **Exportar PDF/Excel generados por el servidor** — factura, cierres, historial de inventario.
@@ -1297,6 +1334,15 @@ la interfaz consulta para deshabilitar botones con `Tooltip` explicativo.
 12. **Tickets de soporte, avatar de usuario.**
 13. **Analítica** — mostrar lo cacheado con "Datos al ⟨fecha⟩", **nunca recalcular en cliente**:
     daría cifras distintas a las oficiales, que es peor que no mostrar nada.
+
+**Permitido con aviso explícito:**
+
+- **Cancelar una venta ya sincronizada.** Se encola, pero la interfaz deja claro que *el stock y el
+  costo no se devuelven hasta que sincronices*. Es la operación con efectos FIFO más complejos del
+  sistema (restaura unidades a las capas exactas de las que salieron, en orden inverso), y el cliente
+  no puede ni debe simularlo.
+- **Editar una venta o un gasto ya sincronizados.** Solo metadata: descripción, tipo de venta y datos
+  de entrega. Se encola con `baseUpdatedAt` para detectar edición concurrente.
 
 **Degradado, no bloqueado** (se muestra cacheado con la antigüedad visible): cierres en consulta,
 historial de precios, historial de inventario, notificaciones, listados en general.
@@ -1382,19 +1428,19 @@ Compromisos conscientes, no descuidos. Conviene que queden por escrito y acordad
    mala. Hay que medirlo con datos reales; si un negocio con 1.000 productos genera un payload
    incómodo, la salida es el `pull?since=` descrito en
    [A2.3](#a23-descartado-del-alcance-documentado-por-si-se-retoma), con su coste.
-6. **Nunca fusionar automáticamente productos duplicados.** Fusionar dos productos con stock y capas
+7. **Nunca fusionar automáticamente productos duplicados.** Fusionar dos productos con stock y capas
    FIFO propias es irreversible.
-7. **El offline reduce el control de acceso** durante la ventana del TTL. Se mitiga revalidando
+8. **El offline reduce el control de acceso** durante la ventana del TTL. Se mitiga revalidando
    permisos en el replay, no se elimina.
-8. **Impuesto perpetuo:** cada endpoint nuevo tendrá que declarar su semántica offline. Se necesita
+9. **Impuesto perpetuo:** cada endpoint nuevo tendrá que declarar su semántica offline. Se necesita
    una lista blanca explícita de operaciones sincronizables y un ítem obligatorio en el checklist de
    PR, con regla por defecto **"online-only salvo demostración en contra"**.
-9. **Versionado de payloads:** la app se actualizará con cola pendiente. Cada operación lleva
-   `schemaVersion`, el store local tiene migraciones, y **el servidor debe aceptar las N versiones
-   anteriores**. Un cambio de DTO que hoy es trivial pasa a requerir compatibilidad hacia atrás.
-10. **Modo incógnito**: el almacenamiento es efímero. El modo offline debe deshabilitarse por completo
+10. **Versionado de payloads:** la app se actualizará con cola pendiente. Cada operación lleva
+    `schemaVersion`, el store local tiene migraciones, y **el servidor debe aceptar las N versiones
+    anteriores**. Un cambio de DTO que hoy es trivial pasa a requerir compatibilidad hacia atrás.
+11. **Modo incógnito**: el almacenamiento es efímero. El modo offline debe deshabilitarse por completo
     y decirlo (es detectable).
-11. **Relojes desincronizados**: offline, el reloj del dispositivo *es* la fuente de la hora del
+12. **Relojes desincronizados**: offline, el reloj del dispositivo *es* la fuente de la hora del
     negocio. Se mide la deriva en cada petición exitosa y se corrige en el servidor; los casos
     extremos se rechazan en vez de silenciarse.
 
@@ -1424,6 +1470,9 @@ Compromisos conscientes, no descuidos. Conviene que queden por escrito y acordad
 - Vitest en `node` para lógica pura: grafo de la cola, clasificador de errores, máquina de
   conectividad con `vi.useFakeTimers()` (histéresis, backoff con jitter, portal cautivo que devuelve
   200 con HTML, 5xx → `degraded`, 401 → `online`), función de mezcla cola+lista.
+- `recomputeChain` — editar una operación con dependientes y verificar que se recalculan; descartar
+  con `cascade: 'block'` vs `'discard'`; que `entityId` y `seq` no cambian al editar; que editar en
+  estado `inflight` o `done` se rechaza. **Es la lógica nueva con más superficie de error.**
 - `dynamic-routes.test.ts` — **lee `pmanage/public/.htaccess` del disco** y verifica que la tabla del
   service worker resuelve idénticamente. Es la única defensa real contra la divergencia entre Apache
   y el service worker.
@@ -1442,8 +1491,11 @@ Con `pmanage/docs/offline-plan/offline-qa.md` como checklist:
 
 - Android real con datos apagados **y** con wifi conectado sin salida (el caso que rompe
   `navigator.onLine`).
-- Jornada completa offline: 30 ventas, 5 gastos, 3 productos nuevos con imagen, 2 entradas de stock,
-  1 edición de precio → subir todo → verificar cifras contra la base de datos.
+- Jornada completa offline: 30 ventas, 5 gastos, 3 productos nuevos con imagen, 2 entradas de stock
+  → **corregir dos ventas y descartar una tercera desde la cola** → subir todo → verificar cifras
+  contra la base de datos.
+- Editar en la cola un producto del que ya cuelga una venta, y comprobar que se avisa del impacto
+  antes de confirmar.
 - Recarga dura en medio de una cola pendiente.
 - Dos pestañas subiendo a la vez.
 - Actualizar la app con cola pendiente.
