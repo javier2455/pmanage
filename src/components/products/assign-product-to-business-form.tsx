@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import {
   CategoryCombobox,
   type CategoryOption,
-} from "@/components/products/category-combobox"
+} from "@/components/categories/category-combobox"
 import { ProductCombobox } from "@/components/products/product-combobox"
 import { AmountCurrencyField } from "@/components/products/amount-currency-field"
 import { useExchangeRate } from "@/hooks/use-exchange"

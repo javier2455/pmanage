@@ -35,6 +35,12 @@ export interface CreateExpenseProps {
   amount: number;
   description: string;
   expenseCategoryId?: string | null;
+  /**
+   * Categoría escrita en el formulario que aún no existe: el backend la crea al
+   * guardar (find-or-create case-insensitive). Si llegan los dos, manda el id.
+   * Mismo contrato que `categoryName` al asignar un producto al negocio.
+   */
+  expenseCategoryName?: string | null;
   /** Moneda del gasto. Si se omite, el backend asume `CUP`. */
   currency?: string;
 }
@@ -44,5 +50,6 @@ export type UpdateExpenseProps = Partial<{
   amount: number;
   description: string;
   expenseCategoryId: string | null;
+  expenseCategoryName: string | null;
   currency: string;
 }>;

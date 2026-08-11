@@ -3,6 +3,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from "@tanstack/react-query";
 import {
   createProductCategory,
@@ -15,6 +16,26 @@ import {
   CreateProductCategoryProps,
   UpdateProductCategoryProps,
 } from "@/lib/types/product-category";
+
+/**
+ * Refresca las vistas que pintan la categoría de un producto.
+ *
+ * La categoría no se consulta aparte: viaja **embebida** en cada producto
+ * (`businessProduct.category`, con fallback a `product.category`). Invalidar
+ * solo `product-categories` refrescaba la pantalla de categorías pero dejaba el
+ * nombre viejo en las tablas de productos hasta recargar con F5.
+ *
+ * Sin `businessId` a propósito: una categoría puede estar en productos de
+ * cualquier negocio, así que se invalidan todas las variantes de cada clave.
+ */
+function invalidateProductViews(queryClient: QueryClient) {
+  // Tabla de productos del negocio y buscador del mostrador.
+  queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses"] });
+  // Catálogo global.
+  queryClient.invalidateQueries({ queryKey: ["all-products"] });
+  // Detalle de un producto.
+  queryClient.invalidateQueries({ queryKey: ["product"] });
+}
 
 interface UseGetAllProductCategoriesParams {
   page?: number;
@@ -76,6 +97,8 @@ export function useUpdateProductCategoryMutation() {
       queryClient.invalidateQueries({
         queryKey: ["product-category", categoryId],
       });
+      // Renombrar la categoría cambia lo que muestran las tablas de productos.
+      invalidateProductViews(queryClient);
     },
   });
 }
@@ -86,6 +109,8 @@ export function useDeleteProductCategoryMutation() {
     mutationFn: (categoryId: string) => deleteProductCategory(categoryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-categories"] });
+      // Los productos que la tenían se quedan sin categoría.
+      invalidateProductViews(queryClient);
     },
   });
 }

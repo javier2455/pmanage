@@ -59,6 +59,12 @@ export function useCreateExpenseMutation() {
       queryClient.invalidateQueries({
         queryKey: [CURRENCY_BALANCES_KEY, credentials.idbusiness],
       });
+      // Guardar el gasto puede haber dado de alta una categoría nueva
+      // (`expenseCategoryName`): sin esto no aparecería en el selector ni en la
+      // pantalla de categorías hasta recargar.
+      if (credentials.expenseCategoryName) {
+        queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      }
     },
   });
 }
@@ -73,10 +79,14 @@ export function useUpdateExpenseMutation() {
       expenseId: string;
       credentials: UpdateExpenseProps;
     }) => updateExpense(expenseId, credentials),
-    onSuccess: (_, { expenseId }) => {
+    onSuccess: (_, { expenseId, credentials }) => {
       queryClient.invalidateQueries({ queryKey: ["all-expenses"] });
       queryClient.invalidateQueries({ queryKey: ["expense", expenseId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      // Igual que al crear: la edición también puede dar de alta la categoría.
+      if (credentials.expenseCategoryName) {
+        queryClient.invalidateQueries({ queryKey: ["expense-categories"] });
+      }
     },
   });
 }

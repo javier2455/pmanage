@@ -1,6 +1,6 @@
 /**
  * Reglas del combobox de categorías con creación al vuelo
- * (ver components/products/category-combobox.tsx).
+ * (ver components/categories/category-combobox.tsx).
  */
 
 export type CategoryLike = { id: string; name: string };

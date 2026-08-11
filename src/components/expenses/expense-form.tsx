@@ -29,12 +29,11 @@ import {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
 } from "@/hooks/use-expenses";
+import { CategoryCombobox } from "@/components/categories/category-combobox";
 import { useGetAllExpenseCategoriesQuery } from "@/hooks/use-expense-categories";
 import { useExchangeRate } from "@/hooks/use-exchange";
 import { useBusiness } from "@/context/business-context";
 import { BASE_CURRENCY, getAvailableCurrencies } from "@/lib/currency";
-
-const NO_CATEGORY_VALUE = "__none__";
 
 interface ExpenseFormProps {
   mode: "create" | "edit";
@@ -87,11 +86,13 @@ export function ExpenseForm({
       amount: defaultValues?.amount ?? (undefined as unknown as number),
       description: defaultValues?.description ?? "",
       expenseCategoryId: defaultValues?.expenseCategoryId ?? null,
+      expenseCategoryName: null,
       currency: defaultValues?.currency ?? BASE_CURRENCY,
     },
   });
 
   const selectedCategoryId = watch("expenseCategoryId");
+  const newCategoryName = watch("expenseCategoryName");
   const selectedCurrency = watch("currency") ?? BASE_CURRENCY;
 
   async function onSubmit(formData: CreateExpenseFormData) {
@@ -99,9 +100,12 @@ export function ExpenseForm({
       formData.expenseCategoryId && formData.expenseCategoryId.length > 0
         ? formData.expenseCategoryId
         : null;
+    const normalizedCategoryName = formData.expenseCategoryName?.trim() || null;
     const payload = {
       ...formData,
       expenseCategoryId: normalizedCategoryId,
+      // Solo viaja si es una categoría nueva; el backend la crea al guardar.
+      expenseCategoryName: normalizedCategoryId ? null : normalizedCategoryName,
     };
     try {
       if (isEdit) {
@@ -244,47 +248,42 @@ export function ExpenseForm({
         <Label htmlFor="expense-category" className="text-card-foreground">
           Categoría
         </Label>
-        <Select
-          value={selectedCategoryId ?? NO_CATEGORY_VALUE}
-          onValueChange={(val) =>
-            setValue(
-              "expenseCategoryId",
-              val === NO_CATEGORY_VALUE ? null : val,
-              { shouldDirty: true },
-            )
-          }
-          disabled={isLoadingCategories || categories.length === 0}
-        >
-          <SelectTrigger id="expense-category" className="w-full">
-            <SelectValue
-              placeholder={
-                isLoadingCategories
-                  ? "Cargando categorías..."
-                  : categories.length === 0
-                    ? "Aún no hay categorías"
-                    : "Sin categoría"
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NO_CATEGORY_VALUE}>Sin categoría</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Opcional — administra tus categorías en la sección de{" "}
-          <Link
-            href="/dashboard/business/categories/expenses"
-            className="underline-offset-2 hover:underline"
-          >
-            Categorías
-          </Link>
-          .
-        </p>
+        <CategoryCombobox
+          id="expense-category"
+          categories={categories}
+          categoryId={selectedCategoryId ?? null}
+          categoryName={newCategoryName ?? null}
+          isLoading={isLoadingCategories}
+          invalid={!!errors.expenseCategoryId || !!errors.expenseCategoryName}
+          onChange={({ categoryId, categoryName }) => {
+            setValue("expenseCategoryId", categoryId, { shouldDirty: true });
+            setValue("expenseCategoryName", categoryName, {
+              shouldDirty: true,
+            });
+          }}
+        />
+        {newCategoryName ? (
+          <p className="text-xs text-primary">
+            Se creará la categoría «{newCategoryName}» al guardar el gasto.
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Opcional — escribe una nueva para crearla, o adminístralas en la
+            sección de{" "}
+            <Link
+              href="/dashboard/business/categories/expenses"
+              className="underline-offset-2 hover:underline"
+            >
+              Categorías
+            </Link>
+            .
+          </p>
+        )}
+        {errors.expenseCategoryName && (
+          <p className="text-xs text-destructive">
+            {errors.expenseCategoryName.message}
+          </p>
+        )}
       </div>
 
       {errors.root && (
