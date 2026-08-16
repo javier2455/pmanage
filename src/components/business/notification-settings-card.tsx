@@ -105,8 +105,6 @@ const CHANNELS: ChannelConfig[] = [
     icon: MessageCircle,
     feature: "whatsappNotifications",
     requiresPhone: true,
-    // WhatsApp todavía en desarrollo: deshabilitado temporalmente.
-    comingSoon: true,
   },
 ];
 
@@ -284,9 +282,9 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400">
                 <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
-                  Para recibir avisos por SMS necesitas un número de teléfono
-                  válido asociado al negocio. Edita el negocio para añadirlo.
-                  Mientras tanto, esa vía permanece deshabilitada.
+                  Para recibir avisos por SMS o WhatsApp necesitas un número de
+                  teléfono válido asociado al negocio. Edita el negocio para
+                  añadirlo. Mientras tanto, esas vías permanecen deshabilitadas.
                 </p>
               </div>
             )}

@@ -190,7 +190,7 @@ export const PLAN_FEATURES: PlanFeatureDefinition[] = [
     label: "Notificaciones por WhatsApp",
     group: "Notificaciones y soporte",
     description:
-      "Los mismos avisos enviados por WhatsApp al teléfono del negocio. La integración está en desarrollo: el canal aparece como «Próximamente» aunque el plan lo conceda.",
+      "Los mismos avisos enviados por WhatsApp al teléfono del negocio. Requiere un teléfono válido asociado al negocio.",
   },
   {
     key: "prioritySupport",
