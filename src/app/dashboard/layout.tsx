@@ -9,6 +9,7 @@ import { ReactivationGuard } from "@/components/auth/reactivation-guard"
 import { PlanGuard } from "@/components/auth/plan-guard"
 import { TourProvider } from "@/components/tour/tour-provider"
 import { TourHelpButton } from "@/components/tour/tour-help-button"
+import { ConnectivityIndicator } from "@/components/connectivity/connectivity-indicator"
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactivationGuard>
@@ -26,6 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-1 items-center justify-center px-2" data-tour="business-switcher">
               <BusinessSwitcher />
             </div>
+            <ConnectivityIndicator />
             <TourHelpButton />
             <NotificationBell />
           </nav>

@@ -11,6 +11,25 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Detección de conexión real (base del modo offline)
+- Nuevo aviso **«Sin conexión»** en la barra superior del panel, con la hora de la
+  última conexión y un botón de reintento. Solo aparece cuando de verdad no hay
+  salida a Internet, así que en el uso normal no ocupa espacio.
+- El estado **no se decide con `navigator.onLine`**, que solo ve el enlace de red:
+  estar conectado a un WiFi sin salida, tras un portal cautivo o con el ISP caído
+  da `true` mientras la app no puede subir una sola venta. Ahora «en línea» exige
+  además que un sondeo al servidor (`GET /sync/health`) haya obtenido respuesta.
+- **Cualquier** respuesta HTTP cuenta como conexión, incluido un 404 o un 500: si el
+  servidor contestó, la red funciona. Tratar un 404 como «sin conexión» dejaría la
+  app encolando operaciones que podía subir.
+- El sondeo se retrae solo (5s → 60s) mientras no hay conexión y se detiene con la
+  pestaña en segundo plano, para no gastar batería ni datos móviles; al volver a
+  primer plano comprueba de inmediato.
+- Lógica pura en `src/lib/connectivity.ts` con suite propia (12 casos); el hook
+  `useConnectivity` solo orquesta los efectos del navegador.
+- Primer paso del [plan offline](docs/offline-plan/plan-offline-negora.md) (B0). El
+  aviso mostrará también las operaciones pendientes cuando exista la cola local.
+
 #### Crear la categoría mientras se asigna el producto
 - El selector de categoría del formulario de asignación **ya no se bloquea cuando el
   negocio no tiene ninguna**: antes se deshabilitaba con «Aún no hay categorías» y
