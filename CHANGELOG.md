@@ -11,6 +11,18 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### El sidebar sobrevive sin conexión
+- **El menú lateral ya no se queda vacío al entrar sin red.** La caché de React
+  Query vive solo en memoria, así que al recargar —o al abrir directamente estando
+  sin conexión— el árbol de secciones, menús y submenús se perdía y no se podía
+  navegar a ninguna parte: la app abría, pero no servía para nada.
+- El árbol se respalda en `localStorage` y se pinta al instante mientras se
+  refresca contra el servidor. Caduca a los 30 días y **se borra al cerrar sesión**,
+  porque depende del rol y de los permisos del usuario.
+- Nueva utilidad `src/lib/offline-cache.ts` con tests propios (11 casos). Es la
+  base para el resto de lecturas offline; los datos de negocio —productos, ventas,
+  inventario— irán a IndexedDB, que es lo que corresponde a su volumen.
+
 #### La aplicación abre y se navega sin conexión (PWA)
 - Nuevo **service worker** que cachea la aplicación completa (777 archivos, ~12 MB)
   en la primera carga. Sin él, entrar a Ventas —o a cualquier sección— sin
@@ -53,6 +65,9 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 - El botón **Reintentar** muestra estado de carga (con una duración mínima
   perceptible: sin red el sondeo falla en milisegundos y el indicador ni se veía)
   y avisa del resultado con un toast. Los sondeos automáticos son silenciosos.
+- En tablet y móvil el aviso se reduce a **solo el icono**, con el detalle y el
+  reintento en un desplegable: la tarjeta completa empujaba fuera de la pantalla
+  los botones de guía y notificaciones.
 - Lógica pura en `src/lib/connectivity.ts` con suite propia (12 casos); el hook
   `useConnectivity` solo orquesta los efectos del navegador.
 - Primer paso del [plan offline](docs/offline-plan/plan-offline-negora.md) (B0). El

@@ -27,6 +27,11 @@ import {
   updateSubmenu,
 } from "@/lib/api/navigation";
 import {
+  OFFLINE_CACHE_KEYS,
+  readOfflineCache,
+  writeOfflineCache,
+} from "@/lib/offline-cache";
+import {
   CreateAdminMenuProps,
   CreateSectionProps,
   CreateSubmenuProps,
@@ -89,14 +94,36 @@ interface UseGetAllSectionsParams {
   enabled?: boolean;
 }
 
+/**
+ * Árbol de navegación que alimenta el sidebar.
+ *
+ * Se respalda en `localStorage` porque es lo único que hace usable la app sin
+ * conexión: la caché de React Query es solo de memoria, así que al entrar sin
+ * red el sidebar aparecía sin secciones ni menús y no se podía navegar a
+ * ninguna parte. Con el respaldo, se pinta al instante el último árbol
+ * conocido y se refresca en cuanto haya servidor.
+ *
+ * `initialData` (y no `placeholderData`) para que el valor quede en la caché y
+ * sobreviva a la navegación entre vistas; `initialDataUpdatedAt` en 0 marca el
+ * dato como añejo, de modo que React Query lo refresque a la primera ocasión
+ * en vez de darlo por bueno.
+ */
 export function useGetAllSectionsQuery({
   businessId,
   enabled = true,
 }: UseGetAllSectionsParams = {}) {
+  const cacheKey = OFFLINE_CACHE_KEYS.navigationSections(businessId ?? null);
+
   return useQuery({
     queryKey: [...SECTIONS_KEY, businessId ?? null],
-    queryFn: () => getAllSections({ businessId }),
+    queryFn: async () => {
+      const sections = await getAllSections({ businessId });
+      writeOfflineCache(cacheKey, sections);
+      return sections;
+    },
     enabled,
+    initialData: () => readOfflineCache<SectionApiNode[]>(cacheKey),
+    initialDataUpdatedAt: 0,
   });
 }
 

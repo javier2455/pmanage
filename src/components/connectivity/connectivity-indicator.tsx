@@ -4,7 +4,22 @@ import { CloudOff, RefreshCw } from "lucide-react";
 import { sileo } from "sileo";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+
+/**
+ * Los toasts se estilan con los tokens del tema, igual que en el resto de la
+ * app. Sin esto, sileo aplica sus colores por defecto y en modo oscuro la
+ * descripción sale en gris sobre fondo blanco: ilegible.
+ */
+const TOAST_STYLES = {
+  title: "text-foreground! text-[16px]! font-bold!",
+  description: "text-muted-foreground! text-[15px]!",
+} as const;
 
 /**
  * Aviso de "sin conexión" en la barra superior del panel (plan offline, B0).
@@ -31,6 +46,7 @@ export function ConnectivityIndicator({ className }: { className?: string }) {
       sileo.success({
         title: "Conexión restablecida",
         description: "Ya puedes seguir trabajando con normalidad.",
+        styles: TOAST_STYLES,
       });
       return;
     }
@@ -39,48 +55,91 @@ export function ConnectivityIndicator({ className }: { className?: string }) {
       description:
         "Lo intentamos de nuevo, pero el servidor no responde. Puedes seguir " +
         "trabajando y reintentar en un momento.",
+      styles: TOAST_STYLES,
     });
   };
 
   if (!isOffline) return null;
 
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className={cn(
-        "flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-amber-700 dark:text-amber-400",
-        className,
-      )}
+  const lastConnectionLabel = lastOnlineAt
+    ? `Última conexión: ${lastOnlineAt.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    : null;
+
+  const retryButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="h-7 gap-1 px-2 text-xs"
+      onClick={() => void handleRetry()}
+      disabled={isChecking}
+      aria-busy={isChecking}
     >
-      <CloudOff className="size-4 shrink-0" aria-hidden />
-      <div className="min-w-0 text-xs leading-tight">
-        <p className="font-medium">Sin conexión</p>
-        {lastOnlineAt && (
-          <p className="text-amber-700/80 dark:text-amber-400/80">
-            Última conexión:{" "}
-            {lastOnlineAt.toLocaleTimeString("es-ES", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-        )}
+      <RefreshCw
+        className={cn("size-3.5", isChecking && "animate-spin")}
+        aria-hidden
+      />
+      {isChecking ? "Comprobando…" : "Reintentar"}
+    </Button>
+  );
+
+  return (
+    <div role="status" aria-live="polite" className={className}>
+      {/* Pantallas anchas: la tarjeta completa, con el estado siempre a la vista. */}
+      <div className="hidden items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-amber-700 lg:flex dark:text-amber-400">
+        <CloudOff className="size-4 shrink-0" aria-hidden />
+        <div className="min-w-0 text-xs leading-tight">
+          <p className="font-medium">Sin conexión</p>
+          {lastConnectionLabel && (
+            <p className="text-amber-700/80 dark:text-amber-400/80">
+              {lastConnectionLabel}
+            </p>
+          )}
+        </div>
+        {retryButton}
       </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="h-7 gap-1 px-2 text-xs"
-        onClick={() => void handleRetry()}
-        disabled={isChecking}
-        aria-busy={isChecking}
-      >
-        <RefreshCw
-          className={cn("size-3.5", isChecking && "animate-spin")}
-          aria-hidden
-        />
-        {isChecking ? "Comprobando…" : "Reintentar"}
-      </Button>
+
+      {/* Tablet y móvil: solo el icono. La tarjeta entera empujaba fuera de la
+          pantalla los botones de guía y notificaciones. Se mantiene en el mismo
+          sitio de la barra —el estado se busca donde están los estados— y el
+          detalle se despliega al tocarlo. */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Sin conexión. Ver detalles y reintentar"
+            className="relative text-amber-700 lg:hidden dark:text-amber-400"
+          >
+            <CloudOff className="size-5" aria-hidden />
+            <span className="absolute end-1.5 top-1.5 size-2 rounded-full bg-amber-500" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-64">
+          <div className="flex items-start gap-2">
+            <CloudOff
+              className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400"
+              aria-hidden
+            />
+            <div className="min-w-0 space-y-1">
+              <p className="text-sm font-medium">Sin conexión</p>
+              <p className="text-muted-foreground text-xs leading-snug">
+                Puedes seguir trabajando; se reintentará solo.
+              </p>
+              {lastConnectionLabel && (
+                <p className="text-muted-foreground text-xs">
+                  {lastConnectionLabel}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="mt-2 flex justify-end">{retryButton}</div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
