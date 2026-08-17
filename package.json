@@ -1,10 +1,10 @@
 {
   "name": "pmanage",
-  "version": "2.3.10",
+  "version": "2.3.11",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/generate-sw.mjs",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",

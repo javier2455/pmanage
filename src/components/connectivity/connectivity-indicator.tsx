@@ -1,6 +1,7 @@
 "use client";
 
 import { CloudOff, RefreshCw } from "lucide-react";
+import { sileo } from "sileo";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,29 @@ import { cn } from "@/lib/utils";
  * subir; por ahora solo informa del estado.
  */
 export function ConnectivityIndicator({ className }: { className?: string }) {
-  const { isOffline, checkNow, lastOnlineAt } = useConnectivity();
+  const { isOffline, isChecking, checkNow, lastOnlineAt } = useConnectivity();
+
+  /**
+   * El aviso solo se muestra en los reintentos MANUALES. Los sondeos
+   * automáticos (cada 5-60s mientras no hay red) son silenciosos a propósito:
+   * un toast por cada uno sería insoportable.
+   */
+  const handleRetry = async () => {
+    const reachable = await checkNow();
+    if (reachable) {
+      sileo.success({
+        title: "Conexión restablecida",
+        description: "Ya puedes seguir trabajando con normalidad.",
+      });
+      return;
+    }
+    sileo.info({
+      title: "Sigue sin conexión",
+      description:
+        "Lo intentamos de nuevo, pero el servidor no responde. Puedes seguir " +
+        "trabajando y reintentar en un momento.",
+    });
+  };
 
   if (!isOffline) return null;
 
@@ -48,10 +71,15 @@ export function ConnectivityIndicator({ className }: { className?: string }) {
         variant="ghost"
         size="sm"
         className="h-7 gap-1 px-2 text-xs"
-        onClick={checkNow}
+        onClick={() => void handleRetry()}
+        disabled={isChecking}
+        aria-busy={isChecking}
       >
-        <RefreshCw className="size-3.5" aria-hidden />
-        Reintentar
+        <RefreshCw
+          className={cn("size-3.5", isChecking && "animate-spin")}
+          aria-hidden
+        />
+        {isChecking ? "Comprobando…" : "Reintentar"}
       </Button>
     </div>
   );

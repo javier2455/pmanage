@@ -1,0 +1,20 @@
+{
+  "name": "Negora — Gestión de Negocios",
+  "short_name": "Negora",
+  "description": "Gestión de inventario, ventas y caja para tu negocio.",
+  "start_url": "/dashboard/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#10b77f",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

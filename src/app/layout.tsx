@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { ServiceWorkerRegistrar } from "@/components/connectivity/service-worker-registrar";
 import { Toaster } from "sileo";
 
 export const metadata: Metadata = {
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
   },
   description:
     "Sistema de gestión multimoneda para negocios reales: ventas, inventario y finanzas en un solo lugar.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Negora", statusBarStyle: "default" },
 };
 
 export default function RootLayout({
@@ -29,6 +32,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased">
+        <ServiceWorkerRegistrar />
         <Toaster position="bottom-right" />
         <ThemeProvider
           attribute="class"

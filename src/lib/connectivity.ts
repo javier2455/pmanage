@@ -24,6 +24,15 @@ export const OFFLINE_RETRY_MIN_MS = 5_000;
 export const OFFLINE_RETRY_MAX_MS = 60_000;
 
 /**
+ * Duración mínima del estado "comprobando" en un reintento manual.
+ *
+ * Sin red, el sondeo falla en milisegundos: el indicador de carga parpadearía
+ * tan rápido que el usuario no vería nada y volvería a pulsar creyendo que el
+ * botón no funciona. Medio segundo basta para que la acción se perciba.
+ */
+export const MIN_CHECK_FEEDBACK_MS = 500;
+
+/**
  * Resultado de un sondeo, expresado como lo ve quien lo lanzó.
  *
  * `status` es el código HTTP si el servidor respondió ALGO. `networkError`

@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   type ConnectivityStatus,
+  MIN_CHECK_FEEDBACK_MS,
   isReachable,
   nextProbeDelay,
   resolveStatus,
@@ -21,9 +22,16 @@ export interface ConnectivityState {
   isOffline: boolean;
   /** Momento del último sondeo con respuesta; null si aún no hubo ninguno. */
   lastOnlineAt: Date | null;
-  /** Fuerza un sondeo inmediato (p. ej. al pulsar "Reintentar"). */
-  checkNow: () => void;
+  /** Hay un sondeo manual en curso. Solo lo activa `checkNow`. */
+  isChecking: boolean;
+  /**
+   * Fuerza un sondeo inmediato (p. ej. al pulsar "Reintentar") y resuelve con
+   * el resultado, para que quien llame pueda avisar de cómo fue.
+   */
+  checkNow: () => Promise<boolean>;
 }
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Estado de conexión real de la aplicación (plan offline, B0).
@@ -60,6 +68,7 @@ export function useConnectivity(): ConnectivityState {
     null,
   );
   const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   const failuresRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,23 +78,24 @@ export function useConnectivity(): ConnectivityState {
 
   const status = resolveStatus({ browserOnline, lastProbeReachable });
 
-  const runProbe = useCallback(async () => {
+  const runProbe = useCallback(async (): Promise<boolean> => {
     // Sin enlace de red el sondeo está condenado a fallar: se ahorra la
     // petición y se deja el contador de fallos intacto para que, al volver el
     // enlace, se reintente enseguida y no con el retroceso máximo.
-    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return false;
 
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
     const outcome = await probeConnectivity(controller.signal);
-    if (!mountedRef.current || controller.signal.aborted) return;
-
     const reachable = isReachable(outcome);
+    if (!mountedRef.current || controller.signal.aborted) return reachable;
+
     failuresRef.current = reachable ? 0 : failuresRef.current + 1;
     setLastProbeReachable(reachable);
     if (reachable) setLastOnlineAt(new Date());
+    return reachable;
   }, []);
 
   // Sondeo inicial y al volver la pestaña a primer plano.
@@ -134,9 +144,23 @@ export function useConnectivity(): ConnectivityState {
     };
   }, [status, lastProbeReachable, runProbe]);
 
-  const checkNow = useCallback(() => {
+  const checkNow = useCallback(async (): Promise<boolean> => {
+    // El reintento manual reinicia el retroceso: el usuario está diciendo
+    // "creo que ya hay red", y merece una comprobación inmediata.
     failuresRef.current = 0;
-    void runProbe();
+    setIsChecking(true);
+    const startedAt = Date.now();
+
+    const reachable = await runProbe();
+
+    // Sin red el sondeo falla al instante; se sostiene el indicador un momento
+    // para que el reintento se perciba como una acción y no como un botón muerto.
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < MIN_CHECK_FEEDBACK_MS) {
+      await wait(MIN_CHECK_FEEDBACK_MS - elapsed);
+    }
+    if (mountedRef.current) setIsChecking(false);
+    return reachable;
   }, [runProbe]);
 
   return {
@@ -144,6 +168,7 @@ export function useConnectivity(): ConnectivityState {
     isOnline: status === "online",
     isOffline: status === "offline",
     lastOnlineAt,
+    isChecking,
     checkNow,
   };
 }

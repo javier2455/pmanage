@@ -11,6 +11,31 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### La aplicación abre y se navega sin conexión (PWA)
+- Nuevo **service worker** que cachea la aplicación completa (777 archivos, ~12 MB)
+  en la primera carga. Sin él, entrar a Ventas —o a cualquier sección— sin
+  conexión terminaba en la **pantalla de error del navegador**, desde la que ni
+  siquiera se podía volver a la app: con `output: "export"` cada ruta descarga sus
+  propios archivos al navegar, y sin red esa descarga falla.
+- La app queda **instalable** en el móvil (`manifest.webmanifest`): se abre desde
+  la pantalla de inicio, a pantalla completa y sin barra del navegador.
+- **La API queda deliberadamente fuera del service worker.** Cachear respuestas de
+  negocio daría datos viejos sin que nadie lo note, y una venta servida desde
+  caché sería indistinguible de una real. Trabajar sin conexión con datos y
+  operaciones es tarea de la cola local, no de esta capa.
+- Los assets con hash en el nombre se sirven de caché directamente; el resto usa
+  red primero con la caché como respaldo, así que estando en línea siempre se ve
+  la versión fresca. Cada despliegue renueva la caché y borra la anterior.
+- Solo se registra en producción: en desarrollo un service worker cacheando toda
+  la app impide ver los cambios.
+- Implementado sin dependencias nuevas: `scripts/generate-sw.mjs` recorre `out/`
+  tras el build y genera la lista exacta de archivos. Se descartó Serwist porque
+  su integración con Next pasa por el bundler (Next 16 usa Turbopack) y este
+  proyecto combina `output: export` + `basePath`, terreno poco probado; con un
+  export estático la lista de archivos ya se conoce y el plugin no aporta nada.
+- Segundo paso del [plan offline](docs/offline-plan/plan-offline-negora.md) (B1).
+  Las pantallas abrirán, pero **sin datos** hasta que exista la caché local (B4).
+
 #### Detección de conexión real (base del modo offline)
 - Nuevo aviso **«Sin conexión»** en la barra superior del panel, con la hora de la
   última conexión y un botón de reintento. Solo aparece cuando de verdad no hay
@@ -25,6 +50,9 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 - El sondeo se retrae solo (5s → 60s) mientras no hay conexión y se detiene con la
   pestaña en segundo plano, para no gastar batería ni datos móviles; al volver a
   primer plano comprueba de inmediato.
+- El botón **Reintentar** muestra estado de carga (con una duración mínima
+  perceptible: sin red el sondeo falla en milisegundos y el indicador ni se veía)
+  y avisa del resultado con un toast. Los sondeos automáticos son silenciosos.
 - Lógica pura en `src/lib/connectivity.ts` con suite propia (12 casos); el hook
   `useConnectivity` solo orquesta los efectos del navegador.
 - Primer paso del [plan offline](docs/offline-plan/plan-offline-negora.md) (B0). El
