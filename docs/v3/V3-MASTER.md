@@ -30,6 +30,7 @@
 8. [Área 5 — Resúmenes automáticos de negocio](#8-resumenes) · *Base (canales SMS/WhatsApp = Pro)*
 9. [Funcionalidades sugeridas](#9-sugeridas)
 10. [Bitácora de cambios](#10-changelog)
+11. [Plan de implementación por fases](#11-plan-implementacion)
 
 ---
 
@@ -128,6 +129,22 @@ Una fila por funcionalidad/cambio. **Toda nueva idea entra aquí.**
 | **V3-094** | Metas de equipo y ranking (gamificación) | Sugerida | Enterprise | idea | V3-021 | §9 |
 | **V3-095** | Costos de envío por zona (MapLibre) | Sugerida | Pro | idea | V3-013 | §9 |
 | **V3-096** | Reportes financieros (P&L caja vs devengo) | Sugerida | Enterprise | idea | V3-033 | §9 |
+| **V3-097** | PWA / offline-first con cola de operaciones | Transversal | Todos | especificada | V3-107..109 | §11 |
+| **V3-098** | Órdenes de compra a proveedores (PO) | Sugerida | Pro | idea | V3-034 | §9 |
+| **V3-099** | Modo POS rápido | Sugerida | Pro | idea | — | §9 |
+| **V3-100** | Log de actividad / auditoría | Transversal | Pro | especificada | — | §11 |
+| **V3-101** | Recibos y facturas compartibles por WhatsApp | Sugerida | Pro | idea | V3-002 | §9 |
+| **V3-102** | Presupuestos por categoría de gasto | Sugerida | Pro | idea | — | §9 |
+| **V3-103** | 2FA (TOTP) y gestión de sesiones activas | Sugerida | Enterprise | idea | — | §9 |
+| **V3-104** | Pronóstico de demanda y reabastecimiento sugerido | Sugerida | Pro | idea | V3-092 | §9 |
+| **V3-105** | Resumen narrativo del negocio (informe mensual automático) | Sugerida | Enterprise | idea | V3-039 | §9 |
+| **V3-106** | Enforcement server-side de planes + gating de exports | Transversal | — | especificada | — | §11 |
+| **V3-107** | Historial de tasas de cambio (append-only) | Caja | — | especificada | — | §11 |
+| **V3-108** | Idempotencia de escrituras (`Idempotency-Key`) | Transversal | — | especificada | — | §11 |
+| **V3-109** | Numeración de facturas atómica (secuencia por negocio) | Ventas | — | especificada | — | §11 |
+| **V3-111** | Tiempo real: SSE + `GET /me/badges` (fin del polling) | Transversal | — | especificada | — | §11 |
+| **V3-112** | UI de búsqueda global (feature `globalSearch`) | Transversal | Básico+ | especificada | — | §11 |
+| **V3-113** | Completar delivery / pedidos | Sugerida | Pro | idea | V3-013 | §9 |
 
 ---
 
@@ -172,6 +189,11 @@ Pre-requisito de varias áreas. **Gating mixto** acordado:
 
 ### Orden sugerido cuando se priorice (sin fecha)
 **Caja N1 → Descuentos → CRM → Nóminas → Caja N2.** Justificación: caja N1 continúa una Fase 2 ya bosquejada (bajo riesgo, base financiera); descuentos toca el flujo de ventas que ya usan los Pro; CRM y nóminas son Enterprise y dependen de entidades nuevas; caja N2 (AR/AP, conciliación) corona el bloque financiero.
+
+> **Nota (2026-08-17):** el enforcement server-side que este V3-000 exige se materializa
+> como ítem propio **V3-106** (Fase 0 del plan de implementación, §11). El orden
+> operativo vigente es el de §11, que antepone cimientos de robustez y offline a este
+> orden por áreas (el orden relativo entre áreas se mantiene).
 
 ---
 
@@ -977,6 +999,14 @@ Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproxima
 | **V3-094** | **Metas de equipo y ranking (gamificación)** — sobre `sales-by-worker`, conecta con estímulos de nómina. | Motivación del equipo | M | V3-021 |
 | **V3-095** | **Costos de envío por zona** — usa el mapa MapLibre ya integrado. | Precio de envío más justo | M | V3-013 |
 | **V3-096** | **Reportes financieros exportables** — P&L base caja vs devengo consolidado. | Visión financiera ejecutiva | M–L | V3-033 |
+| **V3-098** | **Órdenes de compra a proveedores (PO)** — ciclo *pedido → recepción → entrada de inventario → cuenta por pagar*. | Cierra el círculo financiero por el lado de compras | M–L | V3-034 |
+| **V3-099** | **Modo POS rápido** — vista táctil (grilla grande, carrito lateral, cobro en dos toques); reutiliza `product-grid-card.tsx` y `sale-cart-panel.tsx`. | Menos tiempo por venta en mostrador | M | — |
+| **V3-101** | **Recibos/facturas por WhatsApp** — link público firmado o share del PDF; el teléfono del recibo alimenta leads (V3-002). | Canal que los clientes ya usan; capta leads | S–M | V3-002 |
+| **V3-102** | **Presupuestos por categoría de gasto** — `Budget { businessId, categoryId, month, amount }` + barra de consumo + alerta 80/100 %. | Control preventivo del gasto | M | — |
+| **V3-103** | **2FA (TOTP) y sesiones activas** — estándar mínimo si el tier Enterprise custodia nóminas y conciliación. | Seguridad de cuentas serias | M | — |
+| **V3-104** | **Pronóstico de demanda** — velocidad de venta y días-hasta-agotarse con media móvil; sugiere cantidad de compra. | Evita roturas sin ML | M | V3-092 |
+| **V3-105** | **Resumen narrativo mensual** — informe generado (texto + cifras clave) entregable por email/WhatsApp. | El informe que un dueño no-financiero sí lee | M | V3-039 |
+| **V3-113** | **Completar delivery / pedidos** — la entidad `BusinessDelivery` (tarifas, zonas, ventanas, tracking) y el evento `sale.delivery_created` existen en el backend sin módulo ni listener; falta el ciclo de pedido visible. | Termina una feature a medio construir | M | V3-013 |
 
 *Esfuerzo: S = pequeño, M = medio, L = grande (orientativo).*
 
@@ -990,3 +1020,138 @@ Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproxima
 | 2026-06-24 | Creación del documento maestro v3 con las 4 áreas (CRM, Descuentos/Ofertas, Nóminas, Flujo de Caja Pro), tier Enterprise (V3-000), backlog maestro y funcionalidades sugeridas. Estado inicial: áreas `especificada`, sugeridas `idea`. |
 | 2026-06-28 | Alta de **V3-039** (resumen mensual de flujo de caja + semáforo de salud, exportable, tier Enterprise). Detalle en §7.9; contrato backend en [docs/v3/backend-flujo-caja-mensual.md](./backend-flujo-caja-mensual.md). |
 | 2026-07-28 | Nueva **Área 5 — Resúmenes automáticos de negocio** (§8) con **V3-040..043**: activar de punta a punta los tipos `weekly_summary` / `monthly_summary`. **V3-040 marcado `hecho`** (cálculo real de ingresos ya en `main`); V3-041 (cron + idempotencia), V3-042 (visibilidad en la UI) y V3-043 (toggles en Ajustes) quedan `especificada` para implementar en v3. Renumeradas §8→§9 (sugeridas) y §9→§10 (bitácora); la columna *Sección* de V3-090..096 pasa de §8 a §9. Los IDs no cambian. |
+| 2026-08-17 | Registradas como canónicas las propuestas de [docs/revision-integral-2026-07.md](../revision-integral-2026-07.md) §4.2: **V3-097** (offline, `especificada`, contrato en [docs/offline-plan/plan-offline-negora.md](../offline-plan/plan-offline-negora.md)) y **V3-098..105** (`idea`, detalle en §9). Alta de los cimientos **V3-106..109** y de **V3-111/V3-112** (`especificada`, detalle en §11) y de **V3-113** (delivery, `idea`). V3-110 queda sin asignar. Nueva sección **§11 — Plan de implementación por fases** con la prioridad acordada: **Fase 0 cimientos → Fase 1-2 offline (máxima prioridad) → Fase 3 quick wins → Caja N1 → Descuentos → CRM/Nóminas → Caja N2**. Los IDs y contratos existentes no cambian. |
+
+---
+
+<a name="11-plan-implementacion"></a>
+## 11. Plan de implementación por fases — justificación, beneficios y roadmap
+
+> Acordado el 2026-08-17. Orden ejecutivo: **Fase 0 (cimientos) → Fase 1-2 (offline) →
+> Fase 3 (quick wins) → Fase 4 (Caja N1) → Fase 5 (Descuentos) → Fase 6 (CRM + Nóminas)
+> → Fase 7 (Caja N2)**. Complementa el orden por áreas de §3 (que se mantiene entre
+> áreas) anteponiendo robustez de datos y trabajo sin conexión. Las specs de las áreas
+> §4-§8 no cambian; esta sección añade el *por qué*, los *beneficios* y el *cómo* de lo
+> que se decidió implementar.
+
+### 11.0 Fase 0 — Cimientos de robustez (V3-106..109 + spike offline)
+
+**Por qué.** Tres defectos activos falsean datos hoy mismo (documentados en
+[docs/offline-plan/plan-offline-negora.md](../offline-plan/plan-offline-negora.md),
+Parte A0): las tasas de cambio viven en una fila única
+mutable sin historial, la API no tiene idempotencia (un reintento de red duplica ventas
+o pagos), y la numeración de facturas se calcula con `COUNT(*) + 1 + attempt` (colisiona
+bajo concurrencia y tras cancelaciones). Además, el gating de planes se anuncia en el
+frontend pero el backend no siempre lo exige (los exports del cierre contable no llevan
+guard), y **todo** el tier Enterprise (V3-000) depende de que el enforcement
+server-side exista de verdad.
+
+**Beneficios.** Datos contables en los que se puede confiar; monetización real de los
+planes (lo que se vende Pro, se exige Pro en el servidor); y cada ítem es a la vez
+prerrequisito del offline (V3-097), así que nada de este esfuerzo se pierde aunque el
+offline se re-priorizara.
+
+**Cómo.**
+- **V3-106 — Enforcement + gating de exports.** Aplicar `ProPlanGuard` +
+  `@RequiresFeature("exports")` a `GET /sales/closing/range/:businessId/pdf|excel`
+  (`psearch-back/src/v2/sale/sale.controller.ts`), espejo del patrón ya usado en los
+  exports de inventario (`inventory.controller.ts`). Auditar los 19 feature keys de
+  `plan-features.ts` contra los endpoints que los venden y cerrar los huecos que
+  aparezcan. El enum `Plan.type` ya admite `enterprise`; V3-000 conserva la spec del
+  gating mixto.
+- **V3-107 — Historial de tasas.** Tabla nueva append-only `monetary_exchange_history`
+  (snapshot de las 10 tasas + quién y cuándo), escrita en la misma transacción de cada
+  create/update de `MonetaryExchange`. El ledger `FinancialTransaction` ya congela
+  tasas por movimiento; esto cubre el hueco de "¿qué tasa regía el día X?" para
+  cierres retroactivos y sincronización offline.
+- **V3-108 — Idempotencia.** Header `Idempotency-Key` (UUID del cliente) + tabla de
+  claves procesadas con índice único; primero en `POST /sales` y `POST /payments`
+  (los reintentos más dañinos), reutilizable después para gastos y entradas de stock.
+  Respuesta repetida = misma respuesta almacenada, sin efecto doble. Es el eco del
+  ítem #29 del roadmap backend.
+- **V3-109 — Numeración de facturas.** Secuencia por negocio en tabla contador con
+  incremento transaccional (lock pesimista), en lugar de `COUNT(*)`. Los números
+  emitidos nunca se reutilizan aunque haya cancelaciones.
+- **Spike offline (2-3 días).** Verificar que TypeORM respeta un `id` UUID provisto por
+  el cliente en `@PrimaryGeneratedColumn("uuid")` (bloqueante de la cola offline).
+- **Pendiente de decisión (no se ejecuta solo):** reconciliar el historial de
+  migraciones (#19 del roadmap backend; ninguna base tiene tabla `migrations` y dev usa
+  `synchronize`). Requiere acceso a las bases reales y decisión operativa.
+
+### 11.1 Fase 1 — Offline: núcleo (V3-097, primera mitad)
+
+**Por qué.** Contexto de uso real (Cuba, conectividad intermitente): perder una venta
+por falta de red es el peor fallo posible del producto. Es la máxima prioridad
+acordada.
+
+**Alternativas evaluadas.**
+(a) Ejecutar el plan offline completo de una vez (10 fases, ~15,5 semanas);
+(b) **núcleo primero**: fases 2-6 del plan offline — cimientos cliente (Dexie),
+PWA/service worker, lecturas offline, sesión offline con PIN y **sincronización de
+altas de ventas/pagos** (~7,5 semanas tras la Fase 0);
+(c) solo lecturas offline con reintento simple.
+**Decisión: (b).** El propio plan declara la sincronización de altas como "el 80 % del
+valor: no se pierde una venta"; el núcleo entrega eso en la mitad del tiempo y valida
+el modelo de cola/sync antes de invertir en conflictos, integridad retroactiva y APK.
+(c) no protege la venta, que es el objetivo; (a) retrasa meses el valor central.
+
+**Beneficios.** El POS sigue vendiendo sin red durante días; el usuario decide cuándo
+subir la cola; ninguna venta se pierde ni se duplica (gracias a V3-108).
+
+**Cómo.** Seguir el contrato de
+[docs/offline-plan/plan-offline-negora.md](../offline-plan/plan-offline-negora.md):
+Parte A1 (módulo `src/v2/sync/` en el backend), Parte B0-B6 (conectividad, PWA,
+Dexie, sesión offline, lecturas, cola de altas y UI de sync). Decisiones ya tomadas
+que se respetan: un solo dispositivo por negocio, comprobante interno offline (la
+factura se emite online), sin gating de plan.
+
+### 11.2 Fase 2 — Offline: completo (V3-097, segunda mitad)
+
+**Por qué/beneficios.** Completa la promesa offline: ediciones acotadas, resolución de
+conflictos, integridad contable retroactiva (cierres "marcar y avisar", costo FIFO
+aproximado y marcado) y el APK Android con Capacitor para instalación sin tienda.
+
+**Cómo.** Fases 7-10 del plan offline: conflictos (Parte B7), integridad contable
+(Parte A3), resto de altas/ediciones (Parte A2/B8) y empaquetado Capacitor (Parte C).
+
+### 11.3 Fase 3 — Quick wins de producto
+
+**V3-041..043 — Resúmenes automáticos** *(spec completa en §8)*. Por qué: el cálculo
+(V3-040) ya está hecho y dormido; activarlo es la entrada de menor riesgo del ciclo
+v3. Beneficio: el dueño recibe cada semana/mes su resumen sin abrir la app. Cómo: §8.3-§8.5.
+
+**Alertas de stock (bloqueador v2).** Por qué: el frontend
+(`pmanage/src/lib/api/stock-alerts.ts`) ya está construido contra endpoints que no
+existen. Beneficio: cerrar una feature vendida y visible con esfuerzo pequeño. Cómo:
+implementar los endpoints de lectura/config pendientes en el backend según el contrato
+del frontend.
+
+**V3-100 — Auditoría / log de actividad.** Por qué: en cuanto existan ajustes manuales
+de caja (V3-031), transferencias (V3-032) y pagos de nómina (V3-024), mover dinero sin
+rastro de *quién hizo qué* es un riesgo de confianza; **debe aterrizar antes de Caja
+N1**. Beneficio: trazabilidad vendible como feature Pro y base de soporte ante
+disputas. Cómo: entidad `AuditLog` (businessId, actor, acción, entidad, antes/después
+resumido, fecha) alimentada desde los eventos de dominio que ya se emiten post-commit
+(`monetary-exchange.updated`, `sale.cancelled`, …) más los que falten (precios,
+permisos); endpoint paginado por negocio; UI timeline reutilizando el patrón del
+historial de inventario.
+
+**V3-111 — Tiempo real (SSE + `GET /me/badges`).** Por qué: la campana hace polling
+cada 60 s (coste y latencia). Beneficio: notificaciones al instante y menos carga.
+Cómo: endpoint SSE nativo de NestJS (sin dependencias nuevas) + endpoint combinado de
+badges; el frontend sustituye el polling por `EventSource` con fallback al polling
+actual.
+
+**V3-112 — Búsqueda global.** Por qué: la feature `globalSearch` se vende en los
+planes y no existe en la UI. Beneficio: honestidad comercial + navegación rápida.
+Cómo: paleta `cmdk` (`components/ui/command.tsx`, ya instalada y sin uso) con
+productos, ventas, páginas y acciones; gating por feature `globalSearch`.
+
+### 11.4 Fases 4-7 — Áreas v3 ya especificadas
+
+| Fase | Área | Por qué ahora | Spec |
+|---|---|---|---|
+| **4** | **Caja N1** (V3-030..033, Pro) | Base financiera de nóminas y AR/AP; continúa una Fase 2 ya bosquejada. La auditoría (V3-100) ya estará activa para los ajustes manuales. | §7 |
+| **5** | **Descuentos** (V3-014 → V3-010..013, Pro) | Toca el flujo de venta que los Pro usan a diario. **`POST /sales/quote` se construye primero**: es la autoridad del cálculo; si no, los totales FE/BE divergen. | §5 |
+| **6** | **CRM + Nóminas** (V3-001..005, V3-020..024, Enterprise) | Desbloqueadas porque el enforcement (V3-106) ya existe; dependen de entidades nuevas y del tier Enterprise. | §4 y §6 |
+| **7** | **Caja N2** (V3-034..039, Enterprise) | AR/AP, proyección, conciliación y salud mensual coronan el bloque financiero. | §7 |
