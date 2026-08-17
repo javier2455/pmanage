@@ -12,13 +12,17 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Los toasts se estilan con los tokens del tema, igual que en el resto de la
- * app. Sin esto, sileo aplica sus colores por defecto y en modo oscuro la
- * descripción sale en gris sobre fondo blanco: ilegible.
+ * Colores FIJOS, no tokens del tema.
+ *
+ * La hoja de estilos de sileo no tiene ninguna regla de modo oscuro (ni `.dark`
+ * ni `prefers-color-scheme`): su superficie es siempre clara. Con tokens como
+ * `text-foreground`, que en modo oscuro se vuelven casi blancos, el texto
+ * desaparece sobre ese fondo claro — que es justo lo que pasaba primero con la
+ * descripción y después con el título.
  */
 const TOAST_STYLES = {
-  title: "text-foreground! text-[16px]! font-bold!",
-  description: "text-muted-foreground! text-[15px]!",
+  title: "text-zinc-900! text-[16px]! font-bold!",
+  description: "text-zinc-600! text-[15px]!",
 } as const;
 
 /**

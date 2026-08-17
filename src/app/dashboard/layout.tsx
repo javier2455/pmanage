@@ -22,14 +22,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <TourProvider>
         <AppSidebar />
         <main className="bg-background flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden p-4">
-          <nav className="flex items-center gap-2 p-4">
-            <SidebarTrigger />
-            <div className="flex flex-1 items-center justify-center px-2" data-tour="business-switcher">
+          {/* `min-w-0` en la nav y en el bloque central: sin él, un hijo `flex-1`
+              no baja de su ancho de contenido y empuja a los iconos fuera de la
+              pantalla en móvil. Los iconos van en un grupo `shrink-0` para que
+              sean lo último que ceda espacio, nunca lo primero. */}
+          <nav className="flex min-w-0 items-center gap-2 p-4">
+            <SidebarTrigger className="shrink-0" />
+            <div className="flex min-w-0 flex-1 items-center justify-center px-2" data-tour="business-switcher">
               <BusinessSwitcher />
             </div>
-            <ConnectivityIndicator />
-            <TourHelpButton />
-            <NotificationBell />
+            <div className="flex shrink-0 items-center gap-1">
+              <ConnectivityIndicator />
+              <TourHelpButton />
+              <NotificationBell />
+            </div>
           </nav>
           <RouteGuard>
             <AccessGuard>{children}</AccessGuard>

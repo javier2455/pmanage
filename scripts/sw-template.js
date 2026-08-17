@@ -31,19 +31,48 @@ const OFFLINE_FALLBACK = "__BASE_PATH__/dashboard/";
 
 const PRECACHE = __PRECACHE__;
 
+/**
+ * Peticiones simultáneas durante el precacheado.
+ *
+ * Lanzar las ~780 de golpe satura al servidor —un cPanel compartido corta o
+ * encola— y muchas fallan, dejando la caché incompleta EN SILENCIO: la app
+ * parece protegida y al navegar sin red no encuentra nada. De seis en seis
+ * tarda algo más, pero termina.
+ */
+const PRECACHE_CONCURRENCY = 6;
+
+async function precacheAll(cache) {
+  const queue = [...PRECACHE];
+  let failed = 0;
+
+  const worker = async () => {
+    while (queue.length > 0) {
+      const url = queue.shift();
+      try {
+        // `reload` evita que la caché HTTP del navegador sirva una versión
+        // anterior del archivo al precachear una build nueva.
+        await cache.add(new Request(url, { cache: "reload" }));
+      } catch {
+        failed++;
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: PRECACHE_CONCURRENCY }, () => worker()),
+  );
+  return failed;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      // Se añaden de una en una en vez de con `addAll`: este falla entero si
-      // una sola petición falla, y perder toda la caché por un archivo suelto
-      // dejaría la app sin modo offline sin avisar.
-      const results = await Promise.allSettled(
-        PRECACHE.map((url) => cache.add(new Request(url, { cache: "reload" }))),
-      );
-      const failed = results.filter((r) => r.status === "rejected").length;
+      const failed = await precacheAll(cache);
       if (failed > 0) {
-        console.warn(`[sw] ${failed}/${PRECACHE.length} recursos no se cachearon`);
+        console.warn(
+          `[sw] ${failed}/${PRECACHE.length} recursos no se cachearon`,
+        );
       }
       await self.skipWaiting();
     })(),
@@ -128,13 +157,58 @@ async function networkFirst(request) {
     const cached = await caches.match(request);
     if (cached) return cached;
 
-    // Navegación a una ruta que nunca se visitó y que el precache no cubre:
-    // se devuelve el panel para no dejar al usuario en la pantalla de error
-    // del navegador, desde donde no puede volver a la app.
+    // Una NAVEGACIÓN nunca debe acabar en `Response.error()`: el navegador
+    // pinta entonces su propia pantalla de error ("No se puede acceder a este
+    // sitio", ERR_FAILED), desde la que el usuario no puede volver a la
+    // aplicación. Se prueban varios respaldos y, si ninguno está en caché
+    // —precacheado incompleto—, se devuelve una página propia.
     if (request.mode === "navigate") {
-      const fallback = await caches.match(OFFLINE_FALLBACK);
-      if (fallback) return fallback;
+      for (const candidate of [OFFLINE_FALLBACK, BASE_ROOT]) {
+        const fallback = await caches.match(candidate);
+        if (fallback) return fallback;
+      }
+      return offlinePage();
     }
     return Response.error();
   }
+}
+
+/** Raíz de la aplicación; último respaldo cacheado antes de la página propia. */
+const BASE_ROOT = "__BASE_PATH__/";
+
+/**
+ * Página de cortesía, incrustada en el propio service worker para no depender
+ * de ningún archivo: es el caso en el que justamente no hay nada en caché.
+ */
+function offlinePage() {
+  const html = `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin conexión · Negora</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center;
+         font-family: system-ui, sans-serif; background:#0b0f19; color:#e5e7eb; padding:24px; }
+  main { max-width:22rem; text-align:center; }
+  h1 { font-size:1.125rem; margin:0 0 .5rem; }
+  p { margin:0 0 1.25rem; color:#9ca3af; font-size:.9rem; line-height:1.5; }
+  button { font:inherit; padding:.6rem 1.1rem; border-radius:.5rem; border:0;
+           background:#10b77f; color:#04150f; font-weight:600; cursor:pointer; }
+</style>
+</head>
+<body>
+  <main>
+    <h1>Sin conexión</h1>
+    <p>Esta pantalla aún no está guardada en el dispositivo. Vuelve a
+       intentarlo cuando tengas señal.</p>
+    <button onclick="location.reload()">Reintentar</button>
+  </main>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
 }

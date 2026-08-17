@@ -40,6 +40,15 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   la versión fresca. Cada despliegue renueva la caché y borra la anterior.
 - Solo se registra en producción: en desarrollo un service worker cacheando toda
   la app impide ver los cambios.
+- El precacheado se hace **de seis en seis**. Lanzar las ~780 peticiones a la vez
+  saturaba el servidor y muchas fallaban, dejando la caché incompleta en silencio:
+  la app parecía protegida y al navegar sin red no encontraba nada.
+- **Una navegación nunca termina en la pantalla de error del navegador.** Si la
+  ruta no está en caché se prueban el panel y la raíz de la app, y como último
+  recurso se muestra una página propia de «Sin conexión» con botón de reintento
+  —incrustada en el propio service worker, porque es justo el caso en el que no
+  hay nada guardado—. Antes salía «No se puede acceder a este sitio web»
+  (ERR_FAILED), desde donde no se podía volver a la aplicación.
 - Implementado sin dependencias nuevas: `scripts/generate-sw.mjs` recorre `out/`
   tras el build y genera la lista exacta de archivos. Se descartó Serwist porque
   su integración con Next pasa por el bundler (Next 16 usa Turbopack) y este
@@ -68,6 +77,10 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 - En tablet y móvil el aviso se reduce a **solo el icono**, con el detalle y el
   reintento en un desplegable: la tarjeta completa empujaba fuera de la pantalla
   los botones de guía y notificaciones.
+- Corregido además el desbordamiento de fondo de la barra superior: el bloque del
+  selector de negocio usaba `flex-1` sin `min-w-0`, así que **se negaba a
+  encogerse** y expulsaba los iconos del borde derecho en móvil. Ahora los iconos
+  van en un grupo que nunca cede espacio.
 - Lógica pura en `src/lib/connectivity.ts` con suite propia (12 casos); el hook
   `useConnectivity` solo orquesta los efectos del navegador.
 - Primer paso del [plan offline](docs/offline-plan/plan-offline-negora.md) (B0). El
