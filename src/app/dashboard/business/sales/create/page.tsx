@@ -237,8 +237,20 @@ export default function CreateSalesPage() {
         message = "Producto no encontrado o negocio no encontrado"
       } else if (axios.isAxiosError(error) && error.response?.data?.message) {
         message = error.response.data.message
+      } else if (error instanceof Error && error.message) {
+        // Fallos que no vienen del servidor —no se pudo guardar en el
+        // dispositivo, la base local no responde— traen un motivo concreto.
+        // Enterrarlo bajo "intenta de nuevo" deja a la persona repitiendo una
+        // venta que nunca va a entrar por ese camino.
+        message = error.message
       }
-      sileo.error({ title: "No se pudo registrar la venta", description: message })
+      sileo.error({
+        title: "No se pudo registrar la venta",
+        description: message,
+        // Sin colores fijos, sileo pinta gris sobre blanco y en modo oscuro el
+        // motivo del fallo —lo único útil de este aviso— es ilegible.
+        styles: OFFLINE_TOAST_STYLES,
+      })
     }
   }
 

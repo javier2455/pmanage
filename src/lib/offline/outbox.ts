@@ -24,12 +24,24 @@ import { randomUuid } from "./uuid";
 /** Historial de operaciones ya subidas que se conserva antes de purgarlo. */
 export const DONE_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
 
+/**
+ * Tiempo máximo esperando a la base local.
+ *
+ * IndexedDB puede quedarse esperando indefinidamente —una pestaña antigua
+ * bloqueando una actualización de esquema, el navegador sin permiso de
+ * almacenamiento— y sin este corte el botón de registrar se queda girando para
+ * siempre. Es preferible un error claro: al menos la persona sabe que tiene
+ * que apuntar la venta.
+ */
+export const OUTBOX_OPEN_TIMEOUT_MS = 8_000;
+
 /** La base local no está disponible (modo privado, sin IndexedDB, SSR). */
 export class OutboxUnavailableError extends Error {
-  constructor() {
+  constructor(message?: string) {
     super(
-      "No se puede guardar en este dispositivo: el navegador no permite " +
-        "almacenamiento local.",
+      message ??
+        "No se puede guardar en este dispositivo: el navegador no permite " +
+          "almacenamiento local.",
     );
     this.name = "OutboxUnavailableError";
   }
@@ -49,6 +61,24 @@ export function newOperationId(): string {
   return randomUuid();
 }
 
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new OutboxUnavailableError(message)), ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export interface EnqueueInput {
   type: OutboxOperationType;
   businessId: string;
@@ -65,6 +95,18 @@ export interface EnqueueInput {
 
 export async function enqueueOperation(input: EnqueueInput): Promise<OutboxOp> {
   const db = requireDb();
+
+  // Se abre la base ANTES de construir nada. Si la apertura se atasca, el
+  // corte salta sin haber escrito una sola fila: el error es entonces
+  // inequívoco —la venta no se guardó— en vez de dejar la duda de si quedó a
+  // medias.
+  await withTimeout(
+    db.open(),
+    OUTBOX_OPEN_TIMEOUT_MS,
+    "La base local del dispositivo no responde. Si tienes Negora abierto en " +
+      "otra pestaña, ciérrala y vuelve a intentarlo.",
+  );
+
   const now = Date.now();
   const op: OutboxOp = {
     id: input.id ?? newOperationId(),

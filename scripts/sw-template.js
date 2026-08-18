@@ -41,9 +41,9 @@ const PRECACHE = __PRECACHE__;
  */
 const PRECACHE_CONCURRENCY = 6;
 
-async function precacheAll(cache) {
-  const queue = [...PRECACHE];
-  let failed = 0;
+async function precacheRound(cache, urls) {
+  const queue = [...urls];
+  const failed = [];
 
   const worker = async () => {
     while (queue.length > 0) {
@@ -53,7 +53,7 @@ async function precacheAll(cache) {
         // anterior del archivo al precachear una build nueva.
         await cache.add(new Request(url, { cache: "reload" }));
       } catch {
-        failed++;
+        failed.push(url);
       }
     }
   };
@@ -64,16 +64,59 @@ async function precacheAll(cache) {
   return failed;
 }
 
+/**
+ * Descarga todo el build, con una segunda pasada para los que fallaron.
+ *
+ * El reintento importa: en una conexión inestable —o contra un alojamiento
+ * compartido que corta cuando le llegan muchas peticiones seguidas— unos pocos
+ * archivos fallan por azar, y basta con que falte uno para que una pantalla
+ * quede inservible sin conexión.
+ */
+async function precacheAll(cache) {
+  const failed = await precacheRound(cache, PRECACHE);
+  if (failed.length === 0) return [];
+  return precacheRound(cache, failed);
+}
+
+/**
+ * Generaciones de caché que se conservan.
+ *
+ * DOS, no una. Los nombres de los archivos de Next llevan un hash del
+ * contenido, así que cada despliegue estrena nombres: una página que ya está
+ * abierta con la versión anterior sigue pidiendo LOS SUYOS. Si al activarse la
+ * versión nueva se borrara la caché vieja, esa pestaña se quedaría sin sus
+ * propios archivos y al navegar —o al recargar— acabaría en pantalla en blanco
+ * con un `ERR_FAILED` por cada trozo de código que le falta.
+ *
+ * Con dos generaciones vivas y una búsqueda que mira en todas las cachés, cada
+ * página encuentra los archivos de SU build y la transición deja de doler.
+ */
+const CACHE_GENERATIONS = 2;
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
       const failed = await precacheAll(cache);
-      if (failed > 0) {
-        console.warn(
-          `[sw] ${failed}/${PRECACHE.length} recursos no se cachearon`,
+
+      if (failed.length > 0) {
+        // Todo o nada. Media aplicación en caché es PEOR que la anterior
+        // entera, porque el fallo no aparece ahora sino al navegar sin red,
+        // cuando ya no hay vuelta atrás: pantalla en blanco y un `ERR_FAILED`
+        // por cada trozo de código que falta.
+        //
+        // Al lanzar aquí, la instalación fracasa, la versión anterior sigue al
+        // mando intacta y el navegador vuelve a intentarlo en la próxima
+        // visita. Con una conexión intermitente, tarde y bien es mejor que
+        // pronto y roto.
+        await caches.delete(CACHE_NAME);
+        throw new Error(
+          `[sw] Precache incompleto: faltaron ${failed.length} de ` +
+            `${PRECACHE.length} recursos (p. ej. ${failed[0]}). ` +
+            "Se mantiene la versión anterior.",
         );
       }
+
       await self.skipWaiting();
     })(),
   );
@@ -82,13 +125,14 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // Borra las cachés de versiones anteriores. Sin esto, cada despliegue
-      // dejaría otros 13 MB en el dispositivo.
-      const keys = await caches.keys();
+      // `caches.keys()` devuelve los nombres en orden de creación: las últimas
+      // generaciones son las del final.
+      const keys = (await caches.keys()).filter((key) =>
+        key.startsWith(CACHE_PREFIX),
+      );
+      const keep = new Set([...keys.slice(-CACHE_GENERATIONS), CACHE_NAME]);
       await Promise.all(
-        keys
-          .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
-          .map((key) => caches.delete(key)),
+        keys.filter((key) => !keep.has(key)).map((key) => caches.delete(key)),
       );
       await self.clients.claim();
     })(),
@@ -96,7 +140,16 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data === "SKIP_WAITING") void self.skipWaiting();
+  if (event.data === "SKIP_WAITING") {
+    void self.skipWaiting();
+    return;
+  }
+  // Permite preguntar desde la aplicación qué versión está sirviendo. Sin esto
+  // no hay forma de saber si un problema en producción viene del código nuevo
+  // o de una caché vieja que sigue al mando.
+  if (event.data === "VERSION" && event.ports?.[0]) {
+    event.ports[0].postMessage(VERSION);
+  }
 });
 
 self.addEventListener("fetch", (event) => {

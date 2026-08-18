@@ -11,6 +11,28 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### La actualización del service worker dejaba la app en dos builds a la vez
+- **Causa de la pantalla en blanco con ERR_FAILED.** Los archivos de Next llevan
+  un hash del contenido, así que cada despliegue estrena nombres. El service
+  worker tomaba el mando aunque la descarga del build nuevo hubiera fallado a
+  medias, y acto seguido borraba la caché anterior: quedaba media versión nueva,
+  ninguna completa, y cada trozo de código que faltaba salía como ERR_FAILED.
+- **Ahora es todo o nada.** Si falla un solo recurso, se reintentan los fallidos;
+  si aún así falta alguno, la instalación se aborta y **la versión anterior sigue
+  al mando intacta**. El navegador lo reintenta en la siguiente visita. Con una
+  conexión intermitente, tarde y bien es mejor que pronto y roto.
+- **Se conservan dos generaciones de caché.** Una pestaña ya abierta sigue
+  pidiendo los archivos de SU build; borrar la caché anterior al activar la nueva
+  la dejaba sin ellos.
+- La aplicación **anuncia en consola la versión activa** (`[sw] versión activa:`),
+  al arrancar y cuando una versión nueva toma el control. Sin ese dato, responder
+  a «ya lo desplegué y sigue igual» es adivinar si corre el código nuevo o una
+  caché vieja.
+- **Registrar una venta no puede colgarse por la base local**: si IndexedDB no
+  responde en 8 segundos —una pestaña antigua bloqueando la actualización del
+  esquema— se corta con un error explícito. Y el motivo real del fallo llega al
+  aviso en pantalla en vez de quedar bajo un «intenta de nuevo» genérico.
+
 #### Correcciones del primer despliegue de la cola
 - **El botón «Registrando…» ya no se queda girando.** Ninguna petición de la
   aplicación tenía tiempo límite: sin conexión el navegador puede tardar
