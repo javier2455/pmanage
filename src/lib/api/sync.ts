@@ -1,6 +1,9 @@
 import axios from "axios";
+import apiClient from "@/lib/axios";
 import { SyncRoutes } from "@/lib/routes/sync";
 import type { ProbeOutcome } from "@/lib/connectivity";
+import { getDeviceId } from "@/lib/offline/device-id";
+import type { SyncPushResponse } from "@/lib/offline/outbox-policy";
 
 /** Corta el sondeo si el servidor no responde en este tiempo. */
 export const PROBE_TIMEOUT_MS = 8_000;
@@ -35,4 +38,45 @@ export async function probeConnectivity(
     }
     return { networkError: true };
   }
+}
+
+/** Cabecera con la que el backend identifica el dispositivo de origen. */
+export const DEVICE_ID_HEADER = "X-Device-Id";
+
+/** Una operación tal como viaja en el lote. */
+export interface SyncPushOperation {
+  clientOperationId: string;
+  seq: number;
+  type: string;
+  occurredAt: string;
+  payload: Record<string, unknown>;
+}
+
+export interface SyncPushBody {
+  businessId: string;
+  batchId: string;
+  clientSentAt: string;
+  chunkIndex?: number;
+  chunkTotal?: number;
+  operations: SyncPushOperation[];
+}
+
+/**
+ * Sube un lote de operaciones hechas sin conexión.
+ *
+ * Usa el cliente con interceptores a propósito: si el token caducó mientras el
+ * dispositivo estaba sin red, el refresco automático deja subir el lote sin
+ * molestar a la persona. Los errores se propagan tal cual; quien llama los
+ * clasifica con `classifyPushFailure`.
+ */
+export async function pushOperations(
+  body: SyncPushBody,
+): Promise<SyncPushResponse> {
+  const deviceId = getDeviceId();
+  const { data } = await apiClient.post<SyncPushResponse>(
+    SyncRoutes.push(),
+    body,
+    deviceId ? { headers: { [DEVICE_ID_HEADER]: deviceId } } : undefined,
+  );
+  return data;
 }

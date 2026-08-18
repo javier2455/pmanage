@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import type { OutboxOp } from "@/lib/offline/outbox-types";
 
 /**
  * Base de datos local del navegador (plan offline, B2).
@@ -25,6 +26,7 @@ export interface ReadCacheRow {
 
 class NegoraOfflineDB extends Dexie {
   readCache!: Table<ReadCacheRow, string>;
+  outbox!: Table<OutboxOp, number>;
 
   constructor() {
     super("negora-offline");
@@ -32,6 +34,16 @@ class NegoraOfflineDB extends Dexie {
     // poder purgar por antigüedad y por negocio sin recorrer toda la tabla.
     this.version(1).stores({
       readCache: "key, savedAt, businessId",
+    });
+    // v2: cola de operaciones (plan offline, B6).
+    //
+    // `++seq` autoincremental como clave primaria porque el orden de inserción
+    // ES el orden en que ocurrieron las cosas, y ese es el único orden en que
+    // se pueden reproducir. `&id` es único: el UUID del cliente viaja al
+    // servidor como clave de idempotencia, y dos filas con el mismo UUID
+    // significarían dos intentos de aplicar el mismo efecto.
+    this.version(2).stores({
+      outbox: "++seq, &id, status, businessId, [businessId+status], createdAt",
     });
   }
 }

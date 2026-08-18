@@ -10,6 +10,7 @@ import { PlanGuard } from "@/components/auth/plan-guard"
 import { TourProvider } from "@/components/tour/tour-provider"
 import { TourHelpButton } from "@/components/tour/tour-help-button"
 import { ConnectivityIndicator } from "@/components/connectivity/connectivity-indicator"
+import { PendingChangesButton } from "@/components/offline/pending-changes-button"
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <ReactivationGuard>
@@ -33,6 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <ConnectivityIndicator />
+              <PendingChangesButton />
               <TourHelpButton />
               <NotificationBell />
             </div>

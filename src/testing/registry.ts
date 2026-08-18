@@ -10,6 +10,7 @@ import { formatClosingCurrencySuite } from "./suites/format-closing-currency.sui
 import { iconMapSuite } from "./suites/icon-map.suite";
 import { navigationAccessSuite } from "./suites/navigation-access.suite";
 import { normalizationSuite } from "./suites/normalization.suite";
+import { outboxSuite } from "./suites/outbox.suite";
 import { phoneSuite } from "./suites/phone.suite";
 import { planCatalogSuite } from "./suites/plan-catalog.suite";
 import { proGatesSuite } from "./suites/pro-gates.suite";
@@ -41,4 +42,5 @@ export const allSuites: Suite[] = [
   iconMapSuite,
   planCatalogSuite,
   connectivitySuite,
+  outboxSuite,
 ];

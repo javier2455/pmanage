@@ -29,6 +29,7 @@ import { ProductGridCard } from "@/components/sales/product-grid-card"
 import { SaleCartPanel } from "@/components/sales/sale-cart-panel"
 import { Search, ArrowLeft, PackageSearch } from "lucide-react"
 import { sileo } from "sileo"
+import { TOAST_STYLES as OFFLINE_TOAST_STYLES } from "@/lib/toast-styles"
 import axios from "axios"
 
 interface CartItem {
@@ -194,7 +195,23 @@ export default function CreateSalesPage() {
         })),
       })
 
-      const saleId = (response as { id?: string } | undefined)?.id
+      if (response.queued) {
+        // Venta guardada en el dispositivo. No se puede cobrar todavía: el
+        // cobro lo calcula el servidor (recargo, vuelto multimoneda) y la venta
+        // aún no existe allí. Se cobrará al subir la cola.
+        sileo.info({
+          title: "Venta guardada sin conexión",
+          description:
+            "Queda en «Cambios sin subir». Súbela cuando vuelva la conexión " +
+            "y podrás cobrarla entonces.",
+          styles: OFFLINE_TOAST_STYLES,
+        })
+        setCartItems([])
+        router.push("/dashboard/business/sales")
+        return
+      }
+
+      const saleId = (response.sale as { id?: string } | undefined)?.id
 
       if (cobrarAhora && saleId) {
         // Mostrador: nos quedamos en la página y abrimos el cobro de inmediato.

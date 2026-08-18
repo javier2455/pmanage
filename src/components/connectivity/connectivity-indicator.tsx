@@ -10,20 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
-/**
- * Colores FIJOS, no tokens del tema.
- *
- * La hoja de estilos de sileo no tiene ninguna regla de modo oscuro (ni `.dark`
- * ni `prefers-color-scheme`): su superficie es siempre clara. Con tokens como
- * `text-foreground`, que en modo oscuro se vuelven casi blancos, el texto
- * desaparece sobre ese fondo claro — que es justo lo que pasaba primero con la
- * descripción y después con el título.
- */
-const TOAST_STYLES = {
-  title: "text-zinc-900! text-[16px]! font-bold!",
-  description: "text-zinc-600! text-[15px]!",
-} as const;
+import { TOAST_STYLES } from "@/lib/toast-styles";
 
 /**
  * Aviso de "sin conexión" en la barra superior del panel (plan offline, B0).

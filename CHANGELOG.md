@@ -11,6 +11,38 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Se pueden registrar ventas sin conexión
+- **Una venta hecha sin red ya no se pierde.** Se guarda en el dispositivo, en
+  una cola de operaciones, y se sube al servidor cuando la persona lo pide.
+- **La venta se intenta SIEMPRE contra el servidor primero.** Solo se encola si
+  no hubo respuesta. Un 422 (sin stock) o un 403 (plan vencido) siguen fallando
+  como siempre: encolarlos sería prometer que la venta subirá cuando ya se sabe
+  que será rechazada.
+- **`POST /sales` viaja ahora con `Idempotency-Key`.** Resuelve dos problemas de
+  golpe: el doble clic deja de crear dos ventas, y el caso en que la petición
+  llegó, el servidor la registró y la respuesta se perdió por el camino. La venta
+  se encola con el MISMO identificador, así que al subirla el servidor reconoce
+  la operación y devuelve la que ya creó en vez de crear otra.
+- **Nuevo botón «Cambios sin subir»** en la barra superior, siempre visible, con
+  el contador de lo que aún no está en el servidor y el detalle de cada
+  operación —incluido el mensaje literal del servidor cuando algo se rechaza—.
+- **La subida es manual, no automática.** Al subir pueden aparecer rechazos que
+  exigen una decisión (una venta sin stock, un precio que cambió) y esa
+  conversación no puede saltar mientras se atiende a alguien.
+- **Una venta encolada no se puede cobrar todavía**: el cobro lo calcula el
+  servidor (recargo, vuelto multimoneda) y la venta aún no existe allí. Se cobra
+  al subirla.
+- Un fallo de red **no gasta intentos**: la operación nunca llegó a ser juzgada.
+  Solo cuentan los rechazos con respuesta, y tras seis la operación se marca para
+  que se vea en vez de reintentarse en silencio para siempre.
+- La cola **sobrevive al cierre de sesión** —contiene trabajo sin subir— pero cada
+  operación recuerda de quién es: en un mostrador compartido, las ventas de quien
+  salió no se suben con la sesión de quien entró.
+- Un solo envío a la vez en todo el navegador (cerrojo entre pestañas): dos
+  pestañas subiendo la misma cola mandarían cada venta dos veces.
+- 33 pruebas nuevas: la política de reintentos como lógica pura, y la cola contra
+  Dexie real sobre una IndexedDB en memoria.
+
 #### Las pantallas muestran datos sin conexión
 - **Productos, tasas de cambio y resumen del panel ya no aparecen vacíos sin red.**
   Cada una guarda su última respuesta correcta en la base local del navegador

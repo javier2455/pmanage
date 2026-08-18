@@ -1,4 +1,9 @@
 import { offlineDb } from "@/lib/db/offline-db";
+import { isNetworkError } from "@/lib/http-error";
+
+// Se reexporta: la política de "solo ante fallo de red" se lee aquí, aunque la
+// detección viva en un módulo sin dependencias para poder probarla suelta.
+export { isNetworkError };
 
 /**
  * Lecturas guardadas para poder mostrarlas sin conexión (plan offline, B4).
@@ -97,22 +102,6 @@ export function withOfflineFallback<T>(
   };
 }
 
-/**
- * ¿El fallo es de red (no hubo respuesta) y no una respuesta de error?
- *
- * Axios deja `error.response` sin definir cuando no llegó a haber respuesta:
- * DNS, conexión rechazada, timeout o petición cancelada.
- */
-export function isNetworkError(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const candidate = error as {
-    isAxiosError?: boolean;
-    response?: unknown;
-    code?: string;
-  };
-  if (candidate.isAxiosError === true) return candidate.response === undefined;
-  return candidate.code === "ERR_NETWORK";
-}
 
 /** Borra todas las copias. Se llama al cerrar sesión. */
 export async function clearReadCache(): Promise<void> {

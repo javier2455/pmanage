@@ -1,8 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { CancelSaleProps, CreateSaleProps, RegistrarPagoDto } from "@/lib/types/sales";
 import {
     cancelSale,
-    create,
     downloadFactura,
     getAllSalesByBusinessId,
     getPaymentsHistory,
@@ -10,6 +9,7 @@ import {
     getSaleById,
     registerPayments,
 } from "@/lib/api/sale";
+import { createSaleOrQueue } from "@/lib/offline/sale-sync";
 import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
 
 interface UseAllSalesByBusinessIdParams {
@@ -37,27 +37,43 @@ export function useGetSaleById(saleId: string) {
     });
 }
 
+/**
+ * Consultas que quedan obsoletas cuando entra una venta nueva.
+ *
+ * Se extrae porque la venta ya no llega solo por la mutación: al subir la cola
+ * de operaciones sin conexión entran varias de golpe, y esa vía tiene que
+ * refrescar exactamente lo mismo. Dos listas que se copian acaban divergiendo
+ * y el síntoma sería una pantalla que no se actualiza sin motivo aparente.
+ */
+export function invalidateAfterSale(queryClient: QueryClient, bid: string) {
+    queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id", bid] });
+    queryClient.invalidateQueries({ queryKey: ["current-inventory-by-business-id", bid] });
+    queryClient.invalidateQueries({ queryKey: ["inventory-history-by-business-id", bid] });
+    queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", bid] });
+    queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
+    queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
+    // La venta consume capas por FIFO: cambian tanto los lotes vivos
+    // como lo vendido de cada uno.
+    queryClient.invalidateQueries({ queryKey: ["product-cost-layers", bid] });
+    queryClient.invalidateQueries({ queryKey: ["product-lot-profitability", bid] });
+    // Una venta puede cruzar el umbral mínimo de stock y generar
+    // notificaciones en el backend; refrescamos lista y conteo del badge.
+    queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
+    queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
+}
+
 export function useCreateSaleMutation() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (credentials: CreateSaleProps) => create(credentials),
-        onSuccess: (_, variables) => {
-            const bid = variables.idbusiness;
-            queryClient.invalidateQueries({ queryKey: ["all-sales-by-business-id", bid] });
-            queryClient.invalidateQueries({ queryKey: ["current-inventory-by-business-id", bid] });
-            queryClient.invalidateQueries({ queryKey: ["inventory-history-by-business-id", bid] });
-            queryClient.invalidateQueries({ queryKey: ["all-product-of-my-businesses", bid] });
-            queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
-            queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
-            queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
-            // La venta consume capas por FIFO: cambian tanto los lotes vivos
-            // como lo vendido de cada uno.
-            queryClient.invalidateQueries({ queryKey: ["product-cost-layers", bid] });
-            queryClient.invalidateQueries({ queryKey: ["product-lot-profitability", bid] });
-            // Una venta puede cruzar el umbral mínimo de stock y generar
-            // notificaciones en el backend; refrescamos lista y conteo del badge.
-            queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
-            queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
+        mutationFn: (credentials: CreateSaleProps) => createSaleOrQueue(credentials),
+        onSuccess: (result, variables) => {
+            // Encolada sin conexión: no hay nada nuevo en el servidor que
+            // recargar, y cada invalidación sería una petición condenada a
+            // fallar. La lista se actualizará al subir la cola.
+            if (result.queued) return;
+
+            invalidateAfterSale(queryClient, variables.idbusiness);
         },
     });
 }

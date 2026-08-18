@@ -11,6 +11,7 @@ import {
 } from "../types/sales";
 import { salesRoutes } from "../routes/sales";
 import { fromBackendCurrency, toBackendCurrency } from "../currency";
+import { getDeviceId } from "@/lib/offline/device-id";
 
 /** Normaliza la moneda de una venta del backend a la forma interna (mayúsculas). */
 function normalizeSaleCurrency<T extends { currency?: string }>(sale: T): T {
@@ -43,16 +44,54 @@ export async function getSaleById(
   return normalizeSaleCurrency(data);
 }
 
-export async function create(
+/**
+ * Cuerpo exacto que espera `POST /sales`.
+ *
+ * Se extrae de `create` para que la cola sin conexión guarde EL MISMO cuerpo
+ * que se manda en línea: el servidor compara una huella del cuerpo con la
+ * clave de idempotencia, así que dos formas distintas del mismo pedido se
+ * leerían como reutilización de la clave y la venta encolada se rechazaría.
+ */
+export function buildCreateSalePayload(
   credentials: CreateSaleProps,
-): Promise<BusinessWithProducts> {
+): Record<string, unknown> {
   // La moneda viaja con el código que espera el backend (p. ej. CUP_TRANSFERENCIA
   // → cup_transferencia); internamente seguimos usando la forma en mayúsculas.
-  const payload = credentials.currency
+  return credentials.currency
     ? { ...credentials, currency: toBackendCurrency(credentials.currency) }
-    : credentials;
-  const { data } = await apiClient.post(salesRoutes.createSale, payload);
+    : { ...credentials };
+}
 
+export async function create(
+  credentials: CreateSaleProps,
+  options: { operationId?: string } = {},
+): Promise<BusinessWithProducts> {
+  return postCreateSale(buildCreateSalePayload(credentials), options.operationId);
+}
+
+/**
+ * Manda un cuerpo ya normalizado.
+ *
+ * Con `operationId` la petición lleva `Idempotency-Key`: un reintento —doble
+ * clic, o una respuesta que se perdió por el camino— devuelve la venta ya
+ * creada en vez de crear una segunda. Es la misma clave con la que la
+ * operación viajaría por la cola, de modo que ambas vías comparten la entrada
+ * del registro del servidor y no pueden duplicar el efecto.
+ */
+export async function postCreateSale(
+  payload: Record<string, unknown>,
+  operationId?: string,
+): Promise<BusinessWithProducts> {
+  const headers: Record<string, string> = {};
+  if (operationId) headers["Idempotency-Key"] = operationId;
+  const deviceId = getDeviceId();
+  if (deviceId) headers["X-Device-Id"] = deviceId;
+
+  const { data } = await apiClient.post(
+    salesRoutes.createSale,
+    payload,
+    Object.keys(headers).length > 0 ? { headers } : undefined,
+  );
   return data;
 }
 
