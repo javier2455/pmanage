@@ -1,6 +1,7 @@
 import { clearAuthCookies } from "@/lib/cookies";
 import { logout } from "@/lib/api/auth";
 import { clearOfflineCache } from "@/lib/offline-cache";
+import { clearReadCache } from "@/lib/offline-read-cache";
 
 /**
  * Cierra la sesión: invalida el access token en el backend (best-effort) y
@@ -26,7 +27,9 @@ export async function clearSession(): Promise<void> {
   sessionStorage.removeItem("user");
   sessionStorage.removeItem("activeBusinessId");
   clearAuthCookies();
-  // El árbol de menús cacheado depende del rol y de los permisos: no puede
-  // sobrevivir a un cambio de cuenta en el mismo dispositivo.
+  // Ni el árbol de menús ni las lecturas guardadas pueden sobrevivir a un
+  // cambio de cuenta en el mismo dispositivo: dependen del rol, de los
+  // permisos y del negocio del usuario que cerró sesión.
   clearOfflineCache();
+  void clearReadCache();
 }

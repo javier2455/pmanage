@@ -11,6 +11,23 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Las pantallas muestran datos sin conexión
+- **Productos, tasas de cambio y resumen del panel ya no aparecen vacíos sin red.**
+  Cada una guarda su última respuesta correcta en la base local del navegador
+  (IndexedDB, vía Dexie) y la sirve si la recarga falla por falta de conexión.
+- **Solo se recurre a la copia cuando el fallo es de RED.** Un 403 o un 422 son
+  respuestas legítimas del servidor —permiso revocado, plan vencido— y taparlas
+  con datos viejos ocultaría el problema real. Estando en línea manda siempre el
+  servidor: la copia nunca se sirve por delante.
+- El aviso de «Sin conexión» dice ahora explícitamente que **se están mostrando
+  datos guardados**. En un punto de venta, dar por actual un stock de ayer lleva
+  a vender algo que ya no está.
+- Las copias caducan a los 7 días, se guardan por negocio (dos negocios del mismo
+  usuario no comparten catálogo) y **se borran al cerrar sesión**.
+- Del catálogo de productos solo se guarda la lista completa, no cada búsqueda:
+  cachear los términos tecleados llenaría la base de fragmentos y, sin conexión,
+  devolvería el resultado de una búsqueda antigua como si fuera el catálogo entero.
+
 #### El sidebar sobrevive sin conexión
 - **El menú lateral ya no se queda vacío al entrar sin red.** La caché de React
   Query vive solo en memoria, así que al recargar —o al abrir directamente estando

@@ -97,11 +97,9 @@ export function ConnectivityIndicator({ className }: { className?: string }) {
         <CloudOff className="size-4 shrink-0" aria-hidden />
         <div className="min-w-0 text-xs leading-tight">
           <p className="font-medium">Sin conexión</p>
-          {lastConnectionLabel && (
-            <p className="text-amber-700/80 dark:text-amber-400/80">
-              {lastConnectionLabel}
-            </p>
-          )}
+          <p className="text-amber-700/80 dark:text-amber-400/80">
+            {lastConnectionLabel ?? "Mostrando datos guardados"}
+          </p>
         </div>
         {retryButton}
       </div>
@@ -131,8 +129,12 @@ export function ConnectivityIndicator({ className }: { className?: string }) {
             />
             <div className="min-w-0 space-y-1">
               <p className="text-sm font-medium">Sin conexión</p>
+              {/* Decir que los datos son guardados no es un detalle menor: en
+                  un POS, dar por actual un stock de ayer lleva a vender algo
+                  que ya no está. */}
               <p className="text-muted-foreground text-xs leading-snug">
-                Puedes seguir trabajando; se reintentará solo.
+                Estás viendo datos guardados en el dispositivo. Se reintentará
+                la conexión solo.
               </p>
               {lastConnectionLabel && (
                 <p className="text-muted-foreground text-xs">
