@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import packageJson from "../../../package.json";
 import { ChevronsUpDown, CircleHelp, LogOut, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
+import { sessionStore } from "@/lib/session-store";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -44,13 +45,13 @@ export function NavUser() {
   }, []);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("user");
+    const stored = sessionStore.getItem("user");
     if (!stored) return;
     try {
       const parsed: StoredUser = JSON.parse(stored);
       queueMicrotask(() => setUser(parsed));
     } catch {
-      sessionStorage.removeItem("user");
+      sessionStore.removeItem("user");
     }
   }, []);
 

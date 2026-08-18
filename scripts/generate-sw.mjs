@@ -77,6 +77,45 @@ function resolveApiPath(apiUrl) {
   }
 }
 
+/**
+ * Reescribe las rutas del manifiesto con el basePath del despliegue.
+ *
+ * `public/manifest.webmanifest` es un archivo estático: Next lo copia tal cual,
+ * sin prefijar nada. Con la app en `/manager`, un `start_url` de `/dashboard/`
+ * abre la raíz del dominio —fuera de la aplicación— y la app instalada arranca
+ * en un 404. Como el manifiesto solo se lee al instalar, el fallo aparece
+ * justo cuando ya no se está mirando.
+ */
+async function rewriteManifest() {
+  if (!basePath) return;
+
+  const manifestPath = join(outDir, "manifest.webmanifest");
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  } catch {
+    console.warn("[sw] No hay manifest.webmanifest en out/; se omite.");
+    return;
+  }
+
+  const prefix = (value) =>
+    typeof value === "string" && value.startsWith("/")
+      ? `${basePath}${value}`
+      : value;
+
+  manifest.start_url = prefix(manifest.start_url);
+  manifest.scope = prefix(manifest.scope);
+  if (Array.isArray(manifest.icons)) {
+    manifest.icons = manifest.icons.map((icon) => ({
+      ...icon,
+      src: prefix(icon.src),
+    }));
+  }
+
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+  console.log(`[sw] manifest.webmanifest reescrito con basePath ${basePath}`);
+}
+
 async function main() {
   try {
     await stat(outDir);
@@ -86,6 +125,10 @@ async function main() {
     );
     process.exit(1);
   }
+
+  // Antes de listar: el manifiesto reescrito debe entrar en el precache con su
+  // contenido final, no con el original.
+  await rewriteManifest();
 
   const files = await collectFiles(outDir);
   const urls = files

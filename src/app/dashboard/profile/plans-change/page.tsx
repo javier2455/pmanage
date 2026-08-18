@@ -24,6 +24,7 @@ import { getAllPlans } from "@/lib/api/plans"
 import { planToCatalogEntry } from "@/lib/plan-catalog"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { PlanResponse } from "@/lib/types/plans"
+import { sessionStore } from "@/lib/session-store";
 
 type StoredPlan = {
     code?: string
@@ -39,7 +40,7 @@ export default function ChangePlanPage() {
     const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
 
     useEffect(() => {
-        const stored = sessionStorage.getItem("user")
+        const stored = sessionStore.getItem("user")
         if (!stored) return
         try {
             const parsed = JSON.parse(stored)

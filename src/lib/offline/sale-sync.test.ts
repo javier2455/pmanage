@@ -2,6 +2,7 @@
 import "fake-indexeddb/auto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { offlineDb } from "@/lib/db/offline-db";
+import { sessionStore } from "@/lib/session-store";
 import { listOutbox } from "./outbox";
 import { createSaleOrQueue } from "./sale-sync";
 
@@ -36,10 +37,10 @@ beforeEach(async () => {
   await offlineDb()?.outbox.clear();
   setOnline(true);
   // La cola necesita saber de quién es el trabajo que guarda.
-  sessionStorage.setItem("user", JSON.stringify({ email: "ana@negora.cu" }));
+  sessionStore.setItem("user", JSON.stringify({ email: "ana@negora.cu" }));
 });
 
-afterEach(() => sessionStorage.clear());
+afterEach(() => sessionStore.clear());
 
 describe("registrar una venta", () => {
   it("con red va al servidor y no toca la cola", async () => {

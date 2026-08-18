@@ -20,6 +20,7 @@ import { clearAuthCookies } from "@/lib/cookies";
 import { readCacheKey } from "@/lib/db/offline-db";
 import { withOfflineFallback } from "@/lib/offline-read-cache";
 import { currentQueueOwner } from "@/lib/offline/queue-owner";
+import { sessionStore } from "@/lib/session-store";
 
 type BusinessContextType = {
   businesses: Business[];
@@ -44,10 +45,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   // arrancan en null; durante hidratación la lista de negocios aún no resolvió
   // (isLoading), por lo que estos valores no afectan el HTML inicial.
   const [activeBusinessId, setActiveBusinessId] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : sessionStorage.getItem("activeBusinessId"),
+    typeof window === "undefined" ? null : sessionStore.getItem("activeBusinessId"),
   );
   const [loginMode] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : sessionStorage.getItem("loginMode"),
+    typeof window === "undefined" ? null : sessionStore.getItem("loginMode"),
   );
 
   // 🔥 Traer negocios del usuario
@@ -114,10 +115,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
           description: "Tu sesión ha expirado. Inicia sesión nuevamente.",
           styles: { description: "text-[#dc2626]/90! text-[15px]!" },
         });
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("refresh_token");
-        sessionStorage.removeItem("user");
-        sessionStorage.removeItem("activeBusinessId");
+        sessionStore.removeItem("token");
+        sessionStore.removeItem("refresh_token");
+        sessionStore.removeItem("user");
+        sessionStore.removeItem("activeBusinessId");
         clearAuthCookies();
         router.push("/login");
       } else {
@@ -149,7 +150,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   // 🔹 Persistir
   useEffect(() => {
     if (activeBusinessId) {
-      sessionStorage.setItem("activeBusinessId", activeBusinessId);
+      sessionStore.setItem("activeBusinessId", activeBusinessId);
     }
   }, [activeBusinessId]);
 

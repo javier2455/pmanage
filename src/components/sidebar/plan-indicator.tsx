@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { differenceInDays, parseISO, startOfDay } from "date-fns"
 import Link from "next/link"
+import { sessionStore } from "@/lib/session-store";
 
 import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
@@ -22,7 +23,7 @@ export function PlanIndicator() {
     const [plan, setPlan] = useState<StoredPlan | null>(null)
 
     useEffect(() => {
-        const stored = sessionStorage.getItem("user")
+        const stored = sessionStore.getItem("user")
         if (!stored) return
         const parsed = JSON.parse(stored)
         queueMicrotask(() => setPlan(parsed?.plan ?? null))

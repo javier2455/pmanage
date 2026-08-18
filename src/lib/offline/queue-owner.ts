@@ -9,16 +9,18 @@
  *
  * Se usa el `sub` del token, que es el identificador real del usuario en el
  * backend y no cambia al refrescar la sesión. El correo queda como respaldo
- * porque es lo único que la aplicación guarda del usuario en `sessionStorage`.
+ * porque es lo único que la aplicación guarda del usuario en la sesión.
  */
+import { sessionStore } from "@/lib/session-store";
+
 export function currentQueueOwner(): string | null {
   if (typeof window === "undefined") return null;
 
-  const fromToken = subjectFromToken(sessionStorage.getItem("token"));
+  const fromToken = subjectFromToken(sessionStore.getItem("token"));
   if (fromToken) return fromToken;
 
   try {
-    const stored = sessionStorage.getItem("user");
+    const stored = sessionStore.getItem("user");
     if (!stored) return null;
     const email = (JSON.parse(stored) as { email?: unknown }).email;
     return typeof email === "string" && email ? email : null;

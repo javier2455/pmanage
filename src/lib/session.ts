@@ -2,6 +2,7 @@ import { clearAuthCookies } from "@/lib/cookies";
 import { logout } from "@/lib/api/auth";
 import { clearOfflineCache } from "@/lib/offline-cache";
 import { clearReadCache } from "@/lib/offline-read-cache";
+import { sessionStore } from "@/lib/session-store";
 
 /**
  * Cierra la sesión: invalida el access token en el backend (best-effort) y
@@ -13,7 +14,7 @@ import { clearReadCache } from "@/lib/offline-read-cache";
  * la sesión local.
  */
 export async function clearSession(): Promise<void> {
-  const refreshToken = sessionStorage.getItem("refresh_token");
+  const refreshToken = sessionStore.getItem("refresh_token");
   try {
     if (refreshToken) {
       await logout(refreshToken);
@@ -22,10 +23,10 @@ export async function clearSession(): Promise<void> {
     // Ignorado a propósito: el cierre de sesión local debe ocurrir igual.
   }
 
-  sessionStorage.removeItem("token");
-  sessionStorage.removeItem("refresh_token");
-  sessionStorage.removeItem("user");
-  sessionStorage.removeItem("activeBusinessId");
+  // Se borra la sesión ENTERA, no clave por clave: ahora sobrevive al cierre
+  // de la aplicación, así que una clave olvidada aquí ya no desaparecería sola
+  // al cerrar la pestaña — se quedaría en el dispositivo indefinidamente.
+  sessionStore.clear();
   clearAuthCookies();
   // Ni el árbol de menús ni las lecturas guardadas pueden sobrevivir a un
   // cambio de cuenta en el mismo dispositivo: dependen del rol, de los

@@ -9,10 +9,11 @@ import {
 import type { PlanFeatureKey, PlanFeatures } from "@/lib/plan-features";
 import { subscribeToPlanSession } from "@/lib/plan-session";
 import { roleIdFromName } from "@/lib/roles";
+import { sessionStore } from "@/lib/session-store";
 
 function readRoleName(): string {
   if (typeof window === "undefined") return "";
-  const stored = sessionStorage.getItem("user");
+  const stored = sessionStore.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -28,7 +29,7 @@ function readRoleName(): string {
 
 function readRoleId(): string {
   if (typeof window === "undefined") return "";
-  const stored = sessionStorage.getItem("user");
+  const stored = sessionStore.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -52,7 +53,7 @@ function readRoleId(): string {
 /** "1"/"0" si el backend indicó plan.isPro; "" si no lo trae (fallback local). */
 function readPlanIsPro(): string {
   if (typeof window === "undefined") return "";
-  const stored = sessionStorage.getItem("user");
+  const stored = sessionStore.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -68,7 +69,7 @@ function readPlanIsPro(): string {
 /** Nº de negocios permitido según `plan.limits` del backend; "" si no viene. */
 function readMaxBusinesses(): string {
   if (typeof window === "undefined") return "";
-  const stored = sessionStorage.getItem("user");
+  const stored = sessionStore.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -90,7 +91,7 @@ function readMaxBusinesses(): string {
  */
 function readPlanFeatures(): string {
   if (typeof window === "undefined") return "";
-  const stored = sessionStorage.getItem("user");
+  const stored = sessionStore.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -105,7 +106,7 @@ function readPlanFeatures(): string {
 
 function readPlanType(): string {
   if (typeof window === "undefined") return "";
-  const stored = sessionStorage.getItem("user");
+  const stored = sessionStore.getItem("user");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);

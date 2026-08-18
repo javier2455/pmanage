@@ -12,21 +12,22 @@ import {
 import { Button } from "@/components/ui/button";
 import { clearAuthCookies } from "@/lib/cookies";
 import { logout } from "@/lib/api/auth";
+import { sessionStore } from "@/lib/session-store";
 
 export default function NoAccessPage() {
   const router = useRouter();
 
   async function handleLogout() {
-    const refreshToken = sessionStorage.getItem("refresh_token");
+    const refreshToken = sessionStore.getItem("refresh_token");
     try {
       if (refreshToken) await logout(refreshToken);
     } catch {
       // Best-effort: el cierre local debe ocurrir igual.
     }
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("refresh_token");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("activeBusinessId");
+    sessionStore.removeItem("token");
+    sessionStore.removeItem("refresh_token");
+    sessionStore.removeItem("user");
+    sessionStore.removeItem("activeBusinessId");
     clearAuthCookies();
     router.push("/login");
   }

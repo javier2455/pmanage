@@ -1,10 +1,12 @@
 import { setAuthCookies, setPlanExpiredCookie, setNeedsReconciliationCookie } from "@/lib/cookies";
 import type { PlanFeatures } from "@/lib/plan-features";
+import { sessionStore } from "@/lib/session-store";
 
 /**
  * Quién quiere enterarse de que el plan en sesión cambió.
  *
- * `sessionStorage` no emite eventos en la misma pestaña, así que sin esto los
+ * El almacenamiento del navegador no emite eventos en la MISMA pestaña (solo
+ * en las demás), así que sin esto los
  * componentes que ya se renderizaron seguían usando el plan viejo durante toda
  * la vida de la página: al subir de plan, las funciones nuevas no aparecían
  * hasta recargar, y una sesión con capacidades obsoletas no se corregía nunca
@@ -54,7 +56,7 @@ export function applySelectedPlanToSession(plan: {
   features?: PlanFeatures | null;
 }): void {
   if (typeof window !== "undefined") {
-    const stored = sessionStorage.getItem("user");
+    const stored = sessionStore.getItem("user");
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -82,7 +84,7 @@ export function applySelectedPlanToSession(plan: {
           delete parsed.plan.limits;
           delete parsed.plan.features;
         }
-        sessionStorage.setItem("user", JSON.stringify(parsed));
+        sessionStore.setItem("user", JSON.stringify(parsed));
       } catch {
         // sesión inválida: la corregirá el siguiente getMe()
       }

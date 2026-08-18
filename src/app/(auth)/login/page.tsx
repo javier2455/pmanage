@@ -34,6 +34,7 @@ import {
     LoginTypeSelectionModal,
     type LoginType,
 } from "@/components/auth/login-type-selection-modal";
+import { sessionStore } from "@/lib/session-store";
 
 type LoginMode = "owner" | "worker";
 
@@ -72,11 +73,11 @@ export default function LoginPage() {
     });
 
     const persistSessionUser = (user: AuthUser, accessToken: string, refreshToken?: string) => {
-        sessionStorage.setItem("token", accessToken);
+        sessionStore.setItem("token", accessToken);
         if (refreshToken) {
-            sessionStorage.setItem("refresh_token", refreshToken);
+            sessionStore.setItem("refresh_token", refreshToken);
         }
-        sessionStorage.setItem(
+        sessionStore.setItem(
             "user",
             JSON.stringify({
                 name: user.name,
@@ -110,7 +111,7 @@ export default function LoginPage() {
         mode,
     }: PendingLogin & { mode: LoginMode }) => {
         persistSessionUser(user, accessToken, refreshToken);
-        sessionStorage.setItem("loginMode", mode);
+        sessionStore.setItem("loginMode", mode);
 
         if (mode === "worker") {
             const businesses = await getMyBusinessesList();
@@ -127,7 +128,7 @@ export default function LoginPage() {
                activo para que las secciones consultadas coincidan con las que
                cargará el dashboard al montar. */
             const activeBusiness = workerBusinesses[0];
-            sessionStorage.setItem("activeBusinessId", activeBusiness.id);
+            sessionStore.setItem("activeBusinessId", activeBusiness.id);
             const sections = await getAllSections({ businessId: activeBusiness.id });
             /* Preferir el roleId numérico del backend (#21); fallback a la tabla local. */
             const roleId =
@@ -265,7 +266,7 @@ export default function LoginPage() {
                     authResolved = true;
                     cleanup();
                     try {
-                        sessionStorage.setItem("token", accessToken);
+                        sessionStore.setItem("token", accessToken);
                         const user = await getMe();
                         await routeAfterGetMe({ accessToken, refreshToken, user });
                         resolve();
@@ -294,9 +295,9 @@ export default function LoginPage() {
             const response = await loginMutation.mutateAsync(data);
             const { access_token, refresh_token } = response;
 
-            sessionStorage.setItem("token", access_token);
+            sessionStore.setItem("token", access_token);
             if (refresh_token) {
-                sessionStorage.setItem("refresh_token", refresh_token);
+                sessionStore.setItem("refresh_token", refresh_token);
             }
             const user = await getMe();
 

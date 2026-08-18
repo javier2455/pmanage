@@ -11,6 +11,27 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### La sesión sobrevive a cerrar la aplicación
+- **Cerrar la app sin conexión dejaba fuera al usuario.** La sesión vivía en
+  `sessionStorage`, que muere al cerrar la pestaña o la aplicación, y volver a
+  entrar exige al servidor de autenticación. Sus ventas encoladas seguían en el
+  dispositivo, pero la pantalla que las muestra estaba detrás del login. La
+  promesa «no se pierde una venta» valía solo mientras no cerraras la app — y en
+  un móvil el sistema mata procesos en segundo plano.
+- La sesión pasa a almacenamiento duradero, con **rescate de las sesiones ya
+  abiertas**: quien tenga la aplicación abierta al desplegar no es expulsado.
+- Al cerrar sesión se borra la sesión ENTERA, incluido el sitio antiguo. Sin eso,
+  el rescate resucitaría la sesión recién cerrada.
+- Efecto secundario buscado: las pestañas dejan de tener sesiones independientes.
+- **Coste asumido a conciencia**: el token de refresco queda escrito en el
+  dispositivo, así que un teléfono perdido es una sesión abierta hasta que ese
+  token caduque. Lo compensa el bloqueo del propio dispositivo; el PIN para
+  entrar sin conexión queda pendiente de decidir.
+- **La aplicación instalada abría un 404.** El `start_url` del manifiesto
+  apuntaba a la raíz del dominio y no a la subruta donde vive la app. Ahora se
+  reescribe en el build, como el service worker. Solo se lee al instalar, así que
+  el fallo aparecía justo cuando ya nadie estaba mirando.
+
 #### La caché servía la versión ANTERIOR sin conexión
 - **Regresión introducida al conservar dos generaciones de caché.** La búsqueda
   global recorre las cachés en orden de creación y devuelve la primera

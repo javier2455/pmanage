@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sileo } from "sileo";
 import { Loader2, Plus } from "lucide-react";
+import { sessionStore } from "@/lib/session-store";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +38,7 @@ const SUCCESS_TOAST_STYLES = {
 function readUserName(): string {
   if (typeof window === "undefined") return "";
   try {
-    const stored = sessionStorage.getItem("user");
+    const stored = sessionStore.getItem("user");
     if (!stored) return "";
     const parsed = JSON.parse(stored);
     return typeof parsed?.name === "string" ? parsed.name : "";

@@ -2,6 +2,7 @@ import axios from "axios";
 import { clearAuthCookies } from "@/lib/cookies";
 import { withBasePath } from "@/lib/base-path";
 import { BASIC_ROUTE } from "@/lib/routes";
+import { sessionStore } from "@/lib/session-store";
 
 // Create axios instance with interceptors
 const apiClient = axios.create({
@@ -34,7 +35,7 @@ apiClient.interceptors.request.use(
   (config) => {
     // Only run on client-side
     if (typeof window !== "undefined") {
-      const token = sessionStorage.getItem("token");
+      const token = sessionStore.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -80,14 +81,14 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = sessionStorage.getItem("refresh_token");
+      const refreshToken = sessionStore.getItem("refresh_token");
 
       if (!refreshToken) {
         // No refresh token, redirect to login
         if (typeof window !== "undefined") {
-          sessionStorage.removeItem("token");
-          sessionStorage.removeItem("refresh_token");
-          sessionStorage.removeItem("user");
+          sessionStore.removeItem("token");
+          sessionStore.removeItem("refresh_token");
+          sessionStore.removeItem("user");
           clearAuthCookies();
           window.location.href = withBasePath("/login");
         }
@@ -110,9 +111,9 @@ apiClient.interceptors.response.use(
 
         // Save new credentials
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("token", access_token);
+          sessionStore.setItem("token", access_token);
           if (newRefreshToken) {
-            sessionStorage.setItem("refresh_token", newRefreshToken);
+            sessionStore.setItem("refresh_token", newRefreshToken);
           }
         }
 
@@ -129,9 +130,9 @@ apiClient.interceptors.response.use(
         processQueue(refreshError, null);
         
         if (typeof window !== "undefined") {
-          sessionStorage.removeItem("token");
-          sessionStorage.removeItem("refresh_token");
-          sessionStorage.removeItem("user");
+          sessionStore.removeItem("token");
+          sessionStore.removeItem("refresh_token");
+          sessionStore.removeItem("user");
           clearAuthCookies();
           window.location.href = withBasePath("/login");
         }
@@ -144,9 +145,9 @@ apiClient.interceptors.response.use(
 
     // For 401 on auth endpoints or other errors, just reject
     if (error.response?.status === 401 && !isAuthEndpoint && typeof window !== "undefined") {
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("refresh_token");
-      sessionStorage.removeItem("user");
+      sessionStore.removeItem("token");
+      sessionStore.removeItem("refresh_token");
+      sessionStore.removeItem("user");
       clearAuthCookies();
       window.location.href = withBasePath("/login");
     }
