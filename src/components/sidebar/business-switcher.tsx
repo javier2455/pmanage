@@ -35,7 +35,10 @@ export function BusinessSwitcher() {
         <Button
           variant="outline"
           aria-label="Seleccionar negocio"
-          className="w-52 justify-between border-border bg-card text-foreground hover:bg-muted sm:w-64"
+          // Ancho MÁXIMO, no fijo. Con `w-52` el botón no cedía un píxel por
+          // estrecha que fuera la pantalla —el `min-w-0` del padre no puede con
+          // un ancho fijo— y acababa por debajo de los iconos de la barra.
+          className="w-full max-w-52 justify-between border-border bg-card text-foreground hover:bg-muted sm:max-w-64"
         >
           <div className="flex items-center gap-2 truncate">
             <div className="flex size-5 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground">

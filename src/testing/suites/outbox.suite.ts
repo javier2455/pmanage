@@ -13,6 +13,7 @@ import {
   resolveOperationOutcome,
   retryDelayMs,
 } from "@/lib/offline/outbox-policy";
+import { resolveStatusTone } from "@/lib/offline/status-tone";
 import type { OutboxOp, OutboxStatus } from "@/lib/offline/outbox-types";
 
 const NOW = 1_700_000_000_000;
@@ -272,6 +273,72 @@ export const outboxSuite = defineSuite(
         "etiqueta es lo único que permite reconocerla en la lista.",
     );
 
+    /* ------------------------------------------- prioridad del icono */
+
+    test(
+      "sin conexión manda sobre todo lo demás",
+      () => {
+        expect(
+          resolveStatusTone({
+            isOffline: true,
+            rejected: 3,
+            unsynced: 5,
+            isPreparing: true,
+            failedResources: 2,
+          }),
+        ).toBe("offline");
+      },
+      "Es lo único que cambia lo que la persona puede hacer AHORA: cobrar " +
+        "deja de ser posible y toda venta se queda en el dispositivo.",
+    );
+
+    test(
+      "un rechazo pesa más que algo pendiente de subir",
+      () => {
+        expect(
+          resolveStatusTone({
+            isOffline: false,
+            rejected: 1,
+            unsynced: 4,
+            isPreparing: false,
+            failedResources: 0,
+          }),
+        ).toBe("rejected");
+      },
+      "Lo pendiente se resuelve solo al pulsar subir; un rechazo necesita " +
+        "que alguien decida. Lo que necesita a una persona va delante.",
+    );
+
+    test(
+      "la preparación no tapa a los cambios sin subir",
+      () => {
+        expect(
+          resolveStatusTone({
+            isOffline: false,
+            rejected: 0,
+            unsynced: 2,
+            isPreparing: true,
+            failedResources: 0,
+          }),
+        ).toBe("pending");
+      },
+      "Descargar datos no bloquea nada: se está trabajando con conexión.",
+    );
+
+    test(
+      "sin nada que contar, el estado es al día",
+      () => {
+        expect(
+          resolveStatusTone({
+            isOffline: false,
+            rejected: 0,
+            unsynced: 0,
+            isPreparing: false,
+            failedResources: 0,
+          }),
+        ).toBe("ready");
+      },
+    );
     test(
       "el contador principal suma TODO lo que no está en el servidor",
       () => {

@@ -11,6 +11,21 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Un solo icono para todo lo de red
+- **Los tres iconos de conexión, cambios sin subir y datos guardados pasan a ser
+  uno.** En móvil no cabían y se montaban sobre el selector de negocio, pero el
+  problema de fondo no era el espacio: tres avisos sobre el mismo asunto obligan
+  a recomponer mentalmente una sola pregunta —«¿puedo trabajar y está a salvo lo
+  que hice?»— a partir de tres pistas sueltas.
+- El icono resume el **estado más urgente** y el detalle vive dentro, en tres
+  bloques. El orden de urgencia es explícito y está probado: sin conexión manda
+  sobre todo (cambia lo que se puede hacer ahora), un rechazo pesa más que algo
+  pendiente (necesita una decisión de una persona), y la descarga de datos no
+  tapa a ninguno de los dos porque no bloquea nada.
+- **El selector de negocio se desbordaba.** Tenía ancho FIJO, así que no cedía un
+  píxel por estrecha que fuera la pantalla y acababa por debajo de los iconos.
+  Ahora es un ancho máximo y se encoge.
+
 #### El dispositivo se prepara solo para trabajar sin conexión
 - **Ya no hay que pasar por cada pantalla con red antes de perder la conexión.**
   Al entrar, la aplicación descarga en segundo plano lo imprescindible para
