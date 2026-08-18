@@ -1,6 +1,6 @@
 {
   "name": "pmanage",
-  "version": "2.3.21",
+  "version": "2.3.22",
   "private": true,
   "scripts": {
     "dev": "next dev",

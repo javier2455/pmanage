@@ -9,6 +9,33 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+### Corregido
+
+#### Sin conexión no se ejecutaba NINGUNA consulta ni venta
+- **Causa raíz de todos los fallos de modo sin conexión reportados hasta ahora.**
+  React Query viene configurado de fábrica para **pausar** cualquier consulta o
+  mutación cuando `navigator.onLine` es falso: ni siquiera llama a la función de
+  la consulta. Toda la capa de respaldo en IndexedDB colgaba de dentro de esas
+  funciones, así que era **código inalcanzable** justo cuando hacía falta. Se
+  añade `networkMode: "offlineFirst"` a consultas y mutaciones.
+- El síntoma engañaba porque una consulta en pausa **no falla**: no hay pantalla
+  de error ni nada en consola. La lista de ventas salía vacía —«este negocio no
+  ha vendido nunca»— y el catálogo también, con el indicador diciendo, con
+  razón, que todo estaba guardado. Lo estaba; nadie iba a buscarlo.
+- Explica igualmente el botón **«Registrando…» girando indefinidamente**: la
+  mutación quedaba en pausa, así que `createSaleOrQueue` —que habría guardado la
+  venta en la cola local— no llegaba a ejecutarse. Los tiempos límite que se
+  añadieron antes atacaban el síntoma; nunca podían saltar.
+- **Al volver la red se refresca lo que hay en pantalla** aunque React Query lo
+  considere fresco (`refetchOnReconnect: "always"`): recién servido de la copia
+  local, «fresco» mide cuándo se sirvió, no de dónde salió.
+- **Buscar un producto sin conexión ya no vacía la lista.** La búsqueda la
+  resolvía el servidor y no se cachea a propósito; ahora, si no hay red, se
+  filtra sobre la copia completa del catálogo —de donde el servidor habría
+  sacado el resultado igualmente—. Devolver una lista vacía era la peor
+  respuesta posible: parece que el producto no existe justo cuando alguien lo
+  tiene en la mano para cobrarlo.
+
 ### Agregado
 
 #### Un solo icono para todo lo de red

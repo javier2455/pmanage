@@ -2,9 +2,9 @@
 
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllProductOfMyBusinesses, createBusiness, updateBusiness, deleteBusiness, getDashboardSummary } from "@/lib/api/business";
-import type { CreateBusinessPayload, UpdateBusinessPayload } from "@/lib/types/business";
+import type { BusinessWithProducts, CreateBusinessPayload, UpdateBusinessPayload } from "@/lib/types/business";
 import { readCacheKey } from "@/lib/db/offline-db";
-import { withOfflineFallback } from "@/lib/offline-read-cache";
+import { isNetworkError, readReadCache, withOfflineFallback } from "@/lib/offline-read-cache";
 
 /**
  * Catálogo del negocio. Es la lectura imprescindible para poder vender, así
@@ -35,6 +35,53 @@ export function businessProductsQueryOptions(businessId: string) {
     };
 }
 
+/**
+ * Filtra el catálogo guardado por lo que se teclea.
+ *
+ * Se extrae del hook para poder probarlo: sin conexión es lo ÚNICO que sostiene
+ * la búsqueda, y un producto que está en el dispositivo pero no aparece al
+ * escribir su nombre es una venta que no se puede cobrar.
+ */
+export function filterCatalogBySearch(
+    items: BusinessWithProducts[],
+    search: string,
+): BusinessWithProducts[] {
+    const term = search.trim().toLowerCase();
+    if (!term) return items;
+    return items.filter((bp) =>
+        [bp.product?.name, bp.category?.name ?? bp.product?.category?.name].some(
+            (text) => typeof text === "string" && text.toLowerCase().includes(term),
+        ),
+    );
+}
+
+/**
+ * Busca en el servidor y, si no hay red, filtra sobre la copia completa.
+ *
+ * La búsqueda no se cachea (ver arriba), así que sin este respaldo devolvería
+ * la lista vacía —no un error—, que es la peor respuesta posible: parece que el
+ * producto no existe justo cuando alguien lo tiene en la mano para cobrarlo. Se
+ * filtra sobre el catálogo entero, que es de donde el servidor habría sacado el
+ * resultado igualmente.
+ */
+function searchCatalogWithFallback(businessId: string, search: string) {
+    return async () => {
+        try {
+            return await getAllProductOfMyBusinesses({ businessId, search });
+        } catch (error) {
+            if (!isNetworkError(error)) throw error;
+            const cached = await readReadCache<{ data?: BusinessWithProducts[] }>(
+                readCacheKey("business-products", businessId),
+            );
+            if (!cached) throw error;
+            return {
+                ...cached.data,
+                data: filterCatalogBySearch(cached.data?.data ?? [], search),
+            };
+        }
+    };
+}
+
 export function useAllProductOfMyBusinesses(businessId: string, search = "") {
     const catalog = businessProductsQueryOptions(businessId);
     return useQuery({
@@ -42,7 +89,7 @@ export function useAllProductOfMyBusinesses(businessId: string, search = "") {
             ? ["all-product-of-my-businesses", businessId, search]
             : catalog.queryKey,
         queryFn: search
-            ? () => getAllProductOfMyBusinesses({ businessId, search })
+            ? searchCatalogWithFallback(businessId, search)
             : catalog.queryFn,
         enabled: !!businessId,
         placeholderData: keepPreviousData,

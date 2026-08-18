@@ -6,13 +6,40 @@ import { useState } from "react"
 const min = 60 * 1000;
 const hour = 60 * min;
 
-function makeQueryClient() {
+/**
+ * Se exporta para poder probar el comportamiento sin conexión: `networkMode`
+ * decide si la aplicación puede trabajar sin red, y es un ajuste que no se ve
+ * en ninguna pantalla hasta que falla.
+ */
+export function makeQueryClient() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
+        // Al volver la red, lo que hay en pantalla puede venir de la copia
+        // local: se refresca aunque React Query lo considere fresco, porque
+        // "fresco" mide cuándo se sirvió, no de dónde salió.
+        refetchOnReconnect: "always",
         staleTime: 5 * min,
+        // SIN ESTO NO HAY MODO SIN CONEXIÓN. Por defecto React Query PAUSA
+        // toda consulta cuando `navigator.onLine` es falso: no llega a llamar
+        // a la función de la consulta, así que el respaldo en la base local
+        // (`withOfflineFallback`) nunca se ejecuta. La pantalla no da error
+        // —la consulta queda "en pausa", no fallida—, simplemente se queda
+        // con la lista vacía: sin ventas y sin catálogo, como si el negocio
+        // no tuviera nada.
+        //
+        // `offlineFirst` lanza SIEMPRE el primer intento y solo pausa los
+        // reintentos si falla estando sin red. Es justo lo que hace falta
+        // cuando hay otra capa de caché debajo —aquí, IndexedDB—.
+        networkMode: "offlineFirst",
+      },
+      mutations: {
+        // Lo mismo, y aquí se ve peor: una venta lanzada sin conexión se
+        // quedaba en pausa con el botón «Registrando…» girando para siempre,
+        // porque `createSaleOrQueue` —que la habría guardado en la cola— no
+        // llegaba a ejecutarse nunca.
+        networkMode: "offlineFirst",
       },
     },
   });
