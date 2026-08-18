@@ -10,6 +10,8 @@ import {
     registerPayments,
 } from "@/lib/api/sale";
 import { createSaleOrQueue } from "@/lib/offline/sale-sync";
+import { readCacheKey } from "@/lib/db/offline-db";
+import { withOfflineFallback } from "@/lib/offline-read-cache";
 import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
 
 interface UseAllSalesByBusinessIdParams {
@@ -17,13 +19,24 @@ interface UseAllSalesByBusinessIdParams {
     limit?: number;
 }
 
+/**
+ * Listado de ventas. Se respalda en la base local para que sin conexión se vea
+ * lo último conocido en vez de «Error al cargar las ventas».
+ *
+ * La página y el tamaño entran en la clave: servir la página 1 cuando se pidió
+ * la 3 sería mentir sobre qué se está mirando.
+ */
 export function useAllSalesByBusinessId(
     businessId: string,
     params: UseAllSalesByBusinessIdParams = {},
 ) {
     return useQuery({
         queryKey: ["all-sales-by-business-id", businessId, params],
-        queryFn: () => getAllSalesByBusinessId({ businessId, ...params }),
+        queryFn: withOfflineFallback(
+            readCacheKey("sales", businessId, `p${params.page ?? 1}-l${params.limit ?? 0}`),
+            businessId,
+            () => getAllSalesByBusinessId({ businessId, ...params }),
+        ),
         enabled: !!businessId,
         placeholderData: keepPreviousData,
     });

@@ -17,6 +17,9 @@ import apiClient from "@/lib/axios";
 import { useRouter, usePathname } from "next/navigation";
 import { sileo } from "sileo";
 import { clearAuthCookies } from "@/lib/cookies";
+import { readCacheKey } from "@/lib/db/offline-db";
+import { withOfflineFallback } from "@/lib/offline-read-cache";
+import { currentQueueOwner } from "@/lib/offline/queue-owner";
 
 type BusinessContextType = {
   businesses: Business[];
@@ -50,14 +53,27 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   // 🔥 Traer negocios del usuario
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["businesses"],
-    queryFn: async () => {
-      const { data } = await apiClient.get(businessRoutes.getMyBusinesses);
+    /**
+     * Se respalda en la base local (plan offline, B4) porque sin esta lista la
+     * aplicación queda inservible sin red, no solo incompleta: el sidebar
+     * deshabilita TODOS sus enlaces cuando no hay negocios, así que un fallo de
+     * red aquí bloquea la navegación entera aunque el resto esté cacheado.
+     *
+     * La copia se guarda por usuario: en un dispositivo compartido, servirle a
+     * alguien los negocios de otra persona sería peor que no tener caché.
+     */
+    queryFn: withOfflineFallback(
+      readCacheKey("businesses", null, currentQueueOwner() ?? undefined),
+      null,
+      async () => {
+        const { data } = await apiClient.get(businessRoutes.getMyBusinesses);
 
-      if (Array.isArray(data?.data)) {
-        return data.data;
-      }
-      return [];
-    },
+        if (Array.isArray(data?.data)) {
+          return data.data;
+        }
+        return [];
+      },
+    ),
     retry: (failureCount, error: unknown) => {
       if (error instanceof Error && "response" in error && (error as { response?: { status?: number } }).response?.status === 401) return false;
       return failureCount < 2;

@@ -33,6 +33,17 @@ export async function createSaleOrQueue(
   const operationId = newOperationId();
   const payload = buildCreateSalePayload(credentials);
 
+  const queue = (needsManualCheck: boolean) =>
+    enqueueSale(operationId, payload, credentials.idbusiness, needsManualCheck);
+
+  // `navigator.onLine === false` es la única dirección fiable de esa señal:
+  // afirma que no hay ni WiFi ni datos, así que la petición no puede llegar a
+  // ninguna parte. Saltársela ahorra los segundos de espera del tiempo límite
+  // delante de quien está esperando su vuelto.
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return { queued: true, operation: await queue(false) };
+  }
+
   try {
     const sale = await postCreateSale(payload, operationId);
     return { queued: false, sale };
@@ -41,23 +52,34 @@ export async function createSaleOrQueue(
     // encolarlas sería prometer que la venta se subirá cuando ya se sabe que
     // será rechazada. Solo se encola cuando no hubo respuesta.
     if (!isNetworkError(error)) throw error;
+    if (!currentQueueOwner()) throw error;
 
-    const owner = currentQueueOwner();
-    if (!owner) throw error;
-
-    const operation = await enqueueOperation({
-      id: operationId,
-      type: "sale.create",
-      businessId: credentials.idbusiness,
-      userId: owner,
-      payload,
-      label: describeSaleOperation(payload),
-      // Si el navegador ya sabía que estaba sin red, la petición no llegó a
-      // salir y no hay ninguna duda que resolver.
-      needsManualCheck:
-        typeof navigator !== "undefined" && navigator.onLine !== false,
-    });
-
-    return { queued: true, operation };
+    // La petición llegó a salir: pudo haberse aplicado. Lo resuelve la clave de
+    // idempotencia al subir la cola, pero queda anotado para poder explicarlo.
+    return { queued: true, operation: await queue(true) };
   }
+}
+
+async function enqueueSale(
+  operationId: string,
+  payload: Record<string, unknown>,
+  businessId: string,
+  needsManualCheck: boolean,
+): Promise<OutboxOp> {
+  const owner = currentQueueOwner();
+  if (!owner) {
+    throw new Error(
+      "No se puede guardar la venta: no hay una sesión que la respalde.",
+    );
+  }
+
+  return enqueueOperation({
+    id: operationId,
+    type: "sale.create",
+    businessId,
+    userId: owner,
+    payload,
+    label: describeSaleOperation(payload),
+    needsManualCheck,
+  });
 }

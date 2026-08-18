@@ -45,6 +45,20 @@ export async function getSaleById(
 }
 
 /**
+ * Tiempo máximo que se espera al registrar una venta.
+ *
+ * Sin límite, una red que se cae a mitad de la petición deja el botón
+ * «Registrando…» girando para siempre: el navegador no siempre falla al
+ * instante —sin conexión puede tardar decenas de segundos en rendirse— y quien
+ * está cobrando se queda mirando la pantalla sin saber si la venta entró.
+ *
+ * Cortar es seguro precisamente porque la petición lleva `Idempotency-Key`: si
+ * el servidor llegó a registrarla, la venta encolada con esa misma clave se
+ * reconoce al subirla y no se duplica.
+ */
+export const SALE_REQUEST_TIMEOUT_MS = 15_000;
+
+/**
  * Cuerpo exacto que espera `POST /sales`.
  *
  * Se extrae de `create` para que la cola sin conexión guarde EL MISMO cuerpo
@@ -87,11 +101,10 @@ export async function postCreateSale(
   const deviceId = getDeviceId();
   if (deviceId) headers["X-Device-Id"] = deviceId;
 
-  const { data } = await apiClient.post(
-    salesRoutes.createSale,
-    payload,
-    Object.keys(headers).length > 0 ? { headers } : undefined,
-  );
+  const { data } = await apiClient.post(salesRoutes.createSale, payload, {
+    headers,
+    timeout: SALE_REQUEST_TIMEOUT_MS,
+  });
   return data;
 }
 

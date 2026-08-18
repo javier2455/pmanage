@@ -5,6 +5,7 @@ import { useBusiness } from "@/context/business-context";
 import { useAllSalesByBusinessId } from "@/hooks/use-sales";
 import TableOfSales from "@/components/sales/table-of-sales";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
+import { PendingSalesNotice } from "@/components/offline/pending-sales-notice";
 
 const DEFAULT_LIMIT = 5;
 
@@ -18,7 +19,15 @@ export default function SalesPage() {
     { page, limit },
   );
 
-  if (isError) return <div>Error al cargar las ventas</div>;
+  // El aviso de ventas encoladas acompaña también al error: sin conexión y sin
+  // copia guardada, es lo único que le dice a la persona dónde está su venta.
+  if (isError)
+    return (
+      <section className="flex flex-col gap-4">
+        <PendingSalesNotice />
+        <div>Error al cargar las ventas</div>
+      </section>
+    );
 
   const showInitialSkeleton = isLoading && !data;
 
@@ -37,6 +46,7 @@ export default function SalesPage() {
           Consulta y actualiza las ventas de tu negocio
         </p>
       </div>
+      <PendingSalesNotice />
       {showInitialSkeleton ? (
         <SimpleTableSkeleton />
       ) : (

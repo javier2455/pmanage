@@ -11,6 +11,27 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Correcciones del primer despliegue de la cola
+- **El botón «Registrando…» ya no se queda girando.** Ninguna petición de la
+  aplicación tenía tiempo límite: sin conexión el navegador puede tardar
+  decenas de segundos en rendirse, y hasta entonces no había respuesta ni
+  error. Registrar una venta corta a los 15 segundos, y si el navegador ya sabe
+  que no hay red **ni siquiera lo intenta**: encola directamente. Cortar es
+  seguro gracias a la clave de idempotencia.
+- **Sin conexión ya no se bloquea la navegación entera.** La lista de negocios
+  no se guardaba en local; al fallar, el sidebar deshabilitaba TODOS sus
+  enlaces (así estaba escrito para el caso de un usuario sin negocios) y la
+  aplicación quedaba inservible aunque el resto estuviera cacheado. Ahora se
+  respalda como el resto de lecturas, guardada por usuario.
+- **El listado de ventas se guarda en local**, así que sin red muestra lo último
+  conocido en vez de «Error al cargar las ventas».
+- **Aviso de ventas encoladas sobre el listado**: una venta guardada en el
+  dispositivo todavía no está en el servidor y por tanto no sale en la tabla.
+  Sin decirlo, quien acaba de registrarla concluye que se perdió.
+- La base local se cierra sola cuando otra pestaña necesita actualizar el
+  esquema. Sin eso, una pestaña vieja abierta bloquea la actualización de forma
+  indefinida y cualquier lectura o escritura local se queda esperando.
+
 #### Se pueden registrar ventas sin conexión
 - **Una venta hecha sin red ya no se pierde.** Se guarda en el dispositivo, en
   una cola de operaciones, y se sube al servidor cuando la persona lo pide.

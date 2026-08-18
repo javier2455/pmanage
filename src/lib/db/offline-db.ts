@@ -45,6 +45,21 @@ class NegoraOfflineDB extends Dexie {
     this.version(2).stores({
       outbox: "++seq, &id, status, businessId, [businessId+status], createdAt",
     });
+
+    // Otra pestaña con la versión anterior del esquema abierta bloquea la
+    // actualización INDEFINIDAMENTE, y con ella cualquier lectura o escritura:
+    // el síntoma es un botón «Registrando…» que gira para siempre. Cerrando
+    // esta conexión cuando otra pestaña pide subir de versión, la
+    // actualización pasa; Dexie vuelve a abrir sola en la siguiente operación.
+    this.on("versionchange", () => {
+      this.close();
+    });
+    this.on("blocked", () => {
+      console.warn(
+        "[offline] La base local no puede actualizarse: hay otra pestaña de " +
+          "Negora abierta con una versión anterior. Ciérrala y recarga.",
+      );
+    });
   }
 }
 
