@@ -14,6 +14,10 @@ import { readCacheKey } from "@/lib/db/offline-db";
 import { withOfflineFallback } from "@/lib/offline-read-cache";
 import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
 
+/** Tamaño de página del listado de ventas. Lo comparten la pantalla y la
+ *  preparación del dispositivo, para que ambas usen la misma copia. */
+export const DEFAULT_SALES_LIMIT = 5;
+
 interface UseAllSalesByBusinessIdParams {
     page?: number;
     limit?: number;
@@ -26,17 +30,26 @@ interface UseAllSalesByBusinessIdParams {
  * La página y el tamaño entran en la clave: servir la página 1 cuando se pidió
  * la 3 sería mentir sobre qué se está mirando.
  */
-export function useAllSalesByBusinessId(
+export function salesQueryOptions(
     businessId: string,
     params: UseAllSalesByBusinessIdParams = {},
 ) {
-    return useQuery({
+    return {
         queryKey: ["all-sales-by-business-id", businessId, params],
         queryFn: withOfflineFallback(
             readCacheKey("sales", businessId, `p${params.page ?? 1}-l${params.limit ?? 0}`),
             businessId,
             () => getAllSalesByBusinessId({ businessId, ...params }),
         ),
+    };
+}
+
+export function useAllSalesByBusinessId(
+    businessId: string,
+    params: UseAllSalesByBusinessIdParams = {},
+) {
+    return useQuery({
+        ...salesQueryOptions(businessId, params),
         enabled: !!businessId,
         placeholderData: keepPreviousData,
     });

@@ -11,6 +11,26 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### El dispositivo se prepara solo para trabajar sin conexión
+- **Ya no hay que pasar por cada pantalla con red antes de perder la conexión.**
+  Al entrar, la aplicación descarga en segundo plano lo imprescindible para
+  vender: catálogo de productos, tasas de cambio y últimas ventas. El caso que
+  esto resuelve es real: abrir la app por la mañana con señal, quedarse en el
+  panel y perder la conexión antes de entrar a vender.
+- **Indicador con el detalle de lo que se está guardando**, pieza a pieza y con
+  su nombre. Una barra genérica en una conexión lenta parece que la aplicación
+  se colgó; «Catálogo de productos» dice que está trabajando y en qué.
+- **Pieza a pieza, sin todo-o-nada.** Al contrario que el código de la
+  aplicación —donde media copia está rota—, media descarga de datos sirve: con
+  catálogo y tasas ya se puede vender aunque falten las últimas ventas. Lo que
+  falle se reintenta al volver la conexión, o a mano.
+- **Solo lo que esa persona puede ver.** A un trabajador sin acceso a ventas no
+  se le descarga el catálogo: guardarle en su dispositivo datos de pantallas que
+  no puede abrir es justo lo que el control de accesos existe para evitar.
+- Las consultas se comparten entre la pantalla y la preparación en vez de
+  copiarse. Si sus claves se separaran, la preparación llenaría una entrada que
+  ninguna pantalla lee — y el fallo sería invisible hasta quedarse sin conexión.
+
 #### La sesión sobrevive a cerrar la aplicación
 - **Cerrar la app sin conexión dejaba fuera al usuario.** La sesión vivía en
   `sessionStorage`, que muere al cerrar la pestaña o la aplicación, y volver a

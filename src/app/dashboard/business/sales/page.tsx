@@ -2,17 +2,15 @@
 
 import { useState } from "react";
 import { useBusiness } from "@/context/business-context";
-import { useAllSalesByBusinessId } from "@/hooks/use-sales";
+import { DEFAULT_SALES_LIMIT, useAllSalesByBusinessId } from "@/hooks/use-sales";
 import TableOfSales from "@/components/sales/table-of-sales";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
 import { PendingSalesNotice } from "@/components/offline/pending-sales-notice";
 
-const DEFAULT_LIMIT = 5;
-
 export default function SalesPage() {
   const { activeBusinessId } = useBusiness();
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(DEFAULT_LIMIT);
+  const [limit, setLimit] = useState(DEFAULT_SALES_LIMIT);
 
   const { data, isLoading, isFetching, isError } = useAllSalesByBusinessId(
     activeBusinessId ?? "",

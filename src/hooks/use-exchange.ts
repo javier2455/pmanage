@@ -10,15 +10,19 @@ import { withOfflineFallback } from "@/lib/offline-read-cache";
  * Sin tasas no se puede cobrar en divisa, así que es de las lecturas que más
  * falta hacen sin conexión. La copia local se sirve solo si la red falla.
  */
-export function useExchangeRate(businessId: string) {
-    return useQuery({
+export function exchangeRateQueryOptions(businessId: string) {
+    return {
         queryKey: ["exchange-rate", businessId],
         queryFn: withOfflineFallback(
             readCacheKey("exchange-rate", businessId),
             businessId,
             () => getExchangeRate({ businessId }),
         ),
-    });
+    };
+}
+
+export function useExchangeRate(businessId: string) {
+    return useQuery(exchangeRateQueryOptions(businessId));
 }
 
 export function useCreateExchangeRateMutation() {

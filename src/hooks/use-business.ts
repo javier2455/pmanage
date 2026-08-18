@@ -15,17 +15,35 @@ import { withOfflineFallback } from "@/lib/offline-read-cache";
  * base de fragmentos y, al quedarse sin conexión, devolvería el resultado de
  * una búsqueda antigua como si fuera el catálogo entero.
  */
+/**
+ * La consulta del catálogo completo, aparte del hook.
+ *
+ * La preparación del dispositivo (plan offline, B4) descarga esto mismo por
+ * adelantado. Se comparte la definición en vez de copiarla porque si la clave
+ * de una y otra se separaran, la preparación llenaría una entrada que ninguna
+ * pantalla lee — y el fallo sería invisible hasta que alguien se quedara sin
+ * conexión.
+ */
+export function businessProductsQueryOptions(businessId: string) {
+    return {
+        queryKey: ["all-product-of-my-businesses", businessId, ""],
+        queryFn: withOfflineFallback(
+            readCacheKey("business-products", businessId),
+            businessId,
+            () => getAllProductOfMyBusinesses({ businessId, search: "" }),
+        ),
+    };
+}
+
 export function useAllProductOfMyBusinesses(businessId: string, search = "") {
-    const fetcher = () => getAllProductOfMyBusinesses({ businessId, search });
+    const catalog = businessProductsQueryOptions(businessId);
     return useQuery({
-        queryKey: ["all-product-of-my-businesses", businessId, search],
+        queryKey: search
+            ? ["all-product-of-my-businesses", businessId, search]
+            : catalog.queryKey,
         queryFn: search
-            ? fetcher
-            : withOfflineFallback(
-                readCacheKey("business-products", businessId),
-                businessId,
-                fetcher,
-            ),
+            ? () => getAllProductOfMyBusinesses({ businessId, search })
+            : catalog.queryFn,
         enabled: !!businessId,
         placeholderData: keepPreviousData,
     });
