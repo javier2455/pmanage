@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertTriangle, Check, Download, Loader2 } from "lucide-react";
+import { AlertTriangle, Check, CloudCheck, Download, Loader2 } from "lucide-react";
 import { usePrepareOffline, type ResourceStatus } from "@/hooks/use-prepare-offline";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,15 +10,15 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-/** Cuánto se sostiene el «listo» antes de desaparecer. */
-const READY_NOTICE_MS = 5000;
-
 /**
  * Qué se está guardando en el dispositivo para poder trabajar sin conexión.
  *
- * Solo aparece cuando hay algo que contar: mientras descarga, un momento al
- * terminar, o si algo falló. Con todo en orden desaparece — un indicador
- * permanente en verde se vuelve invisible a los dos días y deja de informar.
+ * **Siempre visible**, atenuado cuando todo está en orden. La primera versión
+ * solo aparecía mientras descargaba y unos segundos al terminar; con las
+ * consultas ya en memoria eso es un parpadeo en una esquina con otros cuatro
+ * iconos, imposible de ver — y, peor, no dejaba comprobar el estado cuando a
+ * uno le interesa. «¿Puedo irme al mercado con esto?» es una pregunta que se
+ * hace ANTES de perder la señal, y necesita un sitio fijo donde mirar.
  *
  * Nombrar cada pieza mientras se descarga no es decoración: una barra genérica
  * en una conexión lenta parece que la aplicación se colgó. «Catálogo de
@@ -28,25 +27,9 @@ const READY_NOTICE_MS = 5000;
 export function OfflineReadinessIndicator({ className }: { className?: string }) {
   const { isPreparing, isReady, resources, failedCount, retry } =
     usePrepareOffline();
-  // El aviso de «listo» se retira solo. El estado lo cambia el temporizador, no
-  // el efecto: escribirlo en el cuerpo del efecto provoca un render en cascada.
-  const [readyNoticeDismissed, setReadyNoticeDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!isReady) return;
-    const timer = setTimeout(() => setReadyNoticeDismissed(true), READY_NOTICE_MS);
-    return () => clearTimeout(timer);
-  }, [isReady]);
-
-  const showReady = isReady && !readyNoticeDismissed;
-
-  const handleRetry = () => {
-    setReadyNoticeDismissed(false);
-    retry();
-  };
 
   const hasProblem = failedCount > 0 && !isPreparing;
-  if (!isPreparing && !hasProblem && !showReady) return null;
+  if (resources.length === 0) return null;
 
   const done = resources.filter((r) => r.status === "ready").length;
   const current = resources.find((r) => r.status === "loading");
@@ -71,6 +54,9 @@ export function OfflineReadinessIndicator({ className }: { className?: string })
             hasProblem
               ? "text-amber-700 dark:text-amber-400"
               : "text-muted-foreground",
+            // Con todo guardado se atenúa, como el botón de cambios sin subir:
+            // sigue ahí para consultarlo, sin competir por la atención.
+            isReady && !isPreparing && "opacity-50",
             className,
           )}
         >
@@ -78,8 +64,13 @@ export function OfflineReadinessIndicator({ className }: { className?: string })
             <Loader2 className="size-5 animate-spin" aria-hidden />
           ) : hasProblem ? (
             <AlertTriangle className="size-5" aria-hidden />
+          ) : isReady ? (
+            <CloudCheck
+              className="size-5 text-emerald-600 dark:text-emerald-400"
+              aria-hidden
+            />
           ) : (
-            <Download className="size-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
+            <Download className="size-5" aria-hidden />
           )}
         </Button>
       </PopoverTrigger>
@@ -92,14 +83,18 @@ export function OfflineReadinessIndicator({ className }: { className?: string })
                 ? "Preparando para trabajar sin conexión"
                 : hasProblem
                   ? "Falta algo por guardar"
-                  : "Listo para trabajar sin conexión"}
+                  : isReady
+                    ? "Listo para trabajar sin conexión"
+                    : "Aún sin preparar"}
             </p>
             <p className="text-muted-foreground text-xs">
               {isPreparing
-                ? `Guardando en el dispositivo (${done} de ${resources.length})`
+                ? `${current?.label ?? "Guardando"} (${done} de ${resources.length})`
                 : hasProblem
                   ? "Con lo que sí se guardó puedes seguir trabajando."
-                  : "Tienes lo necesario para vender aunque se caiga la red."}
+                  : isReady
+                    ? "Tienes lo necesario para vender aunque se caiga la red."
+                    : "Se guardará en cuanto haya conexión."}
             </p>
           </div>
 
@@ -121,7 +116,7 @@ export function OfflineReadinessIndicator({ className }: { className?: string })
               size="sm"
               variant="outline"
               className="w-full"
-              onClick={handleRetry}
+              onClick={retry}
             >
               Reintentar
             </Button>

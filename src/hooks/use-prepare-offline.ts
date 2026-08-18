@@ -139,6 +139,9 @@ export function usePrepareOffline(): OfflineReadiness {
 
     runningRef.current = true;
     setIsPreparing(true);
+    // Igual que la versión del service worker: cuando algo no se comporta en
+    // producción, lo primero que hace falta saber es si esto llegó a correr.
+    console.info(`[offline] preparando ${needed.length} recursos…`);
     try {
       for (const resource of needed) {
         setStatuses((prev) => ({ ...prev, [resource.id]: "loading" }));
@@ -151,12 +154,14 @@ export function usePrepareOffline(): OfflineReadiness {
             staleTime: FRESH_MS,
           });
           setStatuses((prev) => ({ ...prev, [resource.id]: "ready" }));
-        } catch {
+        } catch (error) {
           // Una pieza que falla no detiene a las demás: las que sí lleguen
           // siguen sirviendo sin conexión.
           setStatuses((prev) => ({ ...prev, [resource.id]: "failed" }));
+          console.warn(`[offline] no se pudo guardar ${resource.label}`, error);
         }
       }
+      console.info("[offline] preparación terminada");
     } finally {
       runningRef.current = false;
       setIsPreparing(false);

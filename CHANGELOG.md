@@ -17,9 +17,18 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
   vender: catálogo de productos, tasas de cambio y últimas ventas. El caso que
   esto resuelve es real: abrir la app por la mañana con señal, quedarse en el
   panel y perder la conexión antes de entrar a vender.
-- **Indicador con el detalle de lo que se está guardando**, pieza a pieza y con
-  su nombre. Una barra genérica en una conexión lenta parece que la aplicación
-  se colgó; «Catálogo de productos» dice que está trabajando y en qué.
+- **Indicador siempre visible** en la barra superior, atenuado cuando todo está
+  guardado, con el detalle pieza a pieza y su estado. La primera versión solo
+  aparecía mientras descargaba: con las consultas ya en memoria eso es un
+  parpadeo entre otros cuatro iconos, imposible de ver, y encima no dejaba
+  comprobar el estado cuando interesa. «¿Puedo irme sin señal con esto?» es una
+  pregunta que se hace ANTES de perder la conexión y necesita un sitio fijo.
+- Cada pieza se nombra mientras se descarga. Una barra genérica en una conexión
+  lenta parece que la aplicación se colgó; «Catálogo de productos» dice que está
+  trabajando y en qué.
+- La preparación deja traza en consola (`[offline] preparando…`), como la versión
+  del service worker: cuando algo no se comporta en producción, lo primero que
+  hace falta saber es si llegó a ejecutarse.
 - **Pieza a pieza, sin todo-o-nada.** Al contrario que el código de la
   aplicación —donde media copia está rota—, media descarga de datos sirve: con
   catálogo y tasas ya se puede vender aunque falten las últimas ventas. Lo que
