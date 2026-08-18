@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/next-themes";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ServiceWorkerRegistrar } from "@/components/connectivity/service-worker-registrar";
+import { BASE_PATH } from "@/lib/base-path";
 import { Toaster } from "sileo";
 
 export const metadata: Metadata = {
@@ -12,7 +13,11 @@ export const metadata: Metadata = {
   },
   description:
     "Sistema de gestión multimoneda para negocios reales: ventas, inventario y finanzas en un solo lugar.",
-  manifest: "/manifest.webmanifest",
+  // El basePath va a mano: Next lo prefija en `<Link>`, en las imágenes y en
+  // los assets, pero NO en el manifiesto de los metadatos. Sin él, el navegador
+  // lo pide en la raíz del dominio —fuera de la app— y responde 404 en cada
+  // carga, así que la aplicación no llega a ser instalable.
+  manifest: `${BASE_PATH}/manifest.webmanifest`,
   appleWebApp: { capable: true, title: "Negora", statusBarStyle: "default" },
 };
 

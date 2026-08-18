@@ -11,6 +11,29 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### La caché servía la versión ANTERIOR sin conexión
+- **Regresión introducida al conservar dos generaciones de caché.** La búsqueda
+  global recorre las cachés en orden de creación y devuelve la primera
+  coincidencia, es decir **la más antigua**: sin red, cualquier pantalla que
+  existiera en ambas se servía desde la vieja, y con ella el código viejo. El
+  síntoma era desconcertante — la versión nueva instalada y anunciada en consola,
+  pero la aplicación comportándose como la anterior — y solo aparecía sin
+  conexión, que es cuando menos se puede investigar.
+- Ahora se busca primero en la caché de la versión activa y solo después en las
+  anteriores, que siguen ahí por lo que se pusieron: una pestaña ya abierta pide
+  los archivos con los nombres de SU build.
+- **El manifiesto se pedía en la raíz del dominio y devolvía 404 en cada carga.**
+  Next prefija el basePath en los enlaces y en los assets, pero no en el
+  manifiesto de los metadatos, así que se pedía fuera de la aplicación y esta no
+  llegaba a ser instalable. Ya se precachea también, para que sin red no deje un
+  error por arranque.
+- Las cargas de navegación del router (`?_rsc=…`) se buscan ignorando la cadena
+  de consulta: cambia en cada build y hacía fallar cada prefetch aunque el
+  archivo estuviera guardado.
+- Registrar una venta tiene ahora un **tope absoluto de 25 segundos**. No debería
+  saltar nunca —cada paso ya tiene su corte—, pero el fallo que evita es
+  intolerable: un botón girando indefinidamente delante de un cliente que espera.
+
 #### La actualización del service worker dejaba la app en dos builds a la vez
 - **Causa de la pantalla en blanco con ERR_FAILED.** Los archivos de Next llevan
   un hash del contenido, así que cada despliegue estrena nombres. El service

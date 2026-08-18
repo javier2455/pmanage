@@ -28,11 +28,13 @@ const apiPath = resolveApiPath(process.env.NEXT_PUBLIC_API_URL);
 /**
  * Archivos que NO se precachean.
  *
- * - `sw.js` y `manifest.webmanifest`: los pide el navegador por su cuenta;
- *   cachear el propio service worker complica su actualización.
+ * - `sw.js`: cachear el propio service worker complica su actualización.
  * - `.htaccess`: configuración del servidor, no la sirve nadie.
+ *
+ * El manifiesto SÍ se precachea: el navegador lo pide en cada carga y sin él
+ * en caché cada arranque sin conexión deja un error en consola.
  */
-const EXCLUDED = new Set(["sw.js", "manifest.webmanifest", ".htaccess"]);
+const EXCLUDED = new Set(["sw.js", ".htaccess"]);
 
 async function collectFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });

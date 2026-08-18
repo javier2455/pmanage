@@ -27,7 +27,51 @@ export type CreateSaleResult =
  * servidor reconoce la operación y devuelve la venta que ya creó en vez de
  * crear otra.
  */
+/**
+ * Tope absoluto de la operación completa.
+ *
+ * Cada paso tiene ya su propio corte —la petición, la base local—, así que esto
+ * no debería saltar nunca. Está porque el fallo que produce es intolerable: un
+ * botón «Registrando…» girando indefinidamente delante de un cliente que
+ * espera, sin decir qué pasó ni permitir reintentar. Ante la duda, un error a
+ * los 25 segundos es infinitamente mejor que un giro eterno.
+ */
+export const CREATE_SALE_DEADLINE_MS = 25_000;
+
 export async function createSaleOrQueue(
+  credentials: CreateSaleProps,
+): Promise<CreateSaleResult> {
+  return withDeadline(
+    createSaleOrQueueInner(credentials),
+    CREATE_SALE_DEADLINE_MS,
+  );
+}
+
+async function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new Error(
+                "La venta tardó demasiado y se canceló. Comprueba en " +
+                  "«Cambios sin subir» y en la lista de ventas antes de " +
+                  "volver a registrarla.",
+              ),
+            ),
+          ms,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function createSaleOrQueueInner(
   credentials: CreateSaleProps,
 ): Promise<CreateSaleResult> {
   const operationId = newOperationId();

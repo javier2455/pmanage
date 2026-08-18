@@ -176,8 +176,30 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(networkFirst(request));
 });
 
+/**
+ * Busca en la caché de ESTA versión y, solo si no está, en las anteriores.
+ *
+ * El orden importa mucho más de lo que parece. `caches.match` global recorre
+ * las cachés en orden de creación y devuelve la primera coincidencia, es decir,
+ * **la más antigua**: sin conexión, una página que existe en las dos
+ * generaciones se serviría desde la vieja, y con ella el código viejo. El
+ * síntoma es desconcertante —la versión nueva instalada y anunciada, pero la
+ * aplicación comportándose como la anterior— y solo aparece sin red, que es
+ * cuando menos se puede investigar.
+ *
+ * El respaldo en generaciones anteriores sigue existiendo por el motivo por el
+ * que se conservan: una pestaña abierta con la versión anterior pide archivos
+ * con los nombres de SU build, que la caché nueva no tiene.
+ */
+async function matchInCaches(request, options) {
+  const cache = await caches.open(CACHE_NAME);
+  const current = await cache.match(request, options);
+  if (current) return current;
+  return caches.match(request, options);
+}
+
 async function cacheFirst(request) {
-  const cached = await caches.match(request);
+  const cached = await matchInCaches(request);
   if (cached) return cached;
   try {
     const response = await fetch(request);
@@ -207,8 +229,16 @@ async function networkFirst(request) {
     }
     return response;
   } catch (error) {
-    const cached = await caches.match(request);
+    const cached = await matchInCaches(request);
     if (cached) return cached;
+
+    // Segundo intento ignorando la cadena de consulta. El router de Next pide
+    // sus cargas de navegación con un `?_rsc=…` que cambia en cada build: la
+    // URL cacheada y la pedida solo se diferencian en eso, y sin ignorarlo
+    // cada prefetch acaba en un error rojo en consola aunque el archivo esté
+    // guardado.
+    const ignoringQuery = await matchInCaches(request, { ignoreSearch: true });
+    if (ignoringQuery) return ignoringQuery;
 
     // Una NAVEGACIÓN nunca debe acabar en `Response.error()`: el navegador
     // pinta entonces su propia pantalla de error ("No se puede acceder a este
@@ -217,7 +247,7 @@ async function networkFirst(request) {
     // —precacheado incompleto—, se devuelve una página propia.
     if (request.mode === "navigate") {
       for (const candidate of [OFFLINE_FALLBACK, BASE_ROOT]) {
-        const fallback = await caches.match(candidate);
+        const fallback = await matchInCaches(candidate);
         if (fallback) return fallback;
       }
       return offlinePage();
