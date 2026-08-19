@@ -26,7 +26,7 @@ const CACHE_PREFIX = "negora-shell-";
 const API_PREFIX = "__API_PREFIX__";
 /** Assets de build con hash en el nombre: inmutables. */
 const STATIC_PREFIX = "__STATIC_PREFIX__";
-/** Página que se sirve si se navega a algo que no está en caché. */
+/** A dónde se vuelve desde la página de cortesía: el panel siempre está en caché. */
 const OFFLINE_FALLBACK = "__BASE_PATH__/dashboard/";
 
 const PRECACHE = __PRECACHE__;
@@ -198,12 +198,64 @@ async function matchInCaches(request, options) {
   return caches.match(request, options);
 }
 
+/**
+ * ¿El servidor devolvió la página de la aplicación en lugar del archivo?
+ *
+ * El alojamiento tiene una regla de último recurso que responde `index.html`
+ * —con un 200, no con un 404— a cualquier ruta que no exista. Para una
+ * navegación es lo correcto; para un trozo de código o un archivo de datos es
+ * veneno: se guardaría HTML bajo el nombre de un `.js` o de un `.txt` y sin
+ * conexión se serviría con toda confianza, con el síntoma apareciendo muy
+ * lejos de donde se produjo —una pantalla que no es la que pide la URL—.
+ *
+ * La regla del servidor ya está arreglada, pero esto se queda: el service
+ * worker no puede fiarse de una configuración que vive en otro repositorio y
+ * que un despliegue puede revertir sin que nadie se entere.
+ */
+function isAppShellInsteadOfAsset(request, response) {
+  if (request.mode === "navigate") return false;
+  return (response.headers.get("Content-Type") || "").includes("text/html");
+}
+
+/**
+ * La misma URL en su forma canónica, con barra final.
+ *
+ * Con `trailingSlash: true` el sitio exportado SOLO tiene `/x/`. Un enlace
+ * escrito como `/x` funciona en línea porque el servidor redirige, así que la
+ * diferencia es invisible durante meses; sin conexión no hay quien redirija y
+ * la petición no encuentra nada. Como las direcciones del menú vienen de la
+ * base de datos, no basta con revisar los enlaces del código: se normaliza
+ * aquí, que es por donde pasan todas.
+ */
+function withTrailingSlash(url) {
+  const target = new URL(url);
+  const last = target.pathname.split("/").pop();
+  if (target.pathname.endsWith("/") || last.includes(".")) return null;
+  target.pathname += "/";
+  return target.toString();
+}
+
+/** Todas las formas en que la respuesta puede estar guardada. */
+async function findInCaches(request) {
+  const candidates = [request, withTrailingSlash(request.url)].filter(Boolean);
+  // Sin la cadena de consulta al final: el router de Next pide sus cargas de
+  // navegación con un `?_rsc=…` que cambia en cada build, y la URL cacheada y
+  // la pedida solo se diferencian en eso.
+  for (const options of [undefined, { ignoreSearch: true }]) {
+    for (const candidate of candidates) {
+      const hit = await matchInCaches(candidate, options);
+      if (hit) return hit;
+    }
+  }
+  return undefined;
+}
+
 async function cacheFirst(request) {
-  const cached = await matchInCaches(request);
+  const cached = await findInCaches(request);
   if (cached) return cached;
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && !isAppShellInsteadOfAsset(request, response)) {
       const cache = await caches.open(CACHE_NAME);
       void cache.put(request, response.clone());
     }
@@ -223,41 +275,28 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && !isAppShellInsteadOfAsset(request, response)) {
       const cache = await caches.open(CACHE_NAME);
       void cache.put(request, response.clone());
     }
     return response;
   } catch (error) {
-    const cached = await matchInCaches(request);
+    const cached = await findInCaches(request);
     if (cached) return cached;
-
-    // Segundo intento ignorando la cadena de consulta. El router de Next pide
-    // sus cargas de navegación con un `?_rsc=…` que cambia en cada build: la
-    // URL cacheada y la pedida solo se diferencian en eso, y sin ignorarlo
-    // cada prefetch acaba en un error rojo en consola aunque el archivo esté
-    // guardado.
-    const ignoringQuery = await matchInCaches(request, { ignoreSearch: true });
-    if (ignoringQuery) return ignoringQuery;
 
     // Una NAVEGACIÓN nunca debe acabar en `Response.error()`: el navegador
     // pinta entonces su propia pantalla de error ("No se puede acceder a este
-    // sitio", ERR_FAILED), desde la que el usuario no puede volver a la
-    // aplicación. Se prueban varios respaldos y, si ninguno está en caché
-    // —precacheado incompleto—, se devuelve una página propia.
-    if (request.mode === "navigate") {
-      for (const candidate of [OFFLINE_FALLBACK, BASE_ROOT]) {
-        const fallback = await matchInCaches(candidate);
-        if (fallback) return fallback;
-      }
-      return offlinePage();
-    }
+    // sitio", ERR_FAILED), desde la que no se puede volver a la aplicación.
+    //
+    // Pero tampoco puede servir OTRA página. Antes se devolvía el panel para
+    // cualquier navegación no encontrada, y el resultado era peor que un
+    // error: la barra de direcciones decía `…/sales/create/` y la pantalla
+    // enseñaba el panel, sin nada que explicara la contradicción. Un respaldo
+    // que aparenta funcionar convierte un fallo localizable en un misterio.
+    if (request.mode === "navigate") return offlinePage();
     return Response.error();
   }
 }
-
-/** Raíz de la aplicación; último respaldo cacheado antes de la página propia. */
-const BASE_ROOT = "__BASE_PATH__/";
 
 /**
  * Página de cortesía, incrustada en el propio service worker para no depender
@@ -277,16 +316,22 @@ function offlinePage() {
   main { max-width:22rem; text-align:center; }
   h1 { font-size:1.125rem; margin:0 0 .5rem; }
   p { margin:0 0 1.25rem; color:#9ca3af; font-size:.9rem; line-height:1.5; }
-  button { font:inherit; padding:.6rem 1.1rem; border-radius:.5rem; border:0;
-           background:#10b77f; color:#04150f; font-weight:600; cursor:pointer; }
+  .acciones { display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap; }
+  button, a { font:inherit; padding:.6rem 1.1rem; border-radius:.5rem; border:0;
+              font-weight:600; cursor:pointer; text-decoration:none; }
+  button { background:#10b77f; color:#04150f; }
+  a { background:#1f2937; color:#e5e7eb; }
 </style>
 </head>
 <body>
   <main>
-    <h1>Sin conexión</h1>
-    <p>Esta pantalla aún no está guardada en el dispositivo. Vuelve a
-       intentarlo cuando tengas señal.</p>
-    <button onclick="location.reload()">Reintentar</button>
+    <h1>Esta pantalla no está guardada</h1>
+    <p>No se descargó al dispositivo mientras había señal, así que sin conexión
+       no hay nada que mostrar. Lo que sí está guardado sigue funcionando.</p>
+    <div class="acciones">
+      <button onclick="location.reload()">Reintentar</button>
+      <a href="${OFFLINE_FALLBACK}">Volver al panel</a>
+    </div>
   </main>
 </body>
 </html>`;

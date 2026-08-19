@@ -43,6 +43,23 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^reset-password/([^/]+)/?$ /reset-password/__dynamic__/ [L]
 
+# Assets and route data must 404 when they don't exist -- never fall back.
+#
+# The SPA fallback below answers 200 + index.html for anything missing. That is
+# right for a navigation and poison for everything else: a missing chunk is
+# served as HTML and the browser tries to execute it as JavaScript, and a
+# missing route payload (.txt) is served as HTML to the Next router, which then
+# has to reload the whole page. Both get stored by every cache in between --
+# HTTP cache and service worker -- so the damage outlives the request and shows
+# up somewhere else entirely.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^_next/ - [R=404,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule \.txt$ - [R=404,L]
+
 # SPA fallback: serve index.html for any other non-existing path
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

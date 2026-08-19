@@ -11,6 +11,34 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Corregido
 
+#### Sin conexión, una pantalla enseñaba OTRA
+- **La URL decía `…/sales/create/` y aparecía el panel.** Con `trailingSlash:
+  true` el sitio exportado solo existe en su forma CON barra final (`/x/`), pero
+  los enlaces —los del código y los del menú, que vienen de la base de datos— se
+  escriben sin ella. En línea el servidor redirige y nadie se entera nunca; sin
+  conexión no hay quien redirija, la petición no encuentra nada y caía en el
+  respaldo. El service worker ahora prueba la forma canónica antes de rendirse:
+  se normaliza en el único sitio por el que pasan todas las peticiones, no
+  enlace por enlace.
+- **El respaldo de navegación dejaba de mentir.** Antes servía el panel para
+  cualquier pantalla no encontrada, y eso es peor que un error: una pantalla que
+  no corresponde a su URL, sin nada que explique la contradicción, convierte un
+  fallo localizable en un misterio. Ahora se sirve una página propia que dice
+  qué pasó y ofrece volver al panel.
+- **Un archivo que no existe ya no se sirve como si existiera.** La regla de
+  último recurso del servidor respondía `index.html` con un **200** a cualquier
+  ruta inexistente. Para una navegación es correcto; para un trozo de código es
+  HTML que el navegador intenta ejecutar como JavaScript, y para un archivo de
+  datos del router es una carga inválida que fuerza a recargar la página entera.
+  Peor: todas las cachés intermedias lo guardan, así que el daño sobrevive a la
+  petición y reaparece en otro sitio. Ahora `_next/` y `.txt` devuelven 404, y
+  el service worker además se niega a guardar HTML bajo el nombre de un archivo
+  que no lo es —no puede fiarse de una configuración que vive en otro
+  repositorio y que un despliegue puede revertir—.
+- El service worker pasa a tener pruebas: se carga la **plantilla real**, se le
+  sustituyen los marcadores como en el build y se ejercita con una caché y una
+  red de mentira. Copiar su lógica a un test no habría probado nada.
+
 #### Sin conexión no se ejecutaba NINGUNA consulta ni venta
 - **Causa raíz de todos los fallos de modo sin conexión reportados hasta ahora.**
   React Query viene configurado de fábrica para **pausar** cualquier consulta o
