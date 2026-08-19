@@ -61,6 +61,8 @@ function makeCaches() {
         const url = typeof key === "string" ? new URL(key, ORIGIN).toString() : key.url;
         store.set(url, response);
       },
+      // La de verdad devuelve peticiones; aquí solo importa cuántas hay.
+      keys: async () => [...store.keys()],
     };
   };
 
@@ -89,18 +91,24 @@ function makeCaches() {
   };
 }
 
-function loadServiceWorker(fetchImpl: (request: FakeRequest) => Promise<Response>) {
+function loadServiceWorker(
+  fetchImpl: (request: FakeRequest) => Promise<Response>,
+  precache: string[] = [],
+) {
   const source = readFileSync(templatePath, "utf8")
     .replaceAll("__VERSION__", "test")
-    .replaceAll("__PRECACHE__", "[]")
+    .replaceAll("__PRECACHE__", JSON.stringify(precache))
     .replaceAll("__API_PREFIX__", "/api/v2")
     .replaceAll("__STATIC_PREFIX__", `${BASE}/_next/static`)
     .replaceAll("__BASE_PATH__", BASE);
 
   const caches = makeCaches();
+  const listeners: Record<string, (event: unknown) => void> = {};
   const self = {
     location: { origin: ORIGIN },
-    addEventListener: () => {},
+    addEventListener: (name: string, handler: (event: unknown) => void) => {
+      listeners[name] = handler;
+    },
     clients: { claim: async () => {} },
     skipWaiting: async () => {},
   };
@@ -117,7 +125,7 @@ function loadServiceWorker(fetchImpl: (request: FakeRequest) => Promise<Response
     CACHE_NAME: string;
   };
 
-  return { sw, caches };
+  return { sw, caches, listeners };
 }
 
 const navigation = (path: string): FakeRequest => ({
@@ -231,5 +239,45 @@ describe("service worker: qué se guarda estando en línea", () => {
     await sw.cacheFirst(asset(`${BASE}/_next/static/chunks/real.js`));
 
     expect(caches.stored(sw.CACHE_NAME)).toHaveLength(1);
+  });
+});
+
+describe("service worker: lo que cuenta de sí mismo", () => {
+  /**
+   * Sin esto, que la aplicación esté guardada o no es INVISIBLE. El
+   * precacheado es todo o nada y falla en silencio: una conexión que se corta
+   * a mitad deja el dispositivo sin copia, el aviso de datos sigue diciendo
+   * que todo está listo, y el primer indicio llega cuando ya no hay red y el
+   * navegador enseña su propio error.
+   */
+  it("contesta cuántos archivos tiene guardados de los que debe", async () => {
+    const { sw, caches, listeners } = loadServiceWorker(offline, [
+      `${BASE}/dashboard/`,
+      `${BASE}/dashboard/business/sales/`,
+    ]);
+    caches.seed(sw.CACHE_NAME, `${BASE}/dashboard/`, "PANEL");
+
+    const answers: unknown[] = [];
+    const pending: Promise<unknown>[] = [];
+    listeners.message({
+      data: "STATUS",
+      ports: [{ postMessage: (value: unknown) => answers.push(value) }],
+      waitUntil: (promise: Promise<unknown>) => pending.push(promise),
+    });
+    await Promise.all(pending);
+
+    expect(answers).toEqual([{ version: "test", precached: 1, total: 2 }]);
+  });
+
+  it("sigue contestando la versión, que es lo que se registra en consola", () => {
+    const { listeners } = loadServiceWorker(offline);
+    const answers: unknown[] = [];
+
+    listeners.message({
+      data: "VERSION",
+      ports: [{ postMessage: (value: unknown) => answers.push(value) }],
+    });
+
+    expect(answers).toEqual(["test"]);
   });
 });

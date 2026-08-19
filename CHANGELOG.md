@@ -9,6 +9,20 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+### Agregado
+
+#### El aviso de red dice ahora si la APLICACIÓN está guardada
+- Hasta ahora solo hablaba de los **datos**. Se podía leer «tienes lo necesario
+  para vender sin conexión» con la aplicación **sin guardar** en el
+  dispositivo — y sin ella el navegador no llega ni a abrir la pantalla: enseña
+  su propio error, desde el que no se puede volver a ninguna parte.
+- El hueco importa porque la descarga de la aplicación es **todo o nada y falla
+  en silencio**: una conexión que se corta a mitad deja el dispositivo sin
+  copia sin dejar rastro. Ahora el bloque «La aplicación» distingue tres
+  estados —guardada, descargándose (con cuántos archivos van) y **no
+  guardada**—, y esa distinción es la que decide qué hacer: la segunda se
+  arregla esperando, la tercera exige conectarse y recargar.
+
 ### Corregido
 
 #### Sin conexión, una pantalla enseñaba OTRA

@@ -149,6 +149,33 @@ self.addEventListener("message", (event) => {
   // o de una caché vieja que sigue al mando.
   if (event.data === "VERSION" && event.ports?.[0]) {
     event.ports[0].postMessage(VERSION);
+    return;
+  }
+
+  // Estado del precacheado, para poder ENSEÑARLO dentro de la aplicación.
+  //
+  // Hasta ahora era invisible: el aviso de "datos guardados" habla solo de los
+  // datos, así que alguien podía leer que estaba todo listo cuando la
+  // aplicación misma no estaba guardada y no habría llegado ni a abrir sin
+  // conexión. Cuando eso falla —y falla en silencio, porque el precacheado es
+  // todo o nada— no queda ni un rastro que mirar.
+  if (event.data === "STATUS" && event.ports?.[0]) {
+    event.waitUntil(
+      (async () => {
+        let precached = 0;
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          precached = (await cache.keys()).length;
+        } catch (error) {
+          // Sin acceso a la caché se informa de cero, que es la verdad útil.
+        }
+        event.ports[0].postMessage({
+          version: VERSION,
+          precached,
+          total: PRECACHE.length,
+        });
+      })(),
+    );
   }
 });
 

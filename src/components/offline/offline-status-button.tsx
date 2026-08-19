@@ -13,6 +13,7 @@ import { sileo } from "sileo";
 import { useBusiness } from "@/context/business-context";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useOutbox } from "@/hooks/use-outbox";
+import { useAppShellStatus, type AppShellState } from "@/hooks/use-app-shell-status";
 import { usePrepareOffline, type ResourceStatus } from "@/hooks/use-prepare-offline";
 import { resolveStatusTone } from "@/lib/offline/status-tone";
 import type { SyncRunResult } from "@/lib/offline/sync-runner";
@@ -52,6 +53,7 @@ export function OfflineStatusButton({ className }: { className?: string }) {
     failedCount,
     retry: retryPrepare,
   } = usePrepareOffline();
+  const appShell = useAppShellStatus();
 
   const tone = resolveStatusTone({
     isOffline,
@@ -255,6 +257,19 @@ export function OfflineStatusButton({ className }: { className?: string }) {
               )}
             </section>
 
+            {/* -------------------------------- la aplicación en el equipo */}
+            <section className="space-y-1 p-3">
+              <p className="text-sm font-medium">La aplicación</p>
+              <p className="text-muted-foreground text-xs">
+                {APP_SHELL_TEXT[appShell.state]}
+              </p>
+              {appShell.state === "installing" && appShell.total > 0 && (
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  {appShell.precached} de {appShell.total} archivos
+                </p>
+              )}
+            </section>
+
             {/* ------------------------------------ datos del dispositivo */}
             {resources.length > 0 && (
               <section className="space-y-2 p-3">
@@ -306,6 +321,21 @@ export function OfflineStatusButton({ className }: { className?: string }) {
 }
 
 /* ------------------------------------------------------------------ icono */
+
+/**
+ * Los datos guardados no sirven de nada si la aplicación no está guardada: sin
+ * ella el navegador ni siquiera abre la pantalla y enseña su propio error, del
+ * que no se puede volver. Por eso va antes que los datos.
+ */
+const APP_SHELL_TEXT: Record<AppShellState, string> = {
+  ready: "Guardada en este dispositivo: abre y navega sin conexión.",
+  installing:
+    "Descargándose. Hasta que termine, sin conexión no llegaría a abrir.",
+  absent:
+    "NO está guardada. Sin conexión el navegador dará su propio error: " +
+    "conéctate y recarga esta página para guardarla.",
+  unknown: "Comprobando…",
+};
 
 const ARIA_LABEL: Record<ReturnType<typeof resolveStatusTone>, string> = {
   offline: "Sin conexión. Ver detalles",
