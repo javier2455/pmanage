@@ -9,6 +9,19 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Sin publicar]
 
+### Cambiado
+
+#### La lista de cambios sin subir ya no crece dentro del desplegable
+- Con tres ventas encoladas el aviso de red ya tapaba la tabla que hay debajo;
+  con las de una jornada entera habría sido impracticable. El desplegable pasa a
+  mostrar solo lo que se mira de reojo —**cuántas hay**, y aparte cuántas están
+  rechazadas—, más los botones de subir y **«Ver todas»**.
+- El detalle vive ahora en un diálogo propio, con su lista desplazable, la hora
+  de cada operación y sus acciones. **Lo rechazado va primero**: es lo único que
+  no se arregla solo y está esperando una decisión.
+- «Descartar» aparece solo en lo rechazado. Sobre algo que todavía se va a
+  reintentar sería tirar trabajo que aún puede entrar por su cuenta.
+
 ### Agregado
 
 #### El aviso de red dice ahora si la APLICACIÓN está guardada

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   AlertTriangle,
   Check,
@@ -13,6 +15,7 @@ import { sileo } from "sileo";
 import { useBusiness } from "@/context/business-context";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { useOutbox } from "@/hooks/use-outbox";
+import { PendingChangesDialog } from "@/components/offline/pending-changes-dialog";
 import { useAppShellStatus, type AppShellState } from "@/hooks/use-app-shell-status";
 import { usePrepareOffline, type ResourceStatus } from "@/hooks/use-prepare-offline";
 import { resolveStatusTone } from "@/lib/offline/status-tone";
@@ -43,7 +46,7 @@ import { cn } from "@/lib/utils";
 export function OfflineStatusButton({ className }: { className?: string }) {
   const { activeBusinessId } = useBusiness();
   const { isOffline, isChecking, checkNow, lastOnlineAt } = useConnectivity();
-  const { operations, counts, isSyncing, sync, retry } = useOutbox(
+  const { operations, counts, isSyncing, sync, retry, discard } = useOutbox(
     activeBusinessId ?? null,
   );
   const {
@@ -54,6 +57,7 @@ export function OfflineStatusButton({ className }: { className?: string }) {
     retry: retryPrepare,
   } = usePrepareOffline();
   const appShell = useAppShellStatus();
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const tone = resolveStatusTone({
     isOffline,
@@ -97,6 +101,7 @@ export function OfflineStatusButton({ className }: { className?: string }) {
   };
 
   return (
+    <>
     <Popover>
       <PopoverTrigger asChild>
         <Button
@@ -193,50 +198,28 @@ export function OfflineStatusButton({ className }: { className?: string }) {
                 </p>
               </div>
 
+              {/* El RESUMEN, no la lista. Una jornada sin conexión son
+                  decenas de ventas, y una lista dentro de un desplegable crece
+                  hasta tapar la pantalla que hay debajo. El número es lo que
+                  se mira de reojo; el detalle se abre aparte cuando hace
+                  falta. */}
               {queue.length > 0 && (
-                <ul className="space-y-2">
-                  {queue.slice(0, 6).map((op) => (
-                    <li key={op.id} className="text-xs">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="min-w-0 flex-1 break-words">
-                          {op.label}
-                        </span>
-                        <span
-                          className={cn(
-                            "shrink-0 font-medium",
-                            QUEUE_STATUS_CLASS[op.status],
-                          )}
-                        >
-                          {QUEUE_STATUS_LABEL[op.status]}
-                        </span>
-                      </div>
-                      {/* El mensaje literal del servidor: «no hay stock de
-                          Coca-Cola» se puede resolver; «error» no. */}
-                      {op.lastError && (
-                        <p className="text-muted-foreground mt-0.5 break-words">
-                          {op.lastError.message}
-                        </p>
-                      )}
-                      {(op.status === "rejected" || op.status === "failed") &&
-                        typeof op.seq === "number" && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="mt-1 h-6 px-2 text-xs"
-                            onClick={() => void retry(op.seq as number)}
-                          >
-                            Reintentar
-                          </Button>
-                        )}
-                    </li>
-                  ))}
-                  {queue.length > 6 && (
-                    <li className="text-muted-foreground text-xs">
-                      y {queue.length - 6} más
-                    </li>
+                <div className="space-y-0.5 text-xs">
+                  <p className="tabular-nums">
+                    <span className="font-medium">{queue.length}</span>{" "}
+                    {queue.length === 1
+                      ? "operación guardada aquí"
+                      : "operaciones guardadas aquí"}
+                  </p>
+                  {counts.rejected > 0 && (
+                    <p className="font-medium text-red-600 dark:text-red-400">
+                      {counts.rejected}{" "}
+                      {counts.rejected === 1
+                        ? "rechazada: necesita tu decisión"
+                        : "rechazadas: necesitan tu decisión"}
+                    </p>
                   )}
-                </ul>
+                </div>
               )}
 
               {counts.unsynced > 0 && (
@@ -253,6 +236,18 @@ export function OfflineStatusButton({ className }: { className?: string }) {
                     aria-hidden
                   />
                   {isSyncing ? "Subiendo…" : `Subir cambios (${counts.unsynced})`}
+                </Button>
+              )}
+
+              {queue.length > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setDetailOpen(true)}
+                >
+                  Ver todas
                 </Button>
               )}
             </section>
@@ -317,6 +312,15 @@ export function OfflineStatusButton({ className }: { className?: string }) {
         </ScrollArea>
       </PopoverContent>
     </Popover>
+
+    <PendingChangesDialog
+      open={detailOpen}
+      onOpenChange={setDetailOpen}
+      operations={queue}
+      onRetry={(seq) => void retry(seq)}
+      onDiscard={(seq) => void discard(seq)}
+    />
+    </>
   );
 }
 
@@ -368,21 +372,8 @@ function ToneIcon({ tone }: { tone: ReturnType<typeof resolveStatusTone> }) {
 
 /* ------------------------------------------------------------- etiquetas */
 
-const QUEUE_STATUS_LABEL = {
-  pending: "Pendiente",
-  inflight: "Subiendo…",
-  done: "Subida",
-  failed: "Se reintentará",
-  rejected: "Rechazada",
-} as const;
-
-const QUEUE_STATUS_CLASS = {
-  pending: "text-amber-600 dark:text-amber-400",
-  inflight: "text-sky-600 dark:text-sky-400",
-  done: "text-emerald-600 dark:text-emerald-400",
-  failed: "text-amber-600 dark:text-amber-400",
-  rejected: "text-red-600 dark:text-red-400",
-} as const;
+/* Las etiquetas de la cola viven ahora junto a la lista, en
+   pending-changes-dialog.tsx. */
 
 function ResourceMark({ status }: { status: ResourceStatus }) {
   if (status === "ready") {
