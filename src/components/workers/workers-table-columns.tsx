@@ -17,35 +17,14 @@ import {
 } from "@/components/ui/popover";
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { Worker } from "@/lib/types/worker";
-
-export type WorkersColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+import type { ColumnMeta } from "@/components/data-table/column-meta";
+import { getInitials } from "@/lib/utils";
+import { formatDateShort } from "@/lib/dates";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies WorkersColumnMeta;
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function getInitials(name: string | null) {
-  if (!name) return "TR";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+} satisfies ColumnMeta;
 
 function WorkerSortableHeader({
   column,
@@ -79,7 +58,7 @@ export function createWorkersColumns(
       meta: {
         headerClassName: "min-w-[220px]",
         cellClassName: "min-w-[220px]",
-      } satisfies WorkersColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <WorkerSortableHeader column={column} label="Trabajador" />
       ),
@@ -91,7 +70,7 @@ export function createWorkersColumns(
               {worker.avatar ? (
                 <AvatarImage src={worker.avatar} alt={worker.name ?? ""} />
               ) : null}
-              <AvatarFallback>{getInitials(worker.name)}</AvatarFallback>
+              <AvatarFallback>{getInitials(worker.name, "TR")}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium text-foreground">
@@ -164,7 +143,7 @@ export function createWorkersColumns(
       ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {formatDate(row.original.createdAt)}
+          {formatDateShort(row.original.createdAt)}
         </span>
       ),
     },
@@ -174,7 +153,7 @@ export function createWorkersColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies WorkersColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

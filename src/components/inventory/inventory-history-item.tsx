@@ -5,6 +5,8 @@ import type { InventoryEntry } from "@/lib/types/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
+
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { formatQuantity, formatStockWithUnit, normalizeStock } from "@/lib/units";
 import { useInView } from "@/hooks/use-in-view";
@@ -32,15 +34,6 @@ function formatEntryAmount(value: string | number, currency?: string) {
   const num = Number(value);
   if (Number.isNaN(num)) return String(value);
   return formatMoney(num, currency ?? BASE_CURRENCY);
-}
-
-function productInitials(name: string | undefined) {
-  if (!name) return "·";
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w.charAt(0).toUpperCase())
-    .join("");
 }
 
 export default function InventoryHistoryItem({
@@ -153,7 +146,7 @@ export default function InventoryHistoryItem({
                 aria-hidden="true"
                 className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-muted-foreground"
               >
-                {productInitials(entry.product?.name)}
+                {getInitials(entry.product?.name, "·")}
               </div>
             )}
           </div>

@@ -15,28 +15,14 @@ import {
 } from "@/components/ui/popover";
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { Invitation } from "@/lib/types/invitation";
+import type { ColumnMeta } from "@/components/data-table/column-meta";
+import { getInitials } from "@/lib/utils";
 import InvitationDetailsDialog from "./invitation-details-dialog";
-
-export type InvitationsColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies InvitationsColumnMeta;
-
-function getInitials(name: string | null) {
-  if (!name) return "IN";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+} satisfies ColumnMeta;
 
 function InvitationSortableHeader({
   column,
@@ -71,7 +57,7 @@ export function createInvitationsColumns(
       meta: {
         headerClassName: "min-w-[220px]",
         cellClassName: "min-w-[220px]",
-      } satisfies InvitationsColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <InvitationSortableHeader column={column} label="Invitado" />
       ),
@@ -80,7 +66,7 @@ export function createInvitationsColumns(
         return (
           <div className="flex items-center gap-3">
             <Avatar size="lg">
-              <AvatarFallback>{getInitials(invitation.name)}</AvatarFallback>
+              <AvatarFallback>{getInitials(invitation.name, "IN")}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium text-foreground">
@@ -144,7 +130,7 @@ export function createInvitationsColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies InvitationsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

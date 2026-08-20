@@ -26,17 +26,15 @@ comentarios existentes · mejoras no pedidas.
 
 ## Balance acumulado
 
-> Se actualiza al cerrar cada sección. Medida única: `git diff 9d687ce --stat -- src`,
-> donde `9d687ce` es el último commit anterior a esta revisión (v2.3.11), más los
-> archivos nuevos que git aún no rastrea. Excluye documentación y `package.json`.
+> Se actualiza al cerrar cada sección. Medida única y comprobable:
+> `git diff 9d687ce --stat -- src`, donde `9d687ce` es el último commit anterior a esta
+> revisión (v2.3.11). Excluye documentación y `package.json`.
 
-### Líneas — 8 secciones cerradas
+### Líneas — 9 secciones cerradas
 
 | | Archivos | Añadidas | Eliminadas | Neto |
 |---|---:|---:|---:|---:|
-| Rastreados por git | 69 | +649 | −1462 | −813 |
-| Nuevos sin rastrear (`detail-row.tsx`) | 1 | +25 | — | +25 |
-| **Total en `src/`** | **70** | **+674** | **−1462** | **−788 líneas** |
+| **Total en `src/`** | **79** | **+743** | **−1771** | **−1028 líneas** |
 
 Desglose por sección (neto):
 
@@ -50,16 +48,18 @@ Desglose por sección (neto):
 | 6 · Ventas | −70 |
 | 7 · Gastos | −164 |
 | 8 · Proveedores | −116 |
+| 9 · Trabajadores e invitaciones | −248 |
 | Debounce unificado (adelanta trabajo de §4, §8 y §16) | −18 |
 | `lib/types/business.ts` (compartido §1–§2) | −3 |
 
-### Archivos eliminados (6)
+### Archivos eliminados (7)
 
 | Archivo | Líneas | Motivo |
 |---|---:|---|
 | `components/dashboard/recent-activity-table.tsx` | 73 | Sin ningún importador |
 | `components/products/products-table-skeleton.tsx` | 66 | Sin importadores; lo sustituyó `SimpleTableSkeleton` |
 | `app/dashboard/business/expenses/[expenseId]/edit/expense-edit-client.tsx` | 89 | Sin importadores: su `page.tsx` hermano solo hace `redirect()` |
+| `app/dashboard/business/workers/[workerId]/edit/worker-edit-client.tsx` | 55 | Mismo caso |
 | `lib/validations/business-settings.ts` | 22 | Sin importadores |
 | `lib/validations/expense-category.ts` | 24 | Fusionado en `validations/category.ts` |
 | `lib/validations/product-category.ts` | 24 | Sin importadores; fusionado en `validations/category.ts` |
@@ -75,16 +75,16 @@ Desglose por sección (neto):
 | `hooks/use-debounced-value.ts` | 19 | El debounce de búsqueda ×5 |
 | `components/business-providers/detail-row.tsx` | 25 | El markup de fila etiqueta/valor, repetido 6 veces en el diálogo |
 
-A los que se suman, dentro de archivos ya existentes, `toastApiError` en `lib/toast.ts`
+A los que se suman, dentro de archivos ya existentes: `toastApiError` en `lib/toast.ts`
 (sustituye al bloque `isAxiosError` de dos ramas, presente en 43 archivos),
 `PRODUCT_UNITS` en `lib/types/product.ts` (el catálogo de unidades estaba escrito 7
 veces), `BUSINESS_TYPE_LABELS` y `DEFAULT_MAP_LAT/LNG` en `lib/types/business.ts`, y
-`DASH` en `lib/utils.ts`.
+`DASH` + `getInitials` en `lib/utils.ts`.
 
 El hook de debounce apenas mueve la aguja en líneas (unas 7 netas): su valor es dejar el
 retardo de 300 ms y la limpieza del timer en un único sitio en vez de cinco.
 
-### Bugs corregidos (11)
+### Bugs corregidos (12)
 
 Ninguno era el objetivo de la revisión; todos salieron al leer el código.
 
@@ -93,28 +93,28 @@ Ninguno era el objetivo de la revisión; todos salieron al leer el código.
 | 1 | **Los precios de productos se mostraban en pesos colombianos** (`currency: "COP"`, locale es-CO) en la tabla del negocio, las tarjetas del catálogo y el historial de precios. El historial además redondeaba a entero: 1234,50 CUP se leía como `$ 1.235` | §4 |
 | 2 | Los importes del inventario (capas de coste y rentabilidad por lote) usaban separadores es-ES: `"1.234,50 CUP"` frente al `"1,234.50 CUP"` del resto de la app | §5 |
 | 3 | **Eliminar un negocio con la red caída cerraba el diálogo en silencio**: sin toast ni aviso, el negocio parecía borrado | §2 |
-| 4 | El mismo `catch` ciego en 8 formularios más — productos (crear catálogo, editar catálogo, editar del negocio, asignar), stock, gastos (crear/editar) y proveedores: si el error no era de axios o no traía `message`, no pasaba nada en pantalla | §4, §5, §7, §8 |
-| 5 | **Cuatro toasts de error pintados de verde**: usaban los estilos de éxito (`fill:""` + título blanco) al fallar el borrado de una categoría, de un producto, de un gasto o la cancelación de una venta | §3, §4, §6, §7 |
+| 4 | El mismo `catch` ciego en 10 formularios más — productos (4), stock, gastos (2), proveedores y trabajadores (crear/editar): si el error no era de axios o no traía `message`, no pasaba nada en pantalla | §4, §5, §7, §8, §9 |
+| 5 | **Seis toasts de error pintados de verde**: usaban los estilos de éxito (`fill:""` + título blanco) al fallar el borrado de una categoría, un producto, un gasto, un trabajador, una invitación, o la cancelación de una venta | §3, §4, §6, §7, §9 |
 | 6 | En el formulario de categorías, un error sin `message` solo escribía el texto al pie: invisible si el diálogo estaba scrolleado | §3 |
 | 7 | La lista de categorías de **gastos** se habría quedado en "0 categorías" si el backend omite los campos de paginación; la de productos ya lo cubría | §3 |
 | 8 | Los toasts de horario y de notificaciones salían sin los estilos del sistema, con un aspecto distinto al resto | §2 |
 | 9 | `product-grid-card` definía un `formatMoney` propio que **sombreaba al helper global del mismo nombre haciendo algo distinto** (el global añade la moneda, el local no): una llamada descuidada habría impreso el importe sin moneda | §6 |
-| 10 | `expense-form` **redefinía** `SUCCESS_TOAST_STYLES`, que ya está exportado en `lib/toast.ts` — tercera copia de la misma constante en el repo | §7 |
+| 10 | `SUCCESS_TOAST_STYLES` **redefinido** en 3 componentes pese a estar exportado en `lib/toast.ts` | §3, §7, §9 |
 | 11 | Las fichas de proveedor mostraban `"--"` (dos guiones) donde el resto del sistema usa `"—"` | §8 |
+| 12 | Las iniciales de avatar se calculaban con `.split(" ")`, que produce iniciales vacías con nombres que llevan doble espacio | §9 |
 
 ### Duplicación: antes y ahora
 
-Los helpers ya existen y están migrados en las secciones cerradas. El resto se migra
-sección a sección conforme avanza la revisión.
-
 | Patrón duplicado | Copias al empezar | Restantes |
 |---|---:|---:|
-| Llamada a `sileo` con estilos copiados inline | 38 archivos | 15 |
-| `function columnMeta` | 17 | 11 |
-| Overlay "Cargando…" | 16 | 8 |
-| `function formatDate` local | 17 | 9 |
-| Bloque `isAxiosError` de dos ramas | 43 | 34 |
+| Llamada a `sileo` con estilos copiados inline | 38 archivos | 12 |
+| `function columnMeta` | 17 | 9 |
+| Overlay "Cargando…" | 16 | 6 |
+| `function formatDate` local | 17 | 6 |
+| Bloque `isAxiosError` de dos ramas | 43 | 30 |
 | `Array.isArray(...message).join()` a mano | 6 | 4 |
+| `SUCCESS_TOAST_STYLES` redefinido | 4 | 0 ✅ |
+| `getInitials` / `productInitials` | 5 | 0 ✅ |
 | `formatRelativeTime` | 5 | 0 ✅ |
 | Catálogo de unidades de producto | 7 | 0 ✅ |
 | Catálogo de tipos de negocio | 3 | 0 ✅ |
@@ -140,7 +140,7 @@ Cada sección se cierra con `pnpm exec tsc --noEmit` sin errores, `pnpm lint` co
 | 6 | Ventas | ✅ Cerrada (2026-08-20) |
 | 7 | Gastos | ✅ Cerrada (2026-08-20) |
 | 8 | Proveedores | ✅ Cerrada (2026-08-20) |
-| 9 | Trabajadores e invitaciones | Pendiente |
+| 9 | Trabajadores e invitaciones | ✅ Cerrada (2026-08-20) |
 | 10 | Caja y tasas de cambio | Pendiente |
 | 11 | Cierres contables | Pendiente |
 | 12 | Analíticas | Pendiente |
@@ -495,3 +495,32 @@ el arreglo al migrar sus toasts.
   pero son 5 líneas que ya delegan en `formatMoney` y solo añaden el guardarraíl de `NaN`.
   Dos copias no justifican un helper más; además cada archivo lleva una nota cruzada
   explicando el porqué del formato.
+
+---
+
+## Sección 9 — Trabajadores e invitaciones ✅
+
+Superficie revisada: las 8 páginas de `app/dashboard/business/workers/`, los 5
+componentes de `components/workers/`, los 3 de `components/invitations/`,
+`hooks/use-workers.ts`, `hooks/use-invitations.ts` y `lib/worker-permissions.ts`.
+
+La sección con más recorte de toda la revisión hasta ahora: **−248 líneas**.
+
+### Hallazgos aplicados
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| W1 | `app/dashboard/business/workers/[workerId]/edit/worker-edit-client.tsx` (55 líneas) sin importadores, igual que el de gastos. | Eliminado. |
+| W2 | `getInitials` copiado **4 veces** (dos en trabajadores, dos en invitaciones), idéntico salvo el texto de reserva ("TR"/"IN"), y una quinta copia con otro nombre (`productInitials`) en inventario. | `getInitials(name, fallback)` en `lib/utils.ts`; los 5 lo usan. De paso pasa a `split(/\s+/)`, que ya no produce iniciales vacías con dobles espacios. |
+| W3 | `formatDate` local ×3: dos eran `formatDateTimeLong` y uno `formatDateShort`. | Migrados a `lib/dates.ts`. |
+| W4 | `worker-form` tenía la **cuarta** copia de `SUCCESS_TOAST_STYLES` y 8 llamadas a `sileo` directas; las dos tablas, otras 6 (con el error pintado de verde en ambas). | Todo a `lib/toast`. Cero `sileo` directo en la sección. |
+| W5 | `columnMeta` ×2, sus tipos `WorkersColumnMeta` / `InvitationsColumnMeta` y 2 overlays. | A `components/data-table/`. |
+
+### Revisado y descartado
+
+- `worker-form.tsx` (492 líneas) es grande, pero la mayor parte es el árbol de permisos
+  por menú/submenú, con su propia lógica de padres incompletos. No hay bloques repetidos
+  que extraer sin inventar una abstracción.
+- `table-of-workers` y `table-of-invitations` comparten esqueleto, como todas las tablas
+  del proyecto, pero ya comparten lo que se podía compartir (`columnMeta`, overlay,
+  paginación, `PageSizeSelect`). El resto son columnas y acciones distintas.

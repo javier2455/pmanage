@@ -8,9 +8,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import axios from "axios";
-import { sileo } from "sileo";
-import { Loader2, MailX } from "lucide-react";
+import { MailX } from "lucide-react";
 
 import { useDeleteInvitationMutation } from "@/hooks/use-invitations";
 
@@ -38,20 +36,10 @@ import type {
   Invitation,
   InvitationsResponseInterface,
 } from "@/lib/types/invitation";
-import {
-  createInvitationsColumns,
-  type InvitationsColumnMeta,
-} from "./invitations-table-columns";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): InvitationsColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as InvitationsColumnMeta;
-  }
-  return {};
-}
+import { createInvitationsColumns } from "./invitations-table-columns";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
+import { toastApiError, toastSuccess } from "@/lib/toast";
 
 interface TableOfInvitationsProps {
   invitations: Invitation[];
@@ -74,33 +62,13 @@ export default function TableOfInvitations({
     async (invitationId: string) => {
       try {
         await deleteInvitationMutation.mutateAsync(invitationId);
-        sileo.success({
+        toastSuccess({
           title: "Invitación eliminada",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
           description: "La invitación se ha eliminado correctamente",
         });
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          sileo.error({
-            title: error.response?.data?.error ?? "Error",
-            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-            description: error.response.data.message,
-          });
-        } else {
-          sileo.error({
-            title: "Error al eliminar la invitación",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
-            description: "Error al eliminar la invitación. Intenta de nuevo.",
-          });
-        }
+        // El toast del caso genérico se pintaba con los estilos de éxito.
+        toastApiError(error, "Error al eliminar la invitación. Intenta de nuevo.");
       }
     },
     [deleteInvitationMutation],
@@ -151,16 +119,7 @@ export default function TableOfInvitations({
           ) : (
             <div className="relative pt-4">
               {isFetching ? (
-                <div
-                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando…</span>
-                  </div>
-                </div>
+                <TableLoadingOverlay />
               ) : null}
               <div
                 className={cn(

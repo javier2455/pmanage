@@ -9,9 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
-import axios from "axios";
-import { sileo } from "sileo";
-import { Loader2, Plus, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 
 import { useDeleteWorkerMutation } from "@/hooks/use-workers";
 
@@ -40,21 +38,11 @@ import type {
   Worker,
   WorkersResponseInterface,
 } from "@/lib/types/worker";
-import {
-  createWorkersColumns,
-  type WorkersColumnMeta,
-} from "./workers-table-columns";
+import { createWorkersColumns } from "./workers-table-columns";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
+import { toastApiError, toastSuccess } from "@/lib/toast";
 import WorkerDetailsDialog from "./worker-details-dialog";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): WorkersColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as WorkersColumnMeta;
-  }
-  return {};
-}
 
 interface TableOfWorkersProps {
   workers: Worker[];
@@ -77,33 +65,13 @@ export default function TableOfWorkers({
     async (workerId: string) => {
       try {
         await deleteWorkerMutation.mutateAsync(workerId);
-        sileo.success({
+        toastSuccess({
           title: "Trabajador eliminado",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
           description: "El trabajador se ha eliminado correctamente",
         });
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          sileo.error({
-            title: error.response?.data?.error ?? "Error",
-            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-            description: error.response.data.message,
-          });
-        } else {
-          sileo.error({
-            title: "Error al eliminar el trabajador",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
-            description: "Error al eliminar el trabajador. Intenta de nuevo.",
-          });
-        }
+        // El toast del caso genérico se pintaba con los estilos de éxito.
+        toastApiError(error, "Error al eliminar el trabajador. Intenta de nuevo.");
       }
     },
     [deleteWorkerMutation],
@@ -180,16 +148,7 @@ export default function TableOfWorkers({
           ) : (
             <div className="relative">
               {isFetching ? (
-                <div
-                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando…</span>
-                  </div>
-                </div>
+                <TableLoadingOverlay />
               ) : null}
               <div
                 className={cn(

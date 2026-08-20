@@ -21,27 +21,8 @@ import {
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Invitation } from "@/lib/types/invitation";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function getInitials(name: string | null) {
-  if (!name) return "IN";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+import { getInitials } from "@/lib/utils";
+import { formatDateTimeLong } from "@/lib/dates";
 
 interface InvitationDetailsDialogProps {
   invitation: Invitation;
@@ -90,7 +71,7 @@ export default function InvitationDetailsDialog({
         <div className="flex flex-col mt-4">
           <div className="flex items-center gap-3 border-b border-border py-4">
             <Avatar size="lg">
-              <AvatarFallback>{getInitials(invitation.name)}</AvatarFallback>
+              <AvatarFallback>{getInitials(invitation.name, "IN")}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-semibold text-card-foreground">
@@ -146,7 +127,7 @@ export default function InvitationDetailsDialog({
               Expira
             </span>
             <span className="text-sm font-medium text-card-foreground tabular-nums">
-              {formatDate(invitation.expirationDate)}
+              {formatDateTimeLong(invitation.expirationDate)}
             </span>
           </div>
 
@@ -189,7 +170,7 @@ export default function InvitationDetailsDialog({
               Fecha de envío
             </span>
             <span className="text-sm font-medium text-card-foreground tabular-nums">
-              {formatDate(invitation.createdAt)}
+              {formatDateTimeLong(invitation.createdAt)}
             </span>
           </div>
         </div>

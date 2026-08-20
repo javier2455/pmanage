@@ -22,27 +22,8 @@ import {
 } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useGetWorkerByIdQuery } from "@/hooks/use-workers";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function getInitials(name: string | null) {
-  if (!name) return "TR";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+import { getInitials } from "@/lib/utils";
+import { formatDateTimeLong } from "@/lib/dates";
 
 interface WorkerDetailsDialogProps {
   workerId: string;
@@ -105,7 +86,7 @@ export default function WorkerDetailsDialog({
                 {worker.avatar ? (
                   <AvatarImage src={worker.avatar} alt={worker.name ?? ""} />
                 ) : null}
-                <AvatarFallback>{getInitials(worker.name)}</AvatarFallback>
+                <AvatarFallback>{getInitials(worker.name, "TR")}</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-semibold text-card-foreground">
@@ -176,7 +157,7 @@ export default function WorkerDetailsDialog({
                 Fecha de creación
               </span>
               <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(worker.createdAt)}
+                {formatDateTimeLong(worker.createdAt)}
               </span>
             </div>
 
@@ -185,7 +166,7 @@ export default function WorkerDetailsDialog({
                 Última actualización
               </span>
               <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(worker.updatedAt)}
+                {formatDateTimeLong(worker.updatedAt)}
               </span>
             </div>
           </div>

@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
-import { sileo } from "sileo";
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast";
 import { ArrowLeft, Save, ShieldCheck, UserPlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,11 +46,6 @@ interface WorkerFormProps {
   mode: "create" | "edit";
   worker?: Worker;
 }
-
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-};
 
 const ALL_ACTIONS = {
   read: true,
@@ -193,20 +187,18 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
 
   async function handleCreate(data: WorkerFormData) {
     if (!activeBusinessId) {
-      sileo.error({
+      toastError({
         title: "Selecciona un negocio",
         description: "Activa un negocio antes de gestionar trabajadores.",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       return;
     }
 
     const incompleteParent = getIncompleteParentName();
     if (incompleteParent) {
-      sileo.error({
+      toastError({
         title: "Permisos incompletos",
         description: `Selecciona al menos un submenú de "${incompleteParent}" o desmarca el menú principal.`,
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       return;
     }
@@ -223,27 +215,13 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
         job: data.job.trim(),
         permisos,
       });
-      sileo.success({
+      toastSuccess({
         title: "Trabajador agregado",
-        fill: "",
-        styles: SUCCESS_TOAST_STYLES,
         description: "El trabajador se ha agregado correctamente",
       });
       router.push("/dashboard/business/workers");
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: error.response.data.message,
-        });
-      } else {
-        sileo.error({
-          title: "Error al guardar",
-          description: "No se pudo guardar el trabajador. Intenta de nuevo.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        });
-      }
+      toastApiError(error, "No se pudo guardar el trabajador. Intenta de nuevo.");
     }
   }
 
@@ -252,10 +230,9 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
 
     const incompleteParent = getIncompleteParentName();
     if (incompleteParent) {
-      sileo.error({
+      toastError({
         title: "Permisos incompletos",
         description: `Selecciona al menos un submenú de "${incompleteParent}" o desmarca el menú principal.`,
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       return;
     }
@@ -270,35 +247,20 @@ export function WorkerForm({ mode, worker }: WorkerFormProps) {
           permisos,
         },
       });
-      sileo.success({
+      toastSuccess({
         title: "Trabajador actualizado",
-        fill: "",
-        styles: SUCCESS_TOAST_STYLES,
         description: "El trabajador se ha actualizado correctamente",
       });
       router.push("/dashboard/business/workers");
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: error.response.data.message,
-        });
-      } else {
-        sileo.error({
-          title: "Error al actualizar",
-          description: "No se pudo actualizar el trabajador. Intenta de nuevo.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        });
-      }
+      toastApiError(error, "No se pudo actualizar el trabajador. Intenta de nuevo.");
     }
   }
 
   function onInvalid() {
-    sileo.error({
+    toastError({
       title: "Revisa el formulario",
       description: "Hay campos con valores no válidos",
-      styles: { description: "text-[#dc2626]/90! text-[15px]!" },
     });
   }
 
