@@ -13,26 +13,13 @@ import {
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { Expense } from "@/lib/types/expenses";
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
-
-export type ExpensesColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+import { formatDateTimeShort } from "@/lib/dates";
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies ExpensesColumnMeta;
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+} satisfies ColumnMeta;
 
 function ExpensesSortableHeader({
   column,
@@ -66,7 +53,7 @@ export function createExpensesColumns(
       meta: {
         headerClassName: "min-w-[200px]",
         cellClassName: "min-w-[200px]",
-      } satisfies ExpensesColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <ExpensesSortableHeader column={column} label="Título" />
       ),
@@ -111,13 +98,13 @@ export function createExpensesColumns(
       meta: {
         headerClassName: "min-w-[180px] whitespace-nowrap",
         cellClassName: "min-w-[180px] whitespace-nowrap",
-      } satisfies ExpensesColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <ExpensesSortableHeader column={column} label="Fecha" />
       ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {formatDate(row.original.createdAt)}
+          {formatDateTimeShort(row.original.createdAt)}
         </span>
       ),
     },
@@ -127,7 +114,7 @@ export function createExpensesColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies ExpensesColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Building2, Mail, Pencil, Phone, User } from "lucide-react"
+import { formatDateLong } from "@/lib/dates"
+import { DetailRow } from "./detail-row"
 import {
   Card,
   CardContent,
@@ -15,35 +17,6 @@ import { Button } from "@/components/ui/button"
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 import { useGetProviderByIdQuery } from "@/hooks/use-provider"
 import { ProviderProductsTable } from "./provider-products-table"
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "--"
-  return new Date(value).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
-}
-
-interface DetailRowProps {
-  label: string
-  icon?: React.ReactNode
-  children: React.ReactNode
-}
-
-function DetailRow({ label, icon, children }: DetailRowProps) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
-      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        {icon}
-        {label}
-      </span>
-      <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
-        {children}
-      </span>
-    </div>
-  )
-}
 
 export function ProviderDetailsView() {
   const router = useRouter()
@@ -131,13 +104,13 @@ export function ProviderDetailsView() {
 
             <DetailRow label="Registrado el">
               <span className="tabular-nums">
-                {formatDate(provider.createdAt)}
+                {formatDateLong(provider.createdAt)}
               </span>
             </DetailRow>
 
             <DetailRow label="Última actualización">
               <span className="tabular-nums">
-                {formatDate(provider.updatedAt)}
+                {formatDateLong(provider.updatedAt)}
               </span>
             </DetailRow>
           </div>

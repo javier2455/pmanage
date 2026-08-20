@@ -19,6 +19,9 @@ import {
 } from "@/components/ui/tooltip"
 import { useGetProviderByIdQuery } from "@/hooks/use-provider"
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency"
+import { formatDateLong } from "@/lib/dates"
+import { DASH } from "@/lib/utils"
+import { DetailRow } from "./detail-row"
 
 interface ProviderDetailsDialogProps {
   providerId: string
@@ -26,15 +29,6 @@ interface ProviderDetailsDialogProps {
   trigger?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "--"
-  return new Date(value).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
 }
 
 /** Precio con su moneda; ver la nota en `provider-products-table.tsx`. */
@@ -99,88 +93,53 @@ export function ProviderDetailsDialog({
           </div>
         ) : (
           <div className="flex flex-col mt-2 max-h-[70vh] overflow-y-auto pr-1">
-            <div className="flex items-start justify-between border-b border-border py-4 first:pt-0">
-              <span className="text-sm text-muted-foreground">Nombre</span>
-              <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
-                {provider.name}
-              </span>
-            </div>
+            <DetailRow label="Nombre">{provider.name}</DetailRow>
 
-            <div className="flex items-start justify-between border-b border-border py-4">
-              <span className="text-sm text-muted-foreground">Descripción</span>
-              <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
-                {provider.description || "--"}
-              </span>
-            </div>
+            <DetailRow label="Descripción">
+              {provider.description || DASH}
+            </DetailRow>
 
-            <div className="flex items-start justify-between border-b border-border py-4">
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <User className="size-3.5" />
-                Contacto
-              </span>
-              <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
-                {provider.contactName || "--"}
-              </span>
-            </div>
+            <DetailRow label="Contacto" icon={<User className="size-3.5" />}>
+              {provider.contactName || DASH}
+            </DetailRow>
 
-            <div className="flex items-start justify-between border-b border-border py-4">
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Mail className="size-3.5" />
-                Email
-              </span>
+            <DetailRow label="Email" icon={<Mail className="size-3.5" />}>
               {provider.email ? (
                 <a
                   href={`mailto:${provider.email}`}
-                  className="text-sm font-medium text-primary underline-offset-2 hover:underline text-right max-w-[60%] break-all"
+                  className="text-primary underline-offset-2 hover:underline break-all"
                 >
                   {provider.email}
                 </a>
               ) : (
-                <span className="text-sm font-medium text-card-foreground">
-                  --
-                </span>
+                DASH
               )}
-            </div>
+            </DetailRow>
 
-            <div className="flex items-start justify-between border-b border-border py-4">
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Phone className="size-3.5" />
-                Teléfono
-              </span>
-              <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
-                {provider.phone || "--"}
-              </span>
-            </div>
+            <DetailRow label="Teléfono" icon={<Phone className="size-3.5" />}>
+              {provider.phone || DASH}
+            </DetailRow>
 
             {provider.business && (
-              <div className="flex items-start justify-between border-b border-border py-4">
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Building2 className="size-3.5" />
-                  Negocio
-                </span>
-                <span className="text-sm font-medium text-card-foreground text-right max-w-[60%]">
-                  {provider.business.name}
-                </span>
-              </div>
+              <DetailRow
+                label="Negocio"
+                icon={<Building2 className="size-3.5" />}
+              >
+                {provider.business.name}
+              </DetailRow>
             )}
 
-            <div className="flex items-center justify-between border-b border-border py-4">
-              <span className="text-sm text-muted-foreground">
-                Registrado el
+            <DetailRow label="Registrado el">
+              <span className="tabular-nums">
+                {formatDateLong(provider.createdAt)}
               </span>
-              <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(provider.createdAt)}
-              </span>
-            </div>
+            </DetailRow>
 
-            <div className="flex items-center justify-between border-b border-border py-4">
-              <span className="text-sm text-muted-foreground">
-                Última actualización
+            <DetailRow label="Última actualización">
+              <span className="tabular-nums">
+                {formatDateLong(provider.updatedAt)}
               </span>
-              <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(provider.updatedAt)}
-              </span>
-            </div>
+            </DetailRow>
 
             <div className="pt-4">
               <div className="mb-2 flex items-center justify-between">

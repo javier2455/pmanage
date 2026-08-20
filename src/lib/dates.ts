@@ -31,6 +31,20 @@ export function formatDateTimeShort(iso: string | Date) {
   });
 }
 
+/** Fecha sin hora y mes en letra ("05 de agosto de 2026"). */
+export function formatDateLong(iso: string | null | undefined) {
+  if (!iso) return DASH;
+  try {
+    return new Date(iso).toLocaleDateString("es-CO", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return DASH;
+  }
+}
+
 /**
  * Fecha con hora y mes en letra ("05 de agosto de 2026, 14:30"). Para fichas de
  * detalle, donde hay sitio y se lee mejor.

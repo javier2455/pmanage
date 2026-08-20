@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Loader2, Package, Search } from "lucide-react"
+import { Package, Search } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -26,6 +26,7 @@ import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 import { useGetProviderProductsQuery } from "@/hooks/use-provider"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency"
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay"
 
 interface ProviderProductsTableProps {
   providerId: string
@@ -122,16 +123,7 @@ export function ProviderProductsTable({ providerId }: ProviderProductsTableProps
         ) : (
           <div className="relative">
             {isFetching ? (
-              <div
-                className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                role="status"
-                aria-live="polite"
-              >
-                <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Cargando…</span>
-                </div>
-              </div>
+              <TableLoadingOverlay />
             ) : null}
             <div
               className={cn(

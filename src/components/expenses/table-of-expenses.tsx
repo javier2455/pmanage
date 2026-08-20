@@ -9,9 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
-import axios from "axios";
-import { sileo } from "sileo";
-import { HandCoins, Loader2, Plus } from "lucide-react";
+import { HandCoins, Plus } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,21 +35,11 @@ import { PageSizeSelect } from "@/components/data-table/page-size-select";
 
 import { useDeleteExpenseMutation } from "@/hooks/use-expenses";
 import type { Expense, GetAllExpensesResponse } from "@/lib/types/expenses";
-import {
-  createExpensesColumns,
-  type ExpensesColumnMeta,
-} from "./expenses-table-columns";
+import { createExpensesColumns } from "./expenses-table-columns";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
+import { toastApiError, toastSuccess } from "@/lib/toast";
 import ExpenseDetailsDialog from "./expense-details-dialog";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): ExpensesColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as ExpensesColumnMeta;
-  }
-  return {};
-}
 
 interface TableOfExpensesProps {
   expenses: Expense[];
@@ -74,33 +62,13 @@ export default function TableOfExpenses({
     async (expenseId: string) => {
       try {
         await deleteExpenseMutation.mutateAsync(expenseId);
-        sileo.success({
+        toastSuccess({
           title: "Gasto eliminado correctamente",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
           description: "El gasto se ha eliminado correctamente",
         });
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          sileo.error({
-            title: error.response?.data?.error ?? "Error",
-            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-            description: error.response.data.message,
-          });
-        } else {
-          sileo.error({
-            title: "Error al eliminar el gasto",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
-            description: "Error al eliminar el gasto. Intenta de nuevo.",
-          });
-        }
+        // El toast del caso genérico se pintaba con los estilos de éxito.
+        toastApiError(error, "Error al eliminar el gasto. Intenta de nuevo.");
       }
     },
     [deleteExpenseMutation],
@@ -179,16 +147,7 @@ export default function TableOfExpenses({
           ) : (
             <div className="relative">
               {isFetching ? (
-                <div
-                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando…</span>
-                  </div>
-                </div>
+                <TableLoadingOverlay />
               ) : null}
               <div
                 className={cn(

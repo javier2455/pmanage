@@ -8,9 +8,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table"
-import axios from "axios"
-import { sileo } from "sileo"
-import { Loader2, Search, Truck } from "lucide-react"
+import { Search, Truck } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -34,21 +32,11 @@ import { DataTablePaginationNav } from "@/components/data-table/data-table-pagin
 import { PageSizeSelect } from "@/components/data-table/page-size-select"
 import { useDeleteProviderMutation } from "@/hooks/use-provider"
 import type { ProviderWithRelations } from "@/lib/types/provider"
-import {
-  createProvidersColumns,
-  type ProvidersColumnMeta,
-} from "./providers-table-columns"
+import { createProvidersColumns } from "./providers-table-columns"
+import { columnMeta } from "@/components/data-table/column-meta"
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay"
+import { toastApiError, toastSuccess } from "@/lib/toast"
 import { ProviderDetailsDialog } from "./provider-details-dialog"
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown }
-}): ProvidersColumnMeta {
-  const meta = column.columnDef.meta
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as ProvidersColumnMeta
-  }
-  return {}
-}
 
 interface ProvidersTableProps {
   providers: ProviderWithRelations[]
@@ -82,31 +70,13 @@ export function ProvidersTable({
       try {
         const res = await deleteMutation.mutateAsync(providerId)
         if (res?.success) {
-          sileo.success({
+          toastSuccess({
             title: "Proveedor eliminado",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
             description: "El proveedor se ha eliminado correctamente",
           })
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          sileo.error({
-            title: error.response.data.error ?? "Error",
-            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-            description: Array.isArray(error.response.data.message)
-              ? error.response.data.message.join(", ")
-              : error.response.data.message,
-          })
-        } else {
-          sileo.error({
-            title: "Error al eliminar el proveedor",
-            description: "Intenta de nuevo en unos segundos.",
-          })
-        }
+        toastApiError(error, "No se pudo eliminar el proveedor. Intenta de nuevo.")
       }
     },
     [deleteMutation],
@@ -176,16 +146,7 @@ export function ProvidersTable({
           ) : (
             <div className="relative">
               {isFetching ? (
-                <div
-                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando…</span>
-                  </div>
-                </div>
+                <TableLoadingOverlay />
               ) : null}
               <div
                 className={cn(

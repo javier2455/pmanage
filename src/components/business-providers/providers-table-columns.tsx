@@ -11,16 +11,12 @@ import {
 } from "@/components/ui/popover"
 import { DeleteDialog } from "@/components/delete-dialog"
 import type { ProviderWithRelations } from "@/lib/types/provider"
-
-export type ProvidersColumnMeta = {
-  headerClassName?: string
-  cellClassName?: string
-}
+import type { ColumnMeta } from "@/components/data-table/column-meta"
 
 const compactMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies ProvidersColumnMeta
+} satisfies ColumnMeta
 
 function ProvidersSortableHeader({
   column,
@@ -54,7 +50,7 @@ export function createProvidersColumns(
       meta: {
         headerClassName: "min-w-[220px] align-top",
         cellClassName: "min-w-[220px] align-top",
-      } satisfies ProvidersColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <ProvidersSortableHeader column={column} label="Proveedor" />
       ),
@@ -120,7 +116,7 @@ export function createProvidersColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies ProvidersColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

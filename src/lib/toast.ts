@@ -48,9 +48,13 @@ export function toastError({ title, description }: ToastPayload) {
  */
 export function toastApiError(error: unknown, fallback: string) {
   if (isAxiosError(error)) {
+    // NestJS manda un array de mensajes cuando falla la validación de varios
+    // campos; sin unirlos, React los pegaría sin separación.
+    const raw = error.response?.data?.message;
+    const message = Array.isArray(raw) ? raw.join(", ") : raw;
     toastError({
       title: error.response?.data?.error ?? "Error",
-      description: error.response?.data?.message ?? fallback,
+      description: message ?? fallback,
     });
     return;
   }

@@ -17,16 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useGetExpenseByIdQuery } from "@/hooks/use-expenses";
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatDateTimeLong } from "@/lib/dates";
 
 interface ExpenseDetailsDialogProps {
   expenseId: string;
@@ -129,7 +120,7 @@ export default function ExpenseDetailsDialog({
             <div className="flex items-center justify-between border-b border-border py-4">
               <span className="text-sm font-medium text-card-foreground">Fecha de creación</span>
               <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(data.createdAt)}
+                {formatDateTimeLong(data.createdAt)}
               </span>
             </div>
 
@@ -138,7 +129,7 @@ export default function ExpenseDetailsDialog({
                 Última actualización
               </span>
               <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(data.updatedAt)}
+                {formatDateTimeLong(data.updatedAt)}
               </span>
             </div>
           </div>

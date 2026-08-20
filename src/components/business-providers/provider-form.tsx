@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import axios from "axios"
-import { sileo } from "sileo"
+import { isAxiosError } from "axios"
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast"
 import { Save, UserPlus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -84,7 +84,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
   async function onSubmit(data: ProviderFormData) {
     const businessId = provider?.businessId ?? activeBusinessId
     if (!businessId) {
-      sileo.error({
+      toastError({
         title: "Sin negocio activo",
         description:
           "Selecciona un negocio activo antes de crear o editar un proveedor.",
@@ -111,13 +111,8 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
           providerProducts: providerProductsField,
         })
 
-        sileo.success({
+        toastSuccess({
           title: "Proveedor creado correctamente",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
           description: "El proveedor se ha registrado correctamente",
         })
         router.push("/dashboard/business/providers")
@@ -148,27 +143,18 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
         },
       })
 
-      sileo.success({
+      toastSuccess({
         title: "Proveedor actualizado",
-        fill: "",
-        styles: {
-          title: "text-white! text-[16px]! font-bold!",
-          description: "text-white/90! text-[15px]!",
-        },
         description: "Los cambios se guardaron correctamente",
       })
       router.push("/dashboard/business/providers")
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: String(error.response.data.message) })
-        sileo.error({
-          title: error.response.data.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: Array.isArray(error.response.data.message)
-            ? error.response.data.message.join(", ")
-            : error.response.data.message,
-        })
-      }
+      // Sin la segunda rama, un fallo de red dejaba el formulario mudo.
+      const fallback = "No se pudo guardar el proveedor. Intenta de nuevo."
+      const raw = isAxiosError(error) ? error.response?.data?.message : undefined
+      const message = Array.isArray(raw) ? raw.join(", ") : raw
+      toastApiError(error, fallback)
+      setError("root", { message: message ?? fallback })
     }
   }
 
@@ -176,7 +162,7 @@ export function ProviderForm({ mode, provider }: ProviderFormProps) {
     <form
       className="flex flex-col gap-6"
       onSubmit={handleSubmit(onSubmit, () => {
-        sileo.error({
+        toastError({
           title: "Revisa el formulario",
           description: "Completa los campos requeridos correctamente",
         })

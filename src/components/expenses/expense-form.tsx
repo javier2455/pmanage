@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast";
 import Link from "next/link";
-import axios from "axios";
+import { isAxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sileo } from "sileo";
+
 import { HandCoins, RefreshCw, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -40,11 +41,6 @@ interface ExpenseFormProps {
   expenseId?: string;
   defaultValues?: Partial<CreateExpenseFormData>;
 }
-
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-};
 
 export function ExpenseForm({
   mode,
@@ -114,10 +110,8 @@ export function ExpenseForm({
           expenseId,
           credentials: payload,
         });
-        sileo.success({
+        toastSuccess({
           title: "Gasto actualizado correctamente",
-          fill: "",
-          styles: SUCCESS_TOAST_STYLES,
           description: "El gasto se ha actualizado correctamente",
         });
       } else {
@@ -131,36 +125,30 @@ export function ExpenseForm({
           idbusiness: activeBusinessId,
           ...payload,
         });
-        sileo.success({
+        toastSuccess({
           title: "Gasto registrado correctamente",
-          fill: "",
-          styles: SUCCESS_TOAST_STYLES,
           description: "El gasto se ha registrado correctamente",
         });
       }
       router.push("/dashboard/business/expenses");
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message });
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: error.response.data.message,
-        });
-      } else {
-        setError("root", {
-          message: isEdit
-            ? "Error al actualizar el gasto. Intenta de nuevo."
-            : "Error al registrar el gasto. Intenta de nuevo.",
-        });
-      }
+      // La rama sin `message` solo escribía el error al pie del formulario.
+      const fallback = isEdit
+        ? "Error al actualizar el gasto. Intenta de nuevo."
+        : "Error al registrar el gasto. Intenta de nuevo.";
+      toastApiError(error, fallback);
+      setError("root", {
+        message: isAxiosError(error)
+          ? error.response?.data?.message ?? fallback
+          : fallback,
+      });
     }
   }
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit, () => {
-        sileo.error({
+        toastError({
           title: "Revisa el formulario",
           description: "Completa todos los campos requeridos correctamente",
         });
