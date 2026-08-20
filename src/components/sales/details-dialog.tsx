@@ -125,6 +125,12 @@ export default function DetailsDialog({
   );
   const pagos = paymentsSummary?.pagos ?? [];
   const totalPropinas = paymentsSummary?.totalPropinas ?? 0;
+  /* Los vueltos se agrupan aparte, debajo de los cobros: es dinero que SALE
+     del cajón, y mezclarlo con las líneas de lo entregado se leía como una
+     moneda más del cobro en vez de como la devolución del excedente. */
+  const vueltos = pagos.flatMap((p) =>
+    p.vuelto ? [{ pagoId: p.id, ...p.vuelto }] : [],
+  );
   /* Se listan TODOS los cobros, no solo los que llevaron vuelto: al filtrarlos,
      un pago repartido entre varias monedas enseñaba únicamente la pata que cargó
      con el vuelto (los USD) y se perdían las demás (los CUP). El bloque aparece
@@ -385,18 +391,25 @@ export default function DetailsDialog({
                           </span>
                         </div>
                       )}
-                      {pago.vuelto && (
-                        <div className="flex items-center justify-between gap-3">
+                    </div>
+                  ))}
+                  {vueltos.length > 0 && (
+                    <div className="flex flex-col gap-0.5 border-t border-border pt-1.5 text-xs">
+                      {vueltos.map((vuelto) => (
+                        <div
+                          key={vuelto.pagoId}
+                          className="flex items-center justify-between gap-3"
+                        >
                           <span className="text-muted-foreground">
                             Se le devolvió
                           </span>
                           <span className="font-medium tabular-nums text-card-foreground">
-                            {formatMoney(pago.vuelto.monto, pago.vuelto.moneda)}
+                            {formatMoney(vuelto.monto, vuelto.moneda)}
                           </span>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  )}
                   {totalPropinas > 0 && (
                     <div className="flex items-center justify-between border-t border-border pt-1.5 text-xs">
                       <span className="text-muted-foreground">
