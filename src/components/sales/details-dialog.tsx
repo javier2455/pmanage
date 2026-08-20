@@ -115,17 +115,26 @@ export default function DetailsDialog({
   const pendiente = Math.max(total - totalPaid, 0);
   const items = data?.items ?? [];
 
-  // Desglose de los cobros: cuánto entregó el cliente, cuánto se le devolvió y
-  // cuánto quedó a favor del negocio. `totalPaid` solo cuenta lo aplicado a la
-  // venta, así que sin esto no habría forma de auditar un cobro con vuelto.
+  // Desglose de los cobros: cuánto entregó el cliente en cada moneda, cuánto se
+  // le devolvió y cuánto quedó a favor del negocio. `totalPaid` solo cuenta lo
+  // aplicado a la venta y en la moneda de la venta, así que sin esto no habría
+  // forma de auditar un cobro con vuelto ni de ver sus patas multimoneda.
   const isOpen = isControlled ? open : undefined;
   const { data: paymentsSummary } = usePaymentsSummary(
     isOpen === false ? "" : saleId,
   );
-  const pagosConVuelto = (paymentsSummary?.pagos ?? []).filter(
-    (p) => p.vuelto || (p.propina ?? 0) > 0,
-  );
+  const pagos = paymentsSummary?.pagos ?? [];
   const totalPropinas = paymentsSummary?.totalPropinas ?? 0;
+  /* Se listan TODOS los cobros, no solo los que llevaron vuelto: al filtrarlos,
+     un pago repartido entre varias monedas enseñaba únicamente la pata que cargó
+     con el vuelto (los USD) y se perdían las demás (los CUP). El bloque aparece
+     solo cuando la línea "Pagado" no cuenta la historia completa: varios cobros,
+     alguna moneda distinta a la de la venta, o excedente. */
+  const mostrarDesglose =
+    pagos.length > 1 ||
+    pagos.some(
+      (p) => p.vuelto || (p.propina ?? 0) > 0 || p.moneda !== currency,
+    );
   const status = resolvePaymentStatus({
     isCancelled: data?.isCancelled,
     paymentStatus: data?.paymentStatus,
@@ -339,9 +348,9 @@ export default function DetailsDialog({
               </div>
             )}
 
-            {/* Solo aparece si en algún cobro sobró dinero: en el caso normal
-                (pago exacto) no añade ruido al detalle. */}
-            {pagosConVuelto.length > 0 && (
+            {/* Solo aparece cuando el cobro tiene algo que explicar: pago
+                exacto y en la moneda de la venta no añade ruido al detalle. */}
+            {mostrarDesglose && (
               <div className="w-full rounded-lg border border-border bg-muted/30 p-3">
                 <div className="mb-2 flex items-center gap-1.5">
                   <Coins className="size-3.5 text-muted-foreground" />
@@ -350,12 +359,12 @@ export default function DetailsDialog({
                   </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  {pagosConVuelto.map((pago) => (
+                  {pagos.map((pago, index) => (
                     <div
                       key={pago.id}
-                      className="flex flex-col gap-0.5 text-xs"
+                      className={`flex flex-col gap-0.5 text-xs ${index > 0 ? "border-t border-border pt-1.5" : ""}`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <span className="text-muted-foreground">
                           Entregó el cliente
                         </span>
@@ -363,8 +372,21 @@ export default function DetailsDialog({
                           {formatMoney(pago.monto, pago.moneda)}
                         </span>
                       </div>
+                      {/* Lo entregado y lo que cubre la venta no coinciden
+                          cuando el cobro va en otra moneda; sin esta línea los
+                          importes del desglose no cuadran con el total. */}
+                      {pago.moneda !== currency && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-muted-foreground">
+                            Aplicado a la venta
+                          </span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {formatMoney(pago.equivalente, currency)}
+                          </span>
+                        </div>
+                      )}
                       {pago.vuelto && (
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                           <span className="text-muted-foreground">
                             Se le devolvió
                           </span>

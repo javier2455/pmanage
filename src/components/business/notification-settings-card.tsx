@@ -302,7 +302,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
 
                   {/* Column headers (solo sm+: en móvil cada canal lleva su
                       propia etiqueta junto al check) */}
-                  <div className="hidden items-center gap-3 sm:flex">
+                  <div className="hidden items-start gap-3 sm:flex">
                     <div className="flex-1" />
                     {CHANNELS.map((channel) => {
                       const Icon = channel.icon;
@@ -314,10 +314,15 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
                           <span className="flex items-center gap-1">
                             <Icon className="h-3.5 w-3.5" />
                             {channel.label}
-                            {!channel.comingSoon && !hasFeature(channel.feature) && (
-                              <ProBadge className="ml-0" />
-                            )}
                           </span>
+                          {/* El badge Pro va en su propia línea, como el de
+                              "Próximamente": la columna mide w-20 y en línea
+                              con la etiqueta se desbordaba, pisando la columna
+                              siguiente (o saliéndose de la card en la última)
+                              con planes que no incluyen SMS/WhatsApp. */}
+                          {!channel.comingSoon && !hasFeature(channel.feature) && (
+                            <ProBadge className="ml-0" />
+                          )}
                           {channel.comingSoon && (
                             <span
                               className={cn(PRO_STYLE.className, "whitespace-nowrap")}
