@@ -45,18 +45,14 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { sileo } from "sileo";
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
 import { cn } from "@/lib/utils";
-
-const businessTypes = [
-  { value: "mipyme", label: "MiPyme" },
-  { value: "agromarket", label: "Agromercado" },
-  { value: "market", label: "Mercado" },
-] as const;
-
-const HAVANA_LAT = 23.1444;
-const HAVANA_LNG = -82.3855;
+import {
+  BUSINESS_TYPE_LABELS,
+  DEFAULT_MAP_LAT,
+  DEFAULT_MAP_LNG,
+} from "@/lib/types/business";
 
 const STEP_FIELDS_INFO = [
   "name",
@@ -129,11 +125,10 @@ export default function CreateBusinessPage() {
   useEffect(() => {
     if (isLoadingBusinesses) return;
     if (businesses.length >= maxBusinesses) {
-      sileo.error({
+      toastError({
         title: "Límite de negocios alcanzado",
         description:
           "Alcanzaste el número de negocios que permite tu plan. Cambia a Pro para gestionar más negocios.",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       router.replace("/dashboard");
     }
@@ -168,8 +163,8 @@ export default function CreateBusinessPage() {
       email: "",
       acceptsMessaging: false,
       municipalityId: "",
-      lat: HAVANA_LAT,
-      lng: HAVANA_LNG,
+      lat: DEFAULT_MAP_LAT,
+      lng: DEFAULT_MAP_LNG,
     },
   });
 
@@ -206,42 +201,17 @@ export default function CreateBusinessPage() {
       };
 
       await createBusinessMutation.mutateAsync(payload);
-      sileo.success({
+      toastSuccess({
         title: "Negocio creado correctamente",
         description: "Tu negocio ha sido registrado exitosamente",
-        fill: "",
-        styles: {
-          title: "text-white! text-[16px]! font-bold!",
-          description: "text-white/90! text-[15px]!",
-        },
       });
       router.push("/dashboard");
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          description:
-            error.response?.data?.message ?? "Error al crear el negocio",
-          styles: {
-            description: "text-[#dc2626]/90! text-[15px]!",
-          },
-        });
-        setError("root", {
-          message:
-            error.response?.data?.message ?? "Error al crear el negocio.",
-        });
-      } else {
-        sileo.error({
-          title: "Error",
-          description: "Error al crear el negocio. Intenta de nuevo.",
-          styles: {
-            description: "text-[#dc2626]/90! text-[15px]!",
-          },
-        });
-        setError("root", {
-          message: "Error al crear el negocio. Intenta de nuevo.",
-        });
-      }
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? "Error al crear el negocio."
+        : "Error al crear el negocio. Intenta de nuevo.";
+      toastApiError(error, "Error al crear el negocio. Intenta de nuevo.");
+      setError("root", { message });
     }
   };
 
@@ -337,9 +307,9 @@ export default function CreateBusinessPage() {
                         <SelectValue placeholder="Selecciona un tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {businessTypes.map((bt) => (
-                          <SelectItem key={bt.value} value={bt.value}>
-                            {bt.label}
+                        {Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
                           </SelectItem>
                         ))}
                       </SelectContent>

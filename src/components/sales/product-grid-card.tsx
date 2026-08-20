@@ -22,13 +22,7 @@ import {
   isIntegerUnit,
   parseDecimalInput,
 } from "@/lib/units";
-
-function formatMoney(value: number | string) {
-  return Number(value).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
+import { formatAmount } from "@/lib/currency";
 
 interface ProductGridCardProps {
   bp: BusinessWithProducts;
@@ -139,7 +133,7 @@ export function ProductGridCard({
           {category}
         </span>
         <span className="mt-1 text-base font-bold tabular-nums text-primary">
-          ${formatMoney(bp.price)}
+          ${formatAmount(Number(bp.price))}
           <span className="ml-1 text-xs font-normal text-muted-foreground">
             CUP
           </span>

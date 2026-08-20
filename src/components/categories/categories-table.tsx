@@ -8,9 +8,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import axios from "axios";
-import { sileo } from "sileo";
-import { Loader2, Plus, Tags } from "lucide-react";
+import { Plus, Tags } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,28 +31,18 @@ import {
 import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
+import { toastApiError, toastSuccess } from "@/lib/toast";
 
 import type {
   ExpenseCategory,
   GetAllExpenseCategoriesResponse,
 } from "@/lib/types/expense-category";
-import {
-  createCategoriesColumns,
-  type CategoriesColumnMeta,
-} from "./categories-table-columns";
+import { createCategoriesColumns } from "./categories-table-columns";
 import { CategoryDetailsDialog } from "./category-details-dialog";
 import { CategoryFormDialog } from "./category-form-dialog";
 import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): CategoriesColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as CategoriesColumnMeta;
-  }
-  return {};
-}
 
 interface CategoriesTableProps {
   kind: CategoryKind;
@@ -83,33 +71,13 @@ export function CategoriesTable({
     async (categoryId: string) => {
       try {
         await deleteCategoryMutation.mutateAsync(categoryId);
-        sileo.success({
+        toastSuccess({
           title: "Categoría eliminada correctamente",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
           description: "La categoría se ha eliminado correctamente",
         });
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          sileo.error({
-            title: error.response?.data?.error ?? "Error",
-            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-            description: error.response.data.message,
-          });
-        } else {
-          sileo.error({
-            title: "Error al eliminar la categoría",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
-            description: "Error al eliminar la categoría. Intenta de nuevo.",
-          });
-        }
+        // El toast de error se pintaba con los estilos de éxito (fondo verde).
+        toastApiError(error, "Error al eliminar la categoría. Intenta de nuevo.");
       }
     },
     [deleteCategoryMutation],
@@ -187,18 +155,7 @@ export function CategoriesTable({
             </div>
           ) : (
             <div className="relative">
-              {isFetching ? (
-                <div
-                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando…</span>
-                  </div>
-                </div>
-              ) : null}
+              {isFetching ? <TableLoadingOverlay /> : null}
               <div
                 className={cn(
                   "transition-opacity",

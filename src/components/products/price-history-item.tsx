@@ -4,11 +4,11 @@ import * as React from "react";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import type { PriceHistoryEntry } from "@/lib/types/price-history";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, DASH } from "@/lib/utils";
 import { formatQuantity } from "@/lib/units";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import { useInView } from "@/hooks/use-in-view";
 
-const DASH = "—";
 
 function formatTimeOnly(dateStr: string) {
   try {
@@ -22,13 +22,12 @@ function formatTimeOnly(dateStr: string) {
   }
 }
 
+// Los importes se pintan con `formatMoney`, igual que en el resto del sistema:
+// antes se formateaban en COP y redondeados a entero, así que un precio de
+// 1234,50 CUP se leía como "$ 1.235".
 function formatCurrency(value: number) {
   if (!Number.isFinite(value)) return DASH;
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatMoney(value, BASE_CURRENCY);
 }
 
 function parseNumber(v: string | null): number | null {

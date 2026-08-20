@@ -24,6 +24,7 @@ import { DataTablePaginationNav } from "@/components/data-table/data-table-pagin
 import { PageSizeSelect } from "@/components/data-table/page-size-select"
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 import { useGetProviderProductsQuery } from "@/hooks/use-provider"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency"
 
 interface ProviderProductsTableProps {
@@ -48,14 +49,9 @@ function formatPrice(value: number | string, currency?: string): string {
 
 export function ProviderProductsTable({ providerId }: ProviderProductsTableProps) {
   const [search, setSearch] = React.useState("")
-  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+  const debouncedSearch = useDebouncedValue(search.trim())
   const [page, setPage] = React.useState(1)
   const [limit, setLimit] = React.useState(DEFAULT_LIMIT)
-
-  React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300)
-    return () => clearTimeout(t)
-  }, [search])
 
   React.useEffect(() => {
     setPage(1)

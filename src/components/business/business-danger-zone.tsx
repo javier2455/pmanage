@@ -12,8 +12,7 @@ import { TriangleAlert, Trash2 } from "lucide-react";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { useBusiness } from "@/context/business-context";
 import { useDeleteBusinessMutation } from "@/hooks/use-business";
-import { sileo } from "sileo";
-import axios from "axios";
+import { toastApiError, toastSuccess } from "@/lib/toast";
 
 /** Zona de peligro del negocio: acciones irreversibles (eliminar negocio). */
 export function BusinessDangerZone() {
@@ -52,25 +51,14 @@ export function BusinessDangerZone() {
               if (!activeBusinessId) return;
               try {
                 await deleteBusinessMutation.mutateAsync(activeBusinessId);
-                sileo.success({
+                toastSuccess({
                   title: "Negocio eliminado",
                   description: "El negocio ha sido eliminado correctamente",
-                  fill: "",
-                  styles: {
-                    title: "text-white! text-[16px]! font-bold!",
-                    description: "text-white/90! text-[15px]!",
-                  },
                 });
               } catch (error) {
-                if (axios.isAxiosError(error)) {
-                  sileo.error({
-                    title: error.response?.data?.error ?? "Error",
-                    description:
-                      error.response?.data?.message ??
-                      "No se pudo eliminar el negocio",
-                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-                  });
-                }
+                // Sin este aviso, un fallo de red cerraba el diálogo en
+                // silencio y el negocio parecía eliminado.
+                toastApiError(error, "No se pudo eliminar el negocio");
               }
             }}
             trigger={

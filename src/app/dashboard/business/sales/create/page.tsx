@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useBusiness } from "@/context/business-context"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business"
 import { useCreateSaleMutation } from "@/hooks/use-sales"
 import { useExchangeRate } from "@/hooks/use-exchange"
@@ -28,8 +29,8 @@ import {
 import { ProductGridCard } from "@/components/sales/product-grid-card"
 import { SaleCartPanel } from "@/components/sales/sale-cart-panel"
 import { Search, ArrowLeft, PackageSearch } from "lucide-react"
-import { sileo } from "sileo"
-import axios from "axios"
+import { isAxiosError } from "axios"
+import { toastError, toastSuccess } from "@/lib/toast"
 
 interface CartItem {
   productId: string
@@ -48,17 +49,12 @@ export default function CreateSalesPage() {
   const { activeBusinessId } = useBusiness()
 
   const [search, setSearch] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const debouncedSearch = useDebouncedValue(search.trim())
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [selectedCurrency, setSelectedCurrency] = useState(BASE_CURRENCY)
   // Venta recién creada pendiente de cobro inline (flujo "Registrar venta y cobrar").
   const [createdSaleId, setCreatedSaleId] = useState<string | null>(null)
   const [paymentOpen, setPaymentOpen] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300)
-    return () => clearTimeout(timer)
-  }, [search])
 
   const { data, isLoading } = useAllProductOfMyBusinesses(
     activeBusinessId ?? "",
@@ -203,25 +199,19 @@ export default function CreateSalesPage() {
         return
       }
 
-      sileo.success({
+      toastSuccess({
         title: "Venta registrada correctamente",
-        fill: "",
-        styles: {
-          title: "text-white! text-[16px]! font-bold!",
-          description: "text-white/90! text-[15px]!",
-        },
         description: `Se registraron ${cartItems.length} producto(s) en la venta`,
       })
       setCartItems([])
       router.push("/dashboard/business/sales")
     } catch (error) {
-      let message = "Error al registrar la venta. Intenta de nuevo."
-      if (axios.isAxiosError(error) && error.response?.data?.error === "Not Found") {
-        message = "Producto no encontrado o negocio no encontrado"
-      } else if (axios.isAxiosError(error) && error.response?.data?.message) {
-        message = error.response.data.message
-      }
-      sileo.error({ title: "No se pudo registrar la venta", description: message })
+      const data = isAxiosError(error) ? error.response?.data : undefined
+      const message =
+        data?.error === "Not Found"
+          ? "Producto no encontrado o negocio no encontrado"
+          : data?.message ?? "Error al registrar la venta. Intenta de nuevo."
+      toastError({ title: "No se pudo registrar la venta", description: message })
     }
   }
 

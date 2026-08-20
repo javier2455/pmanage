@@ -2,6 +2,20 @@ import { Product, ProductCategoryEmbed } from "./product";
 
 export type BusinessType = "agromarket" | "mipyme" | "market";
 
+/** Etiqueta visible de cada tipo de negocio. Único origen para selects y fichas. */
+export const BUSINESS_TYPE_LABELS: Record<BusinessType, string> = {
+  mipyme: "MiPyme",
+  agromarket: "Agromercado",
+  market: "Mercado",
+};
+
+/**
+ * Centro por defecto del mapa (La Habana) cuando el negocio todavía no tiene
+ * coordenadas propias.
+ */
+export const DEFAULT_MAP_LAT = 23.1444;
+export const DEFAULT_MAP_LNG = -82.3855;
+
 export type Business = {
   id: string;
   name: string;
@@ -118,7 +132,6 @@ export interface DashboardSummaryResponse {
   expenses: DashboardExpensesStat;
   lastFiveSales: DashboardSummarySale[];
   lastFiveExpenses: DashboardSummaryExpense[];
-  recentActivity: DashboardSummaryActivity[];
 }
 
 /** Total de ventas/gastos de un período agrupado por moneda. */
@@ -159,22 +172,6 @@ export type DashboardSummaryExpense = {
   amount: string | number;
   /** Moneda del gasto. Puede faltar si el backend aún no la incluye aquí; el UI cae a CUP. */
   currency?: string;
-  description: string;
-  createdAt: string;
-};
-
-export type DashboardSummaryActivity = {
-  id: string;
-  actionType: string;
-  productName: string;
-  quantity: number;
-  /**
-   * Unidad del producto (`ud`, `kg`, `L`…). Decide si la cantidad se muestra
-   * redondeada o con decimales. Opcional porque los movimientos cuyo producto
-   * se borró llegan sin producto.
-   */
-  unit?: string | null;
-  currency: string;
   description: string;
   createdAt: string;
 };

@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton"
 import { useBusiness } from "@/context/business-context"
 import { useGetAllProvidersQuery } from "@/hooks/use-provider"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { ProvidersTable } from "@/components/business-providers/providers-table"
 
 const DEFAULT_LIMIT = 10
@@ -16,12 +17,7 @@ export default function ProvidersPage() {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
   const [search, setSearch] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 300)
-    return () => clearTimeout(t)
-  }, [search])
+  const debouncedSearch = useDebouncedValue(search.trim().toLowerCase())
 
   const { data, isLoading, isFetching, isError } = useGetAllProvidersQuery({
     page,

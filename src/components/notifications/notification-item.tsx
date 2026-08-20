@@ -1,9 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/dates";
 import { useMarkNotificationAsRead } from "@/hooks/use-notifications";
 import type { InAppNotification } from "@/lib/types/notification";
 import {
@@ -38,15 +37,7 @@ export function NotificationItem({
     router.push(meta.href(notification.metadata));
   }
 
-  let relativeTime = "";
-  try {
-    relativeTime = formatDistanceToNow(new Date(notification.createdAt), {
-      addSuffix: true,
-      locale: es,
-    });
-  } catch {
-    relativeTime = "";
-  }
+  const relativeTime = formatRelativeTime(notification.createdAt);
 
   return (
     <button

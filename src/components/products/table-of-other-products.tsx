@@ -8,14 +8,14 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import axios from "axios";
-import { sileo } from "sileo";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
+import { toastApiError, toastSuccess } from "@/lib/toast";
 import {
   ArrowDown,
   ArrowUp,
   LayoutGrid,
   List,
-  Loader2,
   Search,
 } from "lucide-react";
 import type { GetAllProductsResponse, Product } from "@/lib/types/product";
@@ -52,20 +52,7 @@ import { useDeleteProductMutation } from "@/hooks/use-product";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 import ProductDetailsDialog from "@/components/products/details-dialog";
-import {
-  createCatalogProductsColumns,
-  type CatalogProductsColumnMeta,
-} from "./catalog-products-table-columns";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): CatalogProductsColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as CatalogProductsColumnMeta;
-  }
-  return {};
-}
+import { createCatalogProductsColumns } from "./catalog-products-table-columns";
 
 interface TableOfOtherProductsProps {
   products: Product[];
@@ -103,34 +90,14 @@ export default function TableOfOtherProducts({
       try {
         const response = await deleteProductMutation.mutateAsync(productId);
         if (response) {
-          sileo.success({
+          toastSuccess({
             title: "Producto eliminado correctamente",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
             description: "El producto se ha eliminado correctamente",
           });
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.data?.message) {
-          sileo.error({
-            title: error.response?.data?.error,
-            styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-            description: error.response?.data?.message,
-          });
-        } else {
-          sileo.error({
-            title: "Error al eliminar el producto",
-            fill: "",
-            styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            },
-            description: "Error al eliminar el producto. Intenta de nuevo.",
-          });
-        }
+        // El toast del caso genérico se pintaba con los estilos de éxito.
+        toastApiError(error, "Error al eliminar el producto. Intenta de nuevo.");
       }
     },
     [deleteProductMutation],
@@ -303,18 +270,7 @@ export default function TableOfOtherProducts({
             </div>
           ) : (
             <div className="relative">
-              {isFetching ? (
-                <div
-                  className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando…</span>
-                  </div>
-                </div>
-              ) : null}
+              {isFetching ? <TableLoadingOverlay /> : null}
               <div
                 className={cn(
                   "transition-opacity",

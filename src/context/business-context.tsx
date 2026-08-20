@@ -15,7 +15,7 @@ import { Business } from "@/lib/types/business";
 import { businessRoutes } from "@/lib/routes/business";
 import apiClient from "@/lib/axios";
 import { useRouter, usePathname } from "next/navigation";
-import { sileo } from "sileo";
+import { toastError } from "@/lib/toast";
 import { clearAuthCookies } from "@/lib/cookies";
 
 type BusinessContextType = {
@@ -93,10 +93,9 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       console.error("BusinessProvider error:", error);
 
       if (isAxiosError(error) && error.response?.status === 401) {
-        sileo.error({
+        toastError({
           title: "Sesión expirada",
           description: "Tu sesión ha expirado. Inicia sesión nuevamente.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
         });
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("refresh_token");
@@ -105,12 +104,11 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         clearAuthCookies();
         router.push("/login");
       } else {
-        sileo.error({
+        toastError({
           title: "Error al cargar negocios",
           description: isAxiosError(error)
             ? error.response?.data?.message ?? "Error de conexión con el servidor"
             : "Error inesperado. Intenta recargar la página.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
         });
       }
       return;

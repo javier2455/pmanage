@@ -8,16 +8,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Product } from "@/lib/types/product";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
-
-export type CatalogProductsColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies CatalogProductsColumnMeta;
+} satisfies ColumnMeta;
 
 function CatalogProductsSortableHeader({
   column,
@@ -59,7 +55,7 @@ export function createCatalogProductsColumns(
           "min-w-[240px] max-w-none whitespace-normal align-top sm:max-w-[min(16rem,40vw)]",
         cellClassName:
           "min-w-[240px] max-w-none whitespace-normal break-words align-top sm:max-w-[min(16rem,40vw)]",
-      } satisfies CatalogProductsColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <CatalogProductsSortableHeader
           column={column}
@@ -97,7 +93,7 @@ export function createCatalogProductsColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies CatalogProductsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

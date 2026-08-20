@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEditProductMutation, useGetProductByIdQuery } from "@/hooks/use-product"
-import { ProductUnit } from "@/lib/types/product"
+import { PRODUCT_UNITS, ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -22,11 +22,10 @@ import { X, RefreshCw, ImagePlus, Upload } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { EditProductFormData, editProductSchema } from "@/lib/validations/products"
-import axios from "axios"
-import { sileo } from "sileo"
+import { isAxiosError } from "axios"
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast"
 import Link from "next/link"
 
-const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
 
 export function EditCatalogProductForm() {
@@ -82,10 +81,9 @@ export function EditCatalogProductForm() {
         if (!file) return
         if (file.size > MAX_IMAGE_SIZE_BYTES) {
             if (fileInputRef.current) fileInputRef.current.value = ""
-            sileo.error({
+            toastError({
                 title: "Imagen demasiado grande",
                 description: "La imagen no debe superar los 2 MB. Elige un archivo más pequeño.",
-                styles: { description: "text-[#dc2626]/90! text-[15px]!" },
             })
             return
         }
@@ -110,26 +108,19 @@ export function EditCatalogProductForm() {
                     imageUrl: imageFile ?? data.imageUrl ?? null,
                 },
             })
-            sileo.success({
+            toastSuccess({
                 title: "Producto actualizado correctamente",
-                fill: "",
-                styles: {
-                    title: "text-white! text-[16px]! font-bold!",
-                    description: "text-white/90! text-[15px]!",
-                },
                 description: "El producto se ha actualizado correctamente",
             })
             reset()
             router.push("/dashboard/business/products")
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message })
-                sileo.error({
-                    title: error.response?.data?.error,
-                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-                    description: error.response?.data?.message,
-                })
-            }
+            const fallback = "Error al actualizar el producto. Intenta de nuevo."
+            const message = isAxiosError(error)
+                ? error.response?.data?.message ?? fallback
+                : fallback
+            toastApiError(error, fallback)
+            setError("root", { message })
         }
     }
 
@@ -202,7 +193,7 @@ export function EditCatalogProductForm() {
                             <Combobox<ProductUnit>
                                 value={selectedUnit}
                                 onValueChange={(u) => setValue("unit", u ?? "kg")}
-                                items={UNITS}
+                                items={[...PRODUCT_UNITS]}
                                 itemToStringLabel={(u) => u ?? ""}
                                 isItemEqualToValue={(a, b) => a === b}
                                 {...register("unit")}
@@ -215,7 +206,7 @@ export function EditCatalogProductForm() {
                                 />
                                 <ComboboxContent>
                                     <ComboboxList className="max-h-64">
-                                        {UNITS.map((u) => (
+                                        {PRODUCT_UNITS.map((u) => (
                                             <ComboboxItem key={u} value={u}>
                                                 {u}
                                             </ComboboxItem>

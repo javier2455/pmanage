@@ -4,7 +4,7 @@ import { useRef, useState } from "react"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { useCreateProductMutation } from "@/hooks/use-product"
-import { ProductUnit } from "@/lib/types/product"
+import { PRODUCT_UNITS, ProductUnit } from "@/lib/types/product"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -22,12 +22,11 @@ import { X, PackagePlus, ImagePlus, Upload } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CreateProductFormData, createProductSchema } from "@/lib/validations/products"
-import axios from "axios"
-import { sileo } from "sileo"
+import { isAxiosError } from "axios"
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast"
 import Link from "next/link"
 
 
-const UNITS: ProductUnit[] = ["kg", "lb", "g", "L", "mL", "ud"]
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
 
 export function NewProductForm() {
@@ -63,10 +62,9 @@ export function NewProductForm() {
         if (!file) return
         if (file.size > MAX_IMAGE_SIZE_BYTES) {
             if (fileInputRef.current) fileInputRef.current.value = ""
-            sileo.error({
+            toastError({
                 title: "Imagen demasiado grande",
                 description: "La imagen no debe superar los 2 MB. Elige un archivo más pequeño.",
-                styles: { description: "text-[#dc2626]/90! text-[15px]!" },
             })
             return
         }
@@ -89,24 +87,22 @@ export function NewProductForm() {
                 imageUrl: imageFile ?? undefined,
             })
             if (response) {
-                sileo.success({
-                    title: "Producto registrado correctamente", fill: '', styles: {
-                        title: "text-white! text-[16px]! font-bold!",
-                        description: "text-white/90! text-[15px]!",
-                    }, description: "El producto se ha registrado correctamente"
+                toastSuccess({
+                    title: "Producto registrado correctamente",
+                    description: "El producto se ha registrado correctamente",
                 });
             }
             reset()
             router.push("/dashboard/business/products")
-            //   setSelectedProduct(null)
-            // handleCancel()
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message });
-                sileo.error({
-                    title: error.response?.data?.error, styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: error.response?.data?.message
-                });
-            }
+            // Antes solo se avisaba si el error traía un mensaje del backend: un
+            // fallo de red dejaba el formulario sin señal de que no se guardó.
+            const fallback = "Error al registrar el producto. Intenta de nuevo."
+            const message = isAxiosError(error)
+                ? error.response?.data?.message ?? fallback
+                : fallback
+            toastApiError(error, fallback)
+            setError("root", { message });
         }
     }
 
@@ -114,7 +110,7 @@ export function NewProductForm() {
         <div className="flex flex-col gap-6">
             {/* Name */}
             <form onSubmit={handleSubmit(onSubmit, () => {
-                sileo.error({ title: "Revisa el formulario", description: "Completa todos los campos requeridos correctamente" })
+                toastError({ title: "Revisa el formulario", description: "Completa todos los campos requeridos correctamente" })
             })}>
                 <div className="flex flex-col gap-2 mb-6">
                     <Label htmlFor="product-name" className="text-card-foreground">
@@ -161,7 +157,7 @@ export function NewProductForm() {
                             <Combobox<ProductUnit>
                                 value={selectedUnit}
                                 onValueChange={(u) => setValue("unit", u ?? "kg")}
-                                items={UNITS}
+                                items={[...PRODUCT_UNITS]}
                                 itemToStringLabel={(u) => u ?? ""}
                                 isItemEqualToValue={(a, b) => a === b}
                                 aria-invalid={errors.unit ? "true" : "false"}
@@ -173,7 +169,7 @@ export function NewProductForm() {
                                 />
                                 <ComboboxContent>
                                     <ComboboxList className="max-h-64">
-                                        {UNITS.map((u) => (
+                                        {PRODUCT_UNITS.map((u) => (
                                             <ComboboxItem key={u} value={u}>
                                                 {u}
                                             </ComboboxItem>

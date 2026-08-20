@@ -11,21 +11,8 @@ import {
 } from "@/components/ui/popover";
 import { DeleteDialog } from "@/components/delete-dialog";
 import type { ExpenseCategory } from "@/lib/types/expense-category";
-
-export type CategoriesColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import type { ColumnMeta } from "@/components/data-table/column-meta";
+import { formatDateTimeShort } from "@/lib/dates";
 
 function CategoriesSortableHeader({
   column,
@@ -65,7 +52,7 @@ export function createCategoriesColumns({
       meta: {
         headerClassName: "min-w-[180px]",
         cellClassName: "min-w-[180px]",
-      } satisfies CategoriesColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <CategoriesSortableHeader column={column} label="Nombre" />
       ),
@@ -81,7 +68,7 @@ export function createCategoriesColumns({
       meta: {
         headerClassName: "min-w-[260px]",
         cellClassName: "min-w-[260px]",
-      } satisfies CategoriesColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <span className="font-medium text-foreground">Descripción</span>
       ),
@@ -97,13 +84,13 @@ export function createCategoriesColumns({
       meta: {
         headerClassName: "min-w-[160px] whitespace-nowrap",
         cellClassName: "min-w-[160px] whitespace-nowrap",
-      } satisfies CategoriesColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <CategoriesSortableHeader column={column} label="Creada" />
       ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {formatDate(row.original.createdAt)}
+          {formatDateTimeShort(row.original.createdAt)}
         </span>
       ),
     },
@@ -113,7 +100,7 @@ export function createCategoriesColumns({
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies CategoriesColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

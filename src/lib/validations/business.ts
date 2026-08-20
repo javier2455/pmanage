@@ -7,14 +7,6 @@ import {
 
 export { isDialCodeOnly };
 
-export const addToCartSchema = z.object({
-  stock: z
-    .number()
-    .min(1, "El monto es requerido")
-    .max(100000, "El monto máximo es de 100,000"),
-  productId: z.string().min(1, "El producto es requerido"),
-});
-
 export const createBusinessSchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(100, "El nombre no puede exceder 100 caracteres"),
   description: z.string().max(500, "La descripción no puede exceder 500 caracteres").nullable(),
@@ -45,6 +37,5 @@ export const updateBusinessSchema = z.object({
   lng: z.number().optional(),
 });
 
-export type AddToCartFormData = z.infer<typeof addToCartSchema>;
 export type CreateBusinessFormData = z.infer<typeof createBusinessSchema>;
 export type UpdateBusinessFormData = z.infer<typeof updateBusinessSchema>;

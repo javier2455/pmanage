@@ -8,26 +8,13 @@ import { CancelSaleDialog } from "./cancel-sale-dialog";
 import { PaymentDialog } from "./payment-dialog";
 import { PaymentStatusBadge, resolvePaymentStatus } from "./payment-status-badge";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
-
-export type SalesColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+import { formatDateTimeShort } from "@/lib/dates";
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies SalesColumnMeta;
-
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+} satisfies ColumnMeta;
 
 function SalesSortableHeader({
   column,
@@ -64,13 +51,13 @@ export function createSalesColumns(
       meta: {
         headerClassName: "min-w-[180px] whitespace-nowrap",
         cellClassName: "min-w-[180px] whitespace-nowrap",
-      } satisfies SalesColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <SalesSortableHeader column={column} label="Fecha" />
       ),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {formatDate(row.original.createdAt)}
+          {formatDateTimeShort(row.original.createdAt)}
         </span>
       ),
     },
@@ -133,7 +120,7 @@ export function createSalesColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies SalesColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

@@ -1,4 +1,4 @@
-import type { ImportProductItem, ImportTarget } from "@/lib/types/product";
+import { PRODUCT_UNITS, type ImportProductItem, type ImportTarget } from "@/lib/types/product";
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Utilidades para la importación masiva de productos desde CSV.
@@ -6,7 +6,7 @@ import type { ImportProductItem, ImportTarget } from "@/lib/types/product";
  * con mensajes accionables y genera el archivo de plantilla descargable.
  * ──────────────────────────────────────────────────────────────────────────── */
 
-export const IMPORT_UNITS = ["kg", "lb", "g", "L", "mL", "ud"] as const;
+export const IMPORT_UNITS = PRODUCT_UNITS;
 export type ImportUnit = (typeof IMPORT_UNITS)[number];
 
 export type ImportColumnKey =

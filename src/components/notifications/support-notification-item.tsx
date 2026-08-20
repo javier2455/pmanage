@@ -1,8 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import {
   CheckCircle2,
   LifeBuoy,
@@ -12,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/dates";
 import { useMarkSupportNotificationAsRead } from "@/hooks/use-support-notification";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import type {
@@ -59,15 +58,7 @@ export function SupportNotificationItem({
     router.push(`${base}?id=${notification.ticketId}`);
   }
 
-  let relativeTime = "";
-  try {
-    relativeTime = formatDistanceToNow(new Date(notification.createdAt), {
-      addSuffix: true,
-      locale: es,
-    });
-  } catch {
-    relativeTime = "";
-  }
+  const relativeTime = formatRelativeTime(notification.createdAt);
 
   return (
     <button

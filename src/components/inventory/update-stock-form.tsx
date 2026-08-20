@@ -55,8 +55,8 @@ import { formatStockWithUnit, isIntegerUnit, parseDecimalInput } from "@/lib/uni
 import { useGetAllProvidersQuery } from "@/hooks/use-provider"
 import type { ProviderWithRelations } from "@/lib/types/provider"
 import Link from "next/link"
-import { sileo } from "sileo"
-import axios from "axios"
+import { toastError, toastSuccess } from "@/lib/toast"
+import { isAxiosError } from "axios"
 
 export function UpdateStockForm() {
   const router = useRouter()
@@ -146,11 +146,9 @@ export function UpdateStockForm() {
         registerAsExpense: data.registerAsExpense,
       })
       if (response) {
-        sileo.success({
-          title: "Stock actualizado correctamente", fill: '', styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          }, description: "El stock se ha actualizado correctamente"
+        toastSuccess({
+          title: "Stock actualizado correctamente",
+          description: "El stock se ha actualizado correctamente",
         });
 
         // Confirmación adicional del gasto auto-registrado (en la moneda original).
@@ -159,11 +157,9 @@ export function UpdateStockForm() {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })
-          sileo.success({
-            title: "Gasto registrado", fill: '', styles: {
-              title: "text-white! text-[16px]! font-bold!",
-              description: "text-white/90! text-[15px]!",
-            }, description: `${expenseAmount} ${selectedCurrency} en Reposición de stock`
+          toastSuccess({
+            title: "Gasto registrado",
+            description: `${expenseAmount} ${selectedCurrency} en Reposición de stock`,
           });
         }
       }
@@ -171,18 +167,20 @@ export function UpdateStockForm() {
       setSelectedProduct(null)
       setSelectedProvider(null)
       router.push("/dashboard/business/inventory")
-      // handleCancel()
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = mapCurrencyError(
-          error,
-          "No se pudo actualizar el stock. Intenta de nuevo.",
-        );
-        setError("root", { message });
-        sileo.error({
-          title: error.response?.data?.error ?? "Error", styles: { description: "text-[#dc2626]/90! text-[15px]!" }, description: message
-        });
-      }
+      // mapCurrencyError ya cae al texto genérico, así que cubre también un
+      // fallo de red: antes ese caso no mostraba nada.
+      const message = mapCurrencyError(
+        error,
+        "No se pudo actualizar el stock. Intenta de nuevo.",
+      );
+      setError("root", { message });
+      toastError({
+        title: isAxiosError(error)
+          ? error.response?.data?.error ?? "Error"
+          : "Error",
+        description: message,
+      });
     }
   }
 

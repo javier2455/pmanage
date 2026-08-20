@@ -35,13 +35,9 @@ export async function updateBusiness(businessId: string, payload: UpdateBusiness
 }
 
 export async function deleteBusiness(businessId: string) {
-    const response = await apiClient.delete(businessRoutes.deleteBusiness(businessId));
-
-    if (response.status >= 200 && response.status < 300) {
-        return { success: true, message: "Negocio eliminado correctamente" };
-    }
-
-    return { success: false, message: "Error al eliminar el negocio" };
+    // Un status fuera de 2xx ya llega como excepción de axios, así que aquí no
+    // hay caso de error que distinguir.
+    await apiClient.delete(businessRoutes.deleteBusiness(businessId));
 }
 
 export async function getDashboardSummary(businessId: string): Promise<DashboardSummaryResponse> {

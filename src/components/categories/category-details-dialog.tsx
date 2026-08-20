@@ -14,18 +14,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatDateTimeLong } from "@/lib/dates";
 import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
-
-function formatDate(date?: string) {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 interface CategoryDetailsDialogProps {
   kind: CategoryKind;
@@ -112,7 +102,7 @@ export function CategoryDetailsDialog({
                 Fecha de creación
               </span>
               <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(data.createdAt)}
+                {data.createdAt ? formatDateTimeLong(data.createdAt) : "—"}
               </span>
             </div>
 
@@ -121,7 +111,7 @@ export function CategoryDetailsDialog({
                 Última actualización
               </span>
               <span className="text-sm font-medium text-card-foreground tabular-nums">
-                {formatDate(data.updatedAt)}
+                {data.updatedAt ? formatDateTimeLong(data.updatedAt) : "—"}
               </span>
             </div>
           </div>

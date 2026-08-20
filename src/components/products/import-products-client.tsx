@@ -18,7 +18,8 @@ import {
   Store,
   ChevronDown,
 } from "lucide-react";
-import { sileo } from "sileo";
+import { isAxiosError } from "axios";
+import { toastError, toastSuccess } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useBusiness } from "@/context/business-context";
 import { useImportProductsMutation } from "@/hooks/use-product";
@@ -365,21 +366,19 @@ export function ImportProductsClient() {
       await downloadTemplateXlsx();
     } catch {
       downloadTemplateCsv();
-      sileo.error({
+      toastError({
         title: "Se descargó en CSV",
         description:
           "No se pudo generar el Excel; te descargamos la plantilla en CSV (misma estructura).",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
     }
   }
 
   async function handleImport(dryRun: boolean) {
     if (!activeBusinessId) {
-      sileo.error({
+      toastError({
         title: "Sin negocio activo",
         description: "Selecciona un negocio antes de importar.",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       return;
     }
@@ -391,10 +390,9 @@ export function ImportProductsClient() {
       .map(({ v }) => toImportItem(v.item));
 
     if (items.length === 0) {
-      sileo.error({
+      toastError({
         title: "Nada que importar",
         description: "No hay filas válidas. Corrige los errores marcados.",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
       });
       return;
     }
@@ -419,29 +417,18 @@ export function ImportProductsClient() {
       } else {
         setResult(response.data);
         setPreview(null);
-        sileo.success({
+        toastSuccess({
           title: "Importación completada",
-          fill: "",
-          styles: {
-            title: "text-white! text-[16px]! font-bold!",
-            description: "text-white/90! text-[15px]!",
-          },
           description: `Se registraron ${response.data.businessProductsCreated || response.data.productsCreated} productos.`,
         });
       }
-    } catch (error: unknown) {
-      const message =
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        (error as { response?: { data?: { message?: string } } }).response?.data
-          ?.message;
-      sileo.error({
+    } catch (error) {
+      const fallback = "No se pudo completar la importación. Intenta de nuevo.";
+      toastError({
         title: "Error al importar",
-        description:
-          (message as string) ||
-          "No se pudo completar la importación. Intenta de nuevo.",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
+        description: isAxiosError(error)
+          ? error.response?.data?.message ?? fallback
+          : fallback,
       });
     }
   }

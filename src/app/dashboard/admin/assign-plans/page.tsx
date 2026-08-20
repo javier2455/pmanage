@@ -1,12 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import axios from "axios"
 import { sileo } from "sileo"
 import { BadgeDollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useGetAllUsersData, useGetUserPlanStats } from "@/hooks/use-user"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useGetAllPlans, useAssignPlanMutation, useRemoveUserPlanMutation } from "@/hooks/use-plans"
 import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
@@ -50,14 +51,7 @@ export default function AssignPlansPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [searchInput, setSearchInput] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-
-  useEffect(() => {
-    const handle = window.setTimeout(() => {
-      setDebouncedSearch(searchInput.trim())
-    }, SEARCH_DEBOUNCE_MS)
-    return () => window.clearTimeout(handle)
-  }, [searchInput])
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), SEARCH_DEBOUNCE_MS)
 
   /**
    * Reset a la primera página cuando cambia la búsqueda (ya debounced) o el

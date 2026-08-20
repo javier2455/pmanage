@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProductCostLayers } from "@/hooks/use-inventory";
 import type { InventoryCostLayer } from "@/lib/types/inventory";
 import { formatStockWithUnit } from "@/lib/units";
-import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { formatDateShort } from "@/lib/dates";
+import { cn, DASH } from "@/lib/utils";
 
-const DASH = "—";
 
 /**
  * Importe con su moneda real.
@@ -20,12 +21,10 @@ const DASH = "—";
  * un lote comprado en dólares tiene que verse en dólares.
  */
 function formatAmount(value: number, currency: string) {
+    // Con `Intl` en es-ES esto imprimía "1.234,50 CUP"; el resto del sistema
+    // muestra "1,234.50 CUP".
     if (!Number.isFinite(value)) return DASH;
-    const formatted = new Intl.NumberFormat("es-ES", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(value);
-    return `${formatted} ${currency}`;
+    return formatMoney(value, currency);
 }
 
 /**
@@ -36,18 +35,6 @@ function formatAmount(value: number, currency: string) {
 function formatLayerQuantity(value: number, unit?: string | null) {
     if (!Number.isFinite(value)) return DASH;
     return formatStockWithUnit(value, unit);
-}
-
-function formatDate(value: string) {
-    try {
-        return new Intl.DateTimeFormat("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        }).format(new Date(value));
-    } catch {
-        return DASH;
-    }
 }
 
 interface ProductCostLayersProps {
@@ -207,7 +194,7 @@ function CostLayerRow({
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                    Comprado el {formatDate(layer.acquiredAt)}
+                    Comprado el {formatDateShort(layer.acquiredAt)}
                     {layer.providerName ? ` a ${layer.providerName}` : ""}
                     {layer.originalQuantity !== layer.remainingQuantity
                         ? ` · lote original de ${formatLayerQuantity(layer.originalQuantity, unit)}`

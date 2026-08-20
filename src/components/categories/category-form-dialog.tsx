@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
+import { isAxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sileo } from "sileo";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -30,18 +29,14 @@ import {
 } from "@/components/ui/select";
 
 import {
-  CreateExpenseCategoryFormData,
-  createExpenseCategorySchema,
-} from "@/lib/validations/expense-category";
+  createCategorySchema,
+  type CreateCategoryFormData,
+} from "@/lib/validations/category";
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast";
 import { useBusiness } from "@/context/business-context";
 import { CATEGORY_KINDS, type CategoryKind } from "./kind-config";
 
-type CategoryFormData = CreateExpenseCategoryFormData;
-
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-};
+type CategoryFormData = CreateCategoryFormData;
 
 interface CategoryFormDialogProps {
   kind: CategoryKind;
@@ -90,7 +85,7 @@ export function CategoryFormDialog({
     watch,
     formState: { errors },
   } = useForm<CategoryFormData>({
-    resolver: zodResolver(createExpenseCategorySchema),
+    resolver: zodResolver(createCategorySchema),
     defaultValues: {
       name: defaultValues?.name ?? "",
       description: defaultValues?.description ?? "",
@@ -124,10 +119,8 @@ export function CategoryFormDialog({
             description: formData.description,
           },
         });
-        sileo.success({
+        toastSuccess({
           title: "Categoría actualizada correctamente",
-          fill: "",
-          styles: SUCCESS_TOAST_STYLES,
           description: "La categoría se ha actualizado correctamente",
         });
       } else {
@@ -138,29 +131,20 @@ export function CategoryFormDialog({
           return;
         }
         await createMutation.mutateAsync(formData);
-        sileo.success({
+        toastSuccess({
           title: "Categoría creada correctamente",
-          fill: "",
-          styles: SUCCESS_TOAST_STYLES,
           description: "La categoría se ha creado correctamente",
         });
       }
       setOpen(false);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message });
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: error.response.data.message,
-        });
-      } else {
-        setError("root", {
-          message: isEdit
-            ? "Error al actualizar la categoría. Intenta de nuevo."
-            : "Error al crear la categoría. Intenta de nuevo.",
-        });
-      }
+      const fallback = isEdit
+        ? "Error al actualizar la categoría. Intenta de nuevo."
+        : "Error al crear la categoría. Intenta de nuevo.";
+      // Antes, un error sin `message` en la respuesta solo pintaba el texto al
+      // pie del formulario: si el diálogo estaba scrolleado no se veía nada.
+      toastApiError(error, fallback);
+      setError("root", { message: isAxiosError(error) ? error.response?.data?.message ?? fallback : fallback });
     }
   }
 
@@ -176,7 +160,7 @@ export function CategoryFormDialog({
 
         <form
           onSubmit={handleSubmit(onSubmit, () => {
-            sileo.error({
+            toastError({
               title: "Revisa el formulario",
               description: "Completa todos los campos requeridos correctamente",
             });

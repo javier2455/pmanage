@@ -7,7 +7,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
-import { History, Loader2, Package, Plus } from "lucide-react";
+import { History, Package, Plus } from "lucide-react";
 import type {
   CurrentInventoryEntry,
   InventoryMeta,
@@ -35,20 +35,9 @@ import {
 import { cn } from "@/lib/utils";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
-import {
-  buildCurrentInventoryColumns,
-  type CurrentInventoryColumnMeta,
-} from "./current-inventory-table-columns";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): CurrentInventoryColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as CurrentInventoryColumnMeta;
-  }
-  return {};
-}
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
+import { buildCurrentInventoryColumns } from "./current-inventory-table-columns";
 
 interface TableOfCurrentInventoryProps {
   entries: CurrentInventoryEntry[];
@@ -172,18 +161,7 @@ export default function TableOfCurrentInventory({
           </div>
         ) : (
           <div className="relative">
-            {isFetching ? (
-              <div
-                className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                role="status"
-                aria-live="polite"
-              >
-                <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Cargando…</span>
-                </div>
-              </div>
-            ) : null}
+            {isFetching ? <TableLoadingOverlay /> : null}
             <div
               className={cn(
                 "transition-opacity",

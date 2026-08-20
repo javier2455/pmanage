@@ -15,10 +15,11 @@ interface GetAllExpenseCategoriesParams {
 }
 
 interface RawListResponse {
+  message?: string;
   data: ExpenseCategory[];
-  total: number;
-  page: number;
-  limit: number;
+  total?: number;
+  page?: number;
+  limit?: number;
 }
 
 interface SingleResponse<T> {
@@ -35,14 +36,20 @@ export async function getAllExpenseCategories({
     expensesRoutes.getAllExpenseCategory,
     { params: { page, limit, businessId } },
   );
-  const safeLimit = data.limit || limit || 0;
+  // Misma normalización que en `product-category.ts`: el backend puede omitir
+  // los campos de paginación y sin esto la tabla se quedaba en "0 categorías".
+  const items = data.data ?? [];
+  const resolvedTotal = data.total ?? items.length;
+  const resolvedPage = data.page ?? page ?? 1;
+  const resolvedLimit = data.limit ?? limit ?? items.length;
   return {
-    data: data.data,
+    data: items,
     meta: {
-      total: data.total,
-      page: data.page,
-      limit: data.limit,
-      totalPages: safeLimit > 0 ? Math.ceil(data.total / safeLimit) : 0,
+      total: resolvedTotal,
+      page: resolvedPage,
+      limit: resolvedLimit,
+      totalPages:
+        resolvedLimit > 0 ? Math.ceil(resolvedTotal / resolvedLimit) : 0,
     },
   };
 }

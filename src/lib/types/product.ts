@@ -1,6 +1,10 @@
 import { BusinessProduct, BusinessType } from "./business";
 
-export type ProductUnit = "kg" | "lb" | "g" | "L" | "mL" | "ud";
+/** Unidades de medida admitidas. Único origen: de aquí salen el tipo, los
+ *  `z.enum` de validación, los selects de los formularios y la importación. */
+export const PRODUCT_UNITS = ["kg", "lb", "g", "L", "mL", "ud"] as const;
+
+export type ProductUnit = (typeof PRODUCT_UNITS)[number];
 
 export type ProductCategoryEmbed = {
     id: string;

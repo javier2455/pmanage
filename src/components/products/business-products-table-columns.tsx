@@ -6,27 +6,17 @@ import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ProductToShowInTable } from "@/lib/types/product";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 import { formatQuantity } from "@/lib/units";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { ProductImage } from "@/components/products/product-image";
 import { EditBusinessProductDialog } from "@/components/products/edit-business-product-dialog";
 
-export type BusinessProductsColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
-
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies BusinessProductsColumnMeta;
-
-function formatCurrency(value: string | number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(Number(value));
-}
+} satisfies ColumnMeta;
 
 function BusinessProductsSortableHeader({
   column,
@@ -69,7 +59,7 @@ export function createBusinessProductsColumns(
           "min-w-[240px] max-w-none whitespace-normal align-top sm:max-w-[min(16rem,40vw)]",
         cellClassName:
           "min-w-[240px] max-w-none whitespace-normal break-words align-top sm:max-w-[min(16rem,40vw)]",
-      } satisfies BusinessProductsColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <BusinessProductsSortableHeader
           column={column}
@@ -99,7 +89,7 @@ export function createBusinessProductsColumns(
       ),
       cell: ({ row }) => (
         <span className="tabular-nums text-foreground">
-          {formatCurrency(row.original.price)}
+          {formatMoney(Number(row.original.price), BASE_CURRENCY)}
         </span>
       ),
     },
@@ -144,7 +134,7 @@ export function createBusinessProductsColumns(
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies BusinessProductsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

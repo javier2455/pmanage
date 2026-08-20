@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import { sileo } from "sileo";
 
 /**
@@ -36,4 +37,23 @@ export function toastError({ title, description }: ToastPayload) {
     styles: ERROR_TOAST_STYLES,
     description,
   });
+}
+
+/**
+ * Toast de error para un fallo de API.
+ *
+ * Toma `error`/`message` de la respuesta del backend cuando el fallo viene con
+ * ella, y cae a `fallback` cuando es un error de red o inesperado. Existe para
+ * no repetir el mismo `isAxiosError` con sus dos ramas en cada `catch`.
+ */
+export function toastApiError(error: unknown, fallback: string) {
+  if (isAxiosError(error)) {
+    toastError({
+      title: error.response?.data?.error ?? "Error",
+      description: error.response?.data?.message ?? fallback,
+    });
+    return;
+  }
+
+  toastError({ title: "Error", description: fallback });
 }

@@ -4,6 +4,7 @@ import * as React from "react"
 import { Loader2 } from "lucide-react"
 
 import { useInfiniteProductsQuery } from "@/hooks/use-product"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import type { Product } from "@/lib/types/product"
 import {
   Combobox,
@@ -39,18 +40,13 @@ export function ProductCombobox({
   pageSize = 20,
 }: ProductComboboxProps) {
   const [search, setSearch] = React.useState("")
-  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+  // Sin debounce se dispararía una request por tecla.
+  const debouncedSearch = useDebouncedValue(search.trim())
   // Guardamos el producto elegido aparte para que su nombre siga mostrándose
   // aunque ya no esté en la página/búsqueda actual del servidor.
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(
     null,
   )
-
-  // Debounce del término de búsqueda para no disparar una request por tecla.
-  React.useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300)
-    return () => clearTimeout(timer)
-  }, [search])
 
   // Si el formulario resetea el valor, limpiamos la selección visible.
   React.useEffect(() => {

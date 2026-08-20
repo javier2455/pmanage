@@ -4,8 +4,8 @@ import * as React from "react"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import axios from "axios"
-import { sileo } from "sileo"
+import { isAxiosError } from "axios"
+import { toastApiError, toastSuccess } from "@/lib/toast"
 import { ArrowDown, ArrowUp, RefreshCw, X } from "lucide-react"
 
 import {
@@ -68,10 +68,6 @@ type CategoryOption = { id: string; name: string }
  * colombianos era solo un resto del formato por defecto y confundía justo aquí,
  * donde ahora conviven dos monedas.
  */
-function formatCurrency(value: number) {
-    return formatMoney(value, BASE_CURRENCY)
-}
-
 export function EditBusinessProductDialog({
     open,
     onOpenChange,
@@ -168,7 +164,7 @@ export function EditBusinessProductDialog({
         )
         if (nextPrice > MAX_PRODUCT_PRICE) {
             setError("price", {
-                message: `El precio equivale a ${formatCurrency(nextPrice)} y el máximo es ${formatCurrency(MAX_PRODUCT_PRICE)}.`,
+                message: `El precio equivale a ${formatMoney(nextPrice, BASE_CURRENCY)} y el máximo es ${formatMoney(MAX_PRODUCT_PRICE, BASE_CURRENCY)}.`,
             })
             return
         }
@@ -203,13 +199,8 @@ export function EditBusinessProductDialog({
                 })
             }
 
-            sileo.success({
+            toastSuccess({
                 title: "Producto actualizado correctamente",
-                fill: "",
-                styles: {
-                    title: "text-white! text-[16px]! font-bold!",
-                    description: "text-white/90! text-[15px]!",
-                },
                 description:
                     priceChanged && categoryChanged
                         ? "Se actualizaron el precio y la categoría del producto"
@@ -219,14 +210,12 @@ export function EditBusinessProductDialog({
             })
             onOpenChange(false)
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message })
-                sileo.error({
-                    title: error.response?.data?.error,
-                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-                    description: error.response?.data?.message,
-                })
-            }
+            const fallback = "Error al actualizar el producto. Intenta de nuevo."
+            const message = isAxiosError(error)
+                ? error.response?.data?.message ?? fallback
+                : fallback
+            toastApiError(error, fallback)
+            setError("root", { message })
         }
     }
 
@@ -306,7 +295,7 @@ export function EditBusinessProductDialog({
                         <span className="text-muted-foreground">
                             Actual:{" "}
                             <span className="font-medium text-foreground tabular-nums">
-                                {formatCurrency(currentPrice)}
+                                {formatMoney(currentPrice, BASE_CURRENCY)}
                             </span>
                         </span>
                         {delta !== 0 && newPrice !== undefined && (
@@ -324,7 +313,7 @@ export function EditBusinessProductDialog({
                                     <ArrowDown className="size-3" />
                                 )}
                                 {delta > 0 ? "+" : ""}
-                                {formatCurrency(delta)} ({deltaPct > 0 ? "+" : ""}
+                                {formatMoney(delta, BASE_CURRENCY)} ({deltaPct > 0 ? "+" : ""}
                                 {deltaPct.toFixed(1)}%)
                             </span>
                         )}

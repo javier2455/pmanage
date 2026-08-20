@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
-import axios from "axios"
-import { sileo } from "sileo"
+import { isAxiosError } from "axios"
+import { toastError, toastSuccess } from "@/lib/toast"
 import { X, Link2, BellRing } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -106,7 +106,7 @@ export function AssignProductToBusinessForm() {
 
   async function onSubmit(data: AssignProductToBusinessFormData) {
     if (!activeBusinessId) {
-      sileo.error({
+      toastError({
         title: "Negocio no seleccionado",
         description: "Selecciona un negocio para continuar",
       })
@@ -192,13 +192,8 @@ export function AssignProductToBusinessForm() {
           selectedCurrency !== BASE_CURRENCY ? (rate ?? undefined) : undefined,
       })
 
-      sileo.success({
+      toastSuccess({
         title: "Producto asignado correctamente",
-        fill: "",
-        styles: {
-          title: "text-white! text-[16px]! font-bold!",
-          description: "text-white/90! text-[15px]!",
-        },
         description: "El producto se ha asignado a tu negocio correctamente",
       })
 
@@ -206,18 +201,19 @@ export function AssignProductToBusinessForm() {
       setSelectedProduct(null)
       router.push("/dashboard/business/products")
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = mapCurrencyError(
-          error,
-          "No se pudo asignar el producto. Intenta de nuevo.",
-        )
-        setError("root", { message })
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: message,
-        })
-      }
+      // mapCurrencyError traduce los códigos de moneda del backend y ya cae al
+      // texto genérico, así que cubre también un fallo de red.
+      const message = mapCurrencyError(
+        error,
+        "No se pudo asignar el producto. Intenta de nuevo.",
+      )
+      setError("root", { message })
+      toastError({
+        title: isAxiosError(error)
+          ? error.response?.data?.error ?? "Error"
+          : "Error",
+        description: message,
+      })
     }
   }
 
@@ -236,7 +232,7 @@ export function AssignProductToBusinessForm() {
     <div className="flex flex-col gap-6">
       <form
         onSubmit={handleSubmit(onSubmit, () => {
-          sileo.error({
+          toastError({
             title: "Revisa el formulario",
             description: "Completa todos los campos requeridos correctamente",
           })

@@ -8,29 +8,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProductLotProfitability } from "@/hooks/use-inventory";
 import type { LotProfitability } from "@/lib/types/inventory";
 import { formatStockWithUnit } from "@/lib/units";
-import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
+import { formatDateShort } from "@/lib/dates";
+import { cn, DASH } from "@/lib/utils";
 
-const DASH = "—";
 
 function formatAmount(value: number, currency: string) {
+    // Con `Intl` en es-ES esto imprimía "1.234,50 CUP"; el resto del sistema
+    // muestra "1,234.50 CUP".
     if (!Number.isFinite(value)) return DASH;
-    const formatted = new Intl.NumberFormat("es-ES", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(value);
-    return `${formatted} ${currency}`;
-}
-
-function formatDate(value: string) {
-    try {
-        return new Intl.DateTimeFormat("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        }).format(new Date(value));
-    } catch {
-        return DASH;
-    }
+    return formatMoney(value, currency);
 }
 
 interface ProductLotProfitabilityProps {
@@ -230,7 +217,7 @@ function LotRow({
                         Lote de {formatAmount(lot.unitCost, lot.currency)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                        {formatDate(lot.acquiredAt)}
+                        {formatDateShort(lot.acquiredAt)}
                         {lot.providerName ? ` · ${lot.providerName}` : ""}
                     </span>
                     {isExhausted && (

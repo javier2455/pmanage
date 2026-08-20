@@ -5,19 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { ProductImage } from "@/components/products/product-image";
 import { BusinessProductActionsCell } from "@/components/products/business-products-table-columns";
 import type { ProductToShowInTable } from "@/lib/types/product";
+import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import {
   DEFAULT_LOW_STOCK_THRESHOLD,
   getStockAlertStatus,
   STOCK_ALERT_LABELS,
 } from "@/lib/stock-alert";
 import { formatStockWithUnit } from "@/lib/units";
-
-function formatCurrency(value: string | number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-  }).format(Number(value));
-}
 
 interface ProductCatalogCardProps {
   bp: ProductToShowInTable;
@@ -93,7 +87,7 @@ export function ProductCatalogCard({
       {/* Precio + acciones */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-base font-bold tabular-nums text-primary">
-          {formatCurrency(bp.price)}
+          {formatMoney(Number(bp.price), BASE_CURRENCY)}
         </span>
         <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <BusinessProductActionsCell row={bp} onDelete={onDelete} />

@@ -46,25 +46,41 @@ import { Switch } from "@/components/ui/switch";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBusiness } from "@/context/business-context";
-import { sileo } from "sileo";
-import axios from "axios";
-import { BusinessType } from "@/lib/types/business";
+import { toastApiError, toastSuccess } from "@/lib/toast";
+import {
+  BUSINESS_TYPE_LABELS,
+  DEFAULT_MAP_LAT,
+  DEFAULT_MAP_LNG,
+  type Business,
+  type BusinessType,
+} from "@/lib/types/business";
 import { LocationMap } from "@/components/business/location-map";
 import { BusinessLocationStep } from "@/components/business/business-location-step";
-
-const HAVANA_LAT = 23.1444;
-const HAVANA_LNG = -82.3855;
 
 function toCoord(value: unknown, fallback: number): number {
   const num = typeof value === "number" ? value : Number(value);
   return Number.isFinite(num) ? num : fallback;
 }
 
-const businessTypeLabels: Record<string, string> = {
-  mipyme: "MiPyme",
-  agromarket: "Agromercado",
-  market: "Mercado",
-};
+/**
+ * Valores del formulario a partir del negocio activo. Lo usan tanto el montaje
+ * como el botón "Editar": si cada uno armara su propio objeto, añadir un campo
+ * en un solo sitio dejaría el otro cargando datos viejos.
+ */
+function formValuesFrom(business: Business | null): UpdateBusinessFormData {
+  return {
+    name: business?.name ?? "",
+    description: business?.description ?? "",
+    type: (business?.type as BusinessType) ?? "mipyme",
+    address: business?.address ?? "",
+    phone: business?.phone ?? "",
+    email: business?.email ?? "",
+    acceptsMessaging: business?.acceptsMessaging ?? false,
+    municipalityId: business?.municipality?.id ?? business?.municipalityId ?? "",
+    lat: toCoord(business?.lat, DEFAULT_MAP_LAT),
+    lng: toCoord(business?.lng, DEFAULT_MAP_LNG),
+  };
+}
 
 function EditableFieldWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -130,24 +146,13 @@ export function BusinessDetailsForm() {
     formState: { errors },
   } = useForm<UpdateBusinessFormData>({
     resolver: zodResolver(updateBusinessSchema),
-    defaultValues: {
-      name: activeBusiness?.name ?? "",
-      description: activeBusiness?.description ?? "",
-      type: (activeBusiness?.type as BusinessType) ?? "mipyme",
-      address: activeBusiness?.address ?? "",
-      phone: activeBusiness?.phone ?? "",
-      email: activeBusiness?.email ?? "",
-      acceptsMessaging: activeBusiness?.acceptsMessaging ?? false,
-      municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
-      lat: toCoord(activeBusiness?.lat, HAVANA_LAT),
-      lng: toCoord(activeBusiness?.lng, HAVANA_LNG),
-    },
+    defaultValues: formValuesFrom(activeBusiness),
   });
 
   const selectedType = watch("type");
   const watchedAcceptsMessaging = watch("acceptsMessaging");
-  const watchedLat = toCoord(watch("lat"), toCoord(activeBusiness?.lat, HAVANA_LAT));
-  const watchedLng = toCoord(watch("lng"), toCoord(activeBusiness?.lng, HAVANA_LNG));
+  const watchedLat = toCoord(watch("lat"), toCoord(activeBusiness?.lat, DEFAULT_MAP_LAT));
+  const watchedLng = toCoord(watch("lng"), toCoord(activeBusiness?.lng, DEFAULT_MAP_LNG));
   const watchedAddress = watch("address");
   const watchedMunicipalityId = watch("municipalityId");
 
@@ -161,18 +166,7 @@ export function BusinessDetailsForm() {
   };
 
   function handleEdit() {
-    reset({
-      name: activeBusiness?.name ?? "",
-      description: activeBusiness?.description ?? "",
-      type: (activeBusiness?.type as BusinessType) ?? "mipyme",
-      address: activeBusiness?.address ?? "",
-      phone: activeBusiness?.phone ?? "",
-      email: activeBusiness?.email ?? "",
-      acceptsMessaging: activeBusiness?.acceptsMessaging ?? false,
-      municipalityId: activeBusiness?.municipality?.id ?? activeBusiness?.municipalityId ?? "",
-      lat: toCoord(activeBusiness?.lat, HAVANA_LAT),
-      lng: toCoord(activeBusiness?.lng, HAVANA_LNG),
-    });
+    reset(formValuesFrom(activeBusiness));
     setIsEditing(true);
   }
 
@@ -201,30 +195,13 @@ export function BusinessDetailsForm() {
         },
       });
 
-      sileo.success({
+      toastSuccess({
         title: "Negocio actualizado correctamente",
         description: "Los datos del negocio han sido guardados",
-        fill: "",
-        styles: {
-          title: "text-white! text-[16px]! font-bold!",
-          description: "text-white/90! text-[15px]!",
-        },
       });
       setIsEditing(false);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          description: error.response?.data?.message ?? "Error al actualizar el negocio",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        });
-      } else {
-        sileo.error({
-          title: "Error",
-          description: "Error al actualizar el negocio. Intenta de nuevo.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        });
-      }
+      toastApiError(error, "Error al actualizar el negocio. Intenta de nuevo.");
     }
   };
 
@@ -318,9 +295,11 @@ export function BusinessDetailsForm() {
                         </div>
                       </SelectTrigger>
                       <SelectContent align="start" position="popper">
-                        <SelectItem value="mipyme">MiPyme</SelectItem>
-                        <SelectItem value="agromarket">Agromercado</SelectItem>
-                        <SelectItem value="market">Mercado</SelectItem>
+                        {Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {errors.type && (
@@ -335,7 +314,7 @@ export function BusinessDetailsForm() {
                       <Tags className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="text-sm text-foreground">
                         {activeBusiness?.type
-                          ? businessTypeLabels[activeBusiness.type] ?? activeBusiness.type
+                          ? BUSINESS_TYPE_LABELS[activeBusiness.type] ?? activeBusiness.type
                           : "-"}
                       </span>
                     </div>
@@ -685,8 +664,8 @@ export function BusinessDetailsForm() {
             />
           ) : activeBusiness?.lat != null && activeBusiness?.lng != null ? (
             <LocationMap
-              lat={toCoord(activeBusiness.lat, HAVANA_LAT)}
-              lng={toCoord(activeBusiness.lng, HAVANA_LNG)}
+              lat={toCoord(activeBusiness.lat, DEFAULT_MAP_LAT)}
+              lng={toCoord(activeBusiness.lng, DEFAULT_MAP_LNG)}
               readOnly
               className="w-full h-80 rounded-lg border border-border overflow-hidden"
             />

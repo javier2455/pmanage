@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Clock, Eraser, Info, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { sileo } from "sileo";
+import { toastError, toastSuccess } from "@/lib/toast";
 import {
   useBusinessSchedule,
   useUpsertBusinessSchedule,
@@ -132,9 +132,8 @@ export function BusinessScheduleCard({
     saveSchedule(
       { businessId, schedules: formToPayload(data.days) },
       {
-        onSuccess: () => sileo.success({ title: "Horario guardado" }),
-        onError: () =>
-          sileo.error({ title: "No se pudo guardar el horario" }),
+        onSuccess: () => toastSuccess({ title: "Horario guardado" }),
+        onError: () => toastError({ title: "No se pudo guardar el horario" }),
       },
     );
   }

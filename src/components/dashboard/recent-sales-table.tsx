@@ -1,21 +1,12 @@
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { DashboardSummarySale } from "@/lib/types/business";
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
+import { formatRelativeTime } from "@/lib/dates";
 import { StatusBadge } from "@/components/generic/status-badge";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { RecentListSkeleton } from "./recent-list-skeleton";
-
-function formatRelativeTime(iso: string) {
-    try {
-        return formatDistanceToNow(new Date(iso), { addSuffix: true, locale: es });
-    } catch {
-        return "";
-    }
-}
 
 type RecentSalesTableProps = {
     sales?: DashboardSummarySale[];

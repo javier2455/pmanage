@@ -23,7 +23,7 @@ import {
   Save,
   TriangleAlert,
 } from "lucide-react";
-import { sileo } from "sileo";
+import { toastError, toastSuccess } from "@/lib/toast";
 import { isValidPhone } from "@/lib/validations/phone";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import type { PlanFeatureKey } from "@/lib/plan-features";
@@ -152,6 +152,10 @@ const CATEGORIES: NotificationCategory[] = [
   },
 ];
 
+/** Claves visibles, en el orden en que se muestran. El payload solo debe
+ * tocar estas para no pisar configuración oculta. */
+const ACTIVE_KEYS = CATEGORIES.flatMap((c) => c.items.map((i) => i.key));
+
 /** Convierte la respuesta del backend (arrays por alerta) a la matriz de la UI. */
 function settingsToMatrix(settings: BusinessSettings): ChannelMatrix {
   const matrix: ChannelMatrix = structuredClone(EMPTY_MATRIX);
@@ -196,9 +200,6 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   const { mutate: saveSettings, isPending } = useUpdateBusinessSettings();
 
   const [matrix, setMatrix] = useState<ChannelMatrix>(EMPTY_MATRIX);
-
-  const categories = CATEGORIES;
-  const activeKeys = categories.flatMap((c) => c.items.map((i) => i.key));
 
   // Sincroniza la matriz con la config que llega del backend. Se hace en render
   // (rastreando la referencia previa de `settings`) en vez de en un efecto, para
@@ -245,12 +246,12 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
   function handleSave() {
     if (!businessId) return;
     saveSettings(
-      { businessId, payload: matrixToPayload(matrix, activeKeys) },
+      { businessId, payload: matrixToPayload(matrix, ACTIVE_KEYS) },
       {
         onSuccess: () =>
-          sileo.success({ title: "Preferencias de notificaciones guardadas" }),
+          toastSuccess({ title: "Preferencias de notificaciones guardadas" }),
         onError: () =>
-          sileo.error({ title: "No se pudieron guardar las preferencias" }),
+          toastError({ title: "No se pudieron guardar las preferencias" }),
       },
     );
   }
@@ -291,7 +292,7 @@ export function NotificationSettingsCard({ business }: { business: Business | nu
 
             {/* Notification categories */}
             <div className="flex flex-col gap-4">
-              {categories.map((category) => (
+              {CATEGORIES.map((category) => (
                 <div
                   key={category.title}
                   className="flex flex-col gap-3 rounded-lg border border-border p-4"

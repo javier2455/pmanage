@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import type {
   InventoryEntry,
   InventoryMeta,
@@ -15,6 +15,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 import InventoryHistoryItem from "./inventory-history-item";
@@ -107,16 +108,7 @@ export default function InventoryHistoryTimeline({
         ) : (
           <div className="relative px-4 pb-2">
             {isFetching ? (
-              <div
-                className="pointer-events-auto absolute inset-0 z-10 flex items-start justify-center bg-background/60 pt-8 backdrop-blur-[1px]"
-                role="status"
-                aria-live="polite"
-              >
-                <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Cargando…</span>
-                </div>
-              </div>
+              <TableLoadingOverlay className="items-start pt-8" />
             ) : null}
             <div
               className={cn(

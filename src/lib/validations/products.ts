@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { PRODUCT_UNITS } from "@/lib/types/product";
 
 export const createProductSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
   // El producto de catálogo ya no lleva categoría; se asigna al BusinessProduct
   // al añadirlo a un negocio. Ver docs/category.md.
-  unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
+  unit: z.enum(PRODUCT_UNITS),
 });
 
 /**
@@ -42,7 +43,7 @@ export const createProductInBusinessSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
   category: z.string().nullable().optional(),
-  unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
+  unit: z.enum(PRODUCT_UNITS),
   // "> 0" y no "≥ 1": el importe puede cotizarse en divisa, donde 1 unidad son
   // cientos de CUP. El mínimo real se valida sobre el equivalente en CUP.
   price: z
@@ -92,7 +93,7 @@ export const editProductSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().nullable(),
   // El producto de catálogo ya no lleva categoría (vive en el BusinessProduct).
-  unit: z.enum(["kg", "lb", "g", "L", "mL", "ud"]),
+  unit: z.enum(PRODUCT_UNITS),
   imageUrl: z.string().nullable().optional(),
   active: z.boolean().nullable().optional(),
 });

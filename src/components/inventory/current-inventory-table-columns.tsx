@@ -13,16 +13,12 @@ import {
 import { StockAlertBadge } from "./stock-alert-badge";
 import { formatStockWithUnit } from "@/lib/units";
 import { BASE_CURRENCY, currencyLabel, formatMoney } from "@/lib/currency";
-
-export type CurrentInventoryColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies CurrentInventoryColumnMeta;
+} satisfies ColumnMeta;
 
 function formatDate(dateStr: string) {
   try {
@@ -56,7 +52,7 @@ export function buildCurrentInventoryColumns({
           "min-w-[280px] max-w-none whitespace-normal align-top sm:max-w-[min(18rem,40vw)]",
         cellClassName:
           "min-w-[280px] max-w-none whitespace-normal break-words align-top sm:max-w-[min(18rem,40vw)]",
-      } satisfies CurrentInventoryColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <span className="block px-2 py-2 text-left font-medium text-foreground">
           Producto
