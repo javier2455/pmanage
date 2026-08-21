@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DateRangePicker } from "@/components/analytics/date-range-picker";
+import { DateRangePicker } from "@/components/generic/date-range-picker";
 import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import { fromLocalDateString, toLocalDateString } from "@/lib/date-range";

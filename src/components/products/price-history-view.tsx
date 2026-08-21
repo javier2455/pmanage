@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { DateRangePicker } from "@/components/analytics/date-range-picker";
+import { DateRangePicker } from "@/components/generic/date-range-picker";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import { PageSizeSelect } from "@/components/data-table/page-size-select";
 import { Card, CardContent } from "@/components/ui/card";

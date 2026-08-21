@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
-import { DateRangePicker } from "@/components/analytics/date-range-picker";
+import { DateRangePicker } from "@/components/generic/date-range-picker";
 import {
   fromLocalDateString,
   resolvePresetRange,

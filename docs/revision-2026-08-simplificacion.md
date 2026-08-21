@@ -30,11 +30,11 @@ comentarios existentes · mejoras no pedidas.
 > `git diff 9d687ce --stat -- src`, donde `9d687ce` es el último commit anterior a esta
 > revisión (v2.3.11). Excluye documentación y `package.json`.
 
-### Líneas — 10 secciones cerradas
+### Líneas — 12 secciones cerradas
 
 | | Archivos | Añadidas | Eliminadas | Neto |
 |---|---:|---:|---:|---:|
-| **Total en `src/`** | **82** | **+765** | **−1832** | **−1067 líneas** |
+| **Total en `src/`** | **110** | **+842** | **−3155** | **−2313 líneas** |
 
 Desglose por sección (neto):
 
@@ -50,10 +50,12 @@ Desglose por sección (neto):
 | 8 · Proveedores | −116 |
 | 9 · Trabajadores e invitaciones | −248 |
 | 10 · Caja y tasas de cambio | −39 |
+| 11 · Cierres contables | −82 |
+| 12 · Analíticas (sección retirada) | −1164 |
 | Debounce unificado (adelanta trabajo de §4, §8 y §16) | −18 |
 | `lib/types/business.ts` (compartido §1–§2) | −3 |
 
-### Archivos eliminados (7)
+### Archivos eliminados (16)
 
 | Archivo | Líneas | Motivo |
 |---|---:|---|
@@ -64,8 +66,14 @@ Desglose por sección (neto):
 | `lib/validations/business-settings.ts` | 22 | Sin importadores |
 | `lib/validations/expense-category.ts` | 24 | Fusionado en `validations/category.ts` |
 | `lib/validations/product-category.ts` | 24 | Sin importadores; fusionado en `validations/category.ts` |
+| `app/dashboard/analytics/_page-disabled.tsx` | 251 | Versión anterior de la página, desactivada con un `_` delante |
+| `components/analytics/sales-trend-chart.tsx` + `-filter.tsx` | 221 | Solo los usaba la página desactivada |
+| `components/analytics/top-products-chart.tsx` + `-filter.tsx` | 234 | Ídem |
+| `components/analytics/kpi-card.tsx` + `kpis-grid.tsx` | 222 | Ídem |
+| `components/analytics/period-filter.tsx` | 46 | Ídem |
+| `hooks/use-analytics.ts` | 61 | Tres de sus cuatro hooks solo los usaba la página desactivada; el cuarto se movió a `use-workers` |
 
-### Archivos creados (6)
+### Archivos creados (7)
 
 | Archivo | Líneas | Sustituye a |
 |---|---:|---|
@@ -75,6 +83,7 @@ Desglose por sección (neto):
 | `lib/validations/category.ts` | 25 | Los dos esquemas de categoría espejo |
 | `hooks/use-debounced-value.ts` | 19 | El debounce de búsqueda ×5 |
 | `components/business-providers/detail-row.tsx` | 25 | El markup de fila etiqueta/valor, repetido 6 veces en el diálogo |
+| `components/accounting-close/closing-page-skeleton.tsx` | 15 | El esqueleto de carga, idéntico en las páginas de cierre diario y mensual |
 
 A los que se suman, dentro de archivos ya existentes: `toastApiError` en `lib/toast.ts`,
 `PRODUCT_UNITS` en `lib/types/product.ts`, `BUSINESS_TYPE_LABELS` y `DEFAULT_MAP_LAT/LNG`
@@ -109,7 +118,7 @@ Lo que cambia en pantalla respecto a antes de la revisión. Todo lo demás
 | Precios de producto | `$ 1.234,50` | `1,234.50 CUP` | Tabla de productos del negocio, tarjetas del catálogo, historial de precios |
 | Precio en el historial | `$ 1.235` (redondeado) | `1,234.50 CUP` | Historial de precios |
 | Importes de inventario | `1234,50 CUP` | `1,234.50 CUP` | Capas de coste, rentabilidad por lote |
-| Fecha corta | `05 ago 2026` | `05/08/26` | Capas de coste, rentabilidad por lote, columna de fecha de trabajadores |
+| Fecha corta | `05 ago 2026` / `05 de ago de 2026` | `05/08/26` | Capas de coste, rentabilidad por lote, columna de fecha de trabajadores, columna de fecha de gastos del cierre diario |
 | Toasts de error | Fondo verde (estilos de éxito) | Rojo | 6 sitios de borrado y cancelación |
 | Toasts sin estilo | Aspecto por defecto de sileo | Estilo del sistema | Horario, notificaciones, "Revisa el formulario" de varios formularios |
 | Fallos de red | Sin ningún aviso | Toast de error | 11 formularios y el borrado de negocio |
@@ -125,11 +134,12 @@ sustituyeron.
 | Patrón duplicado | Copias al empezar | Restantes |
 |---|---:|---:|
 | Llamada a `sileo` con estilos copiados inline | 38 archivos | 11 |
-| `function columnMeta` | 17 | 8 |
+| `function columnMeta` | 17 | 5 |
 | Overlay "Cargando…" | 16 | 5 |
-| `function formatDate` local | 17 | 5 |
+| `function formatDate` local | 17 | 4 |
 | Bloque `isAxiosError` de dos ramas | 43 | 29 |
 | `Array.isArray(...message).join()` a mano | 6 | 4 |
+| `downloadBlob` local pese a existir en `lib/download.ts` | 2 | 0 ✅ |
 | `SUCCESS_TOAST_STYLES` redefinido | 4 | 0 ✅ |
 | `getInitials` / `productInitials` | 5 | 0 ✅ |
 | `formatRelativeTime` | 5 | 0 ✅ |
@@ -159,8 +169,8 @@ Cada sección se cierra con `pnpm exec tsc --noEmit` sin errores, `pnpm lint` co
 | 8 | Proveedores | ✅ Cerrada (2026-08-20) |
 | 9 | Trabajadores e invitaciones | ✅ Cerrada (2026-08-20) |
 | 10 | Caja y tasas de cambio | ✅ Cerrada (2026-08-20) |
-| 11 | Cierres contables | Pendiente |
-| 12 | Analíticas | Pendiente |
+| 11 | Cierres contables | ✅ Cerrada (2026-08-20) |
+| 12 | Analíticas | ✅ Cerrada — sección retirada (2026-08-20) |
 | 13 | Notificaciones | Pendiente |
 | 14 | Perfil y planes | Pendiente |
 | 15 | Soporte | Pendiente |
@@ -569,3 +579,92 @@ componentes se limitan a pintarla. Solo salieron los patrones transversales:
 - `balances-table` y `consolidated-balance-card` muestran los mismos saldos, pero uno como
   tabla plana por moneda y el otro consolidado a CUP con su equivalencia. No comparten
   markup que se pueda extraer.
+
+---
+
+## Sección 11 — Cierres contables ✅
+
+Superficie revisada: `app/dashboard/accounting-close/daily/` y `monthly/`, los 13
+componentes de `components/accounting-close/`, `lib/accounting-close-currency.ts`,
+`lib/types/accounting-close.ts` y `hooks/use-accounting-close.ts`.
+
+Cero llamadas a `sileo` y cero overlays duplicados: la sección ya estaba en buena forma,
+con los anchos de columna extraídos en `daily-close-table-layout.ts` y una cabecera
+ordenable compartida.
+
+### Hallazgos aplicados
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| Y1 | `columnMeta` ×3 y sus tipos `DailyCloseExpense/Sold/StockColumnMeta`, uno por cada tabla del cierre diario. | A `components/data-table/`. |
+| Y2 | `formatDate` en `daily-close-expense-columns`. | `formatDateShort` (ahora `05/08/26`). |
+| Y3 | **`downloadBlob` copiado en las dos páginas de cierre pese a existir en `lib/download.ts`** — cuyo comentario dice literalmente "mismo enfoque que las exportaciones de cierre contable": el helper se escribió inspirándose en estas páginas y nunca se migraron. | Ambas usan `lib/download`. |
+| Y4 | `DailyClosePageSkeleton` y `MonthlyClosePageSkeleton` eran **idénticos carácter por carácter**. | `ClosingPageSkeleton` compartido. |
+
+### Revisado y descartado
+
+- Las tres tablas del cierre diario (ventas, gastos, stock) comparten esqueleto, pero la
+  de ventas arrastra toda la consolidación multimoneda (`consolidateClosing`,
+  `hasUnconvertibleFor`) que las otras dos no tienen. Y lo compartible —anchos de columna
+  y cabecera ordenable— ya estaba extraído antes de esta revisión.
+- `daily/page.tsx` y `monthly/page.tsx` se parecen, pero difieren en el filtro (día vs
+  mes), en el rango que envían y en el gating Pro del mensual.
+
+---
+
+## Sección 12 — Analíticas · sección retirada ✅
+
+La sección ya estaba medio desmantelada antes de esta revisión:
+`/dashboard/analytics/page.tsx` era un `redirect("/dashboard")` y el propio catálogo de
+tours lo documentaba ("No hay guía de Analíticas: hoy `/dashboard/analytics` es un
+redirect"). Lo que quedaba era una página completa guardada como `_page-disabled.tsx` y
+todo su árbol de componentes colgando de ella.
+
+**Decisión del usuario: retirar la sección.** Pero no se podía borrar entera —cuatro
+piezas suyas las consumen secciones vivas—, así que se separó en dos:
+
+### Eliminado (−1.164 líneas netas)
+
+| Qué | Líneas |
+|---|---:|
+| `_page-disabled.tsx` | 251 |
+| `sales-trend-chart` + `sales-trend-filter` | 221 |
+| `top-products-chart` + `top-products-filter` | 234 |
+| `kpi-card` + `kpis-grid` | 222 |
+| `period-filter` | 46 |
+| `use-analytics.ts` (3 de sus 4 hooks) | 61 |
+| `api/analytics.ts`: `getKPIS`, `getSalesTrend`, `getTopProducts` | ~45 |
+| `routes/analytics.ts`: 3 de sus 4 endpoints | 3 |
+| `types/analytics.ts`: 12 tipos sin consumidor | ~55 |
+| `query-provider.tsx`: 3 `setQueryDefaults` de claves que ya no existen | 3 |
+
+### Movido a donde pertenece
+
+`components/analytics/` **ya no existe**. Sus cuatro supervivientes se repartieron:
+
+| Pieza | Nuevo hogar | Quién la usa |
+|---|---|---|
+| `date-range-picker.tsx` | `components/generic/` | Inventario (historial) y Productos (historial de precios) |
+| `date-range-filter.tsx` | `components/generic/` | Trabajadores |
+| `sales-by-worker-table.tsx` | `components/workers/` | Trabajadores |
+| `sales-by-worker-columns.tsx` | `components/workers/` | Trabajadores |
+| `useAnalyticsSalesByWorker` | `hooks/use-workers.ts` | Trabajadores |
+
+De paso, la tabla de ventas por trabajador se migró a `columnMeta` y
+`TableLoadingOverlay` compartidos.
+
+`lib/api/analytics.ts`, `lib/routes/analytics.ts` y `lib/types/analytics.ts` **se
+conservan**, reducidos a lo de ventas por trabajador: el endpoint del backend sigue
+siendo `/analytics/sales-by-worker` y renombrarlos mentiría sobre la API real. Los tres
+llevan ahora una nota explicando por qué siguen llamándose así.
+
+### Conservado a propósito (decisión del usuario)
+
+- **La ruta `/dashboard/analytics`** (5 líneas, `redirect("/dashboard")`). El menú se
+  gestiona desde el backend: si alguna entrada apunta ahí, con el redirect sigue llevando
+  al panel en vez de dar 404. Y las notificaciones `weekly_summary` / `monthly_summary`
+  enlazan a esa ruta desde `notification-type-meta.ts`.
+- **La capacidad de plan `analytics`** en `plan-features.ts` y su gate en `pro-gates.ts`,
+  con su test en `pro-gates.suite.ts`. Es una capacidad que **conceden los planes del
+  backend**: retirarla del frontend dejaría a los planes existentes con una capacidad que
+  la app ya no reconoce, y desaparecería de la pantalla de asignación de planes.

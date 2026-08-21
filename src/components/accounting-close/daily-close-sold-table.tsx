@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { columnMeta } from "@/components/data-table/column-meta";
 import {
   flexRender,
   getCoreRowModel,
@@ -46,20 +47,9 @@ import { cn } from "@/lib/utils"
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav"
 import {
   dailyCloseSoldColumns,
-  type DailyCloseSoldColumnMeta,
   type SoldRow,
 } from "./daily-close-sold-columns"
 import { ClosingCurrencyTotals } from "./closing-currency-totals"
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown }
-}): DailyCloseSoldColumnMeta {
-  const meta = column.columnDef.meta
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as DailyCloseSoldColumnMeta
-  }
-  return {}
-}
 
 interface DailyCloseSoldTableProps {
   sales: SaleWithProductAndBusiness[]

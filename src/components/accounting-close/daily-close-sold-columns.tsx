@@ -1,5 +1,6 @@
 "use client"
 
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 import type { ColumnDef } from "@tanstack/react-table"
 import type { SalesProductInfoResponse } from "@/lib/types/product"
 import { currencyLabel } from "@/lib/currency"
@@ -13,11 +14,6 @@ import {
   soldQtyCol,
   soldUnitPriceCol,
 } from "./daily-close-table-layout"
-
-export type DailyCloseSoldColumnMeta = {
-  headerClassName?: string
-  cellClassName?: string
-}
 
 /**
  * Item de venta aplanado con la moneda de su venta padre adjunta. El item
@@ -40,7 +36,7 @@ export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
     meta: {
       headerClassName: soldProductCol.headerClassName,
       cellClassName: `${soldProductCol.cellClassName} font-medium`,
-    } satisfies DailyCloseSoldColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -60,7 +56,7 @@ export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
     meta: {
       headerClassName: soldCurrencyCol.headerClassName,
       cellClassName: soldCurrencyCol.cellClassName,
-    } satisfies DailyCloseSoldColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -80,7 +76,7 @@ export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
     meta: {
       headerClassName: soldQtyCol.headerClassName,
       cellClassName: soldQtyCol.cellClassName,
-    } satisfies DailyCloseSoldColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -100,7 +96,7 @@ export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
     meta: {
       headerClassName: soldUnitPriceCol.headerClassName,
       cellClassName: soldUnitPriceCol.cellClassName,
-    } satisfies DailyCloseSoldColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -118,7 +114,7 @@ export const dailyCloseSoldColumns: ColumnDef<SoldRow>[] = [
     meta: {
       headerClassName: soldLineTotalCol.headerClassName,
       cellClassName: `${soldLineTotalCol.cellClassName} font-semibold`,
-    } satisfies DailyCloseSoldColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}

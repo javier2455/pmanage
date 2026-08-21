@@ -1,5 +1,6 @@
 "use client"
 
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -13,11 +14,6 @@ import {
   dailyCloseQtyCol,
   dailyCloseUnitPriceCol,
 } from "./daily-close-table-layout"
-
-export type DailyCloseStockColumnMeta = {
-  headerClassName?: string
-  cellClassName?: string
-}
 
 const LOW_STOCK_MAX = 10
 
@@ -35,7 +31,7 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
     meta: {
       headerClassName: dailyCloseProductCol.headerClassName,
       cellClassName: dailyCloseProductCol.cellClassName,
-    } satisfies DailyCloseStockColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -68,7 +64,7 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
     meta: {
       headerClassName: dailyCloseQtyCol.headerClassName,
       cellClassName: dailyCloseQtyCol.cellClassName,
-    } satisfies DailyCloseStockColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -98,7 +94,7 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
     meta: {
       headerClassName: dailyCloseUnitPriceCol.headerClassName,
       cellClassName: dailyCloseUnitPriceCol.cellClassName,
-    } satisfies DailyCloseStockColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -116,7 +112,7 @@ export const dailyCloseStockColumns: ColumnDef<BusinessWithProducts>[] = [
     meta: {
       headerClassName: dailyCloseLineTotalCol.headerClassName,
       cellClassName: `${dailyCloseLineTotalCol.cellClassName} font-semibold`,
-    } satisfies DailyCloseStockColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}

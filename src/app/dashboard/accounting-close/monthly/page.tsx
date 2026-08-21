@@ -17,6 +17,8 @@ import {
 import { ShoppingCart, Package, HandCoins, Download, FileSpreadsheet, FileText } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { MonthFilter, type SelectedMonth } from "@/components/accounting-close/month-filter"
+import { ClosingPageSkeleton } from "@/components/accounting-close/closing-page-skeleton"
+import { downloadBlob } from "@/lib/download"
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan"
 import { ProBadge } from "@/components/ui/pro-badge"
 import { DailyCloseSoldTable } from "@/components/accounting-close/daily-close-sold-table"
@@ -24,21 +26,6 @@ import { DailyCloseExpenseTable } from "@/components/accounting-close/daily-clos
 import { DailyCloseStockTable } from "@/components/accounting-close/daily-close-stock-table"
 import { ClosingFinancialSummary } from "@/components/accounting-close/closing-financial-summary"
 import type { ClosingServerTotals } from "@/lib/accounting-close-currency"
-
-function MonthlyClosePageSkeleton() {
-  return (
-    <div className="flex flex-col gap-6 p-4">
-      <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-      <div className="h-4 w-64 animate-pulse rounded bg-muted" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-28 animate-pulse rounded-lg bg-muted" />
-        ))}
-      </div>
-      <div className="h-64 animate-pulse rounded-lg bg-muted" />
-    </div>
-  )
-}
 
 export default function MonthlyPage() {
   const mounted = useSyncExternalStore(
@@ -65,17 +52,6 @@ export default function MonthlyPage() {
   const { data: productsData } = useAllProductOfMyBusinesses(activeBusinessId ?? "")
   const { mutate: exportPdf, isPending: isExportingPdf } = useExportToPdf(activeBusinessId ?? "")
   const { mutate: exportExcel, isPending: isExportingExcel } = useExportToExcel(activeBusinessId ?? "")
-
-  function downloadBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
 
   function getMonthRange() {
     const now = new Date()
@@ -133,7 +109,7 @@ export default function MonthlyPage() {
   const inventory: BusinessWithProducts[] = productsData?.data ?? []
 
   if (!mounted || isLoading) {
-    return <MonthlyClosePageSkeleton />
+    return <ClosingPageSkeleton />
   }
 
   if (isError || !activeBusinessId) {

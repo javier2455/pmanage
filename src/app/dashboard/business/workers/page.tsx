@@ -4,17 +4,20 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { useBusiness } from "@/context/business-context";
-import { useAllWorkersByBusinessId } from "@/hooks/use-workers";
+import {
+  useAllWorkersByBusinessId,
+  useAnalyticsSalesByWorker,
+} from "@/hooks/use-workers";
 import {
   useAllInvitationsByBusinessId,
   useInvitationsCount,
 } from "@/hooks/use-invitations";
-import { useAnalyticsSalesByWorker } from "@/hooks/use-analytics";
+
 import TableOfWorkers from "@/components/workers/table-of-workers";
 import TableOfInvitations from "@/components/invitations/table-of-invitations";
 import { SimpleTableSkeleton } from "@/components/generic/simple-table-skeleton";
-import { DateRangeFilter } from "@/components/analytics/date-range-filter";
-import { SalesByWorkerTable } from "@/components/analytics/sales-by-worker-table";
+import { DateRangeFilter } from "@/components/generic/date-range-filter";
+import { SalesByWorkerTable } from "@/components/workers/sales-by-worker-table";
 import {
   Tabs,
   TabsContent,

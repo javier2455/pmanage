@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { columnMeta } from "@/components/data-table/column-meta";
 import {
   flexRender,
   getCoreRowModel,
@@ -45,19 +46,8 @@ import type { ExchangeRateLike } from "@/lib/currency";
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav";
 import {
   dailyCloseExpenseColumns,
-  type DailyCloseExpenseColumnMeta,
 } from "./daily-close-expense-columns";
 import { ClosingCurrencyTotals } from "./closing-currency-totals";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): DailyCloseExpenseColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as DailyCloseExpenseColumnMeta;
-  }
-  return {};
-}
 
 interface DailyCloseExpenseTableProps {
   expenses: ExpenseInAccountingClose[];

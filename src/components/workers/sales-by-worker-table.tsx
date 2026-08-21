@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
 import {
   flexRender,
   getCoreRowModel,
@@ -8,7 +10,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Loader2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -31,18 +33,7 @@ import { cn } from "@/lib/utils";
 import type { WorkerSalesItem } from "@/lib/types/analytics";
 import {
   createSalesByWorkerColumns,
-  type SalesByWorkerColumnMeta,
 } from "./sales-by-worker-columns";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): SalesByWorkerColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as SalesByWorkerColumnMeta;
-  }
-  return {};
-}
 
 interface SalesByWorkerTableProps {
   data: WorkerSalesItem[];
@@ -98,18 +89,7 @@ export function SalesByWorkerTable({
           </div>
         ) : (
           <div className="relative">
-            {isFetching ? (
-              <div
-                className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                role="status"
-                aria-live="polite"
-              >
-                <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Cargando…</span>
-                </div>
-              </div>
-            ) : null}
+            {isFetching ? <TableLoadingOverlay /> : null}
             <div
               className={cn(
                 "transition-opacity",

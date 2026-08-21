@@ -1,5 +1,6 @@
 "use client";
 
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Info } from "lucide-react";
 
@@ -13,15 +14,10 @@ import {
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import type { WorkerSalesItem } from "@/lib/types/analytics";
 
-export type SalesByWorkerColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
-
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap text-right",
   cellClassName: "w-[1%] whitespace-nowrap text-right",
-} satisfies SalesByWorkerColumnMeta;
+} satisfies ColumnMeta;
 
 function formatPercent(value: number) {
   return `${value.toFixed(2)}%`;
@@ -94,7 +90,7 @@ export function createSalesByWorkerColumns(): ColumnDef<WorkerSalesItem>[] {
       meta: {
         headerClassName: "min-w-[220px]",
         cellClassName: "min-w-[220px]",
-      } satisfies SalesByWorkerColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <SortableHeader column={column} label="Trabajador" />
       ),

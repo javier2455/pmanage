@@ -1,16 +1,13 @@
 "use client";
 
+import type { ColumnMeta } from "@/components/data-table/column-meta";
+import { formatDateShort } from "@/lib/dates";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ExpenseInAccountingClose } from "@/lib/types/accounting-close";
 import { currencyLabel } from "@/lib/currency";
 import { normalizeCurrency } from "@/lib/accounting-close-currency";
 import { formatClosingCurrency } from "./format-closing-currency";
 import { DailyCloseSortableHeader } from "./daily-close-sortable-header";
-
-export type DailyCloseExpenseColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
 
 const titleCol = {
   headerClassName:
@@ -40,14 +37,6 @@ const dateCol = {
   cellClassName: `min-w-[8rem] w-[24%] ${numCellRight}`,
 } as const;
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
   {
     id: "title",
@@ -62,7 +51,7 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
     meta: {
       headerClassName: titleCol.headerClassName,
       cellClassName: `${titleCol.cellClassName} font-medium`,
-    } satisfies DailyCloseExpenseColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -82,7 +71,7 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
     meta: {
       headerClassName: currencyCol.headerClassName,
       cellClassName: currencyCol.cellClassName,
-    } satisfies DailyCloseExpenseColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -102,7 +91,7 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
     meta: {
       headerClassName: amountCol.headerClassName,
       cellClassName: `${amountCol.cellClassName} font-semibold`,
-    } satisfies DailyCloseExpenseColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -120,7 +109,7 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
     meta: {
       headerClassName: dateCol.headerClassName,
       cellClassName: dateCol.cellClassName,
-    } satisfies DailyCloseExpenseColumnMeta,
+    } satisfies ColumnMeta,
     header: ({ column }) => (
       <DailyCloseSortableHeader
         column={column}
@@ -128,6 +117,6 @@ export const dailyCloseExpenseColumns: ColumnDef<ExpenseInAccountingClose>[] = [
         className="-mr-2 h-8 w-full justify-end px-2 lg:-mr-4 lg:pr-4"
       />
     ),
-    cell: ({ row }) => <span>{formatDate(row.original.createdAt)}</span>,
+    cell: ({ row }) => <span>{formatDateShort(row.original.createdAt)}</span>,
   },
 ];
