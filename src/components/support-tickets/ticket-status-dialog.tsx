@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sileo } from "sileo";
+import { apiMessage, toastApiError, toastSuccess } from "@/lib/toast";
 import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
@@ -27,11 +26,6 @@ import {
   statusMessageSchema,
 } from "@/lib/validations/support-ticket";
 import { useUpdateTicketStatusMutation } from "@/hooks/use-support-ticket";
-
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-};
 
 type TicketStatusAction = "close" | "reopen";
 
@@ -124,29 +118,15 @@ export function TicketStatusDialog({
         status: config.status,
         message: formData.message?.trim() || undefined,
       });
-      sileo.success({
+      toastSuccess({
         title: config.successTitle,
-        fill: "",
-        styles: SUCCESS_TOAST_STYLES,
         description: `El ticket «${ticketSubject}» se ha actualizado correctamente`,
       });
       setOpen(false);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        const message = Array.isArray(error.response.data.message)
-          ? error.response.data.message.join(", ")
-          : error.response.data.message;
-        setError("root", { message });
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: message,
-        });
-      } else {
-        setError("root", {
-          message: "Error al actualizar el ticket. Intenta de nuevo.",
-        });
-      }
+      const fallback = "Error al actualizar el ticket. Intenta de nuevo.";
+      toastApiError(error, fallback);
+      setError("root", { message: apiMessage(error) ?? fallback });
     }
   }
 

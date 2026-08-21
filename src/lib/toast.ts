@@ -46,15 +46,25 @@ export function toastError({ title, description }: ToastPayload) {
  * ella, y cae a `fallback` cuando es un error de red o inesperado. Existe para
  * no repetir el mismo `isAxiosError` con sus dos ramas en cada `catch`.
  */
+/**
+ * Mensaje de error que manda el backend, o `undefined` si el fallo no viene de
+ * la API (red caída, error inesperado).
+ *
+ * NestJS manda un array de mensajes cuando falla la validación de varios campos;
+ * sin unirlos, React los pegaría sin separación. Sirve para rellenar el error de
+ * un formulario (`setError("root")`) además de mostrarlo en un toast.
+ */
+export function apiMessage(error: unknown): string | undefined {
+  if (!isAxiosError(error)) return undefined;
+  const raw = error.response?.data?.message;
+  return Array.isArray(raw) ? raw.join(", ") : raw;
+}
+
 export function toastApiError(error: unknown, fallback: string) {
   if (isAxiosError(error)) {
-    // NestJS manda un array de mensajes cuando falla la validación de varios
-    // campos; sin unirlos, React los pegaría sin separación.
-    const raw = error.response?.data?.message;
-    const message = Array.isArray(raw) ? raw.join(", ") : raw;
     toastError({
       title: error.response?.data?.error ?? "Error",
-      description: message ?? fallback,
+      description: apiMessage(error) ?? fallback,
     });
     return;
   }

@@ -26,18 +26,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useAuthUserData } from "@/hooks/use-auth"
+import { formatDateLong } from "@/lib/dates"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getPlanLabel, getPlanPrice } from "@/components/assign-plans/utils"
 import { DeactivateAccountCard } from "@/components/account/deactivate-account-card"
-
-function formatDate(dateString?: string | null): string {
-  if (!dateString) return "—"
-  return new Date(dateString).toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
-}
 
 export default function ProfilePage() {
   const { data: user, isLoading } = useAuthUserData();
@@ -257,7 +249,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {formatDate(user?.plan?.startDate)}
+                      {formatDateLong(user?.plan?.startDate)}
                     </span>
                   </div>
 
@@ -269,7 +261,7 @@ export default function ProfilePage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-card-foreground">
-                      {formatDate(user?.plan?.expireDate)}
+                      {formatDateLong(user?.plan?.expireDate)}
                     </span>
                   </div>
                 </div>

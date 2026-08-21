@@ -1,5 +1,6 @@
 "use client";
 
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 import Link from "next/link";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Eye } from "lucide-react";
@@ -7,15 +8,10 @@ import { Button } from "@/components/ui/button";
 import type { SupportTicket } from "@/lib/types/support-ticket";
 import { TicketStatusBadge } from "./ticket-status-badge";
 
-export type TicketsColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
-
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies TicketsColumnMeta;
+} satisfies ColumnMeta;
 
 export function formatTicketDate(value: string) {
   const date = new Date(value);
@@ -57,7 +53,7 @@ export function createMyTicketsColumns(): ColumnDef<SupportTicket>[] {
       meta: {
         headerClassName: "min-w-[240px]",
         cellClassName: "min-w-[240px] max-w-[360px]",
-      } satisfies TicketsColumnMeta,
+      } satisfies ColumnMeta,
       cell: ({ row }) => (
         <span className="font-medium text-foreground">
           {row.original.subject}
@@ -92,7 +88,7 @@ export function createMyTicketsColumns(): ColumnDef<SupportTicket>[] {
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies TicketsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

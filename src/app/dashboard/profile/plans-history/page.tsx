@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useGetUserPlanHistory } from "@/hooks/use-plans"
+import { formatDateShort } from "@/lib/dates"
 import type { PlanHistoryResponse } from "@/lib/types/plans"
 import { getPlanLabel, getPlanPrice } from "@/components/assign-plans/utils"
 
@@ -46,15 +47,6 @@ function PlanHistorySkeleton() {
       <div className="h-96 animate-pulse rounded-xl bg-muted" />
     </div>
   )
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString("es-MX", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
 }
 
 function getPlanBadgeStyles(type: string) {
@@ -261,7 +253,7 @@ function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
                             Fecha inicio
                           </span>
                           <span className="text-sm font-medium text-card-foreground">
-                            {formatDate(item.startsAt)}
+                            {formatDateShort(item.startsAt)}
                           </span>
                         </div>
                       </div>
@@ -275,7 +267,7 @@ function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
                             Fecha expiración
                           </span>
                           <span className="text-sm font-medium text-card-foreground">
-                            {formatDate(item.expiresAt)}
+                            {formatDateShort(item.expiresAt)}
                           </span>
                         </div>
                       </div>
@@ -289,7 +281,7 @@ function PlanHistoryContent({ history }: { history: PlanHistoryResponse[] }) {
                             Contratado
                           </span>
                           <span className="text-sm font-medium text-card-foreground">
-                            {formatDate(item.createdAt)}
+                            {formatDateShort(item.createdAt)}
                           </span>
                         </div>
                       </div> */}

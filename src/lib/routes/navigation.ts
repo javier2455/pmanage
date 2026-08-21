@@ -4,8 +4,8 @@ import { BASIC_ROUTE } from ".";
  * Endpoints administrativos para gestionar la jerarquía del sidebar:
  * Section → Menu (admin) → Submenu.
  *
- * NOTE: el shape consumido por el sidebar runtime (GET /menu/) vive en
- * src/lib/api/menu.ts y src/lib/types/menu.ts y se queda intacto.
+ * El sidebar runtime consume estos mismos endpoints (GET /section). El cliente
+ * del antiguo GET /menu/ se retiró al terminar la migración.
  */
 export const navigationRoutes = {
   // ===== Section =====

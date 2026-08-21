@@ -30,11 +30,11 @@ comentarios existentes · mejoras no pedidas.
 > `git diff 9d687ce --stat -- src`, donde `9d687ce` es el último commit anterior a esta
 > revisión (v2.3.11). Excluye documentación y `package.json`.
 
-### Líneas — 12 secciones cerradas
+### Líneas — 16 secciones cerradas
 
 | | Archivos | Añadidas | Eliminadas | Neto |
 |---|---:|---:|---:|---:|
-| **Total en `src/`** | **110** | **+842** | **−3155** | **−2313 líneas** |
+| **Total en `src/`** | **132** | **+942** | **−3585** | **−2643 líneas** |
 
 Desglose por sección (neto):
 
@@ -52,10 +52,14 @@ Desglose por sección (neto):
 | 10 · Caja y tasas de cambio | −39 |
 | 11 · Cierres contables | −82 |
 | 12 · Analíticas (sección retirada) | −1164 |
+| 13 · Notificaciones | −25 |
+| 14 · Perfil y planes | −34 |
+| 15 · Soporte | −120 |
+| 16 · Admin | −200 |
 | Debounce unificado (adelanta trabajo de §4, §8 y §16) | −18 |
 | `lib/types/business.ts` (compartido §1–§2) | −3 |
 
-### Archivos eliminados (16)
+### Archivos eliminados (20)
 
 | Archivo | Líneas | Motivo |
 |---|---:|---|
@@ -72,6 +76,10 @@ Desglose por sección (neto):
 | `components/analytics/kpi-card.tsx` + `kpis-grid.tsx` | 222 | Ídem |
 | `components/analytics/period-filter.tsx` | 46 | Ídem |
 | `hooks/use-analytics.ts` | 61 | Tres de sus cuatro hooks solo los usaba la página desactivada; el cuarto se movió a `use-workers` |
+| `hooks/use-menu.ts` | 28 | Cadena del menú *runtime*: el sidebar migró a `GET /section` y nadie volvió a llamarla |
+| `lib/api/menu.ts` | 21 | Ídem |
+| `lib/types/menu.ts` | 35 | Ídem |
+| `lib/routes/menu.ts` | 5 | Ídem |
 
 ### Archivos creados (7)
 
@@ -118,9 +126,11 @@ Lo que cambia en pantalla respecto a antes de la revisión. Todo lo demás
 | Precios de producto | `$ 1.234,50` | `1,234.50 CUP` | Tabla de productos del negocio, tarjetas del catálogo, historial de precios |
 | Precio en el historial | `$ 1.235` (redondeado) | `1,234.50 CUP` | Historial de precios |
 | Importes de inventario | `1234,50 CUP` | `1,234.50 CUP` | Capas de coste, rentabilidad por lote |
-| Fecha corta | `05 ago 2026` / `05 de ago de 2026` | `05/08/26` | Capas de coste, rentabilidad por lote, columna de fecha de trabajadores, columna de fecha de gastos del cierre diario |
+| Fecha corta | `05 ago 2026` / `05 de ago de 2026` / `5 ago 2026` | `05/08/26` | Capas de coste, rentabilidad por lote, fecha de trabajadores, fecha de gastos del cierre diario, historial de planes |
+| Fecha larga del perfil | `5 de agosto de 2026` | `05 de agosto de 2026` | Página de perfil (día con cero delante) |
 | Toasts de error | Fondo verde (estilos de éxito) | Rojo | 6 sitios de borrado y cancelación |
 | Toasts sin estilo | Aspecto por defecto de sileo | Estilo del sistema | Horario, notificaciones, "Revisa el formulario" de varios formularios |
+| Toasts del panel de administración | Estilo propio (`text-foreground` / `text-muted-foreground`) | Estilo del sistema | Crear plan, editar plan, asignar/extender/remover plan |
 | Fallos de red | Sin ningún aviso | Toast de error | 11 formularios y el borrado de negocio |
 | Guiones de "sin dato" | `--` | `—` | Fichas de proveedor |
 | Filas del modal de proveedor | Sin separación | `gap-4` entre etiqueta y valor | Diálogo de detalle de proveedor |
@@ -133,14 +143,14 @@ sustituyeron.
 
 | Patrón duplicado | Copias al empezar | Restantes |
 |---|---:|---:|
-| Llamada a `sileo` con estilos copiados inline | 38 archivos | 11 |
-| `function columnMeta` | 17 | 5 |
-| Overlay "Cargando…" | 16 | 5 |
-| `function formatDate` local | 17 | 4 |
+| Llamada a `sileo` con estilos copiados inline | 38 archivos | 3 |
+| `function columnMeta` | 17 | 1 |
+| Overlay "Cargando…" | 16 | 2 |
+| `function formatDate` local | 17 | 2 |
 | Bloque `isAxiosError` de dos ramas | 43 | 29 |
-| `Array.isArray(...message).join()` a mano | 6 | 4 |
+| `Array.isArray(...message).join()` a mano | 6 | 0 ✅ |
 | `downloadBlob` local pese a existir en `lib/download.ts` | 2 | 0 ✅ |
-| `SUCCESS_TOAST_STYLES` redefinido | 4 | 0 ✅ |
+| `SUCCESS_TOAST_STYLES` redefinido | 8 | 0 ✅ |
 | `getInitials` / `productInitials` | 5 | 0 ✅ |
 | `formatRelativeTime` | 5 | 0 ✅ |
 | Catálogo de unidades de producto | 7 | 0 ✅ |
@@ -171,10 +181,10 @@ Cada sección se cierra con `pnpm exec tsc --noEmit` sin errores, `pnpm lint` co
 | 10 | Caja y tasas de cambio | ✅ Cerrada (2026-08-20) |
 | 11 | Cierres contables | ✅ Cerrada (2026-08-20) |
 | 12 | Analíticas | ✅ Cerrada — sección retirada (2026-08-20) |
-| 13 | Notificaciones | Pendiente |
-| 14 | Perfil y planes | Pendiente |
-| 15 | Soporte | Pendiente |
-| 16 | Admin | Pendiente |
+| 13 | Notificaciones | ✅ Cerrada (2026-08-20) |
+| 14 | Perfil y planes | ✅ Cerrada (2026-08-20) |
+| 15 | Soporte | ✅ Cerrada (2026-08-21) |
+| 16 | Admin | ✅ Cerrada (2026-08-21) |
 | 17 | Transversales (sidebar, auth, axios, tour, ui) | Pendiente |
 
 ---
@@ -668,3 +678,99 @@ llevan ahora una nota explicando por qué siguen llamándose así.
   con su test en `pro-gates.suite.ts`. Es una capacidad que **conceden los planes del
   backend**: retirarla del frontend dejaría a los planes existentes con una capacidad que
   la app ya no reconoce, y desaparecería de la pantalla de asignación de planes.
+
+---
+
+## Sección 13 — Notificaciones ✅
+
+Superficie revisada: `app/dashboard/notifications/page.tsx`, los 4 componentes de
+`components/notifications/`, `hooks/use-notifications.ts`,
+`hooks/use-support-notification.ts` y sus tipos.
+
+Sección muy limpia: cero `sileo` directo, cero overlays, cero `columnMeta`. Sus dos
+`formatRelativeTime` ya se habían unificado en §1.
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| N1 | `DOMAIN_LABEL` en `notification-type-meta.ts`: exportado y **sin ningún consumidor**, ni dentro del propio archivo. | Eliminado. |
+
+### Revisado y descartado
+
+- `notification-item` y `support-notification-item` comparten el esqueleto del botón,
+  pero difieren en el tipo de notificación, el hook de marcado, cómo resuelven el icono y
+  la etiqueta, el destino del clic y el color del icono. Un shell común pediría cinco
+  props de configuración.
+- La campana mezcla y ordena las dos listas; la página las separa en pestañas. Comparten
+  el `.filter(isVisibleNotificationType)` pero la estructura difiere de verdad.
+- **Comprobación tras retirar Analíticas**: los tipos `weekly_summary` y
+  `monthly_summary` enlazan a `/dashboard/analytics`, pero **no están en
+  `VISIBLE_NOTIFICATION_TYPES`**, así que hoy no se muestran al usuario. Aun así, con el
+  redirect conservado, si se habilitaran llevarían al panel en vez de a un 404.
+
+---
+
+## Sección 14 — Perfil y planes ✅
+
+Superficie revisada: las 4 páginas de `app/dashboard/profile/`, `app/seleccionar-plan/`
+(y `reconciliar`), `app/plans/`, `components/plans/plan-form.tsx`,
+`components/account/deactivate-account-card.tsx`, `lib/plan-features.ts`,
+`lib/plan-catalog.ts`, `lib/plan-session.ts`, `lib/pro-gates.ts` y sus hooks.
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| Z1 | `formatDate` local ×2, cada uno con **un locale distinto**: `es-ES` en la página de perfil y `es-MX` en el historial de planes. Con estos, el proyecto llegaba a mezclar cuatro locales (`es-CO`, `es-ES`, `es-MX`, `es-CU`) para la misma tarea. | `formatDateLong` y `formatDateShort` de `lib/dates.ts`. |
+| Z2 | `profile/edit`: toasts inline con las dos ramas del `isAxiosError`. | `toastApiError`. |
+
+### Revisado y descartado
+
+- Las cuatro pantallas que pintan planes (`profile/plans-change`, `seleccionar-plan`,
+  `seleccionar-plan/reconciliar` y `plans`) **ya comparten** `lib/plan-catalog.ts`
+  (`planToCatalogEntry`, `selectablePlans`), que además tiene su propia suite de tests.
+  Lo que queda distinto en cada una es el copy y la acción del botón.
+- `plan-form.tsx` (623 líneas) pertenece funcionalmente a §16 Admin: lo usan la creación
+  de planes asignados y la edición de planes del panel de administración.
+
+---
+
+## Sección 15 — Soporte ✅
+
+Superficie revisada: `app/dashboard/support/`, `app/dashboard/admin/support/` y los 9
+componentes de `components/support-tickets/`.
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| S1 | **Cuatro copias más de `SUCCESS_TOAST_STYLES`** (van 8 en todo el proyecto), en `create-ticket-dialog`, `ticket-reply-form`, `ticket-status-dialog` y `admin-support-detail-client`. | Todas fuera; usan `lib/toast`. |
+| S2 | Los cuatro repetían el bloque `isAxiosError` + `Array.isArray(message).join(", ")`, que `toastApiError` ya cubre desde §8. | `toastApiError`. |
+| S3 | `columnMeta` ×2 (uno importaba su tipo desde el archivo de columnas del *otro* listado), `TicketsColumnMeta` y 2 overlays. | A `components/data-table/`. |
+
+### Helper añadido
+
+`apiMessage(error)` en `lib/toast.ts`. Varios formularios necesitan el texto del error
+del backend **además** del toast, para rellenar `setError("root")`. Ese
+`isAxiosError(...) ? ... : fallback` lo había escrito a mano seis veces durante esta
+revisión; ahora sale de un sitio y `toastApiError` se apoya en él.
+
+---
+
+## Sección 16 — Admin ✅
+
+Superficie revisada: `app/dashboard/admin/` (menús, planes, asignación de planes), los 11
+componentes de `components/navigation-admin/`, los 6 de `components/assign-plans/`,
+`components/plans/plan-form.tsx` y `hooks/use-navigation.ts`.
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| A1 | **La cadena del menú *runtime* estaba muerta entera**: `hooks/use-menu.ts` → `lib/api/menu.ts` → `lib/types/menu.ts` + `lib/routes/menu.ts`. Se confirmó comparando endpoints: el sidebar consume `GET /section` (`useGetAllSectionsQuery` → `navigationRoutes.getAllSections`), mientras la cadena muerta apuntaba a `GET /menu/`. | **89 líneas y 4 archivos eliminados.** El `NOTE` de `routes/navigation.ts` que decía que ese shape "se queda intacto" quedó obsoleto al terminar la migración: se actualizó. |
+| A2 | `showApiError()` en `assign-plans/page.tsx`: una copia local de `toastApiError`, con su propia pareja de `SUCCESS_TOAST_STYLES` / `ERROR_TOAST_STYLES`. | Eliminada. |
+| A3 | `normalizeApiMessage()` duplicada en `assign-plans/create` y `plans/edit` — la misma idea que `apiMessage`, con `". "` en vez de `", "` como separador. | Ambas usan `apiMessage`. |
+| A4 | Los toasts de crear/editar plan usaban **una tercera paleta** (`text-foreground`, `text-muted-foreground`, `text-destructive`) distinta de las otras dos del sistema. | Al estilo estándar. **Cambio visible** en esas pantallas. |
+| A5 | `columnMeta`, `AssignPlansColumnMeta` y el overlay de la tabla de asignación. | A `components/data-table/`. |
+
+### Revisado y descartado
+
+- `assign-plan-confirm-dialog.tsx` (600 líneas) concentra el flujo de asignar / extender /
+  remover plan con sus tres modos y sus validaciones de fecha. Es grande, pero no repite
+  bloques: cada rama hace algo distinto.
+- `components/navigation-admin/` (11 archivos) está bien separado: `node-config.ts`,
+  `role-badges`, `roles-field` y `role-multiselect` ya son piezas compartidas entre los
+  tres diálogos de sección/menú/submenú.

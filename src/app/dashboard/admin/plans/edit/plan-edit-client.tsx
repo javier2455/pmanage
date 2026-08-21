@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
-import { sileo } from "sileo";
+import { apiMessage, toastError, toastSuccess } from "@/lib/toast";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { useGetPlanById, useUpdatePlanMutation } from "@/hooks/use-plans";
@@ -38,31 +37,18 @@ export default function PlanEditClient() {
         },
       });
 
-      sileo.success({
+      toastSuccess({
         title: "Plan actualizado",
         description: "Los cambios se aplicaron correctamente",
-        styles: {
-          title: "text-foreground! text-[16px]! font-bold!",
-          description: "text-muted-foreground! text-[15px]!",
-        },
       });
 
       router.push("/dashboard/admin/plans");
     } catch (error) {
       const message =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? normalizeApiMessage(error.response.data.message)
-          : "No se pudo actualizar el plan. Intenta de nuevo.";
+        apiMessage(error) ?? "No se pudo actualizar el plan. Intenta de nuevo.";
 
       setServerError(message);
-      sileo.error({
-        title: "Error al actualizar el plan",
-        description: message,
-        styles: {
-          title: "text-foreground! text-[16px]! font-bold!",
-          description: "text-destructive! text-[15px]!",
-        },
-      });
+      toastError({ title: "Error al actualizar el plan", description: message });
     }
   }
 
@@ -100,26 +86,13 @@ export default function PlanEditClient() {
           isSubmitting={updatePlanMutation.isPending}
           serverError={serverError}
           onInvalid={() =>
-            sileo.error({
+            toastError({
               title: "Revisa el formulario",
               description: "Completa todos los campos requeridos correctamente",
-              styles: {
-                title: "text-foreground! text-[16px]! font-bold!",
-                description: "text-destructive! text-[15px]!",
-              },
             })
           }
         />
       )}
     </section>
   );
-}
-
-/**
- * El ValidationPipe del backend responde con un array de mensajes cuando falla
- * más de una regla; mostrarlo tal cual dejaría un "[object Object]" en pantalla.
- */
-function normalizeApiMessage(message: unknown): string {
-  if (Array.isArray(message)) return message.join(". ");
-  return String(message);
 }

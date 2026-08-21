@@ -40,20 +40,8 @@ import type { UserDataResponse } from "@/lib/types/user"
 import type { PlanResponse } from "@/lib/types/plans"
 import { DataTablePaginationNav } from "@/components/data-table/data-table-pagination-nav"
 import { PageSizeSelect } from "@/components/data-table/page-size-select"
-import {
-  createAssignPlansColumns,
-  type AssignPlansColumnMeta,
-} from "./assign-plans-table-columns"
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown }
-}): AssignPlansColumnMeta {
-  const meta = column.columnDef.meta
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as AssignPlansColumnMeta
-  }
-  return {}
-}
+import { createAssignPlansColumns } from "./assign-plans-table-columns"
+import { columnMeta } from "@/components/data-table/column-meta"
 
 interface AssignPlansTableProps {
   users: UserDataResponse[]

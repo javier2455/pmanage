@@ -1,5 +1,6 @@
 "use client";
 
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 import Link from "next/link";
 import type { Column, ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MessageSquareReply } from "lucide-react";
@@ -9,13 +10,12 @@ import type { SupportTicket } from "@/lib/types/support-ticket";
 import { TicketStatusBadge } from "./ticket-status-badge";
 import {
   formatTicketDate,
-  type TicketsColumnMeta,
 } from "./my-tickets-table-columns";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies TicketsColumnMeta;
+} satisfies ColumnMeta;
 
 function TicketsSortableHeader({
   column,
@@ -48,7 +48,7 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
       meta: {
         headerClassName: "min-w-[220px]",
         cellClassName: "min-w-[220px] max-w-[340px]",
-      } satisfies TicketsColumnMeta,
+      } satisfies ColumnMeta,
       cell: ({ row }) => (
         <span className="font-medium text-foreground">
           {row.original.subject}
@@ -64,7 +64,7 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
       meta: {
         headerClassName: "min-w-[180px]",
         cellClassName: "min-w-[180px]",
-      } satisfies TicketsColumnMeta,
+      } satisfies ColumnMeta,
       cell: ({ row }) => (
         <div className="flex flex-col">
           {row.original.userName ? (
@@ -122,7 +122,7 @@ export function createAdminTicketsColumns(): ColumnDef<SupportTicket>[] {
       meta: {
         headerClassName: "w-[1%] whitespace-nowrap text-right",
         cellClassName: "w-[1%] whitespace-nowrap",
-      } satisfies TicketsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <div className="text-right font-medium text-foreground">Acciones</div>
       ),

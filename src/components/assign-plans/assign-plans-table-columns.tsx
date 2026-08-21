@@ -1,5 +1,6 @@
 "use client"
 
+import type { ColumnMeta } from "@/components/data-table/column-meta"
 import type { CSSProperties } from "react"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { ArrowUpDown, CalendarPlus, Check, MoreHorizontal, X } from "lucide-react"
@@ -13,15 +14,10 @@ import type { PlanResponse } from "@/lib/types/plans"
 import { PlanBadge } from "./plan-badge"
 import { getPlanLabel, getPlanStyle } from "./utils"
 
-export type AssignPlansColumnMeta = {
-  headerClassName?: string
-  cellClassName?: string
-}
-
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies AssignPlansColumnMeta
+} satisfies ColumnMeta
 
 function AssignPlansSortableHeader({
   column,
@@ -67,7 +63,7 @@ export function createAssignPlansColumns(
           "min-w-[140px] max-w-none whitespace-normal align-top sm:max-w-[min(14rem,36vw)]",
         cellClassName:
           "min-w-[140px] max-w-none whitespace-normal break-words align-top font-medium text-foreground sm:max-w-[min(14rem,36vw)]",
-      } satisfies AssignPlansColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <AssignPlansSortableHeader
           column={column}
@@ -85,7 +81,7 @@ export function createAssignPlansColumns(
           "min-w-[180px] max-w-none whitespace-normal align-top sm:max-w-[min(18rem,45vw)]",
         cellClassName:
           "min-w-[180px] max-w-none whitespace-normal break-words align-top text-muted-foreground sm:max-w-[min(18rem,45vw)]",
-      } satisfies AssignPlansColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <AssignPlansSortableHeader
           column={column}
@@ -101,7 +97,7 @@ export function createAssignPlansColumns(
       meta: {
         headerClassName: "min-w-[8rem] whitespace-normal",
         cellClassName: "min-w-[8rem] align-top",
-      } satisfies AssignPlansColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <AssignPlansSortableHeader
           column={column}
@@ -119,7 +115,7 @@ export function createAssignPlansColumns(
       meta: {
         headerClassName: "min-w-[9rem] whitespace-normal",
         cellClassName: "min-w-[9rem] align-top",
-      } satisfies AssignPlansColumnMeta,
+      } satisfies ColumnMeta,
       header: ({ column }) => (
         <AssignPlansSortableHeader
           column={column}
@@ -159,7 +155,7 @@ export function createAssignPlansColumns(
         ...compactColumnMeta,
         headerClassName: `${compactColumnMeta.headerClassName} text-right`,
         cellClassName: `${compactColumnMeta.cellClassName} text-right`,
-      } satisfies AssignPlansColumnMeta,
+      } satisfies ColumnMeta,
       header: () => (
         <span className="pr-2 text-sm font-medium text-foreground">Acciones</span>
       ),

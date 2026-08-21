@@ -165,10 +165,3 @@ export const SEVERITY_ICON_CLASS: Record<NotificationSeverity, string> = {
   medium: "text-amber-600 dark:text-amber-400",
   info: "text-muted-foreground",
 };
-
-export const DOMAIN_LABEL: Record<NotificationDomain, string> = {
-  inventory: "Inventario",
-  sales: "Ventas",
-  finance: "Finanzas",
-  team: "Equipo",
-};

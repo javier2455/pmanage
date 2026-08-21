@@ -31,8 +31,7 @@ import {
   Save,
 } from "lucide-react"
 import Link from "next/link"
-import { sileo } from "sileo"
-import axios from "axios"
+import { toastApiError, toastSuccess } from "@/lib/toast"
 
 export default function EditProfilePage() {
   const router = useRouter()
@@ -93,31 +92,14 @@ export default function EditProfilePage() {
         },
       })
 
-      sileo.success({
+      toastSuccess({
         title: "Perfil actualizado",
         description: "Los datos de tu cuenta han sido guardados correctamente",
-        fill: "",
-        styles: {
-          title: "text-white! text-[16px]! font-bold!",
-          description: "text-white/90! text-[15px]!",
-        },
       })
 
       router.push("/dashboard/profile")
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          description: error.response?.data?.message ?? "No se pudo actualizar el perfil",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        })
-      } else {
-        sileo.error({
-          title: "Error",
-          description: "No se pudo actualizar el perfil. Intenta de nuevo.",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        })
-      }
+      toastApiError(error, "No se pudo actualizar el perfil. Intenta de nuevo.")
     }
   }
 

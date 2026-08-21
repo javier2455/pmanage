@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sileo } from "sileo";
+import { apiMessage, toastApiError, toastError, toastSuccess } from "@/lib/toast";
 import { Loader2, Plus } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -27,11 +26,6 @@ import {
   createTicketSchema,
 } from "@/lib/validations/support-ticket";
 import { useCreateTicketMutation } from "@/hooks/use-support-ticket";
-
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-};
 
 /** Lee el nombre del usuario logueado para pre-rellenar `userName` (opcional). */
 function readUserName(): string {
@@ -94,29 +88,16 @@ export function CreateTicketDialog({
         message: formData.message,
         userName: formData.userName?.trim() || undefined,
       });
-      sileo.success({
+      toastSuccess({
         title: "Ticket enviado",
-        fill: "",
-        styles: SUCCESS_TOAST_STYLES,
         description: "Tu solicitud de soporte se ha registrado correctamente",
       });
       setOpen(false);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        const message = Array.isArray(error.response.data.message)
-          ? error.response.data.message.join(", ")
-          : error.response.data.message;
-        setError("root", { message });
-        sileo.error({
-          title: error.response?.data?.error ?? "Error",
-          styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-          description: message,
-        });
-      } else {
-        setError("root", {
-          message: "Error al enviar el ticket. Intenta de nuevo.",
-        });
-      }
+      // El caso sin `message` solo escribía el error al pie del formulario.
+      const fallback = "Error al enviar el ticket. Intenta de nuevo.";
+      toastApiError(error, fallback);
+      setError("root", { message: apiMessage(error) ?? fallback });
     }
   }
 
@@ -132,7 +113,7 @@ export function CreateTicketDialog({
 
         <form
           onSubmit={handleSubmit(onSubmit, () => {
-            sileo.error({
+            toastError({
               title: "Revisa el formulario",
               description: "Completa todos los campos requeridos correctamente",
             });

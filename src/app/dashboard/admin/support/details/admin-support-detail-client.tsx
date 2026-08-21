@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import axios from "axios";
-import { sileo } from "sileo";
+import { apiMessage, toastError, toastSuccess } from "@/lib/toast";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -35,11 +34,6 @@ import { TicketReplyForm } from "@/components/support-tickets/ticket-reply-form"
 import { TicketStatusDialog } from "@/components/support-tickets/ticket-status-dialog";
 import { formatTicketDate } from "@/components/support-tickets/my-tickets-table-columns";
 
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-};
-
 export default function AdminSupportDetailClient() {
   const searchParams = useSearchParams();
   const ticketId = searchParams.get("id") ?? "";
@@ -52,23 +46,14 @@ export default function AdminSupportDetailClient() {
     if (!ticket) return;
     try {
       await assignMutation.mutateAsync(ticket.id);
-      sileo.success({
+      toastSuccess({
         title: "Ticket asignado",
-        fill: "",
-        styles: SUCCESS_TOAST_STYLES,
         description: "Ahora eres el admin responsable de este ticket",
       });
     } catch (error) {
-      const description =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? Array.isArray(error.response.data.message)
-            ? error.response.data.message.join(", ")
-            : error.response.data.message
-          : "Intenta de nuevo en unos segundos.";
-      sileo.error({
+      toastError({
         title: "No se pudo asignar el ticket",
-        styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-        description,
+        description: apiMessage(error) ?? "Intenta de nuevo en unos segundos.",
       });
     }
   }

@@ -2,8 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
-import axios from "axios"
-import { sileo } from "sileo"
+import { toastApiError, toastError, toastSuccess } from "@/lib/toast"
 import { BadgeDollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useGetAllUsersData, useGetUserPlanStats } from "@/hooks/use-user"
@@ -20,15 +19,6 @@ import {
 
 const SEARCH_DEBOUNCE_MS = 350
 const DEFAULT_PAGE_SIZE = 10
-
-const SUCCESS_TOAST_STYLES = {
-  title: "text-white! text-[16px]! font-bold!",
-  description: "text-white/90! text-[15px]!",
-}
-
-const ERROR_TOAST_STYLES = {
-  description: "text-[#dc2626]/90! text-[15px]!",
-}
 
 /** Devuelve la fecha local del sistema en formato YYYY-MM-DD sin conversión UTC */
 function localDateString(date: Date): string {
@@ -134,23 +124,20 @@ export default function AssignPlansPage() {
     if (mode === "remove") {
       try {
         await removeUserPlanMutation.mutateAsync(user.id)
-        sileo.success({
+        toastSuccess({
           title: "Plan removido",
-          fill: "",
-          styles: SUCCESS_TOAST_STYLES,
           description: `El plan ${user.plan?.name ?? ""} de ${user.name} se ha removido correctamente.`,
         })
         resetDialog()
       } catch (error) {
-        showApiError(error, "Error al remover plan", "No se pudo remover el plan. Intenta de nuevo.")
+        toastApiError(error, "No se pudo remover el plan. Intenta de nuevo.")
       }
       return
     }
 
     if (!endDate.trim()) {
-      sileo.error({
+      toastError({
         title: "Fecha requerida",
-        styles: ERROR_TOAST_STYLES,
         description: "La fecha de expiración es obligatoria.",
       })
       return
@@ -172,15 +159,13 @@ export default function AssignPlansPage() {
           startDate: extendStartDate,
           expiresAt: toUtcNoon(endDate),
         })
-        sileo.success({
+        toastSuccess({
           title: "Plan extendido",
-          fill: "",
-          styles: SUCCESS_TOAST_STYLES,
           description: `El plan ${user.plan?.name ?? ""} de ${user.name} se ha extendido correctamente.`,
         })
         resetDialog()
       } catch (error) {
-        showApiError(error, "Error al extender plan", "No se pudo extender el plan. Intenta de nuevo.")
+        toastApiError(error, "No se pudo extender el plan. Intenta de nuevo.")
       }
       return
     }
@@ -193,31 +178,13 @@ export default function AssignPlansPage() {
         startDate: toUtcNoon(startDate),
         expiresAt: toUtcNoon(endDate),
       })
-      sileo.success({
+      toastSuccess({
         title: "Plan asignado",
-        fill: "",
-        styles: SUCCESS_TOAST_STYLES,
         description: `El plan ${newPlan.name} se ha asignado correctamente a ${user.name}.`,
       })
       resetDialog()
     } catch (error) {
-      showApiError(error, "Error al asignar plan", "No se pudo asignar el plan. Intenta de nuevo.")
-    }
-  }
-
-  function showApiError(error: unknown, fallbackTitle: string, fallbackMessage: string) {
-    if (axios.isAxiosError(error) && error.response?.data?.message) {
-      sileo.error({
-        title: error.response?.data?.error ?? "Error",
-        styles: ERROR_TOAST_STYLES,
-        description: error.response?.data?.message,
-      })
-    } else {
-      sileo.error({
-        title: fallbackTitle,
-        styles: ERROR_TOAST_STYLES,
-        description: fallbackMessage,
-      })
+      toastApiError(error, "No se pudo asignar el plan. Intenta de nuevo.")
     }
   }
 
