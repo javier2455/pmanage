@@ -142,9 +142,11 @@ Una fila por funcionalidad/cambio. **Toda nueva idea entra aquí.**
 | **V3-107** | Historial de tasas de cambio (append-only) | Caja | — | especificada | — | §11 |
 | **V3-108** | Idempotencia de escrituras (`Idempotency-Key`) | Transversal | — | especificada | — | §11 |
 | **V3-109** | Numeración de facturas atómica (secuencia por negocio) | Ventas | — | especificada | — | §11 |
+| **V3-110** | Compositor de listados de productos por WhatsApp | Mensajería | Pro | idea | — | §9 |
 | **V3-111** | Tiempo real: SSE + `GET /me/badges` (fin del polling) | Transversal | — | especificada | — | §11 |
 | **V3-112** | UI de búsqueda global (feature `globalSearch`) | Transversal | Básico+ | especificada | — | §11 |
 | **V3-113** | Completar delivery / pedidos | Sugerida | Pro | idea | V3-013 | §9 |
+| **V3-114** | Destinatarios múltiples por negocio (`BusinessContact`) | Mensajería | Pro | idea | V3-110 | §9 |
 
 ---
 
@@ -1006,7 +1008,9 @@ Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproxima
 | **V3-103** | **2FA (TOTP) y sesiones activas** — estándar mínimo si el tier Enterprise custodia nóminas y conciliación. | Seguridad de cuentas serias | M | — |
 | **V3-104** | **Pronóstico de demanda** — velocidad de venta y días-hasta-agotarse con media móvil; sugiere cantidad de compra. | Evita roturas sin ML | M | V3-092 |
 | **V3-105** | **Resumen narrativo mensual** — informe generado (texto + cifras clave) entregable por email/WhatsApp. | El informe que un dueño no-financiero sí lee | M | V3-039 |
+| **V3-110** | **Listados de productos por WhatsApp** — el dueño o un trabajador designado selecciona productos, añade textos de introducción/cierre, ve la previa exacta y recibe el mensaje en su WhatsApp para reenviarlo a su grupo de clientes. El sistema nunca publica en el grupo. Detalle en [listados-productos-whatsapp.md](./listados-productos-whatsapp.md). | Ahorra el mensaje diario a mano y garantiza que el precio publicado es el del sistema | M | — |
 | **V3-113** | **Completar delivery / pedidos** — la entidad `BusinessDelivery` (tarifas, zonas, ventanas, tracking) y el evento `sale.delivery_created` existen en el backend sin módulo ni listener; falta el ciclo de pedido visible. | Termina una feature a medio construir | M | V3-013 |
+| **V3-114** | **Destinatarios múltiples por negocio** — hoy todo WhatsApp va a `Business.phone`. Entidad `BusinessContact` (dueño, administrador, vendedor…) con importación de los teléfonos de los trabajadores ya registrados, más selector de destino en el envío. Detalle en [listados-productos-whatsapp.md](./listados-productos-whatsapp.md) §4. | Sin esto, V3-110 solo sirve al dueño, no al trabajador designado | S–M | V3-110 |
 
 *Esfuerzo: S = pequeño, M = medio, L = grande (orientativo).*
 
@@ -1021,6 +1025,7 @@ Ideas que surgen de combinar las 4 áreas. Cada una con valor, esfuerzo aproxima
 | 2026-06-28 | Alta de **V3-039** (resumen mensual de flujo de caja + semáforo de salud, exportable, tier Enterprise). Detalle en §7.9; contrato backend en [docs/v3/backend-flujo-caja-mensual.md](./backend-flujo-caja-mensual.md). |
 | 2026-07-28 | Nueva **Área 5 — Resúmenes automáticos de negocio** (§8) con **V3-040..043**: activar de punta a punta los tipos `weekly_summary` / `monthly_summary`. **V3-040 marcado `hecho`** (cálculo real de ingresos ya en `main`); V3-041 (cron + idempotencia), V3-042 (visibilidad en la UI) y V3-043 (toggles en Ajustes) quedan `especificada` para implementar en v3. Renumeradas §8→§9 (sugeridas) y §9→§10 (bitácora); la columna *Sección* de V3-090..096 pasa de §8 a §9. Los IDs no cambian. |
 | 2026-08-17 | Registradas como canónicas las propuestas de [docs/revision-integral-2026-07.md](../revision-integral-2026-07.md) §4.2: **V3-097** (offline, `especificada`, contrato en [docs/offline-plan/plan-offline-negora.md](../offline-plan/plan-offline-negora.md)) y **V3-098..105** (`idea`, detalle en §9). Alta de los cimientos **V3-106..109** y de **V3-111/V3-112** (`especificada`, detalle en §11) y de **V3-113** (delivery, `idea`). V3-110 queda sin asignar. Nueva sección **§11 — Plan de implementación por fases** con la prioridad acordada: **Fase 0 cimientos → Fase 1-2 offline (máxima prioridad) → Fase 3 quick wins → Caja N1 → Descuentos → CRM/Nóminas → Caja N2**. Los IDs y contratos existentes no cambian. |
+| 2026-08-21 | Alta de **V3-110** (compositor de listados de productos por WhatsApp) y **V3-114** (destinatarios múltiples por negocio, entidad `BusinessContact` con importación desde los trabajadores registrados), ambos `idea` con contrato propuesto. V3-110 ocupa el ID que quedó sin asignar el 2026-08-17. Detalle completo — estado verificado del canal, contrato FE/BE, catálogo de ideas del canal WhatsApp, 9 acuerdos y 6 decisiones abiertas — en [docs/v3/listados-productos-whatsapp.md](./listados-productos-whatsapp.md). Acuerdo de diseño permanente: **el sistema entrega el mensaje al dueño/trabajador y esa persona lo reenvía; nunca publica en grupos de clientes**. |
 
 ---
 
