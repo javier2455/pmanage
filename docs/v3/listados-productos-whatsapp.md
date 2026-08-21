@@ -1,9 +1,11 @@
 # V3-110 / V3-114 — Listados de productos por WhatsApp
 
-> **Versión:** v1.0 (borrador de diseño) · **Fecha:** 2026-08-21 · **Estado:** `idea` (con contrato propuesto)
-> **Área:** Mensajería (§5 del maestro) · **Tier propuesto:** Pro
+> **Versión:** v1.1 · **Fecha:** 2026-08-21 · **Estado:** V3-110 `especificada` · V3-114 `idea`
+> **Área:** Mensajería (§5 del maestro) · **Tier:** Pro
 > **IDs:** **V3-110** (compositor de listados) · **V3-114** (destinatarios múltiples)
 > **Maestro:** [V3-MASTER.md](./V3-MASTER.md) — este documento es el detalle; el maestro manda en caso de conflicto.
+> **▶ Plan de implementación de la v1:** [plan-v1-difusion-listados.md](./plan-v1-difusion-listados.md)
+> — este documento explica el *qué* y el *por qué*; el plan detalla el *cómo* y manda sobre el alcance.
 >
 > Documento de trabajo de la conversación del 2026-08-21. Recoge **el estado real
 > verificado en el código**, la funcionalidad acordada, el catálogo completo de
@@ -413,6 +415,26 @@ Ya está en el maestro y **requiere CRM (V3-001) y consentimiento explícito**:
    número del negocio y añadir el selector de destinatario después. Pero **sin V3-114
    la función solo sirve al dueño**, no al trabajador designado.
 
+### Acuerdos de la v1 (2026-08-21)
+
+10. **Sección nueva "Difusión"** en el sidebar, con el menú "Listado de productos"
+    dentro — no cuelga de Productos. Deja sitio para novedades, ofertas y
+    recordatorios sin reorganizar el menú más adelante.
+11. **Sin envío programado en la v1.** Queda pendiente (§7 P7): la app no tiene
+    planificador propio y depende de dar de alta un cron externo en cPanel.
+12. **Solo plan Pro, con llave propia `productListShare`** en vez de reutilizar
+    `whatsappNotifications`. Cuesta una migración pequeña hoy y permite abrirla al
+    plan Básico mañana cambiando un JSON, sin abrir de paso las 13 alertas de
+    WhatsApp existentes al plan Básico.
+13. **Las plantillas guardan criterio, no productos fijos** (categorías + solo
+    disponibles), y la lista resultante **siempre es editable** antes de enviar;
+    las exclusiones manuales se persisten en la plantilla.
+14. **El destinatario se elige en cada envío**, entre el número del negocio y los
+    trabajadores registrados con teléfono válido. Cumple "1 número aparte del
+    dueño" sin necesidad de la entidad de contactos, que sigue siendo V3-114.
+15. **Por defecto solo se incluyen los productos con stock**, y de cada producto se
+    muestran nombre, precio y disponibilidad — todo configurable por envío.
+
 ---
 
 <a name="7-pendientes"></a>
@@ -421,11 +443,12 @@ Ya está en el maestro y **requiere CRM (V3-001) y consentimiento explícito**:
 | # | Pregunta | Impacto | Estado |
 |---|---|---|---|
 | **P1** | **¿El gateway soporta enviar imágenes o archivos?** Hay que mirar qué rutas expone el servicio detrás de `OPENWA_URL` además de `send-text`. | Si las soporta, se abre la mejor versión del catálogo: **un flyer o un PDF = un solo mensaje = un solo reenvío**, con fotos de producto, reutilizando el generador de PDF del backend. Si no, el alcance queda en texto. | **Abierta** |
-| **P2** | **¿Se permite enviar a varios destinatarios de una vez?** | Multiplica el tráfico saliente del número compartido. Propuesta: **uno por envío** en la v1, con posibilidad de repetir. | Abierta |
-| **P3** | **¿Verificación de números?** ¿Basta con que el dueño lo teclee, o se manda un código para confirmar que el número existe y tiene WhatsApp? | Sin verificar, un número mal tecleado hace que los mensajes se pierdan en silencio (o lleguen a un desconocido). Propuesta: campo `verifiedAt` en la entidad desde el inicio, verificación real en una segunda iteración. | Abierta |
-| **P4** | **¿Llave de plan propia o reutilizar `whatsappNotifications`?** | Decide si la función se cobra aparte. | Abierta |
+| **P2** | **¿Se permite enviar a varios destinatarios de una vez?** | Multiplica el tráfico saliente del número compartido. | **Cerrada (2026-08-21):** uno por envío en la v1, elegido entre el número del negocio y los trabajadores con teléfono válido. |
+| **P3** | **¿Verificación de números?** ¿Basta con que el dueño lo teclee, o se manda un código para confirmar que el número existe y tiene WhatsApp? | Sin verificar, un número mal tecleado hace que los mensajes se pierdan en silencio (o lleguen a un desconocido). | Aplazada: en la v1 los números no se teclean, salen de los trabajadores ya registrados. Vuelve a ser relevante con V3-114. |
+| **P4** | **¿Llave de plan propia o reutilizar `whatsappNotifications`?** | Decide si la función se cobra aparte. | **Cerrada (2026-08-21):** llave propia `productListShare`, concedida solo a premium/enterprise/free-trial. |
 | **P5** | **¿Límite de envíos por negocio y día?** | Protege el número compartido de un uso excesivo. Propuesta: contador simple sobre `notifications` con tipo `product_list`. | Abierta |
-| **P6** | **¿`Business.phone` sincroniza con su `BusinessContact` sembrado?** | Evita que queden desalineados tras editar la ficha del negocio. | Abierta |
+| **P6** | **¿`Business.phone` sincroniza con su `BusinessContact` sembrado?** | Evita que queden desalineados tras editar la ficha del negocio. | Abierta (solo aplica a V3-114) |
+| **P7** | **¿Cuándo entra el envío programado?** | Requiere entidad de programación, endpoint de cron con token, lógica de idempotencia y **dar de alta el cron en cPanel**. La app no usa `@nestjs/schedule`: los crons son tareas externas que golpean endpoints cada hora, así que una hora tipo "8:30" se cumpliría a las 9:00. | **Aplazado (2026-08-21):** fuera de la v1, pendiente a futuro. |
 
 ---
 
@@ -467,3 +490,4 @@ designado) → 4.
 | Fecha | Cambio |
 |---|---|
 | 2026-08-21 | Creación. Recoge la conversación de diseño: estado verificado del canal WhatsApp, propuesta V3-110 (compositor de listados), propuesta V3-114 (destinatarios múltiples), catálogo completo de ideas del canal, 9 acuerdos y 6 decisiones abiertas. Estado de ambos IDs: `idea` con contrato propuesto. |
+| 2026-08-21 | Cerrado el alcance de la v1 tras explorar el código de navegación, planes y crons. Nuevos acuerdos **10-15** (sección "Difusión", sin envío programado, llave de plan propia `productListShare` solo Pro, plantillas por criterio con lista editable, destinatario elegido por envío, defaults de contenido). Decisiones **P2** y **P4** cerradas, **P3** aplazada, **P7** añadida (envío programado). **V3-110 pasa a `especificada`**; plan de implementación en [plan-v1-difusion-listados.md](./plan-v1-difusion-listados.md). |
