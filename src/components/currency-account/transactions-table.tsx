@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowLeftRight, Loader2 } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -41,23 +41,12 @@ import type {
   FinancialTransaction,
   FinancialTransactionsResponse,
 } from "@/lib/types/financial-transaction";
-import {
-  createTransactionsColumns,
-  type TransactionsColumnMeta,
-} from "./transactions-table-columns";
+import { createTransactionsColumns } from "./transactions-table-columns";
+import { columnMeta } from "@/components/data-table/column-meta";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
 
 /** Valor del selector para "sin filtro de moneda" (Radix no admite value=""). */
 const ALL_CURRENCIES = "all";
-
-function columnMeta(column: {
-  columnDef: { meta?: unknown };
-}): TransactionsColumnMeta {
-  const meta = column.columnDef.meta;
-  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
-    return meta as TransactionsColumnMeta;
-  }
-  return {};
-}
 
 interface TransactionsTableProps {
   transactions: FinancialTransaction[];
@@ -143,16 +132,7 @@ export function TransactionsTable({
         ) : (
           <div className="relative">
             {isFetching ? (
-              <div
-                className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]"
-                role="status"
-                aria-live="polite"
-              >
-                <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Cargando…</span>
-                </div>
-              </div>
+              <TableLoadingOverlay />
             ) : null}
             <div
               className={cn(

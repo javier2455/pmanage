@@ -59,13 +59,13 @@ export function formatDateTimeLong(iso: string | Date) {
   });
 }
 
-/** Fecha sin hora, mes abreviado ("05 ago 2026"). */
+/** Fecha numérica compacta ("05/08/26"). Para columnas de tabla y listados. */
 export function formatDateShort(iso: string | Date) {
   try {
-    return new Intl.DateTimeFormat("es-CO", {
+    return new Intl.DateTimeFormat("es-CU", {
       day: "2-digit",
-      month: "short",
-      year: "numeric",
+      month: "2-digit",
+      year: "2-digit",
     }).format(new Date(iso));
   } catch {
     return DASH;

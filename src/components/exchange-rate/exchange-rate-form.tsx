@@ -4,8 +4,8 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, RefreshCw, X } from "lucide-react"
-import { sileo } from "sileo"
-import axios from "axios"
+import { isAxiosError } from "axios"
+import { toastApiError, toastSuccess } from "@/lib/toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -154,24 +154,18 @@ export default function ExchangeRateForm({ businessId, currentData }: ExchangeRa
                 reset(formValuesFromData(response.data))
                 setActiveCodes(activeCodesFromData(response.data))
             }
-            sileo.success({
+            toastSuccess({
                 title: "Tasas actualizadas correctamente",
-                fill: "",
-                styles: {
-                    title: "text-white! text-[16px]! font-bold!",
-                    description: "text-white/90! text-[15px]!",
-                },
                 description: "Los valores de cambio se han guardado correctamente",
             })
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message })
-                sileo.error({
-                    title: error.response?.data?.error,
-                    styles: { description: "text-[#dc2626]/90! text-[15px]!" },
-                    description: error.response?.data?.message,
-                })
-            }
+            // Sin la segunda rama, un fallo de red dejaba el formulario mudo.
+            const fallback = "No se pudieron guardar las tasas. Intenta de nuevo."
+            const message = isAxiosError(error)
+                ? error.response?.data?.message ?? fallback
+                : fallback
+            toastApiError(error, fallback)
+            setError("root", { message })
         }
     }
 

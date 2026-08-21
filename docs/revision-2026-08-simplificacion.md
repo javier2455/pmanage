@@ -30,11 +30,11 @@ comentarios existentes · mejoras no pedidas.
 > `git diff 9d687ce --stat -- src`, donde `9d687ce` es el último commit anterior a esta
 > revisión (v2.3.11). Excluye documentación y `package.json`.
 
-### Líneas — 9 secciones cerradas
+### Líneas — 10 secciones cerradas
 
 | | Archivos | Añadidas | Eliminadas | Neto |
 |---|---:|---:|---:|---:|
-| **Total en `src/`** | **79** | **+743** | **−1771** | **−1028 líneas** |
+| **Total en `src/`** | **82** | **+765** | **−1832** | **−1067 líneas** |
 
 Desglose por sección (neto):
 
@@ -49,6 +49,7 @@ Desglose por sección (neto):
 | 7 · Gastos | −164 |
 | 8 · Proveedores | −116 |
 | 9 · Trabajadores e invitaciones | −248 |
+| 10 · Caja y tasas de cambio | −39 |
 | Debounce unificado (adelanta trabajo de §4, §8 y §16) | −18 |
 | `lib/types/business.ts` (compartido §1–§2) | −3 |
 
@@ -75,14 +76,9 @@ Desglose por sección (neto):
 | `hooks/use-debounced-value.ts` | 19 | El debounce de búsqueda ×5 |
 | `components/business-providers/detail-row.tsx` | 25 | El markup de fila etiqueta/valor, repetido 6 veces en el diálogo |
 
-A los que se suman, dentro de archivos ya existentes: `toastApiError` en `lib/toast.ts`
-(sustituye al bloque `isAxiosError` de dos ramas, presente en 43 archivos),
-`PRODUCT_UNITS` en `lib/types/product.ts` (el catálogo de unidades estaba escrito 7
-veces), `BUSINESS_TYPE_LABELS` y `DEFAULT_MAP_LAT/LNG` en `lib/types/business.ts`, y
-`DASH` + `getInitials` en `lib/utils.ts`.
-
-El hook de debounce apenas mueve la aguja en líneas (unas 7 netas): su valor es dejar el
-retardo de 300 ms y la limpieza del timer en un único sitio en vez de cinco.
+A los que se suman, dentro de archivos ya existentes: `toastApiError` en `lib/toast.ts`,
+`PRODUCT_UNITS` en `lib/types/product.ts`, `BUSINESS_TYPE_LABELS` y `DEFAULT_MAP_LAT/LNG`
+en `lib/types/business.ts`, y `DASH` + `getInitials` en `lib/utils.ts`.
 
 ### Bugs corregidos (12)
 
@@ -91,27 +87,48 @@ Ninguno era el objetivo de la revisión; todos salieron al leer el código.
 | # | Qué pasaba | Sección |
 |---|---|---|
 | 1 | **Los precios de productos se mostraban en pesos colombianos** (`currency: "COP"`, locale es-CO) en la tabla del negocio, las tarjetas del catálogo y el historial de precios. El historial además redondeaba a entero: 1234,50 CUP se leía como `$ 1.235` | §4 |
-| 2 | Los importes del inventario (capas de coste y rentabilidad por lote) usaban separadores es-ES: `"1.234,50 CUP"` frente al `"1,234.50 CUP"` del resto de la app | §5 |
+| 2 | Los importes del inventario (capas de coste y rentabilidad por lote) usaban separadores es-ES: `"1234,50 CUP"` frente al `"1,234.50 CUP"` del resto de la app | §5 |
 | 3 | **Eliminar un negocio con la red caída cerraba el diálogo en silencio**: sin toast ni aviso, el negocio parecía borrado | §2 |
-| 4 | El mismo `catch` ciego en 10 formularios más — productos (4), stock, gastos (2), proveedores y trabajadores (crear/editar): si el error no era de axios o no traía `message`, no pasaba nada en pantalla | §4, §5, §7, §8, §9 |
+| 4 | El mismo `catch` ciego en 11 formularios más — productos (4), stock, gastos (2), proveedores, trabajadores (crear/editar) y tasas de cambio | §4, §5, §7, §8, §9, §10 |
 | 5 | **Seis toasts de error pintados de verde**: usaban los estilos de éxito (`fill:""` + título blanco) al fallar el borrado de una categoría, un producto, un gasto, un trabajador, una invitación, o la cancelación de una venta | §3, §4, §6, §7, §9 |
 | 6 | En el formulario de categorías, un error sin `message` solo escribía el texto al pie: invisible si el diálogo estaba scrolleado | §3 |
 | 7 | La lista de categorías de **gastos** se habría quedado en "0 categorías" si el backend omite los campos de paginación; la de productos ya lo cubría | §3 |
 | 8 | Los toasts de horario y de notificaciones salían sin los estilos del sistema, con un aspecto distinto al resto | §2 |
-| 9 | `product-grid-card` definía un `formatMoney` propio que **sombreaba al helper global del mismo nombre haciendo algo distinto** (el global añade la moneda, el local no): una llamada descuidada habría impreso el importe sin moneda | §6 |
+| 9 | `product-grid-card` definía un `formatMoney` propio que **sombreaba al helper global del mismo nombre haciendo algo distinto** | §6 |
 | 10 | `SUCCESS_TOAST_STYLES` **redefinido** en 3 componentes pese a estar exportado en `lib/toast.ts` | §3, §7, §9 |
 | 11 | Las fichas de proveedor mostraban `"--"` (dos guiones) donde el resto del sistema usa `"—"` | §8 |
 | 12 | Las iniciales de avatar se calculaban con `.split(" ")`, que produce iniciales vacías con nombres que llevan doble espacio | §9 |
+
+### Cambios visibles para el usuario
+
+Lo que cambia en pantalla respecto a antes de la revisión. Todo lo demás
+(código muerto, catálogos unificados, `columnMeta`, overlay, debounce…) es invisible.
+
+| Qué | Antes | Ahora | Dónde |
+|---|---|---|---|
+| Precios de producto | `$ 1.234,50` | `1,234.50 CUP` | Tabla de productos del negocio, tarjetas del catálogo, historial de precios |
+| Precio en el historial | `$ 1.235` (redondeado) | `1,234.50 CUP` | Historial de precios |
+| Importes de inventario | `1234,50 CUP` | `1,234.50 CUP` | Capas de coste, rentabilidad por lote |
+| Fecha corta | `05 ago 2026` | `05/08/26` | Capas de coste, rentabilidad por lote, columna de fecha de trabajadores |
+| Toasts de error | Fondo verde (estilos de éxito) | Rojo | 6 sitios de borrado y cancelación |
+| Toasts sin estilo | Aspecto por defecto de sileo | Estilo del sistema | Horario, notificaciones, "Revisa el formulario" de varios formularios |
+| Fallos de red | Sin ningún aviso | Toast de error | 11 formularios y el borrado de negocio |
+| Guiones de "sin dato" | `--` | `—` | Fichas de proveedor |
+| Filas del modal de proveedor | Sin separación | `gap-4` entre etiqueta y valor | Diálogo de detalle de proveedor |
+
+Verificado carácter por carácter que **no** cambian: `formatDateTimeShort`,
+`formatDateTimeLong` y `formatRelativeTime` respecto a las funciones locales que
+sustituyeron.
 
 ### Duplicación: antes y ahora
 
 | Patrón duplicado | Copias al empezar | Restantes |
 |---|---:|---:|
-| Llamada a `sileo` con estilos copiados inline | 38 archivos | 12 |
-| `function columnMeta` | 17 | 9 |
-| Overlay "Cargando…" | 16 | 6 |
-| `function formatDate` local | 17 | 6 |
-| Bloque `isAxiosError` de dos ramas | 43 | 30 |
+| Llamada a `sileo` con estilos copiados inline | 38 archivos | 11 |
+| `function columnMeta` | 17 | 8 |
+| Overlay "Cargando…" | 16 | 5 |
+| `function formatDate` local | 17 | 5 |
+| Bloque `isAxiosError` de dos ramas | 43 | 29 |
 | `Array.isArray(...message).join()` a mano | 6 | 4 |
 | `SUCCESS_TOAST_STYLES` redefinido | 4 | 0 ✅ |
 | `getInitials` / `productInitials` | 5 | 0 ✅ |
@@ -141,7 +158,7 @@ Cada sección se cierra con `pnpm exec tsc --noEmit` sin errores, `pnpm lint` co
 | 7 | Gastos | ✅ Cerrada (2026-08-20) |
 | 8 | Proveedores | ✅ Cerrada (2026-08-20) |
 | 9 | Trabajadores e invitaciones | ✅ Cerrada (2026-08-20) |
-| 10 | Caja y tasas de cambio | Pendiente |
+| 10 | Caja y tasas de cambio | ✅ Cerrada (2026-08-20) |
 | 11 | Cierres contables | Pendiente |
 | 12 | Analíticas | Pendiente |
 | 13 | Notificaciones | Pendiente |
@@ -524,3 +541,31 @@ La sección con más recorte de toda la revisión hasta ahora: **−248 líneas*
 - `table-of-workers` y `table-of-invitations` comparten esqueleto, como todas las tablas
   del proyecto, pero ya comparten lo que se podía compartir (`columnMeta`, overlay,
   paginación, `PageSizeSelect`). El resto son columnas y acciones distintas.
+
+---
+
+## Sección 10 — Caja y tasas de cambio ✅
+
+Superficie revisada: `app/dashboard/business/currency-accounts/`,
+`app/dashboard/exchange-rate/`, los 6 componentes de `components/currency-account/`, los 3
+de `components/exchange-rate/`, `lib/currency.ts`, `lib/cash-flow.ts`,
+`lib/currency-errors.ts` y sus tres hooks.
+
+**La sección más limpia de la revisión.** Toda la lógica de conversión y consolidación ya
+vive en `lib/currency.ts` y `lib/cash-flow.ts` —ambas con suites de test— y los
+componentes se limitan a pintarla. Solo salieron los patrones transversales:
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| X1 | `formatDate` en `transactions-table-columns` era exactamente `formatDateTimeShort`. | Migrado. |
+| X2 | `columnMeta`, `TransactionsColumnMeta` y el overlay "Cargando…". | A `components/data-table/`. |
+| X3 | `exchange-rate-form`: toasts inline y el `catch` que solo avisaba si la respuesta traía `message`. | A `lib/toast` con `toastApiError`. |
+
+### Revisado y descartado
+
+- `cash-balance-widget` (el del panel principal) llama a `consolidateBalances` sin
+  `useMemo`, mientras `consolidated-balance-card` sí lo memoiza. La diferencia es
+  irrelevante: la lista de monedas de un negocio son unas pocas filas.
+- `balances-table` y `consolidated-balance-card` muestran los mismos saldos, pero uno como
+  tabla plana por moneda y el otro consolidado a CUP con su equivalencia. No comparten
+  markup que se pueda extraer.

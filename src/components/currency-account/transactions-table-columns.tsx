@@ -6,26 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { BASE_CURRENCY, formatMoney } from "@/lib/currency";
 import type { FinancialTransaction } from "@/lib/types/financial-transaction";
 import { getTransactionTypeMeta } from "./transaction-type-meta";
-
-export type TransactionsColumnMeta = {
-  headerClassName?: string;
-  cellClassName?: string;
-};
+import { formatDateTimeShort } from "@/lib/dates";
+import type { ColumnMeta } from "@/components/data-table/column-meta";
 
 const compactColumnMeta = {
   headerClassName: "w-[1%] whitespace-nowrap",
   cellClassName: "w-[1%] whitespace-nowrap",
-} satisfies TransactionsColumnMeta;
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+} satisfies ColumnMeta;
 
 export function createTransactionsColumns(): ColumnDef<FinancialTransaction>[] {
   return [
@@ -43,7 +30,7 @@ export function createTransactionsColumns(): ColumnDef<FinancialTransaction>[] {
       meta: {
         headerClassName: "text-right",
         cellClassName: "text-right",
-      } satisfies TransactionsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => "Monto original",
       cell: ({ row }) => (
         <span className="font-medium text-foreground tabular-nums">
@@ -59,7 +46,7 @@ export function createTransactionsColumns(): ColumnDef<FinancialTransaction>[] {
       meta: {
         headerClassName: "text-right",
         cellClassName: "text-right",
-      } satisfies TransactionsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => `Equivalente (${BASE_CURRENCY})`,
       cell: ({ row }) => (
         <span className="text-muted-foreground tabular-nums">
@@ -72,11 +59,11 @@ export function createTransactionsColumns(): ColumnDef<FinancialTransaction>[] {
       meta: {
         headerClassName: "min-w-[180px] whitespace-nowrap",
         cellClassName: "min-w-[180px] whitespace-nowrap",
-      } satisfies TransactionsColumnMeta,
+      } satisfies ColumnMeta,
       header: () => "Fecha",
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {formatDate(row.original.transactionDate)}
+          {formatDateTimeShort(row.original.transactionDate)}
         </span>
       ),
     },
