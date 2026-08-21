@@ -1,6 +1,7 @@
 # Revisión de simplificación sección por sección — 2026-08
 
-> **Inicio:** 2026-08-20 · **Versión base:** `2.3.11` (rama `main`)
+> **COMPLETADA** · 17/17 secciones · 2026-08-20 → 2026-08-21
+> **Versión base:** `2.3.11` (rama `main`) · **Saldo: −3.175 líneas** (−4,7 % de `src/`)
 > Revisión funcionalidad por funcionalidad buscando redundancia, código muerto,
 > lógica simplificable e inconsistencias de patrón entre secciones.
 > Criterio de juicio: las cinco reglas de [CLAUDE.md](../CLAUDE.md).
@@ -24,17 +25,20 @@ resolviendo lo mismo de forma distinta · bugs reales (se reportan aparte).
 abstracción · estilo y formato · componentes parecidos con contenido distinto ·
 comentarios existentes · mejoras no pedidas.
 
-## Balance acumulado
+## Balance final
 
-> Se actualiza al cerrar cada sección. Medida única y comprobable:
+> Medida única y comprobable:
 > `git diff 9d687ce --stat -- src`, donde `9d687ce` es el último commit anterior a esta
 > revisión (v2.3.11). Excluye documentación y `package.json`.
 
-### Líneas — 16 secciones cerradas
+### Líneas — las 17 secciones
+
+`src/` pasa de **67.486 a 64.311 líneas** en 474 → 459 archivos: **un 4,7 % menos de
+código haciendo exactamente lo mismo**, con 12 bugs menos.
 
 | | Archivos | Añadidas | Eliminadas | Neto |
 |---|---:|---:|---:|---:|
-| **Total en `src/`** | **132** | **+942** | **−3585** | **−2643 líneas** |
+| **Total en `src/`** | **143** | **+971** | **−4146** | **−3175 líneas** |
 
 Desglose por sección (neto):
 
@@ -56,10 +60,11 @@ Desglose por sección (neto):
 | 14 · Perfil y planes | −34 |
 | 15 · Soporte | −120 |
 | 16 · Admin | −200 |
+| 17 · Transversales | −520 |
 | Debounce unificado (adelanta trabajo de §4, §8 y §16) | −18 |
 | `lib/types/business.ts` (compartido §1–§2) | −3 |
 
-### Archivos eliminados (20)
+### Archivos eliminados (22)
 
 | Archivo | Líneas | Motivo |
 |---|---:|---|
@@ -80,6 +85,8 @@ Desglose por sección (neto):
 | `lib/api/menu.ts` | 21 | Ídem |
 | `lib/types/menu.ts` | 35 | Ídem |
 | `lib/routes/menu.ts` | 5 | Ídem |
+| `components/ui/chart.tsx` | 372 | Wrapper de recharts: tras retirar Analíticas era el único archivo que importaba la librería, y a él no lo importaba nadie |
+| `components/ui/pagination.tsx` | 127 | La paginación de shadcn; el proyecto usa `DataTablePaginationNav`, que no la utiliza |
 
 ### Archivos creados (7)
 
@@ -143,11 +150,12 @@ sustituyeron.
 
 | Patrón duplicado | Copias al empezar | Restantes |
 |---|---:|---:|
-| Llamada a `sileo` con estilos copiados inline | 38 archivos | 3 |
-| `function columnMeta` | 17 | 1 |
-| Overlay "Cargando…" | 16 | 2 |
-| `function formatDate` local | 17 | 2 |
-| Bloque `isAxiosError` de dos ramas | 43 | 29 |
+| Llamada a `sileo` con estilos copiados inline | 38 archivos | 0 ✅ |
+| `function columnMeta` | 17 | 0 ✅ |
+| Overlay "Cargando…" | 16 | 0 ✅ |
+| `function formatDate` local | 17 | 1 |
+| Bloque `isAxiosError` de dos ramas con toasts duplicados | 43 | 0 ✅ |
+| `isAxiosError` con narrowing propio (usos legítimos) | — | 11 |
 | `Array.isArray(...message).join()` a mano | 6 | 0 ✅ |
 | `downloadBlob` local pese a existir en `lib/download.ts` | 2 | 0 ✅ |
 | `SUCCESS_TOAST_STYLES` redefinido | 8 | 0 ✅ |
@@ -159,9 +167,12 @@ sustituyeron.
 
 ### Verificación
 
-Cada sección se cierra con `pnpm exec tsc --noEmit` sin errores, `pnpm lint` con 0 errores
-(quedan 2 warnings **preexistentes**, anotados para §17), `pnpm test` con 231/231 pasando y
-`pnpm build` correcto.
+Cada sección se cerró con `pnpm exec tsc --noEmit` sin errores, `pnpm lint`, `pnpm test`
+con 231/231 pasando y `pnpm build` correcto.
+
+Al terminar §17, **`pnpm lint` no emite ni una línea: 0 errores y 0 warnings**. Los dos
+warnings que el proyecto arrastraba desde antes de esta revisión (`authRoutes` sin usar en
+el login y `BASIC_ROUTE` sin usar en `lib/axios.ts`) quedaron cerrados.
 
 ---
 
@@ -185,7 +196,7 @@ Cada sección se cierra con `pnpm exec tsc --noEmit` sin errores, `pnpm lint` co
 | 14 | Perfil y planes | ✅ Cerrada (2026-08-20) |
 | 15 | Soporte | ✅ Cerrada (2026-08-21) |
 | 16 | Admin | ✅ Cerrada (2026-08-21) |
-| 17 | Transversales (sidebar, auth, axios, tour, ui) | Pendiente |
+| 17 | Transversales (sidebar, auth, axios, tour, ui) | ✅ Cerrada (2026-08-21) |
 
 ---
 
@@ -774,3 +785,45 @@ componentes de `components/navigation-admin/`, los 6 de `components/assign-plans
 - `components/navigation-admin/` (11 archivos) está bien separado: `node-config.ts`,
   `role-badges`, `roles-field` y `role-multiselect` ya son piezas compartidas entre los
   tres diálogos de sección/menú/submenú.
+
+---
+
+## Sección 17 — Transversales ✅
+
+Superficie revisada: `components/sidebar/`, `components/auth/`, `middleware.ts`,
+`lib/axios.ts`, `lib/routes/`, `components/tour/` + `lib/tour/` y `components/ui/`.
+
+| id | Hallazgo | Acción |
+|---|---|---|
+| T1 | Los **dos warnings de lint** que el proyecto arrastraba desde antes de la revisión: `authRoutes` importado sin usar en el login y `BASIC_ROUTE` sin usar en `lib/axios.ts`. | Imports eliminados. `pnpm lint` queda **completamente limpio**. |
+| T2 | El **último** overlay "Cargando…" duplicado (`price-history-timeline`, con el anclaje arriba que `TableLoadingOverlay` ya soportaba desde §5). | Migrado. Patrón a cero. |
+| T3 | `reset-password-client`: toast con estilos inline y el `catch` de dos ramas. | `toastSuccess` + `apiMessage`. |
+| T4 | `components/ui/chart.tsx` (372) y `components/ui/pagination.tsx` (127) sin ningún importador. `chart.tsx` era el wrapper de **recharts**, que tras retirar Analíticas dejó de usarse en todo el proyecto. | Ambos eliminados y **`recharts` desinstalado** (decisión del usuario). |
+| T5 | El ternario `isAxiosError(e) && e.response?.data?.message ? … : fallback` —la versión compacta del bloque de dos ramas— repetido **7 veces** en 5 archivos de inventario y administración de menús. | `apiMessage(error) ?? fallback`. |
+
+### Revisado y descartado
+
+- **`lib/routes/index.ts` NO era huérfano.** Se anotó como tal en §3 por un punto ciego del
+  barrido: los 20 módulos de `lib/routes/` lo importan como `from "."`, forma que el
+  script no contemplaba. Exporta `BASIC_ROUTE` (usado en todos) y `LOCAL_ROUTE` (usado en
+  `routes/auth.ts`).
+- Las dos llamadas a `sileo` que quedan **no son duplicación**: `app/layout.tsx` importa el
+  `<Toaster />`, el contenedor sin el cual no se pinta ningún toast; y `tour-provider` usa
+  `sileo.info()`, una variante que `lib/toast` no cubre. Añadir un `toastInfo` para un
+  único consumidor sería crear una abstracción sin necesidad (§2).
+- Los **11 archivos que siguen usando `isAxiosError`** hacen algo más que extraer el
+  mensaje: `login` y `register` distinguen credenciales inválidas de usuario inactivo,
+  `business-context` detecta el 401 para cerrar sesión, `sales/create` mira
+  `data.error === "Not Found"`, y `lib/currency-errors` mapea códigos de moneda. Son usos
+  legítimos, no duplicación.
+- El `formatDate` que queda, en `current-inventory-table-columns`, usa
+  `dateStyle: "short" + timeStyle: "short"` — un formato que ningún otro sitio comparte.
+  Extraerlo no deduplicaría nada.
+- `components/sidebar/`, `components/auth/`, `middleware.ts` y todo `lib/tour/` salieron
+  limpios: sus helpers locales (`grants`, `isAdminRole`, `planAllowsStep`, `step`,
+  `searchableText`) son únicos, sin copias.
+
+### Barrido final de huérfanos
+
+Con el barrido corregido —por ruta completa, contemplando `from "."` y las rutas
+relativas— **no queda ni un módulo sin importador en todo `src/`**.

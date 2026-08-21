@@ -21,7 +21,6 @@ import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { getActivePlan } from "@/lib/api/plans";
-import { authRoutes } from "@/lib/routes/auth";
 import { getMe } from "@/lib/api/auth";
 import { getMyBusinessesList } from "@/lib/api/business";
 import { getAllSections } from "@/lib/api/navigation";

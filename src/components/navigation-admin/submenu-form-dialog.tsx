@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toastError, toastSuccess } from "@/lib/toast";
+import { apiMessage, toastError, toastSuccess } from "@/lib/toast";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -142,9 +141,8 @@ export function SubmenuFormDialog({
       onOpenChange(false);
     } catch (error) {
       const message =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : isEdit
+        apiMessage(error) ??
+          isEdit
             ? "No se pudo actualizar el submenú."
             : "No se pudo crear el submenú.";
       setError("root", { message });

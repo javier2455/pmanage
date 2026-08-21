@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LineChart, Loader2 } from "lucide-react";
+import { LineChart } from "lucide-react";
 import type { PriceHistoryEntry } from "@/lib/types/price-history";
 import {
   Empty,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { TableLoadingOverlay } from "@/components/data-table/table-loading-overlay";
 import PriceHistoryItem from "./price-history-item";
 
 function isSameDay(a: Date, b: Date) {
@@ -127,18 +128,7 @@ export default function PriceHistoryTimeline({
 
   return (
     <div className="relative">
-      {isFetching ? (
-        <div
-          className="pointer-events-auto absolute inset-0 z-10 flex items-start justify-center bg-background/60 pt-8 backdrop-blur-[1px]"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Cargando…</span>
-          </div>
-        </div>
-      ) : null}
+      {isFetching ? <TableLoadingOverlay className="items-start pt-8" /> : null}
       <div
         className={cn(
           "transition-opacity",

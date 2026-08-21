@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { sileo } from "sileo";
+import { apiMessage, toastSuccess } from "@/lib/toast";
 import {
     changePasswordSchema,
     type ChangePasswordFormData,
@@ -53,24 +52,16 @@ export default function ResetPasswordClient() {
                 token,
             });
             setSuccess(true);
-            sileo.success({
+            toastSuccess({
                 title: "Contraseña actualizada",
                 description: "Ya puedes iniciar sesión con tu nueva contraseña.",
-                fill: "",
-                styles: {
-                    title: "text-white! text-[16px]! font-bold!",
-                    description: "text-white/90! text-[15px]!",
-                },
             });
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message });
-            } else {
-                setError("root", {
-                    message:
-                        "No se pudo cambiar la contraseña. El enlace puede haber expirado.",
-                });
-            }
+            setError("root", {
+                message:
+                    apiMessage(error) ??
+                    "No se pudo cambiar la contraseña. El enlace puede haber expirado.",
+            });
         }
     };
 

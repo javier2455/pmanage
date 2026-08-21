@@ -1,7 +1,6 @@
 import axios from "axios";
 import { clearAuthCookies } from "@/lib/cookies";
 import { withBasePath } from "@/lib/base-path";
-import { BASIC_ROUTE } from "@/lib/routes";
 
 // Create axios instance with interceptors
 const apiClient = axios.create({

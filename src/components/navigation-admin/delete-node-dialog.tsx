@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
-import { toastError, toastSuccess } from "@/lib/toast";
+import { apiMessage, toastError, toastSuccess } from "@/lib/toast";
 import { AlertTriangle, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -78,9 +77,8 @@ export function DeleteNodeDialog({
       onOpenChange(false);
     } catch (error) {
       const message =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : `No se pudo eliminar la ${config.singularLower}. Intenta de nuevo.`;
+        apiMessage(error) ??
+          `No se pudo eliminar la ${config.singularLower}. Intenta de nuevo.`;
       toastError({ title: "Error", description: message });
     }
   }

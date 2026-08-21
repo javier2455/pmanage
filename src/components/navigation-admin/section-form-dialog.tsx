@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toastError, toastSuccess } from "@/lib/toast";
+import { apiMessage, toastError, toastSuccess } from "@/lib/toast";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -106,9 +105,8 @@ function CreateSectionDialog({ open, onOpenChange }: SectionFormDialogProps) {
       onOpenChange(false);
     } catch (error) {
       const message =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "No se pudo crear la sección.";
+        apiMessage(error) ??
+          "No se pudo crear la sección.";
       setError("root", { message });
       toastError({ title: "Error", description: message });
     }
@@ -299,9 +297,8 @@ function EditSectionDialog({
       onOpenChange(false);
     } catch (error) {
       const message =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "No se pudo actualizar la sección.";
+        apiMessage(error) ??
+          "No se pudo actualizar la sección.";
       setError("root", { message });
       toastError({ title: "Error", description: message });
     }
