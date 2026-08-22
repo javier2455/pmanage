@@ -32,6 +32,7 @@ export const PLAN_FEATURE_KEYS = [
   "team",
   "priceComparator",
   "whatsappNotifications",
+  "productListShare",
   "analytics",
   "stockAlerts",
   "prioritySupport",
@@ -191,6 +192,13 @@ export const PLAN_FEATURES: PlanFeatureDefinition[] = [
     group: "Notificaciones y soporte",
     description:
       "Los mismos avisos enviados por WhatsApp al teléfono del negocio. Requiere un teléfono válido asociado al negocio.",
+  },
+  {
+    key: "productListShare",
+    label: "Compartir listado de productos",
+    group: "Notificaciones y soporte",
+    description:
+      "Arma en la app el listado de productos con sus precios y recíbelo por WhatsApp, listo para reenviarlo a tu grupo de clientes. Puede enviarse al número del negocio o al de un trabajador.",
   },
   {
     key: "prioritySupport",
