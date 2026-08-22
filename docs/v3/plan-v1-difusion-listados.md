@@ -1,6 +1,8 @@
 # Plan de implementación — V3-110 v1: Difusión de listados de productos
 
-> **Fecha:** 2026-08-21 · **Estado:** listo para implementar · **Tier:** Pro
+> **Fecha:** 2026-08-21 · **Estado:** ✅ implementado (pendiente de despliegue) · **Tier:** Pro
+> **Ramas:** `feat/product-list-share` (psearch-back) · `feat/difusion-listado-productos` (pmanage)
+> **Ruta de la vista:** `/dashboard/broadcast/product-list` — en inglés, como todas las del proyecto
 > **Diseño y contexto:** [listados-productos-whatsapp.md](./listados-productos-whatsapp.md)
 > **Maestro:** [V3-MASTER.md](./V3-MASTER.md) — V3-110
 
@@ -219,7 +221,7 @@ tratan los tipos sin campo en `BusinessSetting`.
 | Nodo | Valores |
 |---|---|
 | Sección | `name: "Difusión"`, `icon: "Megaphone"`, `active: true` |
-| Menú | `name: "Listado de productos"`, `icon: "Send"`, `url: "/dashboard/difusion/listado-productos"`, `sectionId: <id de Difusión>` |
+| Menú | `name: "Listado de productos"`, `icon: "Send"`, `url: "/dashboard/broadcast/product-list"`, `sectionId: <id de Difusión>` |
 
 Dos avisos verificados en el código:
 
@@ -238,7 +240,7 @@ selector de permisos y el dueño lo asigna a quien quiera. Nada que programar.
 Añadir a `PRO_ROUTES` en `pmanage/src/lib/pro-gates.ts`:
 
 ```ts
-{ path: "/dashboard/difusion/listado-productos", feature: "productListShare", redirect: "/dashboard" }
+{ path: "/dashboard/broadcast/product-list", feature: "productListShare", redirect: "/dashboard" }
 ```
 
 `RouteGuard` (redirección real) y el sidebar (badge Pro + deshabilitado) se derivan
@@ -254,7 +256,7 @@ src/lib/types/product-list.ts         → tipos de dominio y respuestas
 src/lib/validations/product-list.ts   → esquemas Zod
 src/lib/api/product-list.ts           → funciones axios (apiClient)
 src/hooks/use-product-list.ts         → useQuery / useMutation
-src/app/dashboard/difusion/listado-productos/page.tsx
+src/app/dashboard/broadcast/product-list/page.tsx
 src/components/product-list-share/    → selector, editor, previa
 ```
 
@@ -362,3 +364,25 @@ Antes de dar por cerrado: `npm run build` y `npm run typecheck` en `psearch-back
   externo. Filtrar el desplegable con `isValidPhone` y normalizar antes de armar el chatId.
 - **"Leer más":** los listados largos aparecen colapsados en el chat. No es un
   error, es cómo se ven; la paginación lo alivia.
+
+---
+
+## 11. Ideas para potenciarlo (evaluadas, no implementadas)
+
+Ninguna entra en la v1. Se dejan aquí ordenadas por relación valor/esfuerzo para
+decidirlas más adelante.
+
+| Idea | Qué aporta | Esfuerzo | Notas |
+|---|---|---|---|
+| **Botón "Copiar mensaje"** en la vista previa | Plan B inmediato si el gateway está caído, y sirve para pegar en Telegram o Facebook | XS | Diez líneas sobre la previa que ya existe |
+| **Enlace `wa.me` con el texto precargado** | Abre WhatsApp con el mensaje listo y el dueño **elige el grupo directamente**, saltándose el paso de recibir y reenviar | S | Los navegadores cortan las URLs muy largas: sirve para listados medianos, como complemento del envío, no como reemplazo |
+| **"Repetir el último listado"** | El 80 % de los días el mensaje es el mismo; un clic para republicar lo de ayer | S | El historial ya está en `notifications` con tipo `product_list` |
+| **Recordar la última configuración** por negocio | Evita obligar a guardar plantilla para conservar textos y opciones | S | Podría vivir en `localStorage` o como plantilla implícita |
+| **Orden manual de los productos** | El dueño casi siempre quiere lo destacado arriba, y la agrupación por categoría no se lo permite | M | El backend ya respeta el orden de `productIds`: falta solo el arrastrar en la UI |
+| **Marcar novedades con 🆕** | Lo que más engancha en un grupo de clientes | S | El dato ya está en `createdAt` de los productos |
+| **Aviso si la tasa de cambio se movió** antes de publicar | Evita publicar precios que habrá que corregir | M | Enlaza con la alerta `exchange_rate_stale` existente |
+| **Historial de envíos en la propia vista** | Ver qué se publicó y cuándo | S | La tabla `notifications` ya lo persiste; falta exponerlo y pintarlo |
+
+> Las ideas que van más allá de esta vista (novedades automáticas, liquidación de
+> productos estancados, flyer en imagen o PDF, envío a clientes finales) están en
+> el catálogo del documento de diseño, [listados-productos-whatsapp.md §5](./listados-productos-whatsapp.md).

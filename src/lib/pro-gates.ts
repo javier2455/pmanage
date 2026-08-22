@@ -91,6 +91,11 @@ export const PRO_ROUTES = [
     feature: "analytics",
     redirect: "/dashboard",
   },
+  {
+    path: "/dashboard/broadcast/product-list",
+    feature: "productListShare",
+    redirect: "/dashboard",
+  },
 ] as const satisfies ReadonlyArray<{
   path: string;
   feature: PlanFeatureKey;
