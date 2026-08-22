@@ -120,8 +120,11 @@ export function MenusClient() {
 
   const businessId = activeBusiness?.isWorker ? activeBusiness.id : undefined;
 
+  // El gestor pide el árbol COMPLETO: es la única herramienta para reparar un
+  // nodo mal configurado, y con el filtrado normal una sección sin rol o plan
+  // accesible desaparecía de aquí, quedando imposible de editar o borrar.
   const { data, isLoading, isError, error, refetch, isRefetching } =
-    useGetAllSectionsQuery({ businessId, enabled: isAdmin });
+    useGetAllSectionsQuery({ businessId, enabled: isAdmin, includeHidden: true });
 
   const reorderTreeMutation = useReorderNavigationTreeMutation();
   const isSaving = reorderTreeMutation.isPending;

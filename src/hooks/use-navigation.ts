@@ -89,13 +89,21 @@ interface UseGetAllSectionsParams {
   enabled?: boolean;
 }
 
+interface UseGetAllSectionsTreeParams extends UseGetAllSectionsParams {
+  /** Solo el gestor de menús: árbol completo, sin filtrar (requiere admin). */
+  includeHidden?: boolean;
+}
+
 export function useGetAllSectionsQuery({
   businessId,
   enabled = true,
-}: UseGetAllSectionsParams = {}) {
+  includeHidden = false,
+}: UseGetAllSectionsTreeParams = {}) {
   return useQuery({
-    queryKey: [...SECTIONS_KEY, businessId ?? null],
-    queryFn: () => getAllSections({ businessId }),
+    // `includeHidden` entra en la clave: el árbol completo y el filtrado son
+    // respuestas distintas y no deben compartir caché.
+    queryKey: [...SECTIONS_KEY, businessId ?? null, includeHidden],
+    queryFn: () => getAllSections({ businessId, includeHidden }),
     enabled,
   });
 }

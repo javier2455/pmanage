@@ -45,15 +45,25 @@ function unwrapList<T>(payload: T[] | ListResponse<T>): T[] {
 
 export interface GetAllSectionsParams {
   businessId?: string;
+  /**
+   * Devuelve el árbol completo, sin filtrar por activo, rol ni plan. Lo pide
+   * solo el gestor de menús, para que un nodo mal configurado siga siendo
+   * reparable; el backend lo ignora si quien llama no es administrador.
+   */
+  includeHidden?: boolean;
 }
 
 export async function getAllSections(
   params: GetAllSectionsParams = {},
 ): Promise<GetAllSectionsResponse> {
+  const query: Record<string, string> = {};
+  if (params.businessId) query.businessId = params.businessId;
+  if (params.includeHidden) query.includeHidden = "true";
+
   const { data } = await apiClient.get<
     SectionApiNode[] | ListResponse<SectionApiNode>
   >(navigationRoutes.getAllSections, {
-    params: params.businessId ? { businessId: params.businessId } : undefined,
+    params: Object.keys(query).length > 0 ? query : undefined,
   });
   return unwrapList(data);
 }
