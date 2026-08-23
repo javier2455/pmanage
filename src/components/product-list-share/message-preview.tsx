@@ -63,19 +63,21 @@ export function MessagePreview({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex max-h-[420px] flex-col gap-4 overflow-y-auto">
+      <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
         {sheets.map((sheet, index) => (
           <figure
             key={index}
             className="overflow-hidden rounded-lg rounded-tl-none bg-muted/60"
           >
             {/* La lámina viene en base64 desde el backend: es exactamente la
-                misma imagen que se enviará. */}
+                misma imagen que se enviará. Se limita por ALTO y no por ancho,
+                porque es vertical (1200×1572) y a ancho completo no cabría
+                entera en pantalla. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={sheet.image}
               alt={`Lámina ${index + 1} de ${sheets.length}`}
-              className="w-full"
+              className="mx-auto max-h-[60vh] w-auto object-contain"
             />
             {sheet.caption && (
               <figcaption className="whitespace-pre-wrap break-words p-3 text-sm leading-relaxed">
