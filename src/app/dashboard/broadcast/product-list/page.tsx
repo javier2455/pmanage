@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Send } from "lucide-react";
+import { Image as ImageIcon, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MessageComposer } from "@/components/product-list-share/message-composer";
+import { ModeTabs } from "@/components/product-list-share/mode-tabs";
 import { MessagePreview } from "@/components/product-list-share/message-preview";
 import { ProductSelector } from "@/components/product-list-share/product-selector";
 import { TemplateBar } from "@/components/product-list-share/template-bar";
@@ -21,6 +22,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   useCreateProductListTemplateMutation,
   useDeleteProductListTemplateMutation,
+  useProductListCurrenciesQuery,
   useProductListPreviewQuery,
   useProductListRecipientsQuery,
   useProductListTemplatesQuery,
@@ -29,6 +31,8 @@ import {
 import { toastApiError, toastError, toastSuccess } from "@/lib/toast";
 import {
   DEFAULT_PRODUCT_LIST_OPTIONS,
+  MAX_PRODUCTS_IMAGE_MODE,
+  type ProductListMode,
   type ProductListOptions,
   type ProductListTemplate,
   type SelectableBusinessProduct,
@@ -51,6 +55,16 @@ export default function ProductListBroadcastPage() {
   );
   const [recipientId, setRecipientId] = useState(BUSINESS_RECIPIENT_ID);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [mode, setMode] = useState<ProductListMode>("text");
+  const [currency, setCurrency] = useState("CUP");
+  /**
+   * Firma de la última previa de láminas pedida. Componer imágenes cuesta
+   * descargar las fotos del bucket, así que en modo imagen no se regenera en
+   * cada tecla: se pide con el botón y se invalida cuando algo cambia.
+   */
+  const [generatedSignature, setGeneratedSignature] = useState<string | null>(
+    null,
+  );
 
   const debouncedSearch = useDebouncedValue(search.trim());
 
@@ -70,6 +84,10 @@ export default function ProductListBroadcastPage() {
     activeBusinessId ?? undefined,
   );
 
+  const currenciesQuery = useProductListCurrenciesQuery(
+    activeBusinessId ?? undefined,
+  );
+
   // La previa se pide con retardo: sin él, cada tecla de la introducción
   // lanzaría una petición.
   const previewPayload = useDebouncedValue(
@@ -79,12 +97,20 @@ export default function ProductListBroadcastPage() {
       intro: intro.trim() || undefined,
       outro: outro.trim() || undefined,
       options,
+      mode,
+      currency,
     },
     PREVIEW_DEBOUNCE_MS,
   );
+
+  const signature = JSON.stringify(previewPayload);
+  // En texto la previa es una cadena y se refresca sola; en imagen hay que
+  // descargar fotos y componer, así que espera al botón.
+  const needsGeneration = mode === "image" && generatedSignature !== signature;
+
   const previewQuery = useProductListPreviewQuery(
     previewPayload,
-    !!activeBusinessId,
+    !!activeBusinessId && !needsGeneration,
   );
 
   const sendMutation = useSendProductListMutation();
@@ -183,6 +209,16 @@ export default function ProductListBroadcastPage() {
   function handleSend() {
     if (!activeBusinessId || !hasSelection) return;
 
+    // El modo imagen es más caro de componer y de reenviar, así que su tope es
+    // mucho más bajo que el del texto.
+    if (mode === "image" && selectedIds.length > MAX_PRODUCTS_IMAGE_MODE) {
+      toastError({
+        title: "Demasiados productos para imágenes",
+        description: `En modo imagen puedes compartir hasta ${MAX_PRODUCTS_IMAGE_MODE} productos. Quita algunos o cambia a texto.`,
+      });
+      return;
+    }
+
     if (selectedIds.length > MAX_PRODUCTS_PER_LIST) {
       toastError({
         title: "Demasiados productos",
@@ -199,6 +235,8 @@ export default function ProductListBroadcastPage() {
         outro: outro.trim() || undefined,
         options,
         recipientId,
+        mode,
+        currency,
       },
       {
         onSuccess: (result) => {
@@ -261,6 +299,44 @@ export default function ProductListBroadcastPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6 rounded-lg border p-4">
+          <div className="flex flex-col gap-3">
+            <ModeTabs value={mode} onChange={setMode} />
+
+            {mode === "image" && (
+              <p className="text-xs text-muted-foreground">
+                Se enviarán láminas de 4 productos. Hasta{" "}
+                {MAX_PRODUCTS_IMAGE_MODE} productos por envío
+                {selectedIds.length > 0 &&
+                  ` · ${Math.ceil(selectedIds.length / 4)} ${
+                    Math.ceil(selectedIds.length / 4) === 1
+                      ? "lámina"
+                      : "láminas"
+                  }`}
+                .
+              </p>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Label htmlFor="currency" className="shrink-0 font-normal">
+                Publicar precios en
+              </Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="currency" className="w-35">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(currenciesQuery.data ?? [{ code: "CUP", rate: 1 }]).map(
+                    (option) => (
+                      <SelectItem key={option.code} value={option.code}>
+                        {option.code}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <ProductSelector
             products={products}
             selectedIds={selectedIds}
@@ -287,11 +363,31 @@ export default function ProductListBroadcastPage() {
 
           <MessagePreview
             messages={previewQuery.data?.messages ?? []}
+            sheets={previewQuery.data?.sheets ?? []}
             productCount={previewQuery.data?.productCount ?? 0}
             isLoading={previewQuery.isFetching}
             isError={previewQuery.isError}
             hasSelection={hasSelection}
+            needsGeneration={needsGeneration}
           />
+
+          {mode === "image" && needsGeneration && hasSelection && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setGeneratedSignature(signature)}
+            >
+              <ImageIcon data-icon="inline-start" />
+              Generar vista previa
+            </Button>
+          )}
+
+          {previewQuery.data?.fellBackToText && (
+            <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+              Ninguno de los productos seleccionados tiene foto, así que el
+              listado se enviará como texto.
+            </p>
+          )}
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="recipient">Enviar a</Label>

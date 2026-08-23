@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createProductListTemplate,
   deleteProductListTemplate,
+  getProductListCurrencies,
   getProductListRecipients,
   getProductListTemplates,
   previewProductList,
@@ -31,6 +32,16 @@ export function useProductListPreviewQuery(
     queryFn: () => previewProductList(payload),
     enabled: enabled && !!payload.businessId && payload.productIds.length > 0,
     staleTime: 0,
+  });
+}
+
+export function useProductListCurrenciesQuery(businessId: string | undefined) {
+  return useQuery({
+    queryKey: ["product-list-currencies", businessId],
+    queryFn: () => getProductListCurrencies(businessId as string),
+    enabled: !!businessId,
+    // Las tasas cambian a diario, no a cada minuto.
+    staleTime: 5 * 60 * 1000,
   });
 }
 

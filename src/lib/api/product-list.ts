@@ -4,6 +4,7 @@ import type {
   CreateProductListTemplatePayload,
   ProductListPayload,
   ProductListPreviewResponse,
+  ProductListCurrency,
   ProductListRecipient,
   ProductListSendResponse,
   ProductListTemplate,
@@ -36,6 +37,16 @@ export async function getProductListRecipients(
 ): Promise<ProductListRecipient[]> {
   const { data } = await apiClient.get<ProductListRecipient[]>(
     productListRoutes.recipients,
+    { params: { businessId } },
+  );
+  return Array.isArray(data) ? data : [];
+}
+
+export async function getProductListCurrencies(
+  businessId: string,
+): Promise<ProductListCurrency[]> {
+  const { data } = await apiClient.get<ProductListCurrency[]>(
+    productListRoutes.currencies,
     { params: { businessId } },
   );
   return Array.isArray(data) ? data : [];

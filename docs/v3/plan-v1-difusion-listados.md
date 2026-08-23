@@ -386,3 +386,11 @@ decidirlas más adelante.
 > Las ideas que van más allá de esta vista (novedades automáticas, liquidación de
 > productos estancados, flyer en imagen o PDF, envío a clientes finales) están en
 > el catálogo del documento de diseño, [listados-productos-whatsapp.md §5](./listados-productos-whatsapp.md).
+
+---
+
+## 12. Fase 2 — Modo imagen (mosaicos)
+
+El modo imagen tiene documento propio: **[plan-v2-mosaicos-imagen.md](./plan-v2-mosaicos-imagen.md)**
+(V3-115). Allí están las decisiones cerradas, el diseño de las láminas, los casos
+borde y los criterios de aceptación. Ese documento manda sobre el modo imagen.

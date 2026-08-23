@@ -1,21 +1,27 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ProductListSheetPreview } from "@/lib/types/product-list";
 
 interface MessagePreviewProps {
   messages: string[];
+  sheets: ProductListSheetPreview[];
   productCount: number;
   isLoading: boolean;
   isError: boolean;
   hasSelection: boolean;
+  /** Modo imagen: la previa se genera a petición, no en cada tecla. */
+  needsGeneration?: boolean;
 }
 
 export function MessagePreview({
   messages,
+  sheets,
   productCount,
   isLoading,
   isError,
   hasSelection,
+  needsGeneration,
 }: MessagePreviewProps) {
   if (!hasSelection) {
     return (
@@ -44,9 +50,41 @@ export function MessagePreview({
     );
   }
 
+  if (needsGeneration) {
+    return (
+      <div className="flex h-[420px] items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+        Pulsa &laquo;Generar vista previa&raquo; para componer las láminas con
+        las fotos de los productos.
+      </div>
+    );
+  }
+
+  const messageCount = sheets.length > 0 ? sheets.length : messages.length;
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex max-h-[420px] flex-col gap-3 overflow-y-auto">
+      <div className="flex max-h-[420px] flex-col gap-4 overflow-y-auto">
+        {sheets.map((sheet, index) => (
+          <figure
+            key={index}
+            className="overflow-hidden rounded-lg rounded-tl-none bg-muted/60"
+          >
+            {/* La lámina viene en base64 desde el backend: es exactamente la
+                misma imagen que se enviará. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={sheet.image}
+              alt={`Lámina ${index + 1} de ${sheets.length}`}
+              className="w-full"
+            />
+            {sheet.caption && (
+              <figcaption className="whitespace-pre-wrap break-words p-3 text-sm leading-relaxed">
+                {sheet.caption}
+              </figcaption>
+            )}
+          </figure>
+        ))}
+
         {messages.map((message, index) => (
           <article
             key={index}
@@ -59,9 +97,8 @@ export function MessagePreview({
 
       <p className="text-right text-xs text-muted-foreground">
         {productCount} {productCount === 1 ? "producto" : "productos"} ·{" "}
-        {messages.length}{" "}
-        {messages.length === 1 ? "mensaje" : "mensajes"}
-        {messages.length > 1 && " (se reenvían por separado)"}
+        {messageCount} {messageCount === 1 ? "mensaje" : "mensajes"}
+        {messageCount > 1 && " (se reenvían por separado)"}
       </p>
     </div>
   );
