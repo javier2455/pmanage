@@ -3,7 +3,10 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ProductListOptions } from "@/lib/types/product-list";
+import type {
+  ProductListMode,
+  ProductListOptions,
+} from "@/lib/types/product-list";
 
 const CHECKBOX_DARK = "dark:bg-card dark:border-white";
 
@@ -19,6 +22,8 @@ interface MessageComposerProps {
   intro: string;
   outro: string;
   options: ProductListOptions;
+  /** El pie escrito solo existe en modo imagen. */
+  mode: ProductListMode;
   onIntroChange: (value: string) => void;
   onOutroChange: (value: string) => void;
   onOptionsChange: (options: ProductListOptions) => void;
@@ -28,6 +33,7 @@ export function MessageComposer({
   intro,
   outro,
   options,
+  mode,
   onIntroChange,
   onOutroChange,
   onOptionsChange,
@@ -59,6 +65,30 @@ export function MessageComposer({
           ))}
         </div>
       </div>
+
+      {mode === "image" && (
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="option-includeCaption"
+            className={`mt-0.5 ${CHECKBOX_DARK}`}
+            checked={options.includeCaption}
+            onCheckedChange={() => toggleOption("includeCaption")}
+          />
+          <div className="flex flex-col gap-1">
+            <Label
+              htmlFor="option-includeCaption"
+              className="cursor-pointer font-normal"
+            >
+              Escribir la lista de productos debajo de la imagen
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Ese texto viaja pegado a la foto, en el mismo mensaje de WhatsApp.
+              Permite copiar los nombres y leer los precios aunque la imagen no
+              cargue. La introducción y la nota final se envían igualmente.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="intro">Introducción (opcional)</Label>

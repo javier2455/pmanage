@@ -69,6 +69,8 @@ entre reenviar cómodamente todos los días y no hacerlo nunca.
 | **I10** | La **vista previa la genera el backend** y la devuelve en base64, sin subirla al bucket | Mismo principio que el texto: lo que se ve es lo que se envía. Y no ensucia el bucket con previas |
 | **I11** | **Sin ofertas: se publica el precio base** (`price`), no `getEffectivePrice()` | Acordado el 2026-08-23. El precio publicado es el que se cobra; los descuentos son una decisión aparte |
 | **I12** | **El usuario elige la moneda** en la que se publican los precios | Ver §5.1. Los precios se guardan en CUP y se convierten al vuelo con la tasa del negocio |
+| **I13** | **El pie escrito es opcional**, con la casilla «Escribir la lista de productos debajo de la imagen» | Acordado el 2026-08-23. Quien quiera mandar solo la foto puede. La introducción y la nota final NO dependen de ella: son el negocio hablándole a su cliente |
+| **I14** | **Solo el precio viene marcado por defecto** | Es lo único sin lo que un listado de precios no tiene sentido. Disponibilidad, unidad, agrupar por categoría y marcar ofertas los activa el usuario, porque cada uno añade ruido a un mensaje pensado para reenviarse |
 
 ---
 
@@ -304,4 +306,5 @@ Tres formas de obtenerla, de más a menos fiable:
 | Fecha | Cambio |
 |---|---|
 | 2026-08-22 | Creación. Recoge la decisión de descartar el PDF por el contexto de uso real, el formato de mosaico, las diez decisiones cerradas (I1-I10) y el reparto continuo por categoría (I5) frente al corte estricto. Verificado con una prueba real que el gateway descarga imágenes del bucket y las entrega como imagen. |
+| 2026-08-23 | El pie escrito pasa a ser opcional (I13) y los valores por defecto se reducen al precio (I14). Además, la vista previa deja de tener scroll propio: el contenedor con alto máximo dejaba la lámina ocupándolo entero y el pie recortado justo debajo, y parecía que el mensaje llevaba un solo producto. |
 | 2026-08-23 | Ajustes tras ver la primera lámina real: **4 productos por lámina en 2×2** en vez de 6 (I2) — la foto pasa de 350 a 568 px y el precio de 30 a 42 px; **fuera las ofertas**, se publica el precio base (I11); y **moneda de publicación elegible** por el usuario, convirtiendo desde CUP con la tasa del negocio (I12, §5.1). Con 4 por lámina, 20 productos pasan de 4 a 5 mensajes. |

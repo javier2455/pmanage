@@ -352,6 +352,7 @@ export default function ProductListBroadcastPage() {
             intro={intro}
             outro={outro}
             options={options}
+            mode={mode}
             onIntroChange={setIntro}
             onOutroChange={setOutro}
             onOptionsChange={setOptions}

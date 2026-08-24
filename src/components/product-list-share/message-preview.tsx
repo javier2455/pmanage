@@ -63,7 +63,12 @@ export function MessagePreview({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
+      {/* Sin scroll propio a propósito: un contenedor con alto máximo dejaba la
+          lámina ocupándolo entero y el pie escrito recortado justo debajo, de
+          modo que parecía que el mensaje solo llevaba un producto. Limitando
+          solo la imagen, el pie fluye completo y quien hace scroll es la
+          página. */}
+      <div className="flex flex-col gap-4">
         {sheets.map((sheet, index) => (
           <figure
             key={index}
@@ -77,7 +82,7 @@ export function MessagePreview({
             <img
               src={sheet.image}
               alt={`Lámina ${index + 1} de ${sheets.length}`}
-              className="mx-auto max-h-[60vh] w-auto object-contain"
+              className="mx-auto max-h-95 w-auto object-contain"
             />
             {sheet.caption && (
               <figcaption className="whitespace-pre-wrap break-words p-3 text-sm leading-relaxed">

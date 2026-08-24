@@ -5,14 +5,29 @@ export interface ProductListOptions {
   showUnit: boolean;
   groupByCategory: boolean;
   markOffers: boolean;
+  /**
+   * Modo imagen: si el listado escrito viaja debajo de la foto.
+   *
+   * La lámina es un JPEG, así que nada de lo que hay en ella se puede copiar,
+   * buscar en el chat ni leer si la imagen no carga. La introducción y la nota
+   * final NO dependen de esta opción: son el negocio hablándole a su cliente y
+   * viajan siempre.
+   */
+  includeCaption: boolean;
 }
 
+/**
+ * Solo el precio viene marcado: es lo único sin lo que un listado de precios no
+ * tiene sentido. Lo demás añade ruido a un mensaje pensado para reenviarse, así
+ * que lo activa el usuario.
+ */
 export const DEFAULT_PRODUCT_LIST_OPTIONS: ProductListOptions = {
   showPrices: true,
-  showAvailability: true,
+  showAvailability: false,
   showUnit: false,
-  groupByCategory: true,
-  markOffers: true,
+  groupByCategory: false,
+  markOffers: false,
+  includeCaption: true,
 };
 
 /** Texto plano, o láminas de 4 productos con su foto. */
