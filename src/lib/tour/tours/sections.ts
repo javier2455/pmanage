@@ -235,6 +235,30 @@ export const SECTION_TOURS: TourDefinition[] = [
     ],
   },
   {
+    id: "seccion-producto-catalogo-editar",
+    kind: "seccion",
+    title: "Editar un producto del catálogo",
+    description: "Corregir el nombre, la descripción o la foto de una ficha.",
+    entryRoute: "/dashboard/business/products/catalog/edit",
+    steps: [
+      {
+        id: "catalogo-editar-intro",
+        route: "/dashboard/business/products/catalog/edit",
+        title: "Editar la ficha",
+        description:
+          "Aquí corriges los datos generales del producto, los que comparte en todos tus negocios. El precio y el stock no están aquí: esos son tuyos y se cambian en «Productos a la venta».",
+      },
+      {
+        id: "catalogo-editar-name",
+        element: "#product-name",
+        onMissing: "skip",
+        title: "Nombre y descripción",
+        description:
+          "Cambiar el nombre lo cambia en todas partes: en el mostrador, en tus listados y en los cierres anteriores.",
+      },
+    ],
+  },
+  {
     id: "seccion-producto-asignar",
     kind: "seccion",
     title: "Poner un producto a la venta",
@@ -373,6 +397,83 @@ export const SECTION_TOURS: TourDefinition[] = [
         title: "Acota por fechas",
         description:
           "Si el producto lleva mucho tiempo contigo, filtra un rango para ver solo los cambios que te interesan.",
+      },
+    ],
+  },
+
+
+  // --- Difusión -----------------------------------------------------------
+  {
+    id: "seccion-difusion",
+    kind: "seccion",
+    title: "Listado de productos",
+    description:
+      "Arma el listado de lo que vendes y compártelo por WhatsApp con tus clientes.",
+    entryRoute: "/dashboard/broadcast/product-list",
+    steps: [
+      {
+        id: "difusion-intro",
+        route: "/dashboard/broadcast/product-list",
+        title: "Listado de productos",
+        description:
+          "Esta pantalla arma el mensaje con lo que vendes para que llegue a tus clientes. Ojo con cómo funciona: el listado te llega a ti por WhatsApp y tú lo reenvías a tu grupo. No se publica solo.",
+      },
+      {
+        id: "difusion-templates",
+        element: '[data-tour="broadcast-templates"]',
+        title: "Plantillas",
+        description:
+          "Si mandas el listado a menudo, guárdalo como plantilla. No guarda los productos sueltos sino el criterio, así que al cargarla trae lo que tengas hoy, no lo de la semana pasada.",
+      },
+      {
+        id: "difusion-mode",
+        element: '[role="tablist"][aria-label="Formato del mensaje"]',
+        title: "Texto o imágenes",
+        description:
+          "«Texto» manda un solo mensaje con la lista escrita. «Imágenes» arma láminas de cuatro productos con foto: entra mejor por los ojos, pero admite menos productos por envío.",
+      },
+      {
+        id: "difusion-currency",
+        element: "#currency",
+        title: "En qué moneda publicas",
+        description:
+          "Los precios salen convertidos a la moneda que elijas con tu tipo de cambio. Útil si tus clientes piensan en dólares aunque tú cobres en CUP.",
+      },
+      {
+        id: "difusion-selector",
+        element: '[data-tour="broadcast-selector"]',
+        title: "Elige qué anunciar",
+        description:
+          "Marca los productos que quieres incluir. Déjalo en «solo con stock» para no anunciar lo que no puedes vender.",
+      },
+      {
+        id: "difusion-composer",
+        element: '[data-tour="broadcast-composer"]',
+        title: "Ponle tus palabras",
+        description:
+          "Un saludo al principio y una despedida al final. Aquí también decides qué acompaña a cada producto: precio, existencia o descripción.",
+      },
+      {
+        id: "difusion-preview",
+        element: '[data-tour="broadcast-preview"]',
+        title: "Míralo antes de mandarlo",
+        description:
+          "La vista previa es exactamente lo que va a recibir el cliente. En modo imágenes hay que pulsar «Generar vista previa», porque componer las láminas lleva su tiempo.",
+      },
+      {
+        id: "difusion-recipient",
+        element: "#recipient",
+        onMissing: "skip",
+        title: "A qué número te lo mandamos",
+        description:
+          "Aquí eliges a cuál de tus números llega. Si no aparece ninguno, añade el teléfono del negocio en sus datos.",
+      },
+      {
+        id: "difusion-send",
+        element: '[data-tour="broadcast-send-btn"]',
+        title: "Envíalo y reenvíalo",
+        description:
+          "Te llega a tu WhatsApp en segundos. Desde ahí lo reenvías a tu grupo o a cada cliente: así el mensaje sale con tu nombre, no con el de un sistema.",
       },
     ],
   },
@@ -568,6 +669,31 @@ export const SECTION_TOURS: TourDefinition[] = [
     ],
   },
 
+  {
+    id: "seccion-gasto-editar",
+    kind: "seccion",
+    title: "Editar un gasto",
+    description: "Corregir un gasto ya anotado sin descuadrar el cierre.",
+    entryRoute: "/dashboard/business/expenses/edit",
+    steps: [
+      {
+        id: "gasto-editar-intro",
+        route: "/dashboard/business/expenses/edit",
+        title: "Corregir un gasto",
+        description:
+          "Es el mismo formulario que al crearlo, con los datos ya puestos. Al guardar, el cierre de ese día se recalcula solo: si te equivocaste de monto, corrígelo aquí en vez de anotar otro gasto.",
+      },
+      {
+        id: "gasto-editar-amount",
+        element: "#expense-amount",
+        onMissing: "skip",
+        title: "El monto y su moneda",
+        description:
+          "Si cambias la moneda se vuelve a convertir con tu tasa. Revisa que la descripción siga contando lo que pasó.",
+      },
+    ],
+  },
+
   // --- Inventario ---------------------------------------------------------
   {
     id: "seccion-inventario",
@@ -756,6 +882,39 @@ export const SECTION_TOURS: TourDefinition[] = [
     ],
   },
 
+  {
+    id: "seccion-trabajador-crear",
+    kind: "seccion",
+    title: "Dar de alta a un trabajador",
+    description: "Sus datos y cómo le llega el acceso al negocio.",
+    entryRoute: "/dashboard/business/workers/create",
+    steps: [
+      {
+        id: "trabajador-crear-intro",
+        route: "/dashboard/business/workers/create",
+        title: "Dar de alta a alguien",
+        description:
+          "Con estos datos le llega una invitación por correo y él elige su propia contraseña. Tú no se la creas ni la conoces.",
+      },
+      {
+        id: "trabajador-crear-name",
+        element: "#worker-name",
+        onMissing: "skip",
+        title: "Quién es",
+        description:
+          "El nombre que pongas es el que quedará en cada venta que registre, así que usa uno que reconozcas de un vistazo.",
+      },
+      {
+        id: "trabajador-crear-email",
+        element: "#worker-email",
+        onMissing: "skip",
+        title: "Su correo",
+        description:
+          "Ahí llega la invitación. Tiene que ser un correo al que entre de verdad, o no podrá aceptarla.",
+      },
+    ],
+  },
+
   // --- Proveedores --------------------------------------------------------
   {
     id: "seccion-proveedores",
@@ -787,6 +946,55 @@ export const SECTION_TOURS: TourDefinition[] = [
         title: "Tus proveedores",
         description:
           "Toca uno para ver su ficha, sus datos de contacto y lo que te suministra.",
+      },
+    ],
+  },
+
+  {
+    id: "seccion-proveedor-crear",
+    kind: "seccion",
+    title: "Crear un proveedor",
+    description: "Fichar a quien te vende, con su contacto.",
+    entryRoute: "/dashboard/business/providers/create",
+    steps: [
+      {
+        id: "proveedor-crear-intro",
+        route: "/dashboard/business/providers/create",
+        title: "Fichar un proveedor",
+        description:
+          "Con el nombre basta para guardarlo. Todo lo demás lo puedes completar después, según lo vayas necesitando.",
+      },
+      {
+        id: "proveedor-crear-name",
+        element: "#provider-name",
+        onMissing: "skip",
+        title: "Cómo lo llamas",
+        description:
+          "El nombre con el que lo buscarás al registrar una entrada de mercancía.",
+      },
+      {
+        id: "proveedor-crear-contact",
+        element: "#provider-contact",
+        onMissing: "skip",
+        title: "Cómo lo localizas",
+        description:
+          "Teléfono y correo. Tenerlos aquí te ahorra buscar en la libreta cuando necesites reponer con prisa.",
+      },
+    ],
+  },
+  {
+    id: "seccion-proveedor-detalles",
+    kind: "seccion",
+    title: "Ficha de un proveedor",
+    description: "Sus datos, lo que te vende y a qué precio.",
+    entryRoute: "/dashboard/business/providers/details",
+    steps: [
+      {
+        id: "proveedor-detalles-intro",
+        route: "/dashboard/business/providers/details",
+        title: "La ficha del proveedor",
+        description:
+          "Aquí ves sus datos de contacto y los productos que te suministra con su precio. Es lo que te permite comparar y saber a quién comprarle cada cosa.",
       },
     ],
   },
@@ -1125,6 +1333,38 @@ export const SECTION_TOURS: TourDefinition[] = [
     ],
   },
   {
+    id: "seccion-perfil-editar",
+    kind: "seccion",
+    title: "Editar tu perfil",
+    description: "Cambiar tus datos, tu foto o tu contraseña.",
+    entryRoute: "/dashboard/profile/edit",
+    steps: [
+      {
+        id: "perfil-editar-intro",
+        route: "/dashboard/profile/edit",
+        title: "Tus datos de cuenta",
+        description:
+          "Esto es tu cuenta personal, no tu negocio: lo que cambies aquí no afecta a lo que ven tus clientes.",
+      },
+      {
+        id: "perfil-editar-name",
+        element: "#name",
+        onMissing: "skip",
+        title: "Nombre y teléfono",
+        description:
+          "El teléfono importa más de lo que parece: es a donde te llegan los avisos por SMS si tu plan los incluye.",
+      },
+      {
+        id: "perfil-editar-password",
+        element: "#password",
+        onMissing: "skip",
+        title: "Cambiar la contraseña",
+        description:
+          "Déjala en blanco si no la vas a cambiar. Solo se actualiza si escribes una nueva y la repites debajo.",
+      },
+    ],
+  },
+  {
     id: "seccion-planes",
     kind: "seccion",
     title: "Cambiar de plan",
@@ -1163,6 +1403,23 @@ export const SECTION_TOURS: TourDefinition[] = [
     ],
   },
 
+  {
+    id: "seccion-planes-historial",
+    kind: "seccion",
+    title: "Historial de planes",
+    description: "Por qué planes has pasado y cuánto duró cada uno.",
+    entryRoute: "/dashboard/profile/plans-history",
+    steps: [
+      {
+        id: "planes-historial-intro",
+        route: "/dashboard/profile/plans-history",
+        title: "Tu historial de planes",
+        description:
+          "El registro de cada plan que has tenido, con sus fechas y su precio. Sirve para comprobar desde cuándo tienes el actual y qué pagaste antes.",
+      },
+    ],
+  },
+
   // --- Soporte ------------------------------------------------------------
   {
     id: "seccion-soporte",
@@ -1193,6 +1450,22 @@ export const SECTION_TOURS: TourDefinition[] = [
         title: "Sigue tus tickets",
         description:
           "Aquí ves el estado de cada uno. Cuando respondamos te llega un aviso en la campana.",
+      },
+    ],
+  },
+  {
+    id: "seccion-soporte-detalle",
+    kind: "seccion",
+    title: "Seguir un ticket",
+    description: "La conversación con soporte y el estado de tu consulta.",
+    entryRoute: "/dashboard/support/details",
+    steps: [
+      {
+        id: "soporte-detalle-intro",
+        route: "/dashboard/support/details",
+        title: "Tu conversación con soporte",
+        description:
+          "Aquí está el hilo completo de este ticket: lo que contaste y lo que te hemos respondido. Puedes seguir escribiendo en el mismo hilo hasta que se resuelva.",
       },
     ],
   },

@@ -36,6 +36,13 @@ export type TourStep = {
    */
   feature?: PlanFeatureKey;
   /**
+   * Paso promocional: se muestra SOLO a quien NO tiene esta capacidad, para
+   * contarle qué hace una sección que su plan no abre. Nunca declara la ruta
+   * de esa sección —hereda la anterior, que sí es accesible—, porque navegar
+   * allí haría que `RouteGuard` expulsara al usuario a mitad del recorrido.
+   */
+  upsellFor?: PlanFeatureKey;
+  /**
    * El ancla está en el menú lateral: hay que expandirlo antes de resaltarla.
    * En móvil estos pasos se descartan (el sidebar es un Sheet modal que
    * neutraliza el resto de la página, incluido el popover del tour).

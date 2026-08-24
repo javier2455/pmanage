@@ -12,6 +12,7 @@ import {
 } from "./tour-utils";
 import { TOURS, closingStepFor } from "./tours";
 import type { PlanFeatureKey } from "@/lib/plan-features";
+import { requiredFeatureFor } from "@/lib/pro-gates";
 import type { TourDefinition, TourStep } from "./types";
 
 /**
@@ -322,5 +323,77 @@ describe("catálogo · invariantes", () => {
         if (s.feature) expect(known.has(s.feature)).toBe(true);
       }
     }
+  });
+});
+
+describe("pasos promocionales", () => {
+  const SIN_NADA = contextWith({ hasFeature: () => false });
+  const CON_TODO = contextWith();
+
+  it("solo se muestran a quien NO tiene la capacidad", () => {
+    const steps = [
+      step("normal", { route: "/dashboard" }),
+      step("promo", { upsellFor: "team" }),
+    ];
+    expect(
+      filterSteps(steps, "/dashboard", SIN_NADA).map((s) => s.id),
+    ).toEqual(["normal", "promo"]);
+    expect(
+      filterSteps(steps, "/dashboard", CON_TODO).map((s) => s.id),
+    ).toEqual(["normal", "promo"].filter((id) => id !== "promo"));
+  });
+
+  it("ninguno hereda una ruta protegida por plan", () => {
+    /* Es el fallo que rompería el recorrido: si un paso promocional cayera en
+       una ruta Pro, se filtraría junto a ella y quien no tiene el plan no
+       llegaría a enterarse de que esa sección existe. Peor aún, si se colara,
+       `RouteGuard` expulsaría al usuario a mitad del tour. */
+    for (const tour of TOURS) {
+      tour.steps.forEach((s, index) => {
+        if (!s.upsellFor) return;
+        expect(s.route, `${s.id} no debe declarar ruta propia`).toBeUndefined();
+        const route = routeForStep(tour.steps, index, tour.entryRoute);
+        expect(
+          requiredFeatureFor(route),
+          `${s.id} hereda la ruta protegida ${route}`,
+        ).toBeNull();
+      });
+    }
+  });
+
+  it("un plan sin capacidades recorre el sistema y ve qué se está perdiendo", () => {
+    const completo = TOURS.find((tour) => tour.kind === "completo")!;
+    const pasos = filterSteps(completo.steps, completo.entryRoute, SIN_NADA);
+    const promocionales = pasos.filter((s) => s.upsellFor);
+    expect(pasos.length).toBeGreaterThan(20);
+    expect(promocionales.length).toBeGreaterThan(0);
+    /* Y no queda ningún paso que exija algo que ese plan no concede. */
+    for (const s of pasos) {
+      if (s.upsellFor) continue;
+      expect(s.feature).toBeUndefined();
+    }
+  });
+
+  it("un plan completo no ve ningún paso promocional", () => {
+    const completo = TOURS.find((tour) => tour.kind === "completo")!;
+    const pasos = filterSteps(completo.steps, completo.entryRoute, CON_TODO);
+    expect(pasos.some((s) => s.upsellFor)).toBe(false);
+  });
+});
+
+describe("cobertura del sistema", () => {
+  it("hay guía para la difusión del listado de productos", () => {
+    const guia = TOURS.find(
+      (tour) => tour.entryRoute === "/dashboard/broadcast/product-list",
+    );
+    expect(guia).toBeDefined();
+    expect(guia!.kind).toBe("seccion");
+  });
+
+  it("cada guía de sección cubre una ruta distinta", () => {
+    const rutas = TOURS.filter((tour) => tour.kind === "seccion").map(
+      (tour) => tour.entryRoute,
+    );
+    expect(new Set(rutas).size).toBe(rutas.length);
   });
 });

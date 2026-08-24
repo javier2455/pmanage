@@ -13,9 +13,14 @@
  * Inventario, y de que las monedas se configuran en Tipo de cambio).
  *
  * Los pasos de rutas Pro no declaran `feature`: el filtro lo deriva de
- * `PRO_ROUTES`, así que un plan sin la capacidad simplemente no los ve.
+ * `PRO_ROUTES`, así que un plan sin la capacidad simplemente no los ve. En su
+ * lugar aparece un paso `upsellFor` que señala el item del menú —que sí se
+ * renderiza, atenuado y con su distintivo— y cuenta qué hace esa sección. Así
+ * quien tiene el plan básico se entera de que existe sin que el tour intente
+ * llevarlo a una ruta de la que `RouteGuard` lo expulsaría.
  */
 
+import { sidebarItemSelector } from "@/lib/tour/tour-utils";
 import type { TourDefinition } from "@/lib/tour/types";
 
 export const FULL_TOUR: TourDefinition = {
@@ -136,6 +141,39 @@ export const FULL_TOUR: TourDefinition = {
         "Esta lista de abajo es la que importa: son los productos que verás al registrar una venta.",
     },
 
+    // --- Difusión ----------------------------------------------------------
+    {
+      id: "full-broadcast-upsell",
+      element: sidebarItemSelector("/dashboard/broadcast/product-list"),
+      upsellFor: "productListShare",
+      needsSidebar: true,
+      side: "right",
+      title: "Listado de productos",
+      description:
+        "Esta sección del menú arma el listado de lo que vendes y te lo manda por WhatsApp para que lo reenvíes a tus clientes. Viene con los planes superiores; si te interesa, lo tienes en Perfil › Cambiar de plan.",
+    },
+    {
+      id: "full-broadcast-intro",
+      route: "/dashboard/broadcast/product-list",
+      title: "Listado de productos",
+      description:
+        "Aquí armas el mensaje con lo que vendes para mandárselo a tus clientes. El listado te llega a ti por WhatsApp y tú lo reenvías a tu grupo: sale con tu nombre, no con el de un sistema.",
+    },
+    {
+      id: "full-broadcast-selector",
+      element: '[data-tour="broadcast-selector"]',
+      title: "Elige qué anunciar",
+      description:
+        "Marca los productos que quieres incluir. Déjalo en «solo con stock» para no anunciar lo que no puedes vender.",
+    },
+    {
+      id: "full-broadcast-preview",
+      element: '[data-tour="broadcast-preview"]',
+      title: "Míralo antes de mandarlo",
+      description:
+        "La vista previa es exactamente lo que va a recibir el cliente. Puedes mandarlo como texto o como láminas con foto.",
+    },
+
     // --- Ventas ------------------------------------------------------------
     {
       id: "full-sales-intro",
@@ -236,6 +274,27 @@ export const FULL_TOUR: TourDefinition = {
 
     // --- Trabajadores (según el plan) --------------------------------------
     {
+      id: "full-workers-upsell",
+      element: sidebarItemSelector("/dashboard/business/workers"),
+      upsellFor: "team",
+      needsSidebar: true,
+      side: "right",
+      title: "Trabajadores",
+      description:
+        "Con un plan superior puedes dar acceso a quien te ayuda, decidir qué ve cada uno y saber cuánto vende. Aparece en el menú marcado como Pro.",
+    },
+    {
+      id: "full-providers-upsell",
+      element: sidebarItemSelector("/dashboard/business/providers"),
+      upsellFor: "providers",
+      needsSidebar: true,
+      side: "right",
+      title: "Proveedores",
+      description:
+        "Y aquí podrías fichar a quien te vende, con sus precios, para saber siempre quién te sale más barato y que el costo se rellene solo al meter mercancía.",
+    },
+
+    {
       id: "full-workers-intro",
       route: "/dashboard/business/workers",
       title: "Trabajadores",
@@ -322,6 +381,17 @@ export const FULL_TOUR: TourDefinition = {
     },
 
     // --- Cierre mensual (según el plan) ------------------------------------
+    {
+      id: "full-monthly-upsell",
+      element: sidebarItemSelector("/dashboard/accounting-close/monthly"),
+      upsellFor: "monthlyClose",
+      needsSidebar: true,
+      side: "right",
+      title: "Y el mes completo",
+      description:
+        "El cierre mensual hace lo mismo que acabas de ver pero con el mes entero, para saber si el negocio va bien más allá de un día bueno. Está en los planes superiores.",
+    },
+
     {
       id: "full-monthly-close-intro",
       route: "/dashboard/accounting-close/monthly",

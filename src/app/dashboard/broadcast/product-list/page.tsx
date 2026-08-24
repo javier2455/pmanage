@@ -287,6 +287,7 @@ export default function ProductListBroadcastPage() {
         </p>
       </div>
 
+      <div data-tour="broadcast-templates">
       <TemplateBar
         templates={templates}
         activeTemplateId={activeTemplateId}
@@ -296,6 +297,7 @@ export default function ProductListBroadcastPage() {
         isSaving={createTemplate.isPending}
         canSave={hasSelection}
       />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6 rounded-lg border p-4">
@@ -343,6 +345,7 @@ export default function ProductListBroadcastPage() {
             </div>
           </div>
 
+          <div data-tour="broadcast-selector">
           <ProductSelector
             products={products}
             selectedIds={selectedIds}
@@ -353,7 +356,9 @@ export default function ProductListBroadcastPage() {
             onOnlyInStockChange={setOnlyInStock}
             isLoading={productsQuery.isLoading}
           />
+          </div>
 
+          <div data-tour="broadcast-composer">
           <MessageComposer
             intro={intro}
             outro={outro}
@@ -364,9 +369,13 @@ export default function ProductListBroadcastPage() {
             onOutroChange={setOutro}
             onOptionsChange={setOptions}
           />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-4 rounded-lg border p-4">
+        <div
+          className="flex flex-col gap-4 rounded-lg border p-4"
+          data-tour="broadcast-preview"
+        >
           <p className="text-sm font-medium">Vista previa</p>
 
           <MessagePreview
@@ -421,6 +430,7 @@ export default function ProductListBroadcastPage() {
 
           <Button
             type="button"
+            data-tour="broadcast-send-btn"
             onClick={handleSend}
             disabled={
               !hasSelection ||

@@ -101,6 +101,9 @@ export function filterSteps(
   return steps.filter((step, index) => {
     const route = routeForStep(steps, index, entryRoute);
     if (isAdminRoute(route)) return false;
+    /* Un paso promocional es lo contrario de los demás: sobra en cuanto el
+       plan concede la capacidad de la que venía a hablar. */
+    if (step.upsellFor && ctx.hasFeature(step.upsellFor)) return false;
     if (!planAllowsStep(step, route, ctx)) return false;
     if (!ctx.isRouteAllowed(route)) return false;
     if (step.needsSidebar && !ctx.allowsSidebarSteps) return false;
