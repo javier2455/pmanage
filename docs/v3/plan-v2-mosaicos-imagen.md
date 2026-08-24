@@ -71,6 +71,7 @@ entre reenviar cómodamente todos los días y no hacerlo nunca.
 | **I12** | **El usuario elige la moneda** en la que se publican los precios | Ver §5.1. Los precios se guardan en CUP y se convierten al vuelo con la tasa del negocio |
 | **I13** | **El pie escrito es opcional**, con la casilla «Escribir la lista de productos debajo de la imagen» | Acordado el 2026-08-23. Quien quiera mandar solo la foto puede. La introducción y la nota final NO dependen de ella: son el negocio hablándole a su cliente |
 | **I14** | **Solo el precio viene marcado por defecto** | Es lo único sin lo que un listado de precios no tiene sentido. Disponibilidad, unidad, agrupar por categoría y marcar ofertas los activa el usuario, porque cada uno añade ruido a un mensaje pensado para reenviarse |
+| **I15** | **La lámina usa Poppins**, la misma familia del sistema, en dos pesos | Acordado el 2026-08-23. La lámina es el negocio hablándole a su cliente: no debe parecer impresa por otro programa. Regular para el texto de lectura, semibold para el nombre del negocio y el precio |
 
 ---
 
@@ -306,5 +307,6 @@ Tres formas de obtenerla, de más a menos fiable:
 | Fecha | Cambio |
 |---|---|
 | 2026-08-22 | Creación. Recoge la decisión de descartar el PDF por el contexto de uso real, el formato de mosaico, las diez decisiones cerradas (I1-I10) y el reparto continuo por categoría (I5) frente al corte estricto. Verificado con una prueba real que el gateway descarga imágenes del bucket y las entrega como imagen. |
+| 2026-08-23 | La lámina pasa a Poppins, la fuente del sistema, en regular y semibold (I15). Con ella el recorte de nombres deja de contar caracteres y pasa a medir el ancho renderizado: a 30 px, 28 «W» miden 508 px y 28 «i» miden 193 px, así que un tope por número de letras se pasaba del ancho de la celda para unos nombres y desperdiciaba media celda para otros. |
 | 2026-08-23 | El pie escrito pasa a ser opcional (I13) y los valores por defecto se reducen al precio (I14). Además, la vista previa deja de tener scroll propio: el contenedor con alto máximo dejaba la lámina ocupándolo entero y el pie recortado justo debajo, y parecía que el mensaje llevaba un solo producto. |
 | 2026-08-23 | Ajustes tras ver la primera lámina real: **4 productos por lámina en 2×2** en vez de 6 (I2) — la foto pasa de 350 a 568 px y el precio de 30 a 42 px; **fuera las ofertas**, se publica el precio base (I11); y **moneda de publicación elegible** por el usuario, convirtiendo desde CUP con la tasa del negocio (I12, §5.1). Con 4 por lámina, 20 productos pasan de 4 a 5 mensajes. |
