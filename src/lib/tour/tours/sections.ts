@@ -727,11 +727,11 @@ export const SECTION_TOURS: TourDefinition[] = [
       },
       {
         id: "inventario-history",
-        element: '[data-tour="inventory-history-btn"]',
+        element: '[data-tour="inventory-more-options-btn"]',
         align: "end",
-        title: "Quién movió qué",
+        title: "Quién movió qué, y qué deja cada producto",
         description:
-          "El historial guarda cada entrada, salida y ajuste con fecha y responsable. Es lo primero que hay que mirar si el stock no cuadra.",
+          "Aquí dentro están el historial de inventario —cada entrada, salida y ajuste con fecha y responsable— y la rentabilidad de cada producto. El historial es lo primero que hay que mirar si el stock no cuadra.",
       },
       {
         id: "inventario-alerts",

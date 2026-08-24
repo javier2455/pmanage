@@ -11,6 +11,7 @@ import { navigationAccessSuite } from "./suites/navigation-access.suite";
 import { normalizationSuite } from "./suites/normalization.suite";
 import { phoneSuite } from "./suites/phone.suite";
 import { planCatalogSuite } from "./suites/plan-catalog.suite";
+import { productProfitabilitySuite } from "./suites/product-profitability.suite";
 import { proGatesSuite } from "./suites/pro-gates.suite";
 import { unitsSuite } from "./suites/units.suite";
 import { validationsSuite } from "./suites/validations.suite";
@@ -38,5 +39,6 @@ export const allSuites: Suite[] = [
   formatClosingCurrencySuite,
   currencyErrorsSuite,
   iconMapSuite,
+  productProfitabilitySuite,
   planCatalogSuite,
 ];

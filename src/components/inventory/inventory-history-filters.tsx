@@ -11,15 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ProBadge } from "@/components/ui/pro-badge";
-import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { BusinessProductCombobox } from "@/components/inventory/business-product-combobox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/generic/date-range-picker";
-import { useAllProductOfMyBusinesses } from "@/hooks/use-business";
 import { useUserRoleAndPlan } from "@/hooks/use-user-role-plan";
 import { fromLocalDateString, toLocalDateString } from "@/lib/date-range";
 import type { BusinessWithProducts } from "@/lib/types/business";
@@ -79,18 +70,10 @@ export default function InventoryHistoryFilters({
   isExporting,
   canExport,
 }: InventoryHistoryFiltersProps) {
-  const { data, isLoading } = useAllProductOfMyBusinesses(businessId);
   const { hasFeature } = useUserRoleAndPlan();
   // Distinto de `canExport` (que indica si hay datos que exportar): esto es si
   // el PLAN concede Excel y PDF. El CSV está en todos los planes.
   const canUseRichExports = hasFeature("exports");
-  const products: BusinessWithProducts[] = data?.data ?? [];
-
-  const productPlaceholder = isLoading
-    ? "Cargando productos…"
-    : products.length === 0
-      ? "No hay productos en este negocio"
-      : "Todos los productos";
 
   function handleStartDateChange(date: Date | undefined) {
     const startDate = date ? toLocalDateString(date) : undefined;
@@ -121,41 +104,15 @@ export default function InventoryHistoryFilters({
   return (
     <div className="flex flex-col gap-4" data-tour="inventory-history-filters">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-        <div className="flex flex-1 flex-col gap-2">
-          <Label
-            htmlFor="inventory-history-product"
-            className="text-card-foreground"
-          >
-            Producto
-          </Label>
-          <Combobox<BusinessWithProducts | null>
-            value={selectedProduct}
-            onValueChange={(item) => onProductChange(item)}
-            items={products}
-            itemToStringLabel={(bp) => (bp ? bp.product.name : "")}
-            isItemEqualToValue={(a, b) => a?.id === b?.id}
-          >
-            <ComboboxInput
-              id="inventory-history-product"
-              placeholder={productPlaceholder}
-              className="w-full"
-              showClear={!!selectedProduct}
-              disabled={isLoading || products.length === 0}
-            />
-            <ComboboxContent>
-              <ComboboxList className="max-h-64">
-                <ComboboxCollection>
-                  {(item: BusinessWithProducts) => (
-                    <ComboboxItem key={item.id} value={item}>
-                      {item.product.name}
-                    </ComboboxItem>
-                  )}
-                </ComboboxCollection>
-                <ComboboxEmpty>No se encontró ningún producto.</ComboboxEmpty>
-              </ComboboxList>
-            </ComboboxContent>
-          </Combobox>
-        </div>
+        <BusinessProductCombobox
+          businessId={businessId}
+          value={selectedProduct}
+          onValueChange={onProductChange}
+          id="inventory-history-product"
+          label="Producto"
+          placeholder="Todos los productos"
+          className="flex flex-1 flex-col"
+        />
 
         {/* El filtro de tipo ya no depende de haber elegido un producto: sin él
             la vista de negocio solo podía enseñar entradas de stock. */}

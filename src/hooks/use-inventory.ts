@@ -3,6 +3,7 @@ import {
     getCurrentInventoryByBusinessId,
     getInventoryHistoryByBusinessId,
     getProductCostLayers,
+    getProductInvestmentStatus,
     getProductInventoryHistory,
     getProductLotProfitability,
 } from "@/lib/api/inventory";
@@ -78,6 +79,21 @@ export function useProductLotProfitability(
     });
 }
 
+/**
+ * Estado de recuperación de la inversión de un producto: lo invertido, lo
+ * recuperado, lo que falta y lo que se ganaría vendiendo lo que queda.
+ */
+export function useProductInvestmentStatus(
+    businessId: string,
+    productId: string,
+) {
+    return useQuery({
+        queryKey: ["product-investment-status", businessId, productId],
+        queryFn: () => getProductInvestmentStatus({ businessId, productId }),
+        enabled: !!businessId && !!productId,
+    });
+}
+
 export function useProductInventoryHistory(
     businessId: string,
     productId: string,
@@ -111,6 +127,10 @@ export function useAddStockToProductMutation() {
             // incluye los que todavía no han vendido nada.
             queryClient.invalidateQueries({
                 queryKey: ["product-lot-profitability", variables.businessId, variables.productId],
+            });
+            // Y la inversión total del producto, que acaba de subir.
+            queryClient.invalidateQueries({
+                queryKey: ["product-investment-status", variables.businessId, variables.productId],
             });
         },
     });

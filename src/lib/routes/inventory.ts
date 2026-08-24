@@ -26,6 +26,13 @@ export const inventoryRoutes = {
   getProductLotProfitability: (businessId: string, productId: string) =>
     `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/lot-profitability`,
   /**
+   * Estado de recuperación de la inversión: cuánto se puso, cuánto ha vuelto y
+   * cuánto falta. Es la vista que cruza el desembolso acumulado con lo cobrado,
+   * que ni las capas ni la rentabilidad por lote responden por separado.
+   */
+  getProductInvestmentStatus: (businessId: string, productId: string) =>
+    `${BASIC_ROUTE}/inventory/business/${businessId}/product/${productId}/investment-status`,
+  /**
    * Exportaciones del historial (plan Pro, validado en el servidor).
    *
    * Un único par de endpoints cubre las dos vistas: el filtro por producto va

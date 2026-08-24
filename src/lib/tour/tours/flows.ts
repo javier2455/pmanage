@@ -230,10 +230,11 @@ export const FLOW_TOURS: TourDefinition[] = [
       },
       {
         id: "descuadre-history-btn",
-        element: '[data-tour="inventory-history-btn"]',
+        element: '[data-tour="inventory-more-options-btn"]',
         align: "end",
         title: "Ve al historial",
-        description: "Ahí está cada movimiento con su motivo y su responsable.",
+        description:
+          "Ábrelo y entra en el historial: ahí está cada movimiento con su motivo y su responsable.",
       },
       {
         id: "descuadre-product",

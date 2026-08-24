@@ -340,3 +340,124 @@ export interface LotProfitabilityResponse {
     message: string;
     data: LotProfitabilityData;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Recuperación de la inversión                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Lo que costó el producto desde que existe. Criterio de DESEMBOLSO: cuenta
+ * todo lo comprado, esté vendido, en el almacén o perdido.
+ *
+ * Vale `totalBase = liveBase + soldBase + writtenOffBase`.
+ */
+export type ProductInvestment = {
+    /** Σ de todas las capas, vivas y agotadas. */
+    totalBase: number;
+    /** Lo que sigue inmovilizado en el stock. */
+    liveBase: number;
+    /** Costo congelado de lo que ya se vendió. */
+    soldBase: number;
+    /** Costo de lo que salió sin venta detrás: mermas y ajustes a la baja. */
+    writtenOffBase: number;
+    purchasedQuantity: number;
+    /** Unidades vivas con capa que las respalde. */
+    costedStockQuantity: number;
+    /** Unidades en stock sin costo conocido: no entran en `liveBase`. */
+    uncostedQuantity: number;
+};
+
+/**
+ * Lo que el producto ha devuelto. `revenueBase` es lo facturado y
+ * `collectedBase` lo cobrado de verdad: una venta a crédito suma en la primera
+ * sin que haya entrado un peso.
+ */
+export type ProductRecovery = {
+    revenueBase: number;
+    collectedBase: number;
+    revenueByCurrency: Record<string, number>;
+    soldQuantity: number;
+    /**
+     * Lo invertido menos lo recuperado, nunca negativo. No es una deuda: casi
+     * todo lo pendiente suele seguir siendo mercancía en el almacén, sin vender.
+     * No mostrarlo nunca solo.
+     */
+    pendingBase: number;
+    recoveredPct: number | null;
+    collectedPct: number | null;
+    profitBase: number;
+    marginPct: number | null;
+};
+
+/** Proyección del stock que queda, al precio de venta de HOY. */
+export type ProductPotential = {
+    revenueBase: number;
+    /** Solo las unidades con capa: es la base del margen. */
+    costedRevenueBase: number;
+    profitBase: number;
+    marginPct: number | null;
+    /** Unidades a vender para cubrir lo pendiente. `null` si el precio es 0. */
+    unitsToBreakEven: number | null;
+    coverableWithStock: boolean;
+    totalProfitIfSoldOutBase: number;
+};
+
+/** Un lote con su cara de inversión. Incluye los agotados. */
+export type LotInvestmentStatus = {
+    /** Posición FIFO empezando en 1: el lote 1 es el más antiguo. */
+    lotNumber: number;
+    layerId: string;
+    acquiredAt: string;
+    providerName: string | null;
+    /** Costo unitario en la moneda de compra. */
+    unitCost: number;
+    currency: string;
+    /** Costo unitario en CUP, congelado el día de la compra. */
+    unitCostBase: number;
+    originalQuantity: number;
+    remainingQuantity: number;
+    soldQuantity: number;
+    /** Unidades que salieron sin venta detrás. */
+    writtenOffQuantity: number;
+    investmentBase: number;
+    liveInvestmentBase: number;
+    costOfSoldBase: number;
+    revenueBase: number;
+    collectedBase: number;
+    revenueByCurrency: Record<string, number>;
+    pendingBase: number;
+    profitBase: number;
+    marginPct: number | null;
+    /** Lo que queda del lote, al precio de hoy del producto. */
+    potentialRevenueBase: number;
+    isDepleted: boolean;
+};
+
+/**
+ * Estado de recuperación de la inversión de un producto.
+ *
+ * Todo importe termina en `Base` y llega en CUP: la conversión a otra moneda la
+ * hace el cliente con las tasas de hoy. No se convierten las cantidades, los
+ * porcentajes, `unitCost` —ya está en su `currency`— ni `revenueByCurrency`.
+ */
+export type ProductInvestmentStatusData = {
+    businessProductId: string;
+    productId: string;
+    /** Precio al que se vende hoy: el de oferta si está vigente. En CUP. */
+    effectivePrice: number;
+    isOnOffer: boolean;
+    stockQuantity: number;
+    investment: ProductInvestment;
+    recovery: ProductRecovery;
+    potential: ProductPotential;
+    lots: LotInvestmentStatus[];
+    /** Monedas de venta sin tasa: lo pendiente sale sobreestimado. */
+    unconvertedCurrencies: string[];
+    /** Hubo conversión con la tasa de hoy, no la del día del cobro. */
+    hasConvertedRevenue: boolean;
+};
+
+export interface ProductInvestmentStatusResponse {
+    message: string;
+    data: ProductInvestmentStatusData;
+}

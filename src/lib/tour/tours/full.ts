@@ -265,11 +265,11 @@ export const FULL_TOUR: TourDefinition = {
     },
     {
       id: "full-inventory-history",
-      element: '[data-tour="inventory-history-btn"]',
+      element: '[data-tour="inventory-more-options-btn"]',
       align: "end",
       title: "Si algo no cuadra",
       description:
-        "Aquí está cada entrada, salida y ajuste con su fecha y su responsable. Es el primer sitio donde mirar.",
+        "En este menú está el historial —cada entrada, salida y ajuste con su fecha y su responsable, el primer sitio donde mirar— y la rentabilidad de cada producto, que dice cuánto llevas recuperado de lo que invertiste.",
     },
 
     // --- Trabajadores (según el plan) --------------------------------------

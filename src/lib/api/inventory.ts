@@ -7,6 +7,7 @@ import {
     InventoryHistoryResponse,
     LotProfitabilityResponse,
     ProductCostLayersResponse,
+    ProductInvestmentStatusResponse,
 } from "../types/inventory";
 
 interface PaginatedByBusiness {
@@ -171,6 +172,19 @@ export async function getProductLotProfitability({
 }): Promise<LotProfitabilityResponse> {
     const { data } = await apiClient.get<LotProfitabilityResponse>(
         inventoryRoutes.getProductLotProfitability(businessId, productId),
+    );
+    return data;
+}
+
+export async function getProductInvestmentStatus({
+    businessId,
+    productId,
+}: {
+    businessId: string;
+    productId: string;
+}): Promise<ProductInvestmentStatusResponse> {
+    const { data } = await apiClient.get<ProductInvestmentStatusResponse>(
+        inventoryRoutes.getProductInvestmentStatus(businessId, productId),
     );
     return data;
 }

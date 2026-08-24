@@ -7,7 +7,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
-import { History, Package, Plus } from "lucide-react";
+import { ChevronDown, History, Package, Plus, TrendingUp } from "lucide-react";
 import type {
   CurrentInventoryEntry,
   InventoryMeta,
@@ -16,6 +16,11 @@ import type {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { SetStockAlertDialog } from "./set-stock-alert-dialog";
 import {
   Empty,
@@ -107,24 +112,56 @@ export default function TableOfCurrentInventory({
     <Card>
       <CardContent className="flex flex-col gap-4 p-0">
         <div className="flex flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-center sm:justify-end">
-          <Button
-            asChild
-            variant="outline"
-            className={cn(
-              "w-full shrink-0 sm:w-auto",
-              isFetching && "pointer-events-none opacity-50",
-            )}
-            aria-disabled={isFetching}
-            data-tour="inventory-history-btn"
-          >
-            <Link
-              href="/dashboard/business/inventory/history"
-              tabIndex={isFetching ? -1 : undefined}
-            >
-              <History data-icon="inline-start" />
-              Ver historial de inventario
-            </Link>
-          </Button>
+          {/* Las dos vistas de consulta van juntas en un menú para que
+              "Agregar entrada" —la acción que se usa a diario— no compita con
+              ellas. Cada opción lleva subtítulo: sin él, nadie abre por primera
+              vez algo llamado "Rentabilidad del producto". */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full shrink-0 sm:w-auto"
+                disabled={isFetching}
+                data-tour="inventory-more-options-btn"
+              >
+                Más opciones
+                <ChevronDown data-icon="inline-end" className="opacity-70" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-1">
+              <Link
+                href="/dashboard/business/inventory/history"
+                className="flex items-start gap-3 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-muted"
+              >
+                <History className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="block font-medium">
+                    Ver historial de inventario
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Entradas, salidas y ajustes con fecha y responsable
+                  </span>
+                </span>
+              </Link>
+              <Link
+                href="/dashboard/business/inventory/profitability"
+                className="flex items-start gap-3 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-muted"
+              >
+                <TrendingUp
+                  className="mt-0.5 size-4 shrink-0"
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="block font-medium">
+                    Rentabilidad del producto
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    Cuánto has recuperado de lo que invertiste
+                  </span>
+                </span>
+              </Link>
+            </PopoverContent>
+          </Popover>
           <Button
             asChild
             className={cn(

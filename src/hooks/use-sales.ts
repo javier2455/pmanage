@@ -54,6 +54,8 @@ export function useCreateSaleMutation() {
             // como lo vendido de cada uno.
             queryClient.invalidateQueries({ queryKey: ["product-cost-layers", bid] });
             queryClient.invalidateQueries({ queryKey: ["product-lot-profitability", bid] });
+            // Sin esto la barra de recuperación se queda congelada tras vender.
+            queryClient.invalidateQueries({ queryKey: ["product-investment-status", bid] });
             // Una venta puede cruzar el umbral mínimo de stock y generar
             // notificaciones en el backend; refrescamos lista y conteo del badge.
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
@@ -85,6 +87,9 @@ export function useRegisterPaymentsMutation() {
             registerPayments(saleId, dto),
         onSuccess: (_, variables) => {
             const bid = variables.businessId;
+            // Cobrar no mueve stock ni margen, pero sí lo recuperado de verdad:
+            // la vista de inversión distingue lo facturado de lo cobrado.
+            queryClient.invalidateQueries({ queryKey: ["product-investment-status", bid] });
             queryClient.invalidateQueries({ queryKey: ["payments-summary", variables.saleId] });
             queryClient.invalidateQueries({ queryKey: ["payments-history", variables.saleId] });
             queryClient.invalidateQueries({ queryKey: ["sale-by-id", variables.saleId] });
@@ -123,9 +128,10 @@ export function useCancelSaleMutation() {
             // tocar varios productos y aquí solo se conoce la venta.
             queryClient.invalidateQueries({ queryKey: ["product-cost-layers", bid] });
             queryClient.invalidateQueries({ queryKey: ["product-lot-profitability", bid] });
+            queryClient.invalidateQueries({ queryKey: ["product-investment-status", bid] });
             // Cancelar repone stock: puede resolver/generar avisos de umbral.
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
         },
     });
-}
+}

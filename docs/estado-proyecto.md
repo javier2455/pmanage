@@ -120,6 +120,7 @@ Todo lo siguiente está mergeado en `develop` y **listo para producción** (salv
 | 52 | **Cron de cierres** (diario/mensual por hora de cierre del negocio, idempotente) + **datos enriquecidos** en el correo de cierre | BE `087`, `088` | — |
 | 53 | **Vuelto y propina en el cobro** — el cliente puede pagar de más; el excedente se reparte entre lo devuelto (en la moneda que se elija) y lo que queda a favor del negocio, con salida de caja propia y renglón en el cierre | BE `150` | **Migración `20260806120000` sin aplicar** en producción (ver detalle) |
 | 54 | **Suite de tests del frontend** (Vitest, 15 suites, 212 casos sobre lógica pura: moneda, cierres, planes, validaciones, permisos) | — | — |
+| 55 | **Rentabilidad del producto** (V3-116) — vista nueva en Inventario que cruza el desembolso acumulado de un producto con lo cobrado: invertido, recuperado (facturado y cobrado), pendiente con barra de cuatro tramos, proyección del stock al precio de hoy y desglose lote a lote en orden FIFO. Incluye unidades que faltan por vender, variación de costo entre lotes y alerta de margen negativo antes de vender | BE `158` | Sobre datos anteriores al costeo muestra el aviso de stock sin costo: depende del backfill pendiente (V3-119) |
 
 > **Ajustes menores incluidos en este rango** (1.3.8 → 1.8.1, no itemizados arriba): eliminación del menú estático de fallback deprecado (1.3.8), efecto hover en filas de productos, fix del `markAllAsRead` (1.4.1), afinado de límites de notificaciones, y botones a variante `outline` (1.5.2).
 >
