@@ -302,19 +302,25 @@ export default function ProductListBroadcastPage() {
           <div className="flex flex-col gap-3">
             <ModeTabs value={mode} onChange={setMode} />
 
-            {mode === "image" && (
-              <p className="text-xs text-muted-foreground">
-                Se enviarán láminas de 4 productos. Hasta{" "}
-                {MAX_PRODUCTS_IMAGE_MODE} productos por envío
-                {selectedIds.length > 0 &&
-                  ` · ${Math.ceil(selectedIds.length / 4)} ${
-                    Math.ceil(selectedIds.length / 4) === 1
-                      ? "lámina"
-                      : "láminas"
-                  }`}
-                .
-              </p>
-            )}
+            {mode === "image" &&
+              (selectedIds.length === 1 ? (
+                <p className="text-xs text-muted-foreground">
+                  Un solo producto viaja como su propia foto, sin lámina: el
+                  nombre y el precio van en el texto.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Se enviarán láminas de 4 productos. Hasta{" "}
+                  {MAX_PRODUCTS_IMAGE_MODE} productos por envío
+                  {selectedIds.length > 0 &&
+                    ` · ${Math.ceil(selectedIds.length / 4)} ${
+                      Math.ceil(selectedIds.length / 4) === 1
+                        ? "lámina"
+                        : "láminas"
+                    }`}
+                  .
+                </p>
+              ))}
 
             <div className="flex items-center gap-2">
               <Label htmlFor="currency" className="shrink-0 font-normal">
@@ -353,6 +359,7 @@ export default function ProductListBroadcastPage() {
             outro={outro}
             options={options}
             mode={mode}
+            productCount={selectedIds.length}
             onIntroChange={setIntro}
             onOutroChange={setOutro}
             onOptionsChange={setOptions}

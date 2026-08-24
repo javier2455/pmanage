@@ -24,6 +24,8 @@ interface MessageComposerProps {
   options: ProductListOptions;
   /** El pie escrito solo existe en modo imagen. */
   mode: ProductListMode;
+  /** Con un solo producto el pie es el único sitio con nombre y precio. */
+  productCount: number;
   onIntroChange: (value: string) => void;
   onOutroChange: (value: string) => void;
   onOptionsChange: (options: ProductListOptions) => void;
@@ -34,6 +36,7 @@ export function MessageComposer({
   outro,
   options,
   mode,
+  productCount,
   onIntroChange,
   onOutroChange,
   onOptionsChange,
@@ -85,6 +88,8 @@ export function MessageComposer({
               Ese texto viaja pegado a la foto, en el mismo mensaje de WhatsApp.
               Permite copiar los nombres y leer los precios aunque la imagen no
               cargue. La introducción y la nota final se envían igualmente.
+              {productCount === 1 &&
+                " Con un solo producto es el único sitio donde aparecen su nombre y su precio, porque la foto va sin lámina."}
             </p>
           </div>
         </div>
