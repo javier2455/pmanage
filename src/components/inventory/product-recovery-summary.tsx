@@ -23,7 +23,7 @@ import {
 } from "@/lib/product-profitability";
 import { formatMoney, type ExchangeRateLike } from "@/lib/currency";
 import type { ProductInvestmentStatusData } from "@/lib/types/inventory";
-import { formatStockWithUnit } from "@/lib/units";
+import { formatQuantity, formatStockWithUnit, isIntegerUnit } from "@/lib/units";
 import { cn } from "@/lib/utils";
 
 interface ProductRecoverySummaryProps {
@@ -96,6 +96,18 @@ export function ProductRecoverySummary({
     const verdict = resolveVerdict(data);
     const uncovered = segments.find((s) => s.key === "uncovered");
     const enPerdida = negativeMarginLot(data);
+
+    // No se vende media unidad entera: si hacen falta 36,2 sacos para cubrir lo
+    // puesto, hay que vender 37. Redondear al más cercano daba 36 y con 36 no se
+    // llega. El backend devuelve el valor exacto a propósito, porque hay
+    // productos que sí se venden en kilos.
+    const breakEven = data.potential.unitsToBreakEven;
+    const unitsNeeded =
+        breakEven === null
+            ? null
+            : isIntegerUnit(unit)
+              ? Math.ceil(breakEven)
+              : breakEven;
 
     const toneClass =
         verdict === "en-riesgo"
@@ -185,24 +197,29 @@ export function ProductRecoverySummary({
                     </div>
                 </div>
 
-                {data.potential.unitsToBreakEven !== null &&
-                    data.potential.unitsToBreakEven > 0 && (
-                        <p className="text-center text-sm">
-                            Faltan{" "}
-                            <span className="font-semibold">
-                                {formatStockWithUnit(
-                                    data.potential.unitsToBreakEven,
-                                    unit,
-                                )}
-                            </span>{" "}
-                            por vender
-                            {!data.potential.coverableWithStock && (
-                                <span className="text-muted-foreground">
-                                    , más de lo que tienes
+                {unitsNeeded !== null && unitsNeeded > 0 && (
+                    <p className="text-center text-sm text-muted-foreground">
+                        {data.potential.coverableWithStock ? (
+                            <>
+                                Recuperas lo invertido vendiendo{" "}
+                                <span className="font-semibold text-foreground">
+                                    {formatStockWithUnit(unitsNeeded, unit)}
+                                </span>{" "}
+                                de las {formatQuantity(data.stockQuantity, unit)}{" "}
+                                que tienes
+                            </>
+                        ) : (
+                            <>
+                                Para recuperar lo invertido harían falta{" "}
+                                <span className="font-semibold text-foreground">
+                                    {formatStockWithUnit(unitsNeeded, unit)}
                                 </span>
-                            )}
-                        </p>
-                    )}
+                                , más de las {formatQuantity(data.stockQuantity, unit)}{" "}
+                                que tienes
+                            </>
+                        )}
+                    </p>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 border-t pt-4 sm:grid-cols-4">
                     <Figure
