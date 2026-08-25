@@ -16,7 +16,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProductLotLedger } from "@/components/inventory/product-lot-ledger";
-import { ProductPotentialValue } from "@/components/inventory/product-potential-value";
 import { ProductProfitabilityToolbar } from "@/components/inventory/product-profitability-toolbar";
 import { ProductRecoverySummary } from "@/components/inventory/product-recovery-summary";
 import type { MarginEmphasis } from "@/components/inventory/margin-value";
@@ -131,9 +130,8 @@ export default function ProductProfitabilityPage() {
 
                 {selectedProduct && isLoading && (
                     <div className="space-y-6">
-                        <Skeleton className="h-64 w-full" />
-                        <Skeleton className="h-40 w-full" />
-                        <Skeleton className="h-56 w-full" />
+                        <Skeleton className="h-80 w-full" />
+                        <Skeleton className="h-48 w-full" />
                     </div>
                 )}
 
@@ -186,13 +184,6 @@ export default function ProductProfitabilityPage() {
                     ) : (
                         <>
                             <ProductRecoverySummary
-                                data={data.data}
-                                currency={currency}
-                                exchangeRate={exchangeRate}
-                                emphasis={emphasis}
-                                unit={selectedProduct.product.unit}
-                            />
-                            <ProductPotentialValue
                                 data={data.data}
                                 currency={currency}
                                 exchangeRate={exchangeRate}

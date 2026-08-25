@@ -138,7 +138,7 @@ export default function TableOfCurrentInventory({
                   <span className="block font-medium">
                     Ver historial de inventario
                   </span>
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block text-xs text-popover-foreground/70">
                     Entradas, salidas y ajustes con fecha y responsable
                   </span>
                 </span>
@@ -155,7 +155,7 @@ export default function TableOfCurrentInventory({
                   <span className="block font-medium">
                     Rentabilidad del producto
                   </span>
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block text-xs text-popover-foreground/70">
                     Cuánto has recuperado de lo que invertiste
                   </span>
                 </span>

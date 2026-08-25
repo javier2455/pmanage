@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { ArrowDown, ArrowUp, Layers, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoHint } from "@/components/inventory/info-hint";
 import { MarginValue, type MarginEmphasis } from "@/components/inventory/margin-value";
 import { RecoveryProgress } from "@/components/inventory/recovery-progress";
 import {
@@ -19,7 +20,7 @@ import type {
     LotInvestmentStatus,
     ProductInvestmentStatusData,
 } from "@/lib/types/inventory";
-import { formatStockWithUnit } from "@/lib/units";
+import { formatQuantity, formatStockWithUnit } from "@/lib/units";
 import { cn } from "@/lib/utils";
 
 /** A partir de aquí, los lotes agotados se pliegan para no tapar los vivos. */
@@ -35,12 +36,12 @@ interface ProductLotLedgerProps {
 }
 
 /**
- * Compra por compra: qué costó cada lote, qué se ha recuperado de él y qué
- * queda.
+ * Compra por compra: qué costó cada lote y cuánto se ha recuperado de él.
  *
- * Es la lectura que no se ve afectada por reponer stock. Un lote agotado y
- * cobrado queda al 100 % para siempre, así que responde "¿cada compra se pagó
- * sola?" mientras la barra de arriba responde "¿ha vuelto el dinero puesto?".
+ * Cada lote entra en una línea y el detalle en dinero se despliega al pulsar.
+ * Antes ocupaba seis líneas, así que dos lotes ya llenaban la pantalla y había
+ * que hacer scroll para lo único que se compara de verdad: cuánto queda de cada
+ * compra y a qué costo entró.
  */
 export function ProductLotLedger({
     data,
@@ -63,9 +64,6 @@ export function ProductLotLedger({
 
     const spread = liveCostSpread(data.lots);
     const depleted = data.lots.filter((l) => l.isDepleted);
-    // El plegado solo entra en juego cuando la lista se hace larga: con pocos
-    // lotes, esconder los agotados quitaría justo los que ya tienen historia
-    // que contar.
     const collapses =
         data.lots.length > COLLAPSE_THRESHOLD && depleted.length > 0;
     const visible =
@@ -76,101 +74,94 @@ export function ProductLotLedger({
     // El primero con stock es el que alimenta la próxima venta.
     const nextLotId = data.lots.find((l) => !l.isDepleted)?.layerId ?? null;
 
-    if (data.lots.length === 0) {
-        return (
-            <Card className={className}>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <Layers className="size-4" aria-hidden="true" />
-                        Tus lotes, compra por compra
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                        Este producto no tiene ninguna compra con su costo
-                        registrado, así que no hay lotes que mostrar.
-                    </p>
-                </CardContent>
-            </Card>
-        );
-    }
-
     return (
         <Card className={className}>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                    <Layers className="size-4" aria-hidden="true" />
+                <CardTitle className="flex items-center justify-between gap-2 text-base">
                     Tus lotes, compra por compra
+                    <InfoHint label="los lotes">
+                        <p>
+                            Cada compra es un lote con{" "}
+                            <strong>el costo que pagaste ese día</strong>. Las
+                            unidades salen en orden de llegada, así que el lote más
+                            antiguo surte las próximas ventas.
+                        </p>
+                        <p>
+                            Si mañana compras más caro, ese precio solo afecta al
+                            lote nuevo: lo que ya vendiste conserva su costo y su
+                            margen no vuelve a moverse. Por eso la ganancia de un
+                            lote agotado es definitiva.
+                        </p>
+                        <p>
+                            El precio de venta, en cambio, es uno solo y es el de
+                            hoy. Cambiarlo solo mueve la proyección de lo que
+                            ganarías con el stock que queda.
+                        </p>
+                    </InfoHint>
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                    Cada compra es un lote con su propio costo. Las unidades salen
-                    en orden de llegada.
-                </p>
-                <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">
-                        Cada lote guarda el costo que pagaste ese día.
-                    </span>{" "}
-                    Si el mes que viene compras más caro, ese precio solo afecta al
-                    lote nuevo: lo que ya vendiste sigue contando con el costo que
-                    tuvo y su margen no vuelve a moverse. Por eso la ganancia de un
-                    lote agotado es definitiva.
-                </p>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-                {spread && (
-                    <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
-                        <TriangleAlert
-                            className="mt-0.5 size-4 shrink-0"
-                            aria-hidden="true"
-                        />
-                        <span>
-                            Este producto tiene lotes a distinto costo, de{" "}
-                            {formatMoney(spread.min.unitCost, spread.min.currency)}{" "}
-                            a{" "}
-                            {formatMoney(spread.max.unitCost, spread.max.currency)}.
-                            Como las unidades salen en orden de llegada, tus
-                            próximas ventas todavía se descuentan del lote más
-                            antiguo y dejarán <strong>su</strong> margen, no el del
-                            último precio que pagaste.
-                        </span>
+            <CardContent className="space-y-3">
+                {data.lots.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                        Este producto no tiene ninguna compra con su costo
+                        registrado.
                     </p>
+                ) : (
+                    <>
+                        {spread && (
+                            <p className="text-xs text-muted-foreground">
+                                Tienes lotes de{" "}
+                                <span className="tabular-nums">
+                                    {formatMoney(
+                                        spread.min.unitCost,
+                                        spread.min.currency,
+                                    )}
+                                </span>{" "}
+                                a{" "}
+                                <span className="tabular-nums">
+                                    {formatMoney(
+                                        spread.max.unitCost,
+                                        spread.max.currency,
+                                    )}
+                                </span>
+                                : las próximas ventas salen del más antiguo y dejan{" "}
+                                <strong>su</strong> margen.
+                            </p>
+                        )}
+
+                        <ul className="divide-y rounded-md border">
+                            {visible.map((lot) => (
+                                <LotRow
+                                    key={lot.layerId}
+                                    lot={lot}
+                                    delta={lotCostDelta(
+                                        data.lots,
+                                        lot.lotNumber - 1,
+                                    )}
+                                    isNext={lot.layerId === nextLotId}
+                                    money={money}
+                                    currency={currency}
+                                    exchangeRate={exchangeRate}
+                                    emphasis={emphasis}
+                                    unit={unit}
+                                />
+                            ))}
+                        </ul>
+
+                        {collapses && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowDepleted((v) => !v)}
+                            >
+                                {showDepleted
+                                    ? "Ocultar los lotes agotados"
+                                    : `Ver los ${depleted.length} lotes agotados`}
+                            </Button>
+                        )}
+                    </>
                 )}
-
-                <ul className="space-y-2">
-                    {visible.map((lot) => (
-                        <LotRow
-                            key={lot.layerId}
-                            lot={lot}
-                            delta={lotCostDelta(data.lots, lot.lotNumber - 1)}
-                            isNext={lot.layerId === nextLotId}
-                            money={money}
-                            currency={currency}
-                            exchangeRate={exchangeRate}
-                            emphasis={emphasis}
-                            unit={unit}
-                        />
-                    ))}
-                </ul>
-
-                {collapses && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowDepleted((v) => !v)}
-                    >
-                        {showDepleted
-                            ? "Ocultar los lotes agotados"
-                            : `Ver los ${depleted.length} lotes agotados`}
-                    </Button>
-                )}
-
-                <p className="text-xs text-muted-foreground">
-                    El precio de venta, en cambio, es uno solo y es el de hoy. Las
-                    ventas ya hechas usan lo que cobraste en cada una; lo que sigue
-                    en almacén se valora al precio actual. Si cambias el precio,
-                    solo cambia la parte de “lo que ganarías al vender todo”.
-                </p>
             </CardContent>
         </Card>
     );
@@ -195,45 +186,35 @@ function LotRow({
     emphasis: MarginEmphasis;
     unit?: string | null;
 }) {
+    const [open, setOpen] = React.useState(false);
+
     const soldPct =
         lot.originalQuantity > 0
             ? (lot.soldQuantity / lot.originalQuantity) * 100
             : 0;
-    const isForeignCurrency = lot.currency !== "CUP";
 
     return (
-        <li
-            className={cn(
-                "space-y-2 rounded-md border p-3",
-                isNext && "border-primary/30 bg-primary/5",
-            )}
-        >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="tabular-nums">
-                        Lote {lot.lotNumber}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                        {formatDateShort(lot.acquiredAt)}
-                        {lot.providerName ? ` · ${lot.providerName}` : ""}
-                    </span>
-                    {isNext && (
-                        <Badge variant="secondary" className="text-xs">
-                            Sale primero
-                        </Badge>
-                    )}
-                    {lot.isDepleted && (
-                        <Badge variant="outline" className="text-xs">
-                            Agotado
-                        </Badge>
-                    )}
-                </div>
+        <li className={cn(isNext && "bg-primary/5")}>
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                className="flex w-full flex-wrap items-center gap-x-3 gap-y-1.5 p-3 text-left text-sm transition-colors hover:bg-muted/50"
+            >
+                <span className="font-medium tabular-nums">
+                    Lote {lot.lotNumber}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                    {formatDateShort(lot.acquiredAt)}
+                </span>
+                <span className="tabular-nums">
+                    {formatMoney(lot.unitCost, lot.currency)}
+                </span>
 
                 {delta !== null && delta !== 0 && (
-                    <Badge
-                        variant="secondary"
+                    <span
                         className={cn(
-                            "gap-1 tabular-nums",
+                            "flex items-center gap-0.5 text-xs tabular-nums",
                             delta > 0
                                 ? "text-destructive"
                                 : "text-emerald-600 dark:text-emerald-400",
@@ -245,83 +226,97 @@ function LotRow({
                         ) : (
                             <ArrowDown className="size-3" aria-hidden="true" />
                         )}
-                        {Math.abs(delta).toFixed(1)}%
+                        {Math.abs(delta).toFixed(0)}%
+                    </span>
+                )}
+
+                <RecoveryProgress
+                    segments={[{ pct: soldPct, className: "bg-emerald-500" }]}
+                    label={`Vendido del lote ${lot.lotNumber}`}
+                    valueNow={Math.min(100, soldPct)}
+                    size="sm"
+                    className="w-20 shrink-0"
+                />
+
+                <span className="tabular-nums text-muted-foreground">
+                    {formatQuantity(lot.soldQuantity, unit)}/
+                    {formatQuantity(lot.originalQuantity, unit)}
+                </span>
+
+                {isNext && (
+                    <Badge variant="secondary" className="text-xs">
+                        Sale primero
                     </Badge>
                 )}
-            </div>
-
-            <p className="text-sm tabular-nums">
-                {formatStockWithUnit(lot.originalQuantity, unit)} a{" "}
-                <span className="font-medium">
-                    {formatMoney(lot.unitCost, lot.currency)}
-                </span>
-                {isForeignCurrency && (
-                    <span className="text-xs text-muted-foreground">
-                        {" "}
-                        ({formatMoney(lot.unitCostBase, "CUP")} por {unit || "ud"} a
-                        la tasa de aquel día)
-                    </span>
+                {lot.isDepleted && (
+                    <Badge variant="outline" className="text-xs">
+                        Agotado
+                    </Badge>
                 )}
-            </p>
 
-            <RecoveryProgress
-                segments={[
-                    { pct: soldPct, className: "bg-emerald-500" },
-                ]}
-                label={`Vendido del lote ${lot.lotNumber}`}
-                valueNow={Math.min(100, soldPct)}
-                size="sm"
-            />
-
-            <p className="text-sm text-muted-foreground">
-                Vendidas {formatStockWithUnit(lot.soldQuantity, unit)} de{" "}
-                {formatStockWithUnit(lot.originalQuantity, unit)}
-                {lot.remainingQuantity > 0
-                    ? ` · quedan ${formatStockWithUnit(lot.remainingQuantity, unit)}`
-                    : ""}
-                {lot.writtenOffQuantity > 0
-                    ? ` · ${formatStockWithUnit(lot.writtenOffQuantity, unit)} salieron sin venta`
-                    : ""}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm tabular-nums">
-                <span className="text-muted-foreground">
-                    Invertido{" "}
-                    <span className="text-foreground">
-                        {money(lot.investmentBase)}
-                    </span>
+                <span className="ml-auto flex items-center gap-2">
+                    <MarginValue
+                        amount={toDisplayCurrency(
+                            lot.profitBase,
+                            currency,
+                            exchangeRate,
+                        )}
+                        marginPct={lot.marginPct}
+                        currency={currency}
+                        emphasis={emphasis}
+                    />
+                    <ChevronDown
+                        className={cn(
+                            "size-4 shrink-0 text-muted-foreground transition-transform",
+                            open && "rotate-180",
+                        )}
+                        aria-hidden="true"
+                    />
                 </span>
-                <span className="text-muted-foreground">
-                    Recuperado{" "}
-                    <span className="text-foreground">
-                        {money(lot.revenueBase)}
-                    </span>
-                </span>
-                {lot.pendingBase > 0 && (
-                    <span className="text-muted-foreground">
-                        Pendiente{" "}
-                        <span className="text-foreground">
-                            {money(lot.pendingBase)}
+            </button>
+
+            {open && (
+                <div className="space-y-1 px-3 pb-3 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 tabular-nums">
+                        <span>
+                            Invertido{" "}
+                            <span className="text-foreground">
+                                {money(lot.investmentBase)}
+                            </span>
                         </span>
-                    </span>
-                )}
-                <MarginValue
-                    amount={toDisplayCurrency(
-                        lot.profitBase,
-                        currency,
-                        exchangeRate,
-                    )}
-                    marginPct={lot.marginPct}
-                    currency={currency}
-                    emphasis={emphasis}
-                />
-            </div>
+                        <span>
+                            Recuperado{" "}
+                            <span className="text-foreground">
+                                {money(lot.revenueBase)}
+                            </span>
+                        </span>
+                        {lot.pendingBase > 0 && (
+                            <span>
+                                Pendiente{" "}
+                                <span className="text-foreground">
+                                    {money(lot.pendingBase)}
+                                </span>
+                            </span>
+                        )}
+                    </div>
 
-            {lot.remainingQuantity > 0 && (
-                <p className="text-xs text-muted-foreground">
-                    Lo que te queda vale {money(lot.potentialRevenueBase)} al precio
-                    de hoy.
-                </p>
+                    <p>
+                        {lot.remainingQuantity > 0
+                            ? `Quedan ${formatStockWithUnit(lot.remainingQuantity, unit)}, que valen ${money(lot.potentialRevenueBase)} al precio de hoy.`
+                            : "Lote agotado: su ganancia ya es definitiva."}
+                        {lot.writtenOffQuantity > 0 &&
+                            ` ${formatStockWithUnit(lot.writtenOffQuantity, unit)} salieron sin venta.`}
+                    </p>
+
+                    {lot.providerName && <p>Proveedor: {lot.providerName}.</p>}
+
+                    {lot.currency !== "CUP" && (
+                        <p className="tabular-nums">
+                            {formatMoney(lot.unitCostBase, "CUP")} por{" "}
+                            {unit || "ud"} a la tasa del día de la compra.
+                        </p>
+                    )}
+                </div>
             )}
         </li>
     );
