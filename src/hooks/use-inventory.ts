@@ -18,6 +18,7 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
+import { invalidateCashQueries } from "./use-currency-account";
 
 interface PaginationParams {
     page?: number;
@@ -132,6 +133,8 @@ export function useAddStockToProductMutation() {
             queryClient.invalidateQueries({
                 queryKey: ["product-investment-status", variables.businessId, variables.productId],
             });
+            // La compra sale de la caja en la moneda en que se pagó.
+            invalidateCashQueries(queryClient, variables.businessId);
         },
     });
 }

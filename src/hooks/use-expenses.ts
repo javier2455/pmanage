@@ -15,7 +15,7 @@ import {
   CreateExpenseProps,
   UpdateExpenseProps,
 } from "@/lib/types/expenses";
-import { CURRENCY_BALANCES_KEY } from "@/hooks/use-currency-account";
+import { invalidateCashQueries } from "@/hooks/use-currency-account";
 
 interface UseGetAllExpensesParams {
   page?: number;
@@ -56,9 +56,7 @@ export function useCreateExpenseMutation() {
       // El gasto descuenta el saldo de la cuenta por moneda en el backend
       // (evento "financial-transaction.created"). Refrescamos la caja para
       // que la card del dashboard y la vista de flujo de caja lo reflejen.
-      queryClient.invalidateQueries({
-        queryKey: [CURRENCY_BALANCES_KEY, credentials.idbusiness],
-      });
+      invalidateCashQueries(queryClient, credentials.idbusiness);
       // Guardar el gasto puede haber dado de alta una categoría nueva
       // (`expenseCategoryName`): sin esto no aparecería en el selector ni en la
       // pantalla de categorías hasta recargar.

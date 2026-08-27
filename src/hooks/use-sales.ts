@@ -11,6 +11,7 @@ import {
     registerPayments,
 } from "@/lib/api/sale";
 import { LIST_KEY as NOTIFICATIONS_KEY, UNREAD_KEY as NOTIFICATIONS_UNREAD_KEY } from "./use-notifications";
+import { invalidateCashQueries } from "./use-currency-account";
 
 interface UseAllSalesByBusinessIdParams {
     page?: number;
@@ -97,6 +98,9 @@ export function useRegisterPaymentsMutation() {
             queryClient.invalidateQueries({ queryKey: ["daily-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["monthly-accounting-close", bid] });
             queryClient.invalidateQueries({ queryKey: ["dashboard-summary", bid] });
+            // Cobrar es lo que de verdad entra en caja: suma lo que el cliente
+            // entregó y resta el vuelto, cada uno en su moneda.
+            invalidateCashQueries(queryClient, bid);
         },
     });
 }
@@ -132,6 +136,9 @@ export function useCancelSaleMutation() {
             // Cancelar repone stock: puede resolver/generar avisos de umbral.
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_KEY, bid] });
             queryClient.invalidateQueries({ queryKey: [NOTIFICATIONS_UNREAD_KEY, bid] });
+            // Y deshace en caja lo que movió el cobro: sale lo entregado, vuelve
+            // el vuelto, y la mercancía perdida se anota como gasto.
+            invalidateCashQueries(queryClient, bid);
         },
     });
 }
