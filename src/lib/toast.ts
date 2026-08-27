@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
 import { sileo } from "sileo";
+import { extractApiErrorMessage } from "@/lib/api-error";
 
 /**
  * Estilos compartidos para los toasts del sistema. Se usan en combinación
@@ -53,17 +54,32 @@ export function toastError({ title, description }: ToastPayload) {
  * NestJS manda un array de mensajes cuando falla la validación de varios campos;
  * sin unirlos, React los pegaría sin separación. Sirve para rellenar el error de
  * un formulario (`setError("root")`) además de mostrarlo en un toast.
+ *
+ * Delega en `extractApiErrorMessage` para no pintar envoltorios crudos: los
+ * endpoints que pasan por el gateway DveloxSoft devolvían el error del
+ * microservicio como JSON serializado dentro de `message`.
  */
 export function apiMessage(error: unknown): string | undefined {
   if (!isAxiosError(error)) return undefined;
-  const raw = error.response?.data?.message;
-  return Array.isArray(raw) ? raw.join(", ") : raw;
+  return extractApiErrorMessage(error, "") || undefined;
+}
+
+/**
+ * Título del toast. `data.error` es el nombre HTTP del fallo y a veces llega
+ * como código (`BAD_REQUEST`, `INTERNAL_SERVER_ERROR`): eso no se le muestra al
+ * usuario, se cae a "Error".
+ */
+function apiErrorTitle(error: unknown): string {
+  const raw = isAxiosError(error) ? error.response?.data?.error : undefined;
+  if (typeof raw !== "string" || !raw.trim()) return "Error";
+  const looksTechnical = raw.includes("_") || raw === raw.toUpperCase();
+  return looksTechnical ? "Error" : raw;
 }
 
 export function toastApiError(error: unknown, fallback: string) {
   if (isAxiosError(error)) {
     toastError({
-      title: error.response?.data?.error ?? "Error",
+      title: apiErrorTitle(error),
       description: apiMessage(error) ?? fallback,
     });
     return;

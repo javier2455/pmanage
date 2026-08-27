@@ -19,7 +19,7 @@ import { NegoraLogo } from "@/components/brand/negora-logo"
 import Link from 'next/link'
 import { useLoginMutation } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { extractApiErrorMessage } from "@/lib/api-error";
 import { getActivePlan } from "@/lib/api/plans";
 import { getMe } from "@/lib/api/auth";
 import { getMyBusinessesList } from "@/lib/api/business";
@@ -43,6 +43,26 @@ type PendingLogin = {
     refreshToken?: string;
     user: AuthUser;
 };
+
+/**
+ * Mensaje que ve el usuario cuando falla el login. `extractApiErrorMessage`
+ * saca el texto real del envoltorio del gateway (que llega como JSON dentro
+ * de `message`); aquí solo traducimos los códigos que el backend todavía
+ * responde en inglés.
+ */
+const LOGIN_ERROR_TRANSLATIONS: Record<string, string> = {
+    "invalid credentials": "Credenciales incorrectas",
+    "user not authenticated":
+        "Usuario no activo. Comuniquese con soporte para activar su cuenta.",
+};
+
+function getLoginErrorMessage(error: unknown): string {
+    const message = extractApiErrorMessage(
+        error,
+        "Error al iniciar sesión. Intenta de nuevo.",
+    );
+    return LOGIN_ERROR_TRANSLATIONS[message.toLowerCase()] ?? message;
+}
 
 export default function LoginPage() {
     const router = useRouter();
@@ -195,12 +215,7 @@ export default function LoginPage() {
         } catch (error) {
             setIsAuthenticating(false);
             setIsGoogleLoading(false);
-            setError("root", {
-                message:
-                    axios.isAxiosError(error) && error.response?.data?.message
-                        ? error.response.data.message
-                        : "Error al iniciar sesión. Intenta de nuevo.",
-            });
+            setError("root", { message: getLoginErrorMessage(error) });
         } finally {
             setPendingLogin(null);
         }
@@ -307,19 +322,7 @@ export default function LoginPage() {
 
         } catch (error) {
             setIsAuthenticating(false);
-            if (axios.isAxiosError(error) && error.response?.data?.error === "Unauthorized" && error.response?.data?.message === "Invalid credentials") {
-                setError("root", { message: "Credenciales incorrectas" })
-                return
-            }
-            if (axios.isAxiosError(error) && error.response?.data?.error === "Internal Server Error" && error.response?.data?.message === "User not authenticated") {
-                setError("root", { message: "Usuario no activo. Comuniquese con soporte para activar su cuenta." })
-                return
-            }
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message });
-            } else {
-                setError("root", { message: "Error al iniciar sesión. Intenta de nuevo." });
-            }
+            setError("root", { message: getLoginErrorMessage(error) });
         }
     };
     return (

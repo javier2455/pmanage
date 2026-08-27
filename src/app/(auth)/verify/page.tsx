@@ -17,9 +17,18 @@ import { NegoraLogo } from "@/components/brand/negora-logo"
 import axios, { AxiosError } from "axios"
 import { useRouter } from "next/navigation"
 import { authRoutes } from "@/lib/routes/auth";
+import { extractApiErrorMessage } from "@/lib/api-error";
 
 
 const CODE_LENGTH = 6
+
+/* Mensajes con los que el backend identifica un código inválido; se traducen a
+   un error sobre el propio campo en vez de un error general del formulario. */
+const INVALID_CODE_MESSAGES = new Set([
+    "invalid verification code",
+    "código de verificación inválido",
+    "codigo de verificación inválido",
+])
 
 export default function VerifyPage() {
     const router = useRouter()
@@ -121,15 +130,20 @@ export default function VerifyPage() {
             setError("root", { message: "No pudimos verificar el código. Intenta de nuevo." })
         } catch (error: unknown) {
             if (error instanceof AxiosError) {
-                const data = error.response?.data
-                if (data?.error === "Unauthorized" && data?.message === "Invalid verification code") {
-                    setError("code", { message: "Código de verificación inválido o expirado" })
-                } else if (error.code === "ERR_NETWORK") {
+                if (error.code === "ERR_NETWORK") {
                     setError("root", { message: "Error de conexión. Verifica tu internet e intenta de nuevo." })
-                } else if (typeof data?.message === "string" && data.message.length > 0) {
-                    setError("root", { message: data.message })
+                    return
+                }
+                /* El mensaje llega del microservicio a través del gateway;
+                   extractApiErrorMessage lo saca de su envoltorio JSON. */
+                const message = extractApiErrorMessage(
+                    error,
+                    "No pudimos verificar el código. Intenta de nuevo en unos momentos.",
+                )
+                if (INVALID_CODE_MESSAGES.has(message.toLowerCase())) {
+                    setError("code", { message: "Código de verificación inválido o expirado" })
                 } else {
-                    setError("root", { message: "No pudimos verificar el código. Intenta de nuevo en unos momentos." })
+                    setError("root", { message })
                 }
             } else {
                 setError("root", { message: "Ocurrió un error inesperado. Intenta de nuevo." })

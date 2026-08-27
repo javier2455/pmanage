@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import axios from "axios";
+import { extractApiErrorMessage } from "@/lib/api-error";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { NegoraLogo } from "@/components/brand/negora-logo";
 
@@ -49,11 +49,10 @@ function AcceptInvitationPageContent() {
   }
 
   if (mutation.isError) {
-    const errorMessage =
-      axios.isAxiosError(mutation.error) &&
-      mutation.error.response?.data?.message
-        ? mutation.error.response.data.message
-        : "Ocurrió un error al procesar la invitación. Intenta de nuevo más tarde.";
+    const errorMessage = extractApiErrorMessage(
+      mutation.error,
+      "Ocurrió un error al procesar la invitación. Intenta de nuevo más tarde.",
+    );
 
     return (
       <ResultCard

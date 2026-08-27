@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import axios from "axios";
+import { extractApiErrorMessage } from "@/lib/api-error";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -46,13 +46,12 @@ export default function ForgotPasswordPage() {
             });
             setSubmittedEmail(data.email);
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                setError("root", { message: error.response.data.message });
-            } else {
-                setError("root", {
-                    message: "No se pudo enviar el correo. Intenta de nuevo.",
-                });
-            }
+            setError("root", {
+                message: extractApiErrorMessage(
+                    error,
+                    "No se pudo enviar el correo. Intenta de nuevo.",
+                ),
+            });
         }
     };
 

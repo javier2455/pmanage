@@ -12,7 +12,7 @@ import { registerSchema, type RegisterFormData } from "@/lib/validations/auth"
 import { Lock, Mail, User, Loader2, AlertTriangle, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { NegoraLogo } from "@/components/brand/negora-logo"
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from 'axios'
+import { extractApiErrorMessage } from "@/lib/api-error"
 import { useRegisterMutation } from '@/hooks/use-auth'
 import { useQuery } from "@tanstack/react-query"
 import { getInvitationInformation } from "@/lib/api/auth"
@@ -94,11 +94,12 @@ function RegisterPageContent() {
       router.push("/verify");
 
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        setError("root", { message: error.response.data.message });
-      } else {
-        setError("root", { message: "Error al iniciar sesión. Intenta de nuevo." });
-      }
+      setError("root", {
+        message: extractApiErrorMessage(
+          error,
+          "No se pudo completar el registro. Intenta de nuevo.",
+        ),
+      });
     }
   };
 
