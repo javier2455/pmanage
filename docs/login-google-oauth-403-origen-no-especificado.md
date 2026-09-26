@@ -7,6 +7,88 @@
 
 ---
 
+## ACTUALIZACIÓN 2026-09-11 — qué se arregló y qué sigue pendiente
+
+Resultó que el login con Google estaba roto por **tres** cosas encadenadas, no
+solo por el 403 del gateway. Dos eran nuestras y ya están corregidas; la tercera
+sigue en manos del equipo del Gateway.
+
+### 1. Regresión del frontend (ARREGLADA) — era la causa dominante
+
+El 2026-07-17, dos días después de redactar este documento, el commit `de342e2`
+("Update page.tsx") sustituyó la llamada correcta al backend de §6a por la URL
+del gateway escrita a mano, con un `state` incrustado en el código fuente:
+
+```ts
+// lo que quedó en main:
+const googleAuthUrl = `https://ms.dveloxsoft.com/auth/google?state=eyJhbGciOi...&rolId=4`;
+```
+
+Ese `state` es el token de página del gateway, un JWT con **una hora de vida**.
+Se emitió el 2026-07-01T22:54Z y **caducó a las 23:54Z de ese mismo día**. Desde
+entonces el OAuth fallaba en escritorio y en móvil por igual, que es justo lo que
+reportan los clientes. De paso, dejaba el token de página publicado en el bundle
+que descarga cualquier visitante.
+
+Hoy la URL se vuelve a pedir al backend, que es quien tiene ese token y sabe
+renovarlo.
+
+### 2. El popup se cerraba solo en móvil (ARREGLADO)
+
+El manejador se suscribía a `unload` **del popup**:
+
+```ts
+popup.addEventListener('unload', () => { cleanup(); /* hace popup.close() */ });
+```
+
+`window.open` crea primero un documento `about:blank` del mismo origen y lo
+descarga en cuanto navega al gateway. Ese primer `unload` disparaba el cierre de
+la ventana recién abierta. Chrome de escritorio trata esa navegación inicial como
+un reemplazo especial y no emite `unload`, por eso el síntoma solo se veía en
+móvil ("parece que abre Google y te devuelve al login").
+
+Ahora el cierre se detecta sondeando `popup.closed`, con un margen de gracia para
+que un `postMessage` ya encolado no se pierda.
+
+### 3. El 403 "Origen no especificado" (SIGUE PENDIENTE)
+
+**No se arregla desde estos repos.** Todo lo pedido en §8 y §10 sigue vigente: hay
+que confirmar con DveloxSoft cómo resuelve el gateway el origen de retorno y dar
+de alta `https://negora.dveloxsoft.com`.
+
+### Estado de los cambios de §6
+
+Ambos están **aplicados** y son seguros de desplegar:
+
+- **§6a (frontend):** restaurado, ahora en `pmanage/src/lib/google-oauth.ts`.
+- **§6b (backend):** aplicado en `psearch-back`. La variable `origin` que el
+  controlador ya calculaba se descartaba sin usarse; ahora sí viaja al gateway.
+
+Pasar `origin` es inocuo bajo la hipótesis A: si el gateway lo ignora y resuelve
+por whitelist, el parámetro sobra y no molesta. Si resulta que el nombre correcto
+del parámetro es otro, solo hay que cambiarlo en `googleAuth()`.
+
+**Importante:** el origen se valida contra `CORS_ORIGINS` **antes** de reenviarlo.
+Sin esa validación, un `?origin=https://atacante.com` podía conseguir que el
+gateway entregara los tokens de la víctima en el dominio del atacante.
+
+### Variables de entorno implicadas
+
+| Variable | Dónde | Para qué |
+|---|---|---|
+| `CORS_ORIGINS` | `psearch-back` | Allowlist de orígenes a los que se acepta devolver los tokens del OAuth. Se normaliza a origen puro, así que una entrada con path (`.../manager`) también vale. |
+| `DVELOXSOFT_MS_AUTH_TOKEN` | `psearch-back` | Token de página del gateway que viaja como `state`. **Caduca**; hay que renovarlo. |
+| `NEXT_PUBLIC_GATEWAY_ORIGIN` | `pmanage` | Origen(es), separados por comas, desde los que se acepta el `postMessage` con los tokens. Si se omite se asume `https://ms.dveloxsoft.com`. Solo hace falta declararla si el gateway corre en otro sitio (p. ej. `http://localhost:8000` en local). |
+
+### Aviso aparte: el token del gateway también caduca
+
+El `DVELOXSOFT_MS_AUTH_TOKEN` del `.env` de desarrollo **expiró el 2026-06-05**.
+Conviene comprobar el de producción: cuando caduca, el OAuth falla de forma
+opaca. El backend ahora lo detecta y lo deja escrito en el log al arrancar el
+flujo, pero nada lo renueva automáticamente.
+
+---
+
 ## TL;DR (resumen ejecutivo)
 
 - Tras migrar el sistema de gestión de `psearch.dveloxsoft.com` → `https://negora.dveloxsoft.com/manager`, el **login con Google dejó de funcionar**. El login normal (email/contraseña) y el resto de la app **sí funcionan**.
@@ -153,9 +235,9 @@ DVELOXSOFT_MS_REFERER=http://localhost:3006/api
 
 ---
 
-## 6. Cambios ya aplicados por el frontend (PENDIENTES DE VALIDAR — no desplegar aún)
+## 6. Cambios de origen en frontend y backend (APLICADOS — ver ACTUALIZACIÓN 2026-09-11)
 
-> Estos cambios asumen la **hipótesis alternativa** de §7 (que el gateway acepte el origen por parámetro). Si la causa real es el whitelist (§4.4, lo más probable), el cambio de backend **sobra** y se revierte. **No desplegar hasta confirmar el mecanismo del gateway (§8).**
+> Estos cambios asumen la **hipótesis alternativa** de §7 (que el gateway acepte el origen por parámetro). Bajo la hipótesis A (whitelist) el parámetro simplemente se ignora, así que no hace daño y no se revierte. Lo que sigue describe la propuesta original; el estado real está en la ACTUALIZACIÓN del principio.
 
 **a) Frontend — pasar el origen del navegador al backend**
 `pmanage/src/app/(auth)/login/page.tsx`

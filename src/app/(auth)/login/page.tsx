@@ -18,31 +18,11 @@ import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react"
 import { NegoraLogo } from "@/components/brand/negora-logo"
 import Link from 'next/link'
 import { useLoginMutation } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
 import { extractApiErrorMessage } from "@/lib/api-error";
-import { getActivePlan } from "@/lib/api/plans";
-import { getMe } from "@/lib/api/auth";
-import { getMyBusinessesList } from "@/lib/api/business";
-import { getAllSections } from "@/lib/api/navigation";
-import { collectAllowedUrls } from "@/lib/navigation-access";
-import { roleIdFromName } from "@/lib/roles";
-import { setAuthCookies, setDeactivatedCookie, setPlanExpiredCookie, setNeedsReconciliationCookie } from "@/lib/cookies";
-import { getMaxBusinesses } from "@/lib/pro-gates";
+import { usePostLogin } from "@/hooks/use-post-login";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { useState } from "react";
-import {
-    LoginTypeSelectionModal,
-    type LoginType,
-} from "@/components/auth/login-type-selection-modal";
-
-type LoginMode = "owner" | "worker";
-
-type AuthUser = Awaited<ReturnType<typeof getMe>>;
-
-type PendingLogin = {
-    accessToken: string;
-    refreshToken?: string;
-    user: AuthUser;
-};
+import { LoginTypeSelectionModal } from "@/components/auth/login-type-selection-modal";
 
 /**
  * Mensaje que ve el usuario cuando falla el login. `extractApiErrorMessage`
@@ -65,17 +45,10 @@ function getLoginErrorMessage(error: unknown): string {
 }
 
 export default function LoginPage() {
-    const router = useRouter();
     const loginMutation = useLoginMutation();
-    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
-    const [showLoginTypeModal, setShowLoginTypeModal] = useState(false);
-    const [pendingLogin, setPendingLogin] = useState<PendingLogin | null>(null);
+    const [isGoogleBusy, setIsGoogleBusy] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
-    const isSubmitBusy = isAuthenticating || loginMutation.isPending;
-    const isGoogleBusy = isGoogleLoading;
-    const isAnyAuthBusy = isSubmitBusy || isGoogleBusy;
 
     const {
         register,
@@ -90,241 +63,31 @@ export default function LoginPage() {
         },
     });
 
-    const persistSessionUser = (user: AuthUser, accessToken: string, refreshToken?: string) => {
-        sessionStorage.setItem("token", accessToken);
-        if (refreshToken) {
-            sessionStorage.setItem("refresh_token", refreshToken);
-        }
-        sessionStorage.setItem(
-            "user",
-            JSON.stringify({
-                name: user.name,
-                role: user.role,
-                roleId: user.roleId,
-                email: user.email,
-                plan: user.plan,
-                avatar: user.avatar,
-            }),
-        );
-        const roleName = user.role ?? "";
-        const planType = user.plan?.type ?? user.plan?.name ?? "";
-        setAuthCookies({
-            token: accessToken,
-            role: roleName,
-            planType,
-        });
-        // Si la cuenta ya está desactivada, sembramos la cookie para que el
-        // middleware redirija a la pantalla de reactivación sin parpadeo.
-        setDeactivatedCookie(user.deactivatedAt);
-        // Si el plan está vencido o nunca tuvo plan, sembramos la cookie para que
-        // el middleware redirija al paywall de selección de plan sin parpadeo.
-        // El PlanGuard la corrige luego con /auth/me.
-        setPlanExpiredCookie(Boolean(user.expiredPlan || user.hasNeverHadPlan));
-    };
+    const showRootError = (message: string) => setError("root", { message });
 
-    const finalizePostLogin = async ({
-        accessToken,
-        refreshToken,
-        user,
-        mode,
-    }: PendingLogin & { mode: LoginMode }) => {
-        persistSessionUser(user, accessToken, refreshToken);
-        sessionStorage.setItem("loginMode", mode);
+    /* Persistir sesión, consultar /auth/me y enrutar: es idéntico para el
+       formulario y para Google, y lo comparte con la pantalla de registro. */
+    const { completeLogin, loginTypeModal } = usePostLogin({
+        onError: showRootError,
+    });
 
-        if (mode === "worker") {
-            const businesses = await getMyBusinessesList();
-            /* En modo worker solo cuentan los negocios donde es trabajador;
-               my-business también incluye los propios. Coincide con el filtro
-               del BusinessProvider para que el destino sea coherente. */
-            const workerBusinesses = businesses.filter((b) => b.isWorker === true);
-            if (workerBusinesses.length === 0) {
-                router.push("/dashboard/business/create");
-                return;
-            }
-            /* Aterrizamos en la primera ruta a la que el trabajador realmente
-               tiene acceso (no en /dashboard fijo). Persistimos el negocio
-               activo para que las secciones consultadas coincidan con las que
-               cargará el dashboard al montar. */
-            const activeBusiness = workerBusinesses[0];
-            sessionStorage.setItem("activeBusinessId", activeBusiness.id);
-            const sections = await getAllSections({ businessId: activeBusiness.id });
-            /* Preferir el roleId numérico del backend (#21); fallback a la tabla local. */
-            const roleId =
-                user.roleId != null
-                    ? String(user.roleId)
-                    : roleIdFromName(user.role ?? "");
-            const allowedUrls = collectAllowedUrls(sections, roleId);
-            router.push(allowedUrls.find(Boolean) ?? "/dashboard/no-access");
-            return;
-        }
-
-        const activePlan = await getActivePlan();
-        if (activePlan?.data?.isActive || activePlan?.isActive) {
-            const businesses = await getMyBusinessesList();
-            const activeBusinesses = businesses.filter((b) => b.status !== "archived");
-            if (activeBusinesses.length === 0) {
-                setNeedsReconciliationCookie(false);
-                router.push("/dashboard/business/create");
-                return;
-            }
-            /* Si el usuario quedó con más negocios activos de los que permite su
-               plan (p. ej. tras expirar el trial Pro), debe elegir cuál conservar
-               antes de entrar al dashboard. Sembramos la cookie para que el
-               middleware bloquee el dashboard hasta que reconcilie. */
-            const planType = user.plan?.type ?? user.plan?.name ?? "";
-            const maxBiz = user.plan?.limits?.maxBusinesses ?? getMaxBusinesses(planType);
-            if (activeBusinesses.length > maxBiz) {
-                setNeedsReconciliationCookie(true);
-                router.push("/seleccionar-plan/reconciliar");
-                return;
-            }
-            setNeedsReconciliationCookie(false);
-            router.push("/dashboard");
-        } else {
-            router.push("/plans");
-        }
-    };
-
-    const routeAfterGetMe = async (params: PendingLogin) => {
-        const { user } = params;
-        // Cuenta desactivada: persistimos la sesión y enviamos directo a la
-        // pantalla de reactivación, sin elegir modo ni comprobar plan/negocios.
-        if (user.deactivatedAt) {
-            persistSessionUser(user, params.accessToken, params.refreshToken);
-            router.replace("/cuenta-desactivada");
-            return;
-        }
-        if (user.isWorker && !user.isOwner) {
-            await finalizePostLogin({ ...params, mode: "worker" });
-            return;
-        }
-        if (user.isOwner && user.isWorker) {
-            setPendingLogin(params);
-            setShowLoginTypeModal(true);
-            return;
-        }
-        await finalizePostLogin({ ...params, mode: "owner" });
-    };
-
-    const handleLoginTypeSelect = async (type: LoginType) => {
-        if (!pendingLogin) return;
-        const mode: LoginMode = type === "business-member" ? "worker" : "owner";
-        setShowLoginTypeModal(false);
-        try {
-            await finalizePostLogin({ ...pendingLogin, mode });
-        } catch (error) {
-            setIsAuthenticating(false);
-            setIsGoogleLoading(false);
-            setError("root", { message: getLoginErrorMessage(error) });
-        } finally {
-            setPendingLogin(null);
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        setIsGoogleLoading(true);
-
-        const width = 500;
-        const height = 600;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-
-        // Pasamos el origen del frontend para que el backend lo reenvíe al
-        // Gateway DveloxSoft. El gateway lo necesita para saber a qué ventana
-        // opener devolver los tokens por postMessage; sin él responde 403
-        // "Origen no especificado" en el paso final del OAuth.
-        const googleAuthUrl = `https://ms.dveloxsoft.com/auth/google?state=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYWdlSWQiOiIxMGFhNGZmOS0zYzVlLTQ3YTAtODY3MS0zY2E0ZTI0ZWFmMzMiLCJjb21wYW55SWQiOiJhZjNiZWZlYi03YmQyLTQ2ZWQtYjgzNy0yZTQyZTA0ZDZkODkiLCJpYXQiOjE3ODI5NDY0NjEsImV4cCI6MTc4Mjk1MDA2MX0.c15vcUMzUUahF20poq5Xo_p7_AcTSlt4RttlrJ7UV_1G0YDBKujjv_UzEst7t_g6tZbS_GX-1KmM1dnpwGMiQ28-XpaLUCefHwMQqO8ZvjjKPqSr-pPsVoGudbqWgGVGZ2BoypvaD7yiCX41Y8XH1wDRq-EjmYRjArW1TXsKHIyCdkXPp0dih5-lF450f9AhODpEWLHvFTeRVxpZtOb67MqjJGTHLjXQxtYR5oLSm7p4XlksaVVBqfXQ20e93Se_bBwLtG6cSxpl99fMdFSrN8aOcc1jKGNHtyPQVWrWz1vDlvmKZ1BSdhJeSHTjgd_Z2FaxdaIxaJfo76CaehaSBg&rolId=4`;
-
-        const popup = window.open(
-            googleAuthUrl,
-            'GoogleLogin',
-            `width=${width},height=${height},left=${left},top=${top},popup=yes,resizable=yes,scrollbars=yes`
-        );
-
-        if (!popup) {
-            setIsGoogleLoading(false);
-            setError("root", { message: "No se pudo abrir la ventana de autenticación. Verifica que los popups estén habilitados." });
-            return;
-        }
-
-        return new Promise<void>((resolve, reject) => {
-            let authResolved = false;
-
-            const cleanup = () => {
-                window.removeEventListener('message', handleMessage);
-                if (popup && !popup.closed) {
-                    popup.close();
-                }
-            };
-
-            const handleMessage = (event: MessageEvent) => {
-                if (authResolved) return;
-
-                const origin = window.location.origin;
-                if (!event.origin.includes('ms.dveloxsoft.com') && event.origin !== origin) return;
-
-                if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
-                    authResolved = true;
-                    cleanup();
-                    setIsGoogleLoading(false);
-                    setError("root", { message: event.data.message || "Error al iniciar sesión con Google" });
-                    reject(new Error(event.data.message || "Error al iniciar sesión con Google"));
-                    return;
-                }
-
-                const { accessToken, refreshToken } = event.data || {};
-                if (!accessToken) return;
-
-                (async () => {
-                    authResolved = true;
-                    cleanup();
-                    try {
-                        sessionStorage.setItem("token", accessToken);
-                        const user = await getMe();
-                        await routeAfterGetMe({ accessToken, refreshToken, user });
-                        resolve();
-                    } catch {
-                        setIsGoogleLoading(false);
-                        setError("root", { message: "Error al obtener los datos del usuario" });
-                        reject(new Error("Error al obtener los datos del usuario"));
-                    }
-                })();
-            };
-
-            window.addEventListener('message', handleMessage);
-
-            popup.addEventListener('unload', () => {
-                if (authResolved) return;
-                cleanup();
-                setIsGoogleLoading(false);
-                reject(new Error("La ventana de autenticación se cerró sin completar el proceso."));
-            });
-        });
-    };
+    const isSubmitBusy = isAuthenticating || loginMutation.isPending;
+    const isAnyAuthBusy = isSubmitBusy || isGoogleBusy;
 
     const onSubmit = async (data: LoginFormData) => {
         setIsAuthenticating(true);
         try {
             const response = await loginMutation.mutateAsync(data);
-            const { access_token, refresh_token } = response;
-
-            sessionStorage.setItem("token", access_token);
-            if (refresh_token) {
-                sessionStorage.setItem("refresh_token", refresh_token);
-            }
-            const user = await getMe();
-
-            await routeAfterGetMe({
-                accessToken: access_token,
-                refreshToken: refresh_token,
-                user,
+            await completeLogin({
+                accessToken: response.access_token,
+                refreshToken: response.refresh_token,
             });
-
         } catch (error) {
             setIsAuthenticating(false);
-            setError("root", { message: getLoginErrorMessage(error) });
+            showRootError(getLoginErrorMessage(error));
         }
     };
+
     return (
         <div className="flex min-h-svh items-center justify-center bg-background px-4 py-12">
             <Card className="w-full max-w-md">
@@ -437,44 +200,13 @@ export default function LoginPage() {
                         <Separator className="flex-1" />
                     </div>
 
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full cursor-pointer"
-                        onClick={async () => {
-                            try {
-                                await handleGoogleLogin();
-                            } catch (error) {
-                                console.error(error);
-                            }
-                        }}
-                        disabled={isAnyAuthBusy}
-                        aria-busy={isGoogleBusy}
-                    >
-                        {isGoogleBusy ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                                <path
-                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                                    fill="#4285F4"
-                                />
-                                <path
-                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                    fill="#34A853"
-                                />
-                                <path
-                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                    fill="#FBBC05"
-                                />
-                                <path
-                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                    fill="#EA4335"
-                                />
-                            </svg>
-                        )}
-                        {isGoogleBusy ? "Conectando..." : "Continuar con Google"}
-                    </Button>
+                    <GoogleAuthButton
+                        onSuccess={completeLogin}
+                        onError={showRootError}
+                        onBusyChange={setIsGoogleBusy}
+                        disabled={isSubmitBusy}
+                    />
+
                     <p className="text-center text-sm text-muted-foreground">
                         {"No tienes una cuenta? "}
                         <Link
@@ -486,10 +218,7 @@ export default function LoginPage() {
                     </p>
                 </CardContent>
             </Card>
-            <LoginTypeSelectionModal
-                open={showLoginTypeModal}
-                onSelect={handleLoginTypeSelect}
-            />
+            <LoginTypeSelectionModal {...loginTypeModal} />
         </div>
     )
 }
