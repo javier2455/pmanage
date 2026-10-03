@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildContactsPayload,
   buildWhatsAppMessage,
   businessToday,
+  contactsErrorMessage,
   daysUntil,
+  formatContactPhone,
   formatDay,
   formatInstallationCode,
   formatPaymentAmount,
   getLicenseStatus,
   isDuplicateCodeError,
+  isValidContactPhone,
   isValidInstallationCode,
   licenseErrorMessage,
+  normalizeContactPhone,
   normalizeInstallationCode,
+  validateContactDrafts,
 } from "./desktop-licenses";
 
 /** Mediodía en La Habana del 2 de octubre de 2026 (UTC-4 en horario de verano). */
@@ -149,6 +155,101 @@ describe("buildWhatsAppMessage", () => {
       licenseText: "NGL1.abc.def",
     });
     expect(message.startsWith("Hola.\n")).toBe(true);
+  });
+});
+
+describe("números de contacto", () => {
+  it("normaliza espacios, guiones, puntos y paréntesis, y antepone el +", () => {
+    expect(normalizeContactPhone(" +53 5 460-0851 ")).toBe("+5354600851");
+    expect(normalizeContactPhone("(53) 5460.0851")).toBe("+5354600851");
+    expect(normalizeContactPhone("5354600851")).toBe("+5354600851");
+    expect(normalizeContactPhone("   ")).toBe("");
+  });
+
+  it("valida + y de 8 a 15 dígitos", () => {
+    expect(isValidContactPhone("+5354600851")).toBe(true);
+    expect(isValidContactPhone("+12345678")).toBe(true);
+    expect(isValidContactPhone("+123456789012345")).toBe(true);
+    expect(isValidContactPhone("+1234567")).toBe(false);
+    expect(isValidContactPhone("+1234567890123456")).toBe(false);
+    expect(isValidContactPhone("5354600851")).toBe(false);
+    expect(isValidContactPhone("+53546008a1")).toBe(false);
+    expect(isValidContactPhone("++5354600851")).toBe(false);
+  });
+
+  it("formatea los móviles cubanos para leer", () => {
+    expect(formatContactPhone("+5354600851")).toBe("+53 5 4600851");
+    expect(formatContactPhone("53 5 460-0851")).toBe("+53 5 4600851");
+  });
+
+  it("deja normalizado lo que no es un móvil cubano", () => {
+    // Fijo de La Habana: +53 y 8 dígitos, pero no empieza por 5.
+    expect(formatContactPhone("+5378300000")).toBe("+5378300000");
+    expect(formatContactPhone("+34 612 345 678")).toBe("+34612345678");
+    // +53 y 5, pero con un dígito de más.
+    expect(formatContactPhone("+53546008512")).toBe("+53546008512");
+  });
+
+  it("valida cada fila: vacía, no válida y repetida", () => {
+    expect(
+      validateContactDrafts([
+        { phone: "+53 5 4600851", label: "Ventas" },
+        { phone: " ", label: "" },
+        { phone: "12345", label: "" },
+        // El mismo número que la primera fila, escrito de otra forma.
+        { phone: "5354600851", label: "Soporte" },
+      ]),
+    ).toEqual([
+      null,
+      "Escribe el número o quita esta fila.",
+      "Número no válido: lleva el código del país y de 8 a 15 dígitos.",
+      "Este número está repetido.",
+    ]);
+  });
+
+  it("da por buena una lista correcta y también la vacía", () => {
+    expect(
+      validateContactDrafts([
+        { phone: "+53 5 4600851", label: "" },
+        { phone: "+53 5 8138905", label: "" },
+      ]),
+    ).toEqual([null, null]);
+    expect(validateContactDrafts([])).toEqual([]);
+  });
+
+  it("arma el cuerpo del PUT en orden, normalizado y sin etiquetas vacías", () => {
+    expect(
+      buildContactsPayload([
+        { phone: "+53 5 8138905", label: "  Soporte " },
+        { phone: "53 5 460-0851", label: "   " },
+      ]),
+    ).toEqual({
+      contacts: [
+        { phone: "+5358138905", label: "Soporte" },
+        { phone: "+5354600851" },
+      ],
+    });
+    expect(buildContactsPayload([])).toEqual({ contacts: [] });
+  });
+});
+
+describe("contactsErrorMessage", () => {
+  const FALLBACK = "No se pudieron guardar los números.";
+
+  it("traduce el 400 del backend", () => {
+    expect(
+      contactsErrorMessage(
+        axiosErrorWith(400, { message: "Duplicated phone: +5354600851" }),
+        FALLBACK,
+      ),
+    ).toBe("Revisa los números: hay alguno no válido o repetido.");
+  });
+
+  it("el resto se traduce igual que en la pantalla de licencias", () => {
+    expect(contactsErrorMessage(axiosErrorWith(403), FALLBACK)).toContain(
+      "administrador",
+    );
+    expect(contactsErrorMessage(undefined, FALLBACK)).toBe(FALLBACK);
   });
 });
 

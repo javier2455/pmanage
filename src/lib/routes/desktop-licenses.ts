@@ -11,4 +11,5 @@ export const desktopLicenseRoutes = {
     `${ADMIN_INSTALLATIONS}/${encodeURIComponent(code)}/payments`,
   payment: (code: string, paymentId: string) =>
     `${ADMIN_INSTALLATIONS}/${encodeURIComponent(code)}/payments/${encodeURIComponent(paymentId)}`,
+  contacts: `${BASIC_ROUTE}/desktop/admin/contacts`,
 };

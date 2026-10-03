@@ -75,3 +75,24 @@ export interface AddDesktopLicensePaymentProps {
   currency?: string;
   note?: string;
 }
+
+/**
+ * Número de WhatsApp al que escriben los clientes del escritorio para pagar o
+ * renovar. La lista es una sola para todas las instalaciones y llega ordenada.
+ */
+export interface DesktopLicenseContact {
+  id: string;
+  /** `+` y de 8 a 15 dígitos, sin espacios: `+5354600851`. */
+  phone: string;
+  label: string | null;
+  position: number;
+}
+
+export interface DesktopLicenseContactsResponse {
+  data: DesktopLicenseContact[];
+}
+
+/** Sustituye la lista entera (de 0 a 5 números), en el orden en que se manda. */
+export interface UpdateDesktopLicenseContactsProps {
+  contacts: { phone: string; label?: string }[];
+}

@@ -7,6 +7,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useGetDesktopInstallationsQuery } from "@/hooks/use-desktop-licenses";
 import { InstallationsTable } from "@/components/desktop-licenses/installations-table";
 import { CreateInstallationDialog } from "@/components/desktop-licenses/create-installation-dialog";
+import { PaymentContactsCard } from "@/components/desktop-licenses/payment-contacts-card";
 
 const SEARCH_DEBOUNCE_MS = 350;
 const DEFAULT_LIMIT = 10;
@@ -56,6 +57,8 @@ export default function DesktopLicensesPage() {
           }
         />
       </div>
+
+      <PaymentContactsCard />
 
       {isError ? (
         <p className="text-destructive">Error al cargar las instalaciones.</p>

@@ -1,12 +1,14 @@
 /**
  * Lógica pura del panel de licencias de la app de escritorio: código de
- * instalación, fechas, estado del vencimiento, mensaje de WhatsApp y errores.
+ * instalación, fechas, estado del vencimiento, mensaje de WhatsApp, números de
+ * contacto y errores.
  * Sin React ni APIs de navegador, para poder probarla con Vitest.
  */
 
 import { isAxiosError } from "axios";
 import { extractApiErrorMessage } from "@/lib/api-error";
 import { formatAmount, formatMoney } from "@/lib/currency";
+import type { UpdateDesktopLicenseContactsProps } from "@/lib/types/desktop-licenses";
 import { DASH } from "@/lib/utils";
 
 /* ---------------------------- Código de instalación --------------------------- */
@@ -171,6 +173,84 @@ export function buildWhatsAppMessage({
   ].join("\n");
 }
 
+/* ----------------------------- Números de contacto ---------------------------- */
+
+/** Máximo de números de WhatsApp para pagos (igual que el backend). */
+export const LICENSE_CONTACTS_MAX = 5;
+
+/** Tope de la etiqueta en el formulario ("Ventas", "Soporte"…). */
+export const CONTACT_LABEL_MAX_LENGTH = 30;
+
+const CONTACT_PHONE_PATTERN = /^\+\d{8,15}$/;
+
+/** Móvil cubano: `+53` y 8 dígitos que empiezan por 5. */
+const CUBAN_MOBILE_PATTERN = /^\+53(5)(\d{7})$/;
+
+/**
+ * Deja el teléfono como lo guarda el backend: sin espacios, guiones, puntos ni
+ * paréntesis, y con el `+` delante si no lo traía.
+ */
+export function normalizeContactPhone(input: string): string {
+  const compact = input.replace(/[\s().-]/g, "");
+  if (!compact || compact.startsWith("+")) return compact;
+  return `+${compact}`;
+}
+
+/** ¿Es un teléfono normalizado válido (`+` y de 8 a 15 dígitos)? */
+export function isValidContactPhone(normalized: string): boolean {
+  return CONTACT_PHONE_PATTERN.test(normalized);
+}
+
+/**
+ * Teléfono para leer: los móviles cubanos como `+53 5 4600851`; el resto, el
+ * número normalizado.
+ */
+export function formatContactPhone(phone: string): string {
+  const normalized = normalizeContactPhone(phone);
+  const cuban = CUBAN_MOBILE_PATTERN.exec(normalized);
+  return cuban ? `+53 ${cuban[1]} ${cuban[2]}` : normalized;
+}
+
+/** Fila del formulario: lo que escribe el administrador, sin normalizar. */
+export interface ContactDraft {
+  phone: string;
+  label: string;
+}
+
+/**
+ * Error de cada fila, en el mismo orden (`null` = fila correcta). Las mismas
+ * reglas que el backend: teléfono válido y sin repetir.
+ */
+export function validateContactDrafts(
+  drafts: ContactDraft[],
+): (string | null)[] {
+  const phones = drafts.map((draft) => normalizeContactPhone(draft.phone));
+  return phones.map((phone, index) => {
+    if (!phone) return "Escribe el número o quita esta fila.";
+    if (!isValidContactPhone(phone)) {
+      return "Número no válido: lleva el código del país y de 8 a 15 dígitos.";
+    }
+    if (phones.indexOf(phone) !== index) return "Este número está repetido.";
+    return null;
+  });
+}
+
+/**
+ * Cuerpo del `PUT`: la lista entera en orden, con los teléfonos normalizados.
+ * La etiqueta vacía no se manda.
+ */
+export function buildContactsPayload(
+  drafts: ContactDraft[],
+): UpdateDesktopLicenseContactsProps {
+  return {
+    contacts: drafts.map((draft) => {
+      const phone = normalizeContactPhone(draft.phone);
+      const label = draft.label.trim();
+      return label ? { phone, label } : { phone };
+    }),
+  };
+}
+
 /* ----------------------------------- Errores ---------------------------------- */
 
 /**
@@ -190,6 +270,17 @@ export function licenseErrorMessage(error: unknown, fallback: string): string {
     (status ? ERROR_BY_STATUS[status] : undefined) ??
     extractApiErrorMessage(error, fallback)
   );
+}
+
+/**
+ * Al guardar los números de contacto, el 400 es un teléfono no válido o
+ * repetido que el formulario no llegó a detectar.
+ */
+export function contactsErrorMessage(error: unknown, fallback: string): string {
+  if (isAxiosError(error) && error.response?.status === 400) {
+    return "Revisa los números: hay alguno no válido o repetido.";
+  }
+  return licenseErrorMessage(error, fallback);
 }
 
 /** ¿El fallo es porque el código ya existe? (para marcar el campo). */
