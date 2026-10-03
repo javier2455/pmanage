@@ -9,8 +9,10 @@ import {
   createDesktopInstallation,
   getDesktopInstallation,
   getDesktopInstallations,
+  getDesktopLicenseContacts,
   removeDesktopLicensePayment,
   updateDesktopInstallation,
+  updateDesktopLicenseContacts,
   type GetDesktopInstallationsParams,
 } from "@/lib/api/desktop-licenses";
 import type {
@@ -18,10 +20,12 @@ import type {
   CreateDesktopInstallationProps,
   DesktopInstallationDetail,
   UpdateDesktopInstallationProps,
+  UpdateDesktopLicenseContactsProps,
 } from "@/lib/types/desktop-licenses";
 
 const LIST_KEY = "desktop-installations";
 const DETAIL_KEY = "desktop-installation";
+const CONTACTS_KEY = "desktop-license-contacts";
 
 export function useGetDesktopInstallationsQuery(
   params: GetDesktopInstallationsParams = {},
@@ -98,5 +102,24 @@ export function useRemoveDesktopLicensePaymentMutation() {
     mutationFn: ({ code, paymentId }: { code: string; paymentId: string }) =>
       removeDesktopLicensePayment(code, paymentId),
     onSuccess: (detail, { code }) => applyDetail(queryClient, code, detail),
+  });
+}
+
+export function useGetDesktopLicenseContactsQuery() {
+  return useQuery({
+    queryKey: [CONTACTS_KEY],
+    queryFn: getDesktopLicenseContacts,
+  });
+}
+
+/** El backend responde con la lista ya guardada: se pinta tal cual. */
+export function useUpdateDesktopLicenseContactsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateDesktopLicenseContactsProps) =>
+      updateDesktopLicenseContacts(payload),
+    onSuccess: (contacts) => {
+      queryClient.setQueryData([CONTACTS_KEY], contacts);
+    },
   });
 }

@@ -5,8 +5,11 @@ import type {
   CreateDesktopInstallationProps,
   DesktopInstallation,
   DesktopInstallationDetail,
+  DesktopLicenseContact,
+  DesktopLicenseContactsResponse,
   GetDesktopInstallationsResponse,
   UpdateDesktopInstallationProps,
+  UpdateDesktopLicenseContactsProps,
 } from "../types/desktop-licenses";
 
 export interface GetDesktopInstallationsParams {
@@ -83,4 +86,25 @@ export async function removeDesktopLicensePayment(
     desktopLicenseRoutes.payment(code, paymentId),
   );
   return data;
+}
+
+/** (Admin) Números de WhatsApp a los que escriben los clientes para pagar. */
+export async function getDesktopLicenseContacts(): Promise<
+  DesktopLicenseContact[]
+> {
+  const { data } = await apiClient.get<DesktopLicenseContactsResponse>(
+    desktopLicenseRoutes.contacts,
+  );
+  return data.data;
+}
+
+/** (Admin) Sustituye la lista entera de números. Devuelve la lista guardada. */
+export async function updateDesktopLicenseContacts(
+  payload: UpdateDesktopLicenseContactsProps,
+): Promise<DesktopLicenseContact[]> {
+  const { data } = await apiClient.put<DesktopLicenseContactsResponse>(
+    desktopLicenseRoutes.contacts,
+    payload,
+  );
+  return data.data;
 }
