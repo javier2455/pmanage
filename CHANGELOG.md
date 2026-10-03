@@ -11,6 +11,16 @@ y el proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Agregado
 
+#### Licencias de la app de escritorio (admin)
+- Nueva pantalla **Administración → Licencias de escritorio**
+  (`/dashboard/admin/desktop-licenses`): lista de instalaciones de Negora para
+  Windows con buscador, versión, última conexión, vencimiento (avisos «Prueba»,
+  «Vence pronto», «Vencida») y «Posible duplicado».
+- **Alta manual** para el cliente que paga al instalar sin internet, y detalle con
+  datos, notas, «Marcar como revisado», pagos (registrar y quitar) y el **código
+  de licencia** con «Copiar código» y «Copiar mensaje para WhatsApp».
+- Usa el módulo `desktop-licenses` de psearch-back (`/desktop/admin/installations`).
+
 #### Crear la categoría mientras se asigna el producto
 - El selector de categoría del formulario de asignación **ya no se bloquea cuando el
   negocio no tiene ninguna**: antes se deshabilitaba con «Aún no hay categorías» y
