@@ -20,6 +20,7 @@ import { InstallationNotesCard } from "@/components/desktop-licenses/installatio
 import { LicenseCodeCard } from "@/components/desktop-licenses/license-code-card";
 import { RegisterPaymentCard } from "@/components/desktop-licenses/register-payment-card";
 import { PaymentsCard } from "@/components/desktop-licenses/payments-card";
+import { WhatsappNumbersCard } from "@/components/desktop-licenses/whatsapp-numbers-card";
 
 const LIST_HREF = "/dashboard/admin/desktop-licenses";
 
@@ -134,6 +135,11 @@ export default function InstallationDetailClient() {
             code={code}
             payments={installation.payments ?? []}
             onRemoved={() => setJustRenewed(false)}
+          />
+
+          <WhatsappNumbersCard
+            code={code}
+            numbers={installation.whatsappNumbers ?? []}
           />
         </>
       )}

@@ -11,5 +11,8 @@ export const desktopLicenseRoutes = {
     `${ADMIN_INSTALLATIONS}/${encodeURIComponent(code)}/payments`,
   payment: (code: string, paymentId: string) =>
     `${ADMIN_INSTALLATIONS}/${encodeURIComponent(code)}/payments/${encodeURIComponent(paymentId)}`,
+  whatsappNumber: (code: string, numberId: string) =>
+    `${ADMIN_INSTALLATIONS}/${encodeURIComponent(code)}/whatsapp-numbers/${encodeURIComponent(numberId)}`,
   contacts: `${BASIC_ROUTE}/desktop/admin/contacts`,
+  settings: `${BASIC_ROUTE}/desktop/admin/settings`,
 };

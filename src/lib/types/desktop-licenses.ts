@@ -38,9 +38,32 @@ export interface DesktopLicensePayment {
   createdAt: string;
 }
 
-/** Detalle (`GET /:code`): la instalación con sus pagos, más nuevos primero. */
+/**
+ * Número de WhatsApp de un negocio de la instalación, por el que recibe los
+ * avisos que el escritorio manda a través del servidor de Negora.
+ */
+export interface DesktopWhatsappNumber {
+  id: string;
+  /** `+` y dígitos, sin espacios: `+5355555555`. */
+  phone: string;
+  businessName: string;
+  verifiedAt: string | null;
+  blocked: boolean;
+  /** Límite propio de mensajes al día. Null = usa el general. */
+  dailyLimit: number | null;
+  /** El que se aplica de verdad: el propio o, si no tiene, el general. */
+  effectiveDailyLimit: number;
+  sentToday: number;
+  sentThisMonth: number;
+}
+
+/**
+ * Detalle (`GET /:code`): la instalación con sus pagos, más nuevos primero, y
+ * sus números de WhatsApp (un servidor antiguo no los manda).
+ */
 export interface DesktopInstallationDetail extends DesktopInstallation {
   payments: DesktopLicensePayment[];
+  whatsappNumbers?: DesktopWhatsappNumber[];
 }
 
 export interface GetDesktopInstallationsResponse {
@@ -95,4 +118,16 @@ export interface DesktopLicenseContactsResponse {
 /** Sustituye la lista entera (de 0 a 5 números), en el orden en que se manda. */
 export interface UpdateDesktopLicenseContactsProps {
   contacts: { phone: string; label?: string }[];
+}
+
+/** Ajustes generales del escritorio, los mismos para todas las instalaciones. */
+export interface DesktopAdminSettings {
+  /** Avisos por WhatsApp al día por negocio (entero de 1 a 500). */
+  whatsappDailyLimit: number;
+}
+
+/** Solo se manda lo que cambia. `dailyLimit: null` quita el límite propio. */
+export interface UpdateDesktopWhatsappNumberProps {
+  dailyLimit?: number | null;
+  blocked?: boolean;
 }
