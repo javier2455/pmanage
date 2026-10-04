@@ -1,14 +1,17 @@
 /**
  * Lógica pura del panel de licencias de la app de escritorio: código de
  * instalación, fechas, estado del vencimiento, mensaje de WhatsApp, números de
- * contacto y errores.
+ * contacto, avisos por WhatsApp y errores.
  * Sin React ni APIs de navegador, para poder probarla con Vitest.
  */
 
 import { isAxiosError } from "axios";
 import { extractApiErrorMessage } from "@/lib/api-error";
 import { formatAmount, formatMoney } from "@/lib/currency";
-import type { UpdateDesktopLicenseContactsProps } from "@/lib/types/desktop-licenses";
+import type {
+  DesktopWhatsappNumber,
+  UpdateDesktopLicenseContactsProps,
+} from "@/lib/types/desktop-licenses";
 import { DASH } from "@/lib/utils";
 
 /* ---------------------------- Código de instalación --------------------------- */
@@ -251,6 +254,57 @@ export function buildContactsPayload(
   };
 }
 
+/* ----------------------------- Avisos por WhatsApp ---------------------------- */
+
+/** Rango del límite diario de avisos por negocio (igual que el backend). */
+export const WHATSAPP_DAILY_LIMIT_MIN = 1;
+export const WHATSAPP_DAILY_LIMIT_MAX = 500;
+
+export const WHATSAPP_LIMIT_ERROR = `El límite debe ser un número entre ${WHATSAPP_DAILY_LIMIT_MIN} y ${WHATSAPP_DAILY_LIMIT_MAX}.`;
+
+/**
+ * Lee el límite que escribe el administrador: un entero de 1 a 500. Vacío es
+ * `null` ("usa el general"), que solo vale como límite propio de un negocio. Lo
+ * que no es válido devuelve `undefined`.
+ */
+export function parseWhatsappDailyLimit(
+  input: string,
+): number | null | undefined {
+  const text = input.trim();
+  if (!text) return null;
+  if (!/^\d+$/.test(text)) return undefined;
+  const limit = Number(text);
+  return limit >= WHATSAPP_DAILY_LIMIT_MIN && limit <= WHATSAPP_DAILY_LIMIT_MAX
+    ? limit
+    : undefined;
+}
+
+/** Uso de un número: enviados hoy sobre el límite que se le aplica, y en el mes. */
+export function formatWhatsappUsage({
+  sentToday,
+  effectiveDailyLimit,
+  sentThisMonth,
+}: Pick<
+  DesktopWhatsappNumber,
+  "sentToday" | "effectiveDailyLimit" | "sentThisMonth"
+>): string {
+  return `Enviados hoy: ${sentToday} de ${effectiveDailyLimit} · Este mes: ${sentThisMonth}`;
+}
+
+export type WhatsappNumberStatusKind = "blocked" | "verified" | "unverified";
+
+/** Estado que se pinta en el badge: el bloqueo manda sobre la verificación. */
+export function getWhatsappNumberStatus({
+  blocked,
+  verifiedAt,
+}: Pick<
+  DesktopWhatsappNumber,
+  "blocked" | "verifiedAt"
+>): WhatsappNumberStatusKind {
+  if (blocked) return "blocked";
+  return verifiedAt ? "verified" : "unverified";
+}
+
 /* ----------------------------------- Errores ---------------------------------- */
 
 /**
@@ -279,6 +333,19 @@ export function licenseErrorMessage(error: unknown, fallback: string): string {
 export function contactsErrorMessage(error: unknown, fallback: string): string {
   if (isAxiosError(error) && error.response?.status === 400) {
     return "Revisa los números: hay alguno no válido o repetido.";
+  }
+  return licenseErrorMessage(error, fallback);
+}
+
+/**
+ * Avisos por WhatsApp: el 400 es un límite fuera de rango que el formulario no
+ * llegó a detectar, y el 404 un número que ya no existe.
+ */
+export function whatsappErrorMessage(error: unknown, fallback: string): string {
+  const status = isAxiosError(error) ? error.response?.status : undefined;
+  if (status === 400) return WHATSAPP_LIMIT_ERROR;
+  if (status === 404) {
+    return "No se encontró el número de WhatsApp. Recarga la página.";
   }
   return licenseErrorMessage(error, fallback);
 }

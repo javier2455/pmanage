@@ -3,13 +3,16 @@ import { desktopLicenseRoutes } from "../routes/desktop-licenses";
 import type {
   AddDesktopLicensePaymentProps,
   CreateDesktopInstallationProps,
+  DesktopAdminSettings,
   DesktopInstallation,
   DesktopInstallationDetail,
   DesktopLicenseContact,
   DesktopLicenseContactsResponse,
+  DesktopWhatsappNumber,
   GetDesktopInstallationsResponse,
   UpdateDesktopInstallationProps,
   UpdateDesktopLicenseContactsProps,
+  UpdateDesktopWhatsappNumberProps,
 } from "../types/desktop-licenses";
 
 export interface GetDesktopInstallationsParams {
@@ -107,4 +110,36 @@ export async function updateDesktopLicenseContacts(
     payload,
   );
   return data.data;
+}
+
+/** (Admin) Ajustes generales: el límite diario de avisos por WhatsApp. */
+export async function getDesktopAdminSettings(): Promise<DesktopAdminSettings> {
+  const { data } = await apiClient.get<DesktopAdminSettings>(
+    desktopLicenseRoutes.settings,
+  );
+  return data;
+}
+
+/** (Admin) Cambia el límite general. Devuelve los ajustes guardados. */
+export async function updateDesktopAdminSettings(
+  payload: DesktopAdminSettings,
+): Promise<DesktopAdminSettings> {
+  const { data } = await apiClient.put<DesktopAdminSettings>(
+    desktopLicenseRoutes.settings,
+    payload,
+  );
+  return data;
+}
+
+/** (Admin) Límite propio o bloqueo de un número. Devuelve el número guardado. */
+export async function updateDesktopWhatsappNumber(
+  code: string,
+  numberId: string,
+  payload: UpdateDesktopWhatsappNumberProps,
+): Promise<DesktopWhatsappNumber> {
+  const { data } = await apiClient.patch<DesktopWhatsappNumber>(
+    desktopLicenseRoutes.whatsappNumber(code, numberId),
+    payload,
+  );
+  return data;
 }

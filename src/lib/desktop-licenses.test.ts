@@ -9,14 +9,18 @@ import {
   formatDay,
   formatInstallationCode,
   formatPaymentAmount,
+  formatWhatsappUsage,
   getLicenseStatus,
+  getWhatsappNumberStatus,
   isDuplicateCodeError,
   isValidContactPhone,
   isValidInstallationCode,
   licenseErrorMessage,
   normalizeContactPhone,
   normalizeInstallationCode,
+  parseWhatsappDailyLimit,
   validateContactDrafts,
+  whatsappErrorMessage,
 } from "./desktop-licenses";
 
 /** Mediodía en La Habana del 2 de octubre de 2026 (UTC-4 en horario de verano). */
@@ -250,6 +254,79 @@ describe("contactsErrorMessage", () => {
       "administrador",
     );
     expect(contactsErrorMessage(undefined, FALLBACK)).toBe(FALLBACK);
+  });
+});
+
+describe("avisos por WhatsApp", () => {
+  it("lee un límite entero de 1 a 500", () => {
+    expect(parseWhatsappDailyLimit("30")).toBe(30);
+    expect(parseWhatsappDailyLimit(" 1 ")).toBe(1);
+    expect(parseWhatsappDailyLimit("500")).toBe(500);
+  });
+
+  it("vacío es null: el negocio usa el límite general", () => {
+    expect(parseWhatsappDailyLimit("")).toBeNull();
+    expect(parseWhatsappDailyLimit("   ")).toBeNull();
+  });
+
+  it("lo que no es un entero de 1 a 500 no es válido", () => {
+    expect(parseWhatsappDailyLimit("0")).toBeUndefined();
+    expect(parseWhatsappDailyLimit("501")).toBeUndefined();
+    expect(parseWhatsappDailyLimit("-5")).toBeUndefined();
+    expect(parseWhatsappDailyLimit("1.5")).toBeUndefined();
+    expect(parseWhatsappDailyLimit("1e2")).toBeUndefined();
+    expect(parseWhatsappDailyLimit("treinta")).toBeUndefined();
+  });
+
+  it("arma el texto de uso con el límite que se aplica", () => {
+    expect(
+      formatWhatsappUsage({
+        sentToday: 12,
+        effectiveDailyLimit: 30,
+        sentThisMonth: 240,
+      }),
+    ).toBe("Enviados hoy: 12 de 30 · Este mes: 240");
+  });
+
+  it("decide el estado: el bloqueo manda sobre la verificación", () => {
+    const verifiedAt = "2026-10-02T16:00:00.000Z";
+    expect(getWhatsappNumberStatus({ blocked: false, verifiedAt })).toBe(
+      "verified",
+    );
+    expect(getWhatsappNumberStatus({ blocked: false, verifiedAt: null })).toBe(
+      "unverified",
+    );
+    expect(getWhatsappNumberStatus({ blocked: true, verifiedAt })).toBe(
+      "blocked",
+    );
+    expect(getWhatsappNumberStatus({ blocked: true, verifiedAt: null })).toBe(
+      "blocked",
+    );
+  });
+});
+
+describe("whatsappErrorMessage", () => {
+  const FALLBACK = "No se pudo guardar el límite.";
+
+  it("traduce el 400 del límite y el 404 del número", () => {
+    expect(
+      whatsappErrorMessage(
+        axiosErrorWith(400, {
+          message: ["whatsappDailyLimit must not be greater than 500"],
+        }),
+        FALLBACK,
+      ),
+    ).toBe("El límite debe ser un número entre 1 y 500.");
+    expect(whatsappErrorMessage(axiosErrorWith(404), FALLBACK)).toBe(
+      "No se encontró el número de WhatsApp. Recarga la página.",
+    );
+  });
+
+  it("el resto se traduce igual que en la pantalla de licencias", () => {
+    expect(whatsappErrorMessage(axiosErrorWith(403), FALLBACK)).toContain(
+      "administrador",
+    );
+    expect(whatsappErrorMessage(undefined, FALLBACK)).toBe(FALLBACK);
   });
 });
 

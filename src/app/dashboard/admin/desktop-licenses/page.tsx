@@ -8,6 +8,7 @@ import { useGetDesktopInstallationsQuery } from "@/hooks/use-desktop-licenses";
 import { InstallationsTable } from "@/components/desktop-licenses/installations-table";
 import { CreateInstallationDialog } from "@/components/desktop-licenses/create-installation-dialog";
 import { PaymentContactsCard } from "@/components/desktop-licenses/payment-contacts-card";
+import { WhatsappLimitCard } from "@/components/desktop-licenses/whatsapp-limit-card";
 
 const SEARCH_DEBOUNCE_MS = 350;
 const DEFAULT_LIMIT = 10;
@@ -58,7 +59,10 @@ export default function DesktopLicensesPage() {
         />
       </div>
 
-      <PaymentContactsCard />
+      <div className="grid gap-4 xl:grid-cols-2">
+        <PaymentContactsCard />
+        <WhatsappLimitCard />
+      </div>
 
       {isError ? (
         <p className="text-destructive">Error al cargar las instalaciones.</p>

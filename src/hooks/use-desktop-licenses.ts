@@ -7,25 +7,31 @@ import {
 import {
   addDesktopLicensePayment,
   createDesktopInstallation,
+  getDesktopAdminSettings,
   getDesktopInstallation,
   getDesktopInstallations,
   getDesktopLicenseContacts,
   removeDesktopLicensePayment,
+  updateDesktopAdminSettings,
   updateDesktopInstallation,
   updateDesktopLicenseContacts,
+  updateDesktopWhatsappNumber,
   type GetDesktopInstallationsParams,
 } from "@/lib/api/desktop-licenses";
 import type {
   AddDesktopLicensePaymentProps,
   CreateDesktopInstallationProps,
+  DesktopAdminSettings,
   DesktopInstallationDetail,
   UpdateDesktopInstallationProps,
   UpdateDesktopLicenseContactsProps,
+  UpdateDesktopWhatsappNumberProps,
 } from "@/lib/types/desktop-licenses";
 
 const LIST_KEY = "desktop-installations";
 const DETAIL_KEY = "desktop-installation";
 const CONTACTS_KEY = "desktop-license-contacts";
+const SETTINGS_KEY = "desktop-admin-settings";
 
 export function useGetDesktopInstallationsQuery(
   params: GetDesktopInstallationsParams = {},
@@ -120,6 +126,58 @@ export function useUpdateDesktopLicenseContactsMutation() {
       updateDesktopLicenseContacts(payload),
     onSuccess: (contacts) => {
       queryClient.setQueryData([CONTACTS_KEY], contacts);
+    },
+  });
+}
+
+export function useGetDesktopAdminSettingsQuery() {
+  return useQuery({
+    queryKey: [SETTINGS_KEY],
+    queryFn: getDesktopAdminSettings,
+  });
+}
+
+/**
+ * El backend responde con los ajustes guardados. Los detalles en caché se
+ * vuelven a pedir: el límite efectivo de los números sin límite propio es el
+ * general.
+ */
+export function useUpdateDesktopAdminSettingsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: DesktopAdminSettings) =>
+      updateDesktopAdminSettings(payload),
+    onSuccess: (settings) => {
+      queryClient.setQueryData([SETTINGS_KEY], settings);
+      queryClient.invalidateQueries({ queryKey: [DETAIL_KEY] });
+    },
+  });
+}
+
+/**
+ * El backend responde con el número ya actualizado: se cambia dentro del
+ * detalle en caché, sin volver a pedirlo.
+ */
+export function useUpdateDesktopWhatsappNumberMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      code,
+      numberId,
+      ...payload
+    }: { code: string; numberId: string } & UpdateDesktopWhatsappNumberProps) =>
+      updateDesktopWhatsappNumber(code, numberId, payload),
+    onSuccess: (updated, { code }) => {
+      queryClient.setQueryData<DesktopInstallationDetail>(
+        [DETAIL_KEY, code],
+        (detail) =>
+          detail && {
+            ...detail,
+            whatsappNumbers: detail.whatsappNumbers?.map((number) =>
+              number.id === updated.id ? updated : number,
+            ),
+          },
+      );
     },
   });
 }
